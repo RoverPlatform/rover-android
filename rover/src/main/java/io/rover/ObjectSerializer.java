@@ -1,0 +1,140 @@
+package io.rover;
+
+import android.content.Context;
+import android.util.Log;
+
+import com.google.android.gms.location.Geofence;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+
+/**
+ * Created by ata_n on 2016-03-31.
+ */
+public class ObjectSerializer implements JsonApiObjectSerializer {
+
+    private Object mObject;
+    private Context mApplicationContext;
+
+    public ObjectSerializer(Object object, Context context) {
+        mObject = object;
+        mApplicationContext = context;
+    }
+
+    @Override
+    public String getType() {
+        if (mObject instanceof Event) {
+            return "events";
+        } else if (mObject instanceof Message) {
+            return "messages";
+        }
+        return null;
+    }
+
+    @Override
+    public String getIdentifier() {
+        if (mObject instanceof Message) {
+            return ((Message) mObject).getId();
+        }
+        return null;
+    }
+
+    @Override
+    public JSONObject getAttributes() {
+        JSONObject jsonObject = new JSONObject();
+
+        try {
+            putAttributes(jsonObject);
+        } catch (JSONException e) {
+            Log.e("ObjectSerializer", "Error creating attributes JSON");
+            e.printStackTrace();
+        }
+
+        return jsonObject;
+    }
+
+    private void putAttributes(JSONObject jsonObject) throws JSONException {
+
+        if (mObject instanceof Event) {
+            Event event = (Event)mObject;
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US);
+            jsonObject.put("time", sdf.format(event.getDate()));
+
+            Customer customer = Customer.getInstance(mApplicationContext);
+            ObjectSerializer customerSerializer = new ObjectSerializer(customer, mApplicationContext);
+
+            jsonObject.put("user", customerSerializer.getAttributes());
+
+            Device device = Device.getInstance();
+            ObjectSerializer deviceSerializer = new ObjectSerializer(device, mApplicationContext);
+
+            jsonObject.put("device", deviceSerializer.getAttributes());
+
+            if (event instanceof LocationUpdateEvent) {
+                LocationUpdateEvent luEvent = (LocationUpdateEvent)event;
+
+                jsonObject.put("object", "location");
+                jsonObject.put("action", "update");
+                jsonObject.put("latitude", luEvent.getLocation().getLatitude());
+                jsonObject.put("longitude", luEvent.getLocation().getLongitude());
+            } else if (event instanceof GeofenceTransitionEvent) {
+                GeofenceTransitionEvent gtEvent = (GeofenceTransitionEvent) event;
+
+                jsonObject.put("object", "geofence-region");
+                jsonObject.put("action", gtEvent.getGeofenceTransition() == Geofence.GEOFENCE_TRANSITION_EXIT ? "exit" : "enter");
+                jsonObject.put("identifier", gtEvent.getId());
+            } else if (event instanceof BeaconTransitionEvent) {
+                BeaconTransitionEvent btEvent = (BeaconTransitionEvent) event;
+
+                jsonObject.put("object", "beacon-region");
+                jsonObject.put("action", btEvent.getTransition() == BeaconTransitionEvent.TRANSITION_EXIT ? "exit" : "enter");
+                jsonObject.put("configuration-id", btEvent.getId());
+            }
+
+        } else if (mObject instanceof Customer) {
+            Customer customer = (Customer)mObject;
+
+            jsonObject.put("identifier", customer.getIdentifier());
+            jsonObject.put("name", customer.getName());
+            jsonObject.put("email", customer.getEmail());
+            jsonObject.put("phone-number", customer.getPhoneNumber());
+            //jsonObject.put("gender", customer.getGender());
+            //jsonObject.put("age", customer.getAge());
+            //jsonObject.put("tags", new JSONArray(customer.getTags()));
+
+        } else if (mObject instanceof Device) {
+            Device device = (Device)mObject;
+
+            jsonObject.put("os-name", "Android");
+            jsonObject.put("platform", "Android");
+            jsonObject.put("sdk-version", "4.0.0");
+            jsonObject.put("development", true);
+            jsonObject.put("udid", device.getIdentifier());
+            jsonObject.put("locale-lang", device.getLocaleLanguage());
+            jsonObject.put("locale-region", device.getLocaleRegion());
+            jsonObject.put("os-version", device.getOSVersion());
+            jsonObject.put("manufacturer", device.getManufacturer());
+            jsonObject.put("model", device.getModel());
+            jsonObject.put("time-zone", device.getTimeZone());
+            jsonObject.put("local-notifications-enabled", device.getLocalNotificationsEnabled());
+            jsonObject.put("remote-notifications-enabled", device.getRemoteNotificationsEnabled());
+            jsonObject.put("bluetooth-enabled", device.getBluetoothEnabled());
+            jsonObject.put("token", device.getToken());
+            jsonObject.put("aid", device.getAdvertisingIdentifier());
+            jsonObject.put("location-monitoring-enabled", device.getLocationMonitoringEnabled());
+            jsonObject.put("background-enabled", device.getBackgroundEnabled());
+            jsonObject.put("carrier", device.getCarrier());
+            jsonObject.put("app-identifier", device.getAppIdentifier());
+
+        } else if (mObject instanceof Message) {
+            Message message = (Message)mObject;
+
+            jsonObject.put("read", message.isRead());
+        }
+    }
+}

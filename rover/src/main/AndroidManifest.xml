@@ -17,6 +17,8 @@
 
         <!-- Services -->
 
+        <service android:name=".Rover$NearbyMessageService" android:exported="false"/>
+
         <service android:name=".Rover$LocationUpdateService" android:exported="false"/>
 
         <service android:name=".Rover$GcmRegistrationService" android:exported="false"/>

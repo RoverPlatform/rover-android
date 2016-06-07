@@ -75,12 +75,12 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 return getGeofence(id, lat, lng, (float) radius);
             }
             case "messages": {
-                String title = attributes.getString("title");
+                String title = attributes.getString("android-title");
                 String text = attributes.getString("notification-text");
                 String timestampString = attributes.getString("timestamp");
                 Date timestamp = null;
                 boolean read = attributes.getBoolean("read");
-                String action = attributes.getString("action");
+                String contentType = attributes.getString("content-type");
 
                 // TODO: get this from Rover or somewhere else
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
@@ -95,9 +95,9 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 Message message = new Message(title, text, timestamp, id);
                 message.setRead(read);
 
-                switch (action) {
-                    case "link":
-                        String url = attributes.getString("action-url");
+                switch (contentType) {
+                    case "website":
+                        String url = attributes.getString("website-url");
                         message.setAction(Message.Action.Link);
                         try {
                             message.setURL(new URL(url));

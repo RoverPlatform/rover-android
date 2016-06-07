@@ -12,6 +12,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <meta-data
+            android:name="com.google.android.nearby.messages.API_KEY"
+            android:value="AIzaSyDF_GRb1_rtSDaaZ_Oxi-2qx9DeNM2ut-8" />
+
         <activity
             android:name=".MainActivity"
             android:label="@string/title_activity_main"

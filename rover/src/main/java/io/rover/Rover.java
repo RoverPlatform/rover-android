@@ -88,7 +88,7 @@ public class Rover implements EventSubmitTask.Callback {
         GoogleApiConnection connection = new GoogleApiConnection(mSharedInstance.mApplicationContext);
         connection.setCallbacks(new GoogleApiConnection.Callbacks() {
             @Override
-            public int onConnected(GoogleApiClient client) {
+            public int onConnected(final GoogleApiClient client) {
                 // Location Updates
                 if (ContextCompat.checkSelfPermission(mSharedInstance.mApplicationContext, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                     LocationServices.FusedLocationApi.requestLocationUpdates(client, locationRequest, mSharedInstance.getLocationPendingIntent());
@@ -102,13 +102,15 @@ public class Rover implements EventSubmitTask.Callback {
                                 if (status.isSuccess()) {
                                     Log.i("Nearby", "Subscribed successfully.");
                                 } else {
-                                    Log.i("Nearby", "Could not subscribe.");
+                                    Log.i("Nearby", "Could not subscribe." + status.getStatusMessage());
                                     //handleUnsuccessfulNearbyResult(status);
                                 }
+
+                                client.disconnect();
                             }
                         });
 
-                return GoogleApiConnection.DISCONNECT;
+                return GoogleApiConnection.KEEP_ALIVE;
             }
         });
         connection.connect();
@@ -118,7 +120,7 @@ public class Rover implements EventSubmitTask.Callback {
         GoogleApiConnection connection = new GoogleApiConnection(mSharedInstance.mApplicationContext);
         connection.setCallbacks(new GoogleApiConnection.Callbacks() {
             @Override
-            public int onConnected(GoogleApiClient client) {
+            public int onConnected(final GoogleApiClient client) {
                 // Location Updates
                 LocationServices.FusedLocationApi.removeLocationUpdates(client, mSharedInstance.getLocationPendingIntent());
 
@@ -132,10 +134,12 @@ public class Rover implements EventSubmitTask.Callback {
                                 } else {
                                     Log.i("Nearby", "Could not unsubscribe");
                                 }
+
+                                client.disconnect();
                             }
                         });
 
-                return GoogleApiConnection.DISCONNECT;
+                return GoogleApiConnection.KEEP_ALIVE;
             }
         });
         connection.connect();
@@ -433,6 +437,11 @@ public class Rover implements EventSubmitTask.Callback {
                 }
 
                 private void handleMessage(int transition, Message message) {
+                    String type = message.getType();
+                    if (!type.equals("rover-configuration-id")){
+                        return;
+                    }
+
                     String messageString = new String(message.getContent());
 
                     Log.i("NearbyMessage", "Message string: " + messageString);

@@ -7,6 +7,8 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.nearby.Nearby;
+import com.google.android.gms.nearby.messages.MessagesOptions;
+import com.google.android.gms.nearby.messages.NearbyPermissions;
 
 /**
  * Created by ata_n on 2016-04-04.
@@ -35,7 +37,9 @@ public class GoogleApiConnection implements GoogleApiClient.ConnectionCallbacks,
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
-                .addApi(Nearby.MESSAGES_API)
+                .addApi(Nearby.MESSAGES_API, new MessagesOptions.Builder()
+                    .setPermissions(NearbyPermissions.BLE)
+                    .build())
                 .build();
     }
 

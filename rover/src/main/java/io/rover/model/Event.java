@@ -1,4 +1,4 @@
-package io.rover;
+package io.rover.model;
 
 import android.os.Parcelable;
 
@@ -13,6 +13,6 @@ public abstract class Event /*implements Parcelable */{
     Date mDate;
     String mId;
 
-    Date getDate() { return mDate; }
-    String getId() { return mId; }
+    public Date getDate() { return mDate; }
+    public String getId() { return mId; }
 }

@@ -1,4 +1,4 @@
-package io.rover;
+package io.rover.model;
 
 import android.location.Location;
 import android.os.Parcel;

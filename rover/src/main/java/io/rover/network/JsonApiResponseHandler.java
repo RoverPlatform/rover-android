@@ -1,6 +1,5 @@
-package io.rover;
+package io.rover.network;
 
-import android.support.annotation.NonNull;
 import android.util.JsonReader;
 import android.util.JsonToken;
 import android.util.Log;
@@ -16,7 +15,15 @@ import java.util.List;
 /**
  * Created by ata_n on 2016-03-31.
  */
-class JsonApiResponseHandler implements JsonResponseHandler {
+public class JsonApiResponseHandler implements NetworkTask.JsonResponseHandler {
+
+    public interface JsonApiObjectMapper {
+        Object getObject(String type, String identifier, JSONObject attributes);
+    }
+
+    public interface JsonApiCompletionHandler {
+        void onHandleCompletion(Object response, List includedObject);
+    }
 
     private JsonApiObjectMapper mMapper;
     private JsonApiCompletionHandler mCompletionHandler;
@@ -202,12 +209,4 @@ class JsonApiResponseHandler implements JsonResponseHandler {
 
         return array;
     }
-}
-
-interface JsonApiObjectMapper {
-    Object getObject(String type, String identifier, JSONObject attributes);
-}
-
-interface JsonApiCompletionHandler {
-    void onHandleCompletion(Object response, List includedObject);
 }

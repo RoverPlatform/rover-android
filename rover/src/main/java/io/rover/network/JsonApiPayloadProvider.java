@@ -1,4 +1,4 @@
-package io.rover;
+package io.rover.network;
 
 import android.util.JsonWriter;
 import android.util.Log;
@@ -8,18 +8,29 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.Iterator;
-import java.util.Objects;
 
 /**
  * Created by ata_n on 2016-03-31.
  */
-class JsonApiPayloadProvider implements JsonPayloadProvider {
+public class JsonApiPayloadProvider implements NetworkTask.JsonPayloadProvider {
+
+    public interface JsonApiObjectSerializer {
+        String getIdentifier();
+        String getType();
+        JSONObject getAttributes();
+    }
 
     private JsonApiObjectSerializer mSerializer;
 
     public JsonApiPayloadProvider(JsonApiObjectSerializer serializer) {
         mSerializer = serializer;
+    }
+
+    @Override
+    public void onPrepareConnection(HttpURLConnection connection) {
+        connection.setRequestProperty("Accept", "application/vn.api+json");
     }
 
     @Override
@@ -108,10 +119,4 @@ class JsonApiPayloadProvider implements JsonPayloadProvider {
 
         writer.endArray();
     }
-}
-
-interface JsonApiObjectSerializer {
-    String getIdentifier();
-    String getType();
-    JSONObject getAttributes();
 }

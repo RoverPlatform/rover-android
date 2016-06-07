@@ -1,8 +1,12 @@
 package com.example.rover;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.os.Build;
 import android.support.design.widget.TabLayout;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -11,17 +15,23 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 
-import android.widget.TextView;
+import android.widget.CompoundButton;
+import android.widget.Switch;
 
-import com.example.rover.dummy.DummyContent;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 
-public class MainActivity extends AppCompatActivity implements MessageFragment.OnListFragmentInteractionListener {
+import io.rover.GoogleApiConnection;
+import io.rover.model.Message;
+import io.rover.Rover;
+
+public class MainActivity extends AppCompatActivity implements MessageFragment.OnListFragmentInteractionListener, RegionFragment.OnRegionFragmentInteractionListener {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -65,14 +75,96 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
 //            }
 //        });
 
+        Rover.registerForNotifications();
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Rover.activityStarted(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Rover.activityStopped(this);
+    }
+
+    public void onUpdateLocationClicked(View view) {
+        //Rover.updateLocation();
+        GoogleApiConnection connection = new GoogleApiConnection(getApplicationContext());
+
+        final LocationRequest locationRequest = new LocationRequest()
+                .setInterval(1)
+                .setFastestInterval(1)
+                .setSmallestDisplacement(0)
+                .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+
+        final Context context = getApplicationContext();
+
+        connection.setCallbacks(new GoogleApiConnection.Callbacks() {
+            @Override
+            public int onConnected(final GoogleApiClient client) {
+
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    LocationServices.FusedLocationApi.requestLocationUpdates(client, locationRequest, new LocationListener() {
+                        @Override
+                        public void onLocationChanged(Location location) {
+                            client.disconnect();
+                            //Rover.updateLocation(location);
+                        }
+                    });
+                }
+                return GoogleApiConnection.KEEP_ALIVE;
+            }
+        });
+        connection.connect();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        Switch monitoringSwitch = (Switch)menu.findItem(R.id.action_monitoring).getActionView().findViewById(R.id.monitoringSwitch);
+        if (monitoringSwitch != null) {
+            //monitoringSwitch.setChecked(Rover.isMonitoring());
+            monitoringSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if (isChecked) {
+                        startMonitoring();
+                    } else {
+                        Rover.stopMonitoring();
+                    }
+                }
+            });
+        }
         return true;
+    }
+
+    private void startMonitoring() {
+        if (Build.VERSION.SDK_INT >= 23) {
+            // Marshmallow+
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+            } else {
+                Rover.startMonitoring();
+            }
+        } else {
+            // Pre-Marshmallow
+            Rover.startMonitoring();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == 0) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Rover.startMonitoring();
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
     }
 
     @Override
@@ -83,52 +175,28 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+        //if (id == R.id.action_settings) {
+        //    return true;
+        //}
 
         return super.onOptionsItemSelected(item);
     }
 
 
     @Override
-    public void onListFragmentInteraction(DummyContent.DummyItem item) {
+    public void onListFragmentInteraction(Message item) {
 
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
 
-        public PlaceholderFragment() {
-        }
+    @Override
+    public void onRegionFragmentEnterClick(String id) {
+        Rover.simulateGeofenceEnter(id);
+    }
 
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
-            return rootView;
-        }
+    @Override
+    public void onRegionFragmentExitClick(String id) {
+        Rover.simulateGeofenceExit(id);
     }
 
     /**
@@ -146,8 +214,10 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
             switch (position) {
                 case 1:
                     return MessageFragment.newInstance(1);
+                case 0:
+                    return RegionFragment.newInstance(1);
                 default:
-                    return PlaceholderFragment.newInstance(position + 1);
+                    return null;
             }
         }
 

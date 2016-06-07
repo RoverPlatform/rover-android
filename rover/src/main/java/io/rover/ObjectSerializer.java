@@ -5,17 +5,26 @@ import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
+import io.rover.model.BeaconTransitionEvent;
+import io.rover.model.Customer;
+import io.rover.model.Device;
+import io.rover.model.DeviceUpdateEvent;
+import io.rover.model.Event;
+import io.rover.model.GeofenceTransitionEvent;
+import io.rover.model.LocationUpdateEvent;
+import io.rover.model.Message;
+import io.rover.network.JsonApiPayloadProvider;
+
 /**
  * Created by ata_n on 2016-03-31.
  */
-public class ObjectSerializer implements JsonApiObjectSerializer {
+public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSerializer {
 
     private Object mObject;
     private Context mApplicationContext;
@@ -87,13 +96,18 @@ public class ObjectSerializer implements JsonApiObjectSerializer {
 
                 jsonObject.put("object", "geofence-region");
                 jsonObject.put("action", gtEvent.getGeofenceTransition() == Geofence.GEOFENCE_TRANSITION_EXIT ? "exit" : "enter");
-                jsonObject.put("identifier", gtEvent.getId());
+                jsonObject.put("identifier", gtEvent.getGeofenceId());
             } else if (event instanceof BeaconTransitionEvent) {
                 BeaconTransitionEvent btEvent = (BeaconTransitionEvent) event;
 
                 jsonObject.put("object", "beacon-region");
                 jsonObject.put("action", btEvent.getTransition() == BeaconTransitionEvent.TRANSITION_EXIT ? "exit" : "enter");
                 jsonObject.put("configuration-id", btEvent.getId());
+            } else if (event instanceof DeviceUpdateEvent) {
+                DeviceUpdateEvent duEvent = (DeviceUpdateEvent)event;
+
+                jsonObject.put("object", "device");
+                jsonObject.put("action", "update");
             }
 
         } else if (mObject instanceof Customer) {
@@ -114,22 +128,21 @@ public class ObjectSerializer implements JsonApiObjectSerializer {
             jsonObject.put("platform", "Android");
             jsonObject.put("sdk-version", "4.0.0");
             jsonObject.put("development", true);
-            jsonObject.put("udid", device.getIdentifier());
+            jsonObject.put("udid", device.getIdentifier(mApplicationContext));
             jsonObject.put("locale-lang", device.getLocaleLanguage());
             jsonObject.put("locale-region", device.getLocaleRegion());
             jsonObject.put("os-version", device.getOSVersion());
             jsonObject.put("manufacturer", device.getManufacturer());
             jsonObject.put("model", device.getModel());
             jsonObject.put("time-zone", device.getTimeZone());
-            jsonObject.put("local-notifications-enabled", device.getLocalNotificationsEnabled());
-            jsonObject.put("remote-notifications-enabled", device.getRemoteNotificationsEnabled());
-            jsonObject.put("bluetooth-enabled", device.getBluetoothEnabled());
-            jsonObject.put("token", device.getToken());
+            jsonObject.put("bluetooth-enabled", device.getBluetoothEnabled(mApplicationContext));
+            jsonObject.put("token", device.getGcmToken(mApplicationContext));
             jsonObject.put("aid", device.getAdvertisingIdentifier());
+            jsonObject.put("ad-tracking", device.getAdTrackingEnabled());
             jsonObject.put("location-monitoring-enabled", device.getLocationMonitoringEnabled());
             jsonObject.put("background-enabled", device.getBackgroundEnabled());
-            jsonObject.put("carrier", device.getCarrier());
-            jsonObject.put("app-identifier", device.getAppIdentifier());
+            jsonObject.put("carrier", device.getCarrier(mApplicationContext));
+            jsonObject.put("app-identifier", device.getAppIdentifier(mApplicationContext));
 
         } else if (mObject instanceof Message) {
             Message message = (Message)mObject;

@@ -1,4 +1,4 @@
-package io.rover;
+package io.rover.model;
 
 import java.net.URL;
 import java.util.Date;
@@ -8,7 +8,7 @@ import java.util.Date;
  */
 public class Message {
 
-    enum Action {
+    public enum Action {
         None, Link
     }
 

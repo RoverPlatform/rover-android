@@ -1,37 +1,20 @@
 package io.rover;
 
 import android.app.IntentService;
-import android.app.Service;
 import android.content.Intent;
-import android.os.Build;
-import android.os.IBinder;
-import android.support.annotation.Nullable;
-import android.util.JsonReader;
-import android.util.JsonToken;
-import android.util.JsonWriter;
-import android.util.Log;
 
-import com.google.android.gms.location.Geofence;
-import com.google.android.gms.location.internal.ParcelableGeofence;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.TimeZone;
+
+import io.rover.model.Event;
+import io.rover.network.NetworkTask;
+import io.rover.network.NetworkTask.JsonPayloadProvider;
+import io.rover.network.JsonApiPayloadProvider;
+import io.rover.network.JsonApiResponseHandler;
+import io.rover.network.JsonApiResponseHandler.JsonApiObjectMapper;
+import io.rover.network.JsonApiPayloadProvider.JsonApiObjectSerializer;
+import io.rover.network.JsonApiResponseHandler.JsonApiCompletionHandler;
 
 /**
  * Created by ata_n on 2016-03-23.
@@ -48,7 +31,7 @@ public class EventService extends IntentService implements JsonApiCompletionHand
     @Override
     protected void onHandleIntent(Intent intent) {
 
-        String applicationToken = Rover.getApplicationToken();
+        //String applicationToken = Rover.getApplicationToken();
 
         final Event event = intent.getParcelableExtra("event");
 
@@ -74,7 +57,7 @@ public class EventService extends IntentService implements JsonApiCompletionHand
     }
 
     @Override
-    public void onHandleCompletion(List includedObject) {
+    public void onHandleCompletion(Object response, List includedObject) {
 
 //        // Geofences
 //

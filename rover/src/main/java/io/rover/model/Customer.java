@@ -1,4 +1,4 @@
-package io.rover;
+package io.rover.model;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -89,7 +88,7 @@ public class Customer {
 
             editor.putString("traits", jsonObject.toString());
         }
-        editor.commit();
+        editor.apply();
     }
 
     private static Customer pullSharedCustomerFromSharedPrefs(Context context) {

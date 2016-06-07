@@ -1,26 +1,34 @@
 package io.rover;
 
 import android.content.Context;
-import android.content.Intent;
-import android.telecom.Call;
 
-import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.internal.ParcelableGeofence;
 
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.rover.model.Device;
+import io.rover.model.Event;
+import io.rover.model.Message;
+import io.rover.network.JsonApiPayloadProvider;
+import io.rover.network.JsonApiResponseHandler;
+import io.rover.network.JsonApiPayloadProvider.JsonApiObjectSerializer;
+import io.rover.network.JsonApiResponseHandler.JsonApiObjectMapper;
+import io.rover.network.NetworkTask;
+import io.rover.network.NetworkTask.JsonPayloadProvider;
+
 /**
  * Created by ata_n on 2016-04-04.
  */
-public class EventSubmitTask implements Runnable, JsonApiCompletionHandler {
+public class EventSubmitTask implements Runnable, JsonApiResponseHandler.JsonApiCompletionHandler {
 
     public interface Callback {
         void onReceivedMessages(List<Message> messages);
         void onReceivedGeofences(List geofences);
-        //void onSuccess(Event event);
+        void onEventRegistered(Event event);
     }
 
     private Event mEvent;
@@ -38,31 +46,51 @@ public class EventSubmitTask implements Runnable, JsonApiCompletionHandler {
 
     @Override
     public void run() {
-        try {
-            NetworkTask networkTask = new NetworkTask("POST", new URL("https://rover-content-api-development.herokuapp.com/v1/events"));
 
-            JsonApiObjectSerializer serializer = new ObjectSerializer(mEvent, mContext);
-            JsonPayloadProvider payloadProvider = new JsonApiPayloadProvider(serializer);
+        NetworkTask networkTask = Router.getEventsNetworkTask();
 
-            networkTask.setPayloadProvider(payloadProvider);
-
-            JsonApiObjectMapper mapper = new ObjectMapper(); // TODO: could get this from Rover singleton?
-            JsonApiResponseHandler responseHandler = new JsonApiResponseHandler(mapper);
-            responseHandler.setCompletionHandler(this);
-
-            networkTask.setResponseHandler(responseHandler);
-
-            networkTask.run();
-
-        } catch (MalformedURLException e) {
-
+        if (networkTask == null) {
+            return;
         }
+
+        JsonApiObjectSerializer serializer = new ObjectSerializer(mEvent, mContext);
+        JsonPayloadProvider payloadProvider = new JsonApiPayloadProvider(serializer);
+
+        networkTask.setPayloadProvider(payloadProvider);
+
+        JsonApiObjectMapper mapper = new ObjectMapper();
+        JsonApiResponseHandler responseHandler = new JsonApiResponseHandler(mapper);
+        responseHandler.setCompletionHandler(this);
+
+        networkTask.setResponseHandler(responseHandler);
+
+        // TODO:
+//      AdvertisingIdTask advertisingIdTask = new AdvertisingIdTask(mContext);
+//       advertisingIdTask.setCallback(new AdvertisingIdTask.Callback() {
+//                @Override
+//                public void onFinished(String advertisingId, boolean isLAT) {
+//                    Device.getInstance().setAdvertisingId(advertisingId);
+//                    Device.getInstance().setAdTrackingEnabled(!isLAT);
+//
+//                    networkTask.run();
+//                }
+//            });
+//            advertisingIdTask.onPostExecute(advertisingIdTask.doInBackground());
+
+
+        networkTask.run();
+
+
     }
 
     @Override
     public void onHandleCompletion(Object response, List includedObject) {
         if (mCallback == null) {
             return;
+        }
+
+        if (response instanceof Event) {
+            mCallback.onEventRegistered((Event)response);
         }
 
         ArrayList<ParcelableGeofence> geofences = new ArrayList<ParcelableGeofence>();

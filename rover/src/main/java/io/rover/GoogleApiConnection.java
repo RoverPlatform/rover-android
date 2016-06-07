@@ -13,8 +13,8 @@ import com.google.android.gms.nearby.Nearby;
  */
 public class GoogleApiConnection implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
-    static int KEEP_ALIVE = 1;
-    static int DISCONNECT = 0;
+    public static int KEEP_ALIVE = 1;
+    public static int DISCONNECT = 0;
 
     public interface Callbacks {
         int onConnected(GoogleApiClient client);

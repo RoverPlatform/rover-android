@@ -1,6 +1,5 @@
-package io.rover;
+package io.rover.network;
 
-import android.os.AsyncTask;
 import android.util.JsonReader;
 import android.util.JsonWriter;
 import android.util.Log;
@@ -9,21 +8,36 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import io.rover.Rover;
 
 /**
  * Created by ata_n on 2016-03-23.
  */
 public class NetworkTask implements Runnable {
 
+    public interface JsonPayloadProvider {
+        void onProvidePayload(JsonWriter writer) throws IOException;
+        void onPrepareConnection(HttpURLConnection connection);
+    }
+
+    public interface JsonResponseHandler {
+        void onHandleResponse(JsonReader reader) throws IOException;
+    }
+
+    public interface NetworkTaskConnectionManager {
+        void onPrepareConnection(HttpURLConnection connection);
+    }
+
     private URL mURL;
     private String mMethod;
 
     private JsonPayloadProvider mPayloadProvider;
     private JsonResponseHandler mResponseHandler;
+    private NetworkTaskConnectionManager mConnectionManager;
 
     public NetworkTask(String method, URL url) {
         mMethod = method;
@@ -38,6 +52,10 @@ public class NetworkTask implements Runnable {
         mResponseHandler = completionHandler;
     }
 
+    public void setConnectionManager(NetworkTaskConnectionManager manager) {
+        mConnectionManager = manager;
+    }
+
     @Override
     public void run() {
 
@@ -48,14 +66,18 @@ public class NetworkTask implements Runnable {
         try {
             connection = (HttpURLConnection)mURL.openConnection();
             connection.setRequestMethod(mMethod);
-            connection.setRequestProperty("Accept", "application/vn.api+json");
             connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("X-Rover-Api-Key", Rover.getApplicationToken());
-            connection.setRequestProperty("X-Rover-Device-Id", "DEVICE_ID");
+
+            if (mConnectionManager != null) {
+                mConnectionManager.onPrepareConnection(connection);
+            }
 
             connection.setDoInput(true);
 
             if (mPayloadProvider != null) {
+
+                mPayloadProvider.onPrepareConnection(connection);
+
                 connection.setDoOutput(true);
 
                 JsonWriter writer = new JsonWriter(new OutputStreamWriter(connection.getOutputStream()));
@@ -80,7 +102,10 @@ public class NetworkTask implements Runnable {
             }
 
         } catch (IOException e) {
-            is = connection.getErrorStream();
+
+            if (connection != null) {
+                is = connection.getErrorStream();
+            }
 
             String error = getStringFromInputStream(is);
             Log.e("NetworkTask", error);
@@ -127,12 +152,4 @@ public class NetworkTask implements Runnable {
 
     }
 
-}
-
-interface JsonPayloadProvider {
-    void onProvidePayload(JsonWriter writer) throws IOException;
-}
-
-interface JsonResponseHandler {
-    void onHandleResponse(JsonReader reader) throws IOException;
 }

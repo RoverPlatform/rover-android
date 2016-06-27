@@ -11,7 +11,7 @@ public class GeofenceTransitionEvent extends Event {
 
     private int mTransition;
     private String mGeofenceId;
-    private Location mLocation;
+    private Place mPlace;
 
     public GeofenceTransitionEvent(String geofenceId, int transition, Date date) {
         mDate = date;
@@ -27,11 +27,11 @@ public class GeofenceTransitionEvent extends Event {
         return mGeofenceId;
     }
 
-    public Location getLocation() {
-        return mLocation;
+    public Place getPlace() {
+        return mPlace;
     }
 
-    public void setLocation(Location location) {
-        mLocation = location;
+    public void setPlace(Place place) {
+        mPlace = place;
     }
 }

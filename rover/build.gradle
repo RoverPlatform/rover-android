@@ -1,5 +1,29 @@
 apply plugin: 'com.android.library'
 
+ext {
+    bintrayRepo = 'maven'
+    bintrayName = 'rover'
+
+    publishedGroupId = 'io.rover.library'
+    libraryName = 'Rover'
+    artifact = 'rover'
+
+    libraryDescription = 'The Rover Proximity and Messaging Library'
+
+    siteUrl = 'https://github.com/RoverPlatform/rover-android'
+    gitUrl = 'https://github.com/RoverPlatform/rover-android.git'
+
+    libraryVersion = '0.1.0'
+
+    developerId = 'ata-n'
+    developerName = 'Ata N'
+    developerEmail = 'ata@rover.io'
+
+    licenseName = 'MIT License'
+    licenseUrl = 'https://opensource.org/licenses/MIT'
+    allLicenses = ["MIT"]
+}
+
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
@@ -24,5 +48,8 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'com.google.android.gms:play-services-location:9.0.2'
     compile 'com.google.android.gms:play-services-nearby:9.0.2'
-    compile 'com.google.android.gms:play-services-gcm:9.0.2'
+    compile 'com.google.firebase:firebase-messaging:9.0.2'
 }
+
+apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
+apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'

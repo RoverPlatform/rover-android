@@ -76,6 +76,8 @@ public class JsonApiResponseHandler implements NetworkTask.JsonResponseHandler {
                 }
                 reader.endArray();
 
+            } else {
+                reader.skipValue();
             }
         }
         reader.endObject();

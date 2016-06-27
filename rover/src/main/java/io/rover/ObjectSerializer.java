@@ -144,6 +144,7 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
             jsonObject.put("carrier", device.getCarrier(mApplicationContext));
             jsonObject.put("app-identifier", device.getAppIdentifier(mApplicationContext));
 
+
         } else if (mObject instanceof Message) {
             Message message = (Message)mObject;
 

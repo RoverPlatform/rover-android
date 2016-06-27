@@ -1,5 +1,8 @@
 package io.rover.model;
 
+import android.renderscript.ScriptC;
+
+import java.net.URI;
 import java.net.URL;
 import java.util.Date;
 
@@ -9,7 +12,7 @@ import java.util.Date;
 public class Message {
 
     public enum Action {
-        None, Link
+        None, Website, DeepLink, LandingPage
     }
 
     private String mId;
@@ -18,7 +21,8 @@ public class Message {
     private Date mTimestamp;
     private boolean mRead;
     private Action mAction;
-    private URL mURL;
+    private URI mURI;
+    private Screen mLandingPage;
 
     public String getId() { return mId; }
 
@@ -28,10 +32,10 @@ public class Message {
         mAction = action;
     }
 
-    public URL getURL() { return mURL; }
+    public URI getURI() { return mURI; }
 
-    public void setURL(URL url) {
-        mURL = url;
+    public void setURI(URI uri) {
+        mURI = uri;
     }
 
     public boolean isRead() { return mRead; }
@@ -39,6 +43,10 @@ public class Message {
     public void setRead(boolean read) {
         mRead = read;
     }
+
+    public void setLandingPage(Screen screen) { mLandingPage = screen; }
+
+    public Screen getLandingPage() { return mLandingPage; }
 
     public Message(String title, String text, Date timestamp, String id) {
         mId = id;

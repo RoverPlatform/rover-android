@@ -1,6 +1,7 @@
 package io.rover;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.google.android.gms.location.internal.ParcelableGeofence;
 
@@ -26,7 +27,6 @@ import io.rover.network.NetworkTask.JsonPayloadProvider;
 public class EventSubmitTask implements Runnable, JsonApiResponseHandler.JsonApiCompletionHandler {
 
     public interface Callback {
-        void onReceivedMessages(List<Message> messages);
         void onReceivedGeofences(List geofences);
         void onEventRegistered(Event event);
     }
@@ -46,6 +46,8 @@ public class EventSubmitTask implements Runnable, JsonApiResponseHandler.JsonApi
 
     @Override
     public void run() {
+
+        Log.d("EventSubmitTask", "Submitting: " + mEvent.getClass());
 
         NetworkTask networkTask = Router.getEventsNetworkTask();
 
@@ -94,13 +96,10 @@ public class EventSubmitTask implements Runnable, JsonApiResponseHandler.JsonApi
         }
 
         ArrayList<ParcelableGeofence> geofences = new ArrayList<ParcelableGeofence>();
-        ArrayList<Message> messages = new ArrayList<Message>();
 
         for (Object object : includedObject) {
             if (object instanceof ParcelableGeofence) {
                 geofences.add((ParcelableGeofence)object);
-            } else if (object instanceof Message) {
-                messages.add((Message)object);
             }
         }
 
@@ -108,8 +107,6 @@ public class EventSubmitTask implements Runnable, JsonApiResponseHandler.JsonApi
             mCallback.onReceivedGeofences(geofences);
         }
 
-        if (messages.size() > 0) {
-            mCallback.onReceivedMessages(messages);
-        }
+
     }
 }

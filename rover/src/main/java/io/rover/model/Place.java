@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Created by ata_n on 2016-04-20.
  */
-public class Location {
+public class Place {
 
     private double mLatitude;
     private double mLongitude;
@@ -13,7 +13,7 @@ public class Location {
     private String mName;
     private List<String> mTags;
 
-    public Location(double lat, double lng, double radius, String name, List<String> tags) {
+    public Place(double lat, double lng, double radius, String name, List<String> tags) {
         mLatitude = lat;
         mLongitude = lng;
         mRadius = radius;

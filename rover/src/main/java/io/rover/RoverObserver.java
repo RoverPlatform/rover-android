@@ -5,8 +5,8 @@ import com.google.android.gms.location.Geofence;
 import java.util.List;
 
 import io.rover.model.BeaconConfiguration;
-import io.rover.model.Location;
 import io.rover.model.Message;
+import io.rover.model.Place;
 
 /**
  * Created by ata_n on 2016-04-07.
@@ -18,8 +18,8 @@ public interface RoverObserver {
     }
 
     interface GeofenceTransitionObserver extends RoverObserver {
-        void onEnterGeofence(Location location);
-        void onExitGeofence(Location location);
+        void onEnterGeofence(Place place);
+        void onExitGeofence(Place place);
     }
 
     interface BeaconTransitionObserver extends RoverObserver {
@@ -28,7 +28,6 @@ public interface RoverObserver {
     }
 
     interface MessageDeliveryObserver extends RoverObserver {
-        boolean shouldDeliverMessage(Message message);
-        void onDeliveredMessage(Message message);
+        void onMessageReceived(Message message);
     }
 }

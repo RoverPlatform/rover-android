@@ -64,6 +64,9 @@ public class NetworkTask implements Runnable {
         HttpURLConnection connection = null;
 
         try {
+
+            Log.i("NetworkTask", "Connection to: " + mURL.toString());
+
             connection = (HttpURLConnection)mURL.openConnection();
             connection.setRequestMethod(mMethod);
             connection.setRequestProperty("Content-Type", "application/json");

@@ -1,14 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="io.rover">
 
     <!-- Permissions -->
 
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <!--uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/-->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/ -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
 
-    <permission android:name="${applicationId}.permission.C2D_MESSAGE" android:protectionLevel="signature" />
-    <uses-permission android:name="${applicationId}.permission.C2D_MESSAGE" />
+    <!--<permission-->
+        <!--android:name="${applicationId}.permission.C2D_MESSAGE"-->
+        <!--android:protectionLevel="signature" />-->
+
+    <!--<uses-permission android:name="${applicationId}.permission.C2D_MESSAGE" />-->
 
     <application
         android:allowBackup="true"
@@ -17,36 +21,60 @@
 
         <!-- Services -->
 
-        <service android:name=".Rover$NearbyMessageService" android:exported="false"/>
+        <service
+            android:name=".Rover$NearbyMessageService"
+            android:exported="false" />
+        <service
+            android:name=".Rover$LocationUpdateService"
+            android:exported="false" />
 
-        <service android:name=".Rover$LocationUpdateService" android:exported="false"/>
-
-        <service android:name=".Rover$GcmRegistrationService" android:exported="false"/>
-
-        <service android:name=".Rover$RoverInstanceIDListenerService" android:exported="false">
+        <service
+            android:name=".Rover$RoverFirebaseInstanceIdService">
             <intent-filter>
-                <action android:name="com.google.android.gms.iid.InstanceID"/>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
             </intent-filter>
         </service>
 
-        <service android:name=".Rover$RoverGcmListenerService" android:exported="false">
+        <service
+            android:name=".Rover$RoverFirebaseMessagingService">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
+
+        <!--service
+            android:name=".Rover$GcmRegistrationService"
+            android:exported="false" />
+        <service
+            android:name=".Rover$RoverInstanceIDListenerService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.android.gms.iid.InstanceID" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".Rover$RoverGcmListenerService"
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
             </intent-filter>
-        </service>
+        </service-->
 
         <!-- Receivers -->
 
-        <receiver
+        <!--receiver
             android:name="com.google.android.gms.gcm.GcmReceiver"
             android:exported="true"
-            android:permission="com.google.android.c2dm.permission.SEND" >
+            android:permission="com.google.android.c2dm.permission.SEND">
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+
                 <category android:name="${applicationId}" />
             </intent-filter>
-        </receiver>
+        </receiver-->
 
+        <activity android:name=".ui.ScreenActivity">
+        </activity>
     </application>
 
 </manifest>

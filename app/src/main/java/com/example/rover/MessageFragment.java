@@ -109,7 +109,7 @@ public class MessageFragment extends Fragment implements SwipeRefreshLayout.OnRe
                 mSwipeLayout.setRefreshing(false);
             }
 
-            public void onFailure(/*TODO: PASS ERROR*/) {
+            public void onFailure() {
                 mSwipeLayout.setRefreshing(false);
             }
         });

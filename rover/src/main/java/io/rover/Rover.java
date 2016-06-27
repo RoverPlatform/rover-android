@@ -1,25 +1,31 @@
 package io.rover;
 
 import android.Manifest;
-import android.app.Activity;
+import android.app.Application;
 import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Bundle;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+/*
 import com.google.android.gms.gcm.GcmListenerService;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
 import com.google.android.gms.iid.InstanceIDListenerService;
+*/
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
 import com.google.android.gms.location.GeofencingRequest;
@@ -32,14 +38,18 @@ import com.google.android.gms.nearby.messages.MessageListener;
 import com.google.android.gms.nearby.messages.Strategy;
 import com.google.android.gms.nearby.messages.SubscribeCallback;
 import com.google.android.gms.nearby.messages.SubscribeOptions;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.FirebaseInstanceIdService;
+import com.google.firebase.messaging.FirebaseMessagingService;
+import com.google.firebase.messaging.RemoteMessage;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -49,13 +59,20 @@ import io.rover.model.Device;
 import io.rover.model.DeviceUpdateEvent;
 import io.rover.model.Event;
 import io.rover.model.GeofenceTransitionEvent;
-import io.rover.model.Location;
 import io.rover.model.LocationUpdateEvent;
+import io.rover.model.Place;
 
 /**
  * Created by ata_n on 2016-03-21.
  */
 public class Rover implements EventSubmitTask.Callback {
+
+    public interface NotificationProvider {
+        PendingIntent getNotificationPendingIntent(io.rover.model.Message message);
+        int getSmallIconForNotification(io.rover.model.Message message);
+        Bitmap getLargeIconForNotification(io.rover.model.Message message);
+        Uri getSoundForNotification(io.rover.model.Message message);
+    }
 
     protected static Rover mSharedInstance = new Rover();
 
@@ -67,17 +84,25 @@ public class Rover implements EventSubmitTask.Callback {
     private ExecutorService mEventExecutorService = Executors.newSingleThreadExecutor();
     private ArrayList<RoverObserver> mObservers = new ArrayList<>();
     private String mProjectNumber;
+    private NotificationProvider mNotificationProvider;
 
     private Rover() {}
 
-    public static void setup(Context context, RoverConfig config) {
-        mSharedInstance.mApplicationContext = context;
+    public static void setup(Application application, RoverConfig config) {
+        mSharedInstance.mApplicationContext = application.getApplicationContext();
         mSharedInstance.mProjectNumber = config.mProjectNum;
         Router.setApiKey(config.mAppToken);
-        Router.setDeviceId(Device.getInstance().getIdentifier(context));
+        Router.setDeviceId(Device.getInstance().getIdentifier(mSharedInstance.mApplicationContext));
+
+
     }
 
     public static void startMonitoring() {
+
+        if (!GoogleApiConnection.checkPlayServices(mSharedInstance.mApplicationContext)) {
+            Log.e("Rover", "Failed to start monitoring");
+            return;
+        }
 
         final LocationRequest locationRequest = new LocationRequest()
                 .setInterval(60000)
@@ -87,14 +112,34 @@ public class Rover implements EventSubmitTask.Callback {
 
         GoogleApiConnection connection = new GoogleApiConnection(mSharedInstance.mApplicationContext);
         connection.setCallbacks(new GoogleApiConnection.Callbacks() {
+            private int mDisconnectionTry = 2;
+
             @Override
             public int onConnected(final GoogleApiClient client) {
+                final GoogleApiConnection.Callbacks clientCallbacks = this;
+
                 // Location Updates
                 if (ContextCompat.checkSelfPermission(mSharedInstance.mApplicationContext, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                    LocationServices.FusedLocationApi.requestLocationUpdates(client, locationRequest, mSharedInstance.getLocationPendingIntent());
+                    Log.i("LocationServices", "Requesting location updates");
+                    LocationServices.FusedLocationApi.requestLocationUpdates(client, locationRequest, mSharedInstance.getLocationPendingIntent())
+                            .setResultCallback(new ResultCallback<Status>() {
+                                @Override
+                                public void onResult(@NonNull Status status) {
+                                    if (status.isSuccess()) {
+                                        Log.i("LocationServices", "Successfully registered for updates");
+                                    } else {
+                                        Log.e("LocationServices", "Could not register for updates. " + status.getStatusMessage());
+                                    }
+
+                                    mDisconnectionTry--;
+                                    if (mDisconnectionTry == 0) {
+                                        client.disconnect();
+                                    }
+                                }
+                            });
                 }
 
-                // Nearyby Messages
+                // Nearby Messages
                 Nearby.Messages.subscribe(client, mSharedInstance.getNearbyMessagesPendingIntent(), mSharedInstance.getNearbySubscriptionOptions())
                         .setResultCallback(new ResultCallback<Status>() {
                             @Override
@@ -102,11 +147,14 @@ public class Rover implements EventSubmitTask.Callback {
                                 if (status.isSuccess()) {
                                     Log.i("Nearby", "Subscribed successfully.");
                                 } else {
-                                    Log.i("Nearby", "Could not subscribe." + status.getStatusMessage());
+                                    Log.e("Nearby", "Could not subscribe. " + status.getStatusMessage());
                                     //handleUnsuccessfulNearbyResult(status);
                                 }
 
-                                client.disconnect();
+                                mDisconnectionTry--;
+                                if (mDisconnectionTry == 0) {
+                                    client.disconnect();
+                                }
                             }
                         });
 
@@ -153,14 +201,6 @@ public class Rover implements EventSubmitTask.Callback {
         mSharedInstance.mObservers.remove(observer);
     }
 
-    public static void activityStarted(Activity activity) {
-
-    }
-
-    public static void activityStopped(Activity activity) {
-
-    }
-
     public interface OnInboxReloadListener {
         void onSuccess(List<io.rover.model.Message> messages);
         void onFailure();
@@ -177,6 +217,10 @@ public class Rover implements EventSubmitTask.Callback {
             }
         });
         task.execute();
+    }
+
+    public static void setNotificationProvider(NotificationProvider provider) {
+        mSharedInstance.mNotificationProvider = provider;
     }
 
     private PendingIntent getLocationPendingIntent() {
@@ -225,36 +269,6 @@ public class Rover implements EventSubmitTask.Callback {
                 .build();
     }
 
-    private void deliverMessage(io.rover.model.Message message) {
-        // TODO: call observer
-
-        for (RoverObserver observer : mObservers) {
-            if (observer instanceof RoverObserver.MessageDeliveryObserver) {
-                ((RoverObserver.MessageDeliveryObserver) observer).shouldDeliverMessage(message);
-            }
-        }
-        
-        // TODO: need to add the message ID to the intent
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(mApplicationContext)
-                .setSmallIcon(R.drawable.rover_notification_icon)
-                .setContentTitle(message.getTitle())
-                .setContentText(message.getText())
-                .setContentIntent(getAppLaunchPendingIntent());
-
-        NotificationManager manager = (NotificationManager) mApplicationContext.getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.notify(message.getId(), 12345 /* Rover notification id */, builder.build());
-
-        // TODO: call observer
-
-        for (RoverObserver observer : mObservers) {
-            if (observer instanceof RoverObserver.MessageDeliveryObserver) {
-                ((RoverObserver.MessageDeliveryObserver) observer).onDeliveredMessage(message);
-            }
-        }
-
-    }
-
     protected void sendEvent(Event event) {
         EventSubmitTask eventTask = new EventSubmitTask(mApplicationContext, event);
         eventTask.setCallback(this);
@@ -266,16 +280,16 @@ public class Rover implements EventSubmitTask.Callback {
     public void onEventRegistered(Event event) {
         if (event instanceof GeofenceTransitionEvent) {
             GeofenceTransitionEvent gtEvent = (GeofenceTransitionEvent)event;
-            Location location = gtEvent.getLocation();
+            Place place = gtEvent.getPlace();
 
             for (RoverObserver observer : mObservers) {
                 if (observer instanceof RoverObserver.GeofenceTransitionObserver) {
                     switch (gtEvent.getGeofenceTransition()) {
                         case Geofence.GEOFENCE_TRANSITION_ENTER:
-                            ((RoverObserver.GeofenceTransitionObserver) observer).onEnterGeofence(location);
+                            ((RoverObserver.GeofenceTransitionObserver) observer).onEnterGeofence(place);
                             break;
                         case Geofence.GEOFENCE_TRANSITION_EXIT:
-                            ((RoverObserver.GeofenceTransitionObserver) observer).onExitGeofence(location);
+                            ((RoverObserver.GeofenceTransitionObserver) observer).onExitGeofence(place);
                             break;
                     }
                 }
@@ -331,7 +345,7 @@ public class Rover implements EventSubmitTask.Callback {
                     LocationServices.GeofencingApi.addGeofences(client, request, getGeofencePendingIntent())
                             .setResultCallback(new ResultCallback<Status>() {
                                 @Override
-                                public void onResult(Status status) {
+                                public void onResult(@NonNull Status status) {
                                     if (status.isSuccess()) {
                                         // TODO: Clean up
 
@@ -352,13 +366,6 @@ public class Rover implements EventSubmitTask.Callback {
         connection.connect();
     }
 
-    @Override
-    public void onReceivedMessages(List<io.rover.model.Message> messages) {
-        for (io.rover.model.Message message : messages) {
-            deliverMessage(message);
-        }
-    }
-
     static public void simulateGeofenceEnter(String id) {
         Event event = new GeofenceTransitionEvent(id, Geofence.GEOFENCE_TRANSITION_ENTER, new Date());
         mSharedInstance.sendEvent(event);
@@ -370,9 +377,13 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     static public void registerForNotifications() {
-        Intent intent = new Intent(mSharedInstance.mApplicationContext, GcmRegistrationService.class);
-        mSharedInstance.mApplicationContext.startService(intent);
+    //    Intent intent = new Intent(mSharedInstance.mApplicationContext, GcmRegistrationService.class);
+    //    mSharedInstance.mApplicationContext.startService(intent);
     }
+
+    /**
+     * Services
+     */
 
     static public class LocationUpdateService extends IntentService {
 
@@ -397,9 +408,7 @@ public class Rover implements EventSubmitTask.Callback {
             GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
 
             if (geofencingEvent.hasError()) {
-               //String errorMessage = GeofenceErrorMessage.getErrorString(this,
-                //        geofencingEvent.getErrorCode());
-                Log.e("GeofenceService", "SOME ERROR");
+                Log.e("GeofenceService", "GeofencingEventError: " + geofencingEvent.getErrorCode());
                 return;
             }
 
@@ -444,9 +453,7 @@ public class Rover implements EventSubmitTask.Callback {
 
                     String messageString = new String(message.getContent());
 
-                    Log.i("NearbyMessage", "Message string: " + messageString);
-                    Log.i("NearbyMessage", "Message namespaced type: " + message.getNamespace() +
-                            "/" + message.getType());
+                    Log.i("NearbyMessage", "Message namespaced type: " + message.getNamespace() + "/" + message.getType());
                     Event event = new BeaconTransitionEvent(transition, messageString, new Date());
                     mSharedInstance.sendEvent(event);
                 }
@@ -454,60 +461,102 @@ public class Rover implements EventSubmitTask.Callback {
         }
     }
 
-    static public class GcmRegistrationService extends IntentService {
-
-        public GcmRegistrationService() { super("GcmRegistrationService"); }
-
-        @Override
-        protected void onHandleIntent(Intent intent) {
-            try {
-                InstanceID instanceID = InstanceID.getInstance(this);
-                String token = instanceID.getToken(mSharedInstance.mProjectNumber, GoogleCloudMessaging.INSTANCE_ID_SCOPE);
-
-                Device.setGcmToken(token, mSharedInstance.mApplicationContext);
-
-                Event event = new DeviceUpdateEvent(new Date());
-                mSharedInstance.sendEvent(event);
-            } catch (Exception e) {
-                Log.e("GcmRegistrationService", "Failed to get token.");
-                e.printStackTrace();
-            }
-        }
-    }
-
-    static public class RoverInstanceIDListenerService extends InstanceIDListenerService {
+    static public class RoverFirebaseInstanceIdService extends FirebaseInstanceIdService {
         @Override
         public void onTokenRefresh() {
-            Intent intent = new Intent(this, GcmRegistrationService.class);
-            startService(intent);
+            String token = FirebaseInstanceId.getInstance().getToken();
+            Device.setGcmToken(token, mSharedInstance.mApplicationContext);
+
+            Log.i("TOKEN", token);
+
+            Event event = new DeviceUpdateEvent(new Date());
+            mSharedInstance.sendEvent(event);
         }
     }
 
-    static public class RoverGcmListenerService extends GcmListenerService {
+    static public class RoverFirebaseMessagingService extends FirebaseMessagingService {
         @Override
-        public void onMessageReceived(String from, Bundle data) {
-
-            String attributesString = data.getString("attributes");
-            String typeString = data.getString("type");
-            String idString = data.getString("id");
-
-            if (attributesString == null || typeString == null || idString == null || !typeString.equals("messages")) {
-                Log.e("RoverGcmListener", "Bad data bundle for Gcm message");
-                return;
-            }
-
-            JSONObject attributes = null;
-
+        public void onMessageReceived(RemoteMessage remoteMessage) {
+            Map<String,String> data = remoteMessage.getData();
+            if (data == null) { return; }
+            String jsonString = data.get("message");
+            if (jsonString == null) { return; }
             try {
-                attributes = new JSONObject(data.getString("attributes"));
+                JSONObject messageJson = new JSONObject(jsonString);
+                if (!messageJson.isNull("id") && !messageJson.isNull("attributes")) {
+                    String id = messageJson.getString("id");
+                    JSONObject attributes = messageJson.getJSONObject("attributes");
+
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    io.rover.model.Message message = (io.rover.model.Message) objectMapper.getObject("messages", id, attributes);
+                    if (message != null) {
+                        // Rover message observer
+                        for (RoverObserver observer : mSharedInstance.mObservers) {
+                            if (observer instanceof RoverObserver.MessageDeliveryObserver) {
+                                ((RoverObserver.MessageDeliveryObserver) observer).onMessageReceived(message);
+                            }
+                        }
+
+                        sendNotification(message);
+                    }
+                }
+
             } catch (JSONException e) {
-                Log.e("RoverGcmListener","Bad JSON for message attributes");
+                Log.e("RoverFBMessagingService", "Bad JSON in message payload.");
+            }
+        }
+
+        private void sendNotification(io.rover.model.Message message) {
+            PendingIntent pendingIntent = null;
+            int smallIcon = 0;
+            Bitmap largeIcon = null;
+            Uri sound = null;
+            if (mSharedInstance.mNotificationProvider != null) {
+                pendingIntent = mSharedInstance.mNotificationProvider.getNotificationPendingIntent(message);
+                smallIcon = mSharedInstance.mNotificationProvider.getSmallIconForNotification(message);
+                largeIcon = mSharedInstance.mNotificationProvider.getLargeIconForNotification(message);
+                sound = mSharedInstance.mNotificationProvider.getSoundForNotification(message);
             }
 
-            ObjectMapper mapper = new ObjectMapper();
-            io.rover.model.Message message = (io.rover.model.Message)mapper.getObject(typeString, idString, attributes);
 
-            mSharedInstance.deliverMessage(message);
+            if (pendingIntent == null) {
+                switch (message.getAction()) {
+                    case Website: {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
+                        TaskStackBuilder stackBuilder = TaskStackBuilder.create(getApplicationContext());
+                        stackBuilder.addNextIntent(intent);
+
+                        Intent inten = new Intent(getApplicationContext(), NearbyMessageService.class);
+                        stackBuilder.addNextIntent(inten);
+                        pendingIntent =  stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+                        break;
+                    }
+                    case LandingPage: {
+                        pendingIntent = mSharedInstance.getAppLaunchPendingIntent();
+                        break;
+                    }
+                    case DeepLink: {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
+                        pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+                        break;
+                    }
+                    default: {
+                        pendingIntent = mSharedInstance.getAppLaunchPendingIntent();
+                    }
+                }
+            }
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext())
+                    .setAutoCancel(true)
+                    .setSmallIcon(R.drawable.rover_notification_icon)
+                    .setLargeIcon(largeIcon)
+                    .setSound(sound)
+                    .setContentTitle(message.getTitle())
+                    .setContentText(message.getText())
+                    .setContentIntent(pendingIntent);
+
+            NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            manager.notify(message.getId(), 12345 /* Rover notification id */, builder.build());
         }
     }
 }

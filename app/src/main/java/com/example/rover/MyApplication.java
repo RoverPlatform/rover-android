@@ -15,10 +15,10 @@ public class MyApplication extends Application {
         super.onCreate();
 
         RoverConfig config = new RoverConfig.Builder()
-                .setApplicationToken("c554c131e1c2959a22c8147eceeb0e7d")
+                .setApplicationToken("b43963962ea03fc2f4b456a5cbe49b40")
                 .setProjectNumber("951983123918")
                 .build();
 
-        Rover.setup(this.getApplicationContext(), config);
+        Rover.setup(this, config);
     }
 }

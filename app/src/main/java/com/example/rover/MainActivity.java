@@ -2,6 +2,7 @@ package com.example.rover;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
@@ -30,6 +31,7 @@ import com.google.android.gms.location.LocationServices;
 import io.rover.GoogleApiConnection;
 import io.rover.model.Message;
 import io.rover.Rover;
+import io.rover.ui.ScreenActivity;
 
 public class MainActivity extends AppCompatActivity implements MessageFragment.OnListFragmentInteractionListener, RegionFragment.OnRegionFragmentInteractionListener {
 
@@ -76,18 +78,6 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
 //        });
 
         Rover.registerForNotifications();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Rover.activityStarted(this);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Rover.activityStopped(this);
     }
 
     public void onUpdateLocationClicked(View view) {
@@ -185,7 +175,8 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
 
     @Override
     public void onListFragmentInteraction(Message item) {
-
+        Intent intent = new Intent(getApplicationContext(), ScreenActivity.class);
+        startActivity(intent);
     }
 
 

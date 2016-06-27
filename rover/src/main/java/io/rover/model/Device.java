@@ -1,9 +1,11 @@
 package io.rover.model;
 
+import android.app.NotificationManager;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.support.v4.app.NotificationManagerCompat;
 import android.telephony.TelephonyManager;
 
 import java.util.Locale;
@@ -130,4 +132,6 @@ public class Device {
     public String getLocaleLanguage() {
         return Locale.getDefault().getLanguage();
     }
+
+    // TODO: add getNotificationsEnabled()
 }

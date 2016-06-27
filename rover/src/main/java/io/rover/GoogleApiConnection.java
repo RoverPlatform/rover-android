@@ -2,8 +2,10 @@ package io.rover;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.nearby.Nearby;
@@ -47,6 +49,21 @@ public class GoogleApiConnection implements GoogleApiClient.ConnectionCallbacks,
         mGoogleApiClient.connect();
     }
 
+    public static boolean checkPlayServices(Context context) {
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        int resultCode = apiAvailability.isGooglePlayServicesAvailable(context);
+        if (resultCode != ConnectionResult.SUCCESS) {
+            if (apiAvailability.isUserResolvableError(resultCode)) {
+                // TODO: pass back to developer
+                Log.e("GoogleApiConnection", "GooglePlayServices not installed or out of date");
+            } else {
+                Log.e("GoogleApiConnection", "This device is not supported.");
+            }
+            return false;
+        }
+        return true;
+    }
+
     @Override
     public void onConnected(Bundle bundle) {
         if (mCallbacks != null) {
@@ -60,11 +77,11 @@ public class GoogleApiConnection implements GoogleApiClient.ConnectionCallbacks,
 
     @Override
     public void onConnectionSuspended(int i) {
-
+        Log.d("GoogleApiConnection", "Connection suspended: " + i);
     }
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
-
+        Log.e("GoogleApiConnection", "Connection failed: " + connectionResult.getErrorMessage());
     }
 }

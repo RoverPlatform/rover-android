@@ -1,34 +1,37 @@
 package io.rover.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 /**
  * Created by ata_n on 2016-06-16.
  */
-public abstract class Block {
-    /*
-        // Layout
+public abstract class Block implements Parcelable {
 
-
-    // Appearance
-
-    var backgroundColor = UIColor.clearColor()
-    var borderColor = UIColor.clearColor()
-    var borderRadius: CGFloat = 0
-    var borderWidth: CGFloat = 0
+    /** Appearance
      */
 
-    // Layout
+    private int mBackgroundColor;
+    private int mBorderColor;
+    private double mBorderRadius;
+    private double mBorderWidth;
+
+    /** Layout
+     */
 
     public enum Position {
         Stacked, Floating
     }
 
     private Position mPosition;
-
     private Unit mHeight;
     private Unit mWidth;
-
     private Alignment mAlignment;
     private Offset mOffset;
+
+    public Block() {
+
+    }
 
     public Position getPosition() { return mPosition; }
 
@@ -50,5 +53,54 @@ public abstract class Block {
 
     public void setOffset(Offset offset) { mOffset = offset; }
 
+    public int getBackgroundColor() { return mBackgroundColor; }
+
+    public void setBackgroundColor(int color) { mBackgroundColor = color; }
+
+    public int getBorderColor() { return mBorderColor; }
+
+    public void setBorderColor(int color) { mBorderColor = color; }
+
+    public double getBorderRadius() { return mBorderRadius; }
+
+    public void setBorderRadius(double radius) { mBorderRadius = radius; }
+
+    public double getBorderWidth() { return mBorderWidth; }
+
+    public void setBorderWidth(double width) { mBorderWidth = width; }
+
     // TODO: Appearance
+
+    /** Parcelable
+     */
+
+    protected Block(Parcel in) {
+        mPosition = (Position) in.readSerializable();
+        mHeight = (Unit) in.readValue(Unit.class.getClassLoader());
+        mWidth = (Unit) in.readValue(Unit.class.getClassLoader());
+        mAlignment = (Alignment) in.readValue(Alignment.class.getClassLoader());
+        mOffset = (Offset) in.readValue(Offset.class.getClassLoader());
+        mBackgroundColor = in.readInt();
+        mBorderColor = in.readInt();
+        mBorderRadius = in.readDouble();
+        mBorderWidth = in.readDouble();
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeSerializable(mPosition);
+        dest.writeValue(mHeight);
+        dest.writeValue(mWidth);
+        dest.writeValue(mAlignment);
+        dest.writeValue(mOffset);
+        dest.writeInt(mBackgroundColor);
+        dest.writeInt(mBorderColor);
+        dest.writeDouble(mBorderRadius);
+        dest.writeDouble(mBorderWidth);
+    }
 }

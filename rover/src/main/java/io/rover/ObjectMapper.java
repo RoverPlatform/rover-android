@@ -1,5 +1,6 @@
 package io.rover;
 
+import android.graphics.Color;
 import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
@@ -21,6 +22,8 @@ import java.util.Locale;
 import io.rover.model.Alignment;
 import io.rover.model.Block;
 import io.rover.model.GeofenceTransitionEvent;
+import io.rover.model.Image;
+import io.rover.model.ImageBlock;
 import io.rover.model.Message;
 import io.rover.model.Offset;
 import io.rover.model.PercentageUnit;
@@ -203,7 +206,31 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 return PointsUnit.ZeroUnit;
             }
             case "blocks": {
-                Block block = new TextBlock();
+                Block block = null;
+
+                String blockType = attributes.getString("type");
+
+                switch (blockType) {
+                    case "image-block": {
+                        block = new ImageBlock();
+                        ((ImageBlock)block).setImage((Image) parseObject("images", null, attributes.getJSONObject("image")));
+                        break;
+                    }
+                    case "text-block": {
+                        block = new TextBlock();
+                        break;
+                    }
+                    default:
+                        return null;
+                }
+
+                // Appearance
+                block.setBackgroundColor(getColorFromJSON(attributes.getJSONObject("background-color")));
+                block.setBorderColor(getColorFromJSON(attributes.getJSONObject("border-color")));
+                block.setBorderRadius(attributes.getDouble("border-radius"));
+                block.setBorderWidth(attributes.getDouble("border-width"));
+
+                // Layout
                 if (!attributes.isNull("width")) {
                     block.setWidth((Unit) parseObject("units", null, attributes.getJSONObject("width")));
                 }
@@ -231,12 +258,16 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                     switch (vertical) {
                         case "middle":
                             verticalAlignment = Alignment.Vertical.Middle;
+                            break;
                         case "bottom":
                             verticalAlignment = Alignment.Vertical.Bottom;
+                            break;
                         case "fill":
                             verticalAlignment = Alignment.Vertical.Fill;
+                            break;
                         default:
                             verticalAlignment = Alignment.Vertical.Top;
+                            break;
                     }
                 } else {
                     verticalAlignment = Alignment.Vertical.Top;
@@ -246,12 +277,16 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                     switch (horizontal) {
                         case "center":
                             horizontalAlignment = Alignment.Horizontal.Center;
+                            break;
                         case "right":
                             horizontalAlignment = Alignment.Horizontal.Right;
+                            break;
                         case "fill":
                             horizontalAlignment = Alignment.Horizontal.Fill;
+                            break;
                         default:
                             horizontalAlignment = Alignment.Horizontal.Left;
+                            break;
                     }
                 } else {
                     horizontalAlignment = Alignment.Horizontal.Left;
@@ -268,6 +303,17 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 Unit middle = (Unit)parseObject("units", null, attributes.getJSONObject("middle"));
 
                 return new Offset(top,right,bottom,left,center,middle);
+            }
+            case "images": {
+                double width = attributes.getDouble("width");
+                double height = attributes.getDouble("height");
+                String urlString = attributes.getString("url");
+                try {
+                    URI imageURI = new URI(urlString);
+                    return new Image(width, height, imageURI);
+                } catch (URISyntaxException e) {
+                    return null;
+                }
             }
         }
 
@@ -297,5 +343,18 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 attributes.getDouble("radius"),
                 attributes.getString("name"),
                 tags);
+    }
+
+    private int getColorFromJSON(JSONObject attributes) {
+        try {
+            double red = attributes.getDouble("red");
+            double blue = attributes.getDouble("blue");
+            double green = attributes.getDouble("green");
+            double alpha = attributes.getDouble("alpha");
+
+            return Color.argb((int)(alpha * 255), (int)red, (int)green, (int)blue);
+        } catch (JSONException e) {
+            return 0;
+        }
     }
 }

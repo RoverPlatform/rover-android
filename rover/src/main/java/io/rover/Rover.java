@@ -67,13 +67,6 @@ import io.rover.model.Place;
  */
 public class Rover implements EventSubmitTask.Callback {
 
-    public interface NotificationProvider {
-        PendingIntent getNotificationPendingIntent(io.rover.model.Message message);
-        int getSmallIconForNotification(io.rover.model.Message message);
-        Bitmap getLargeIconForNotification(io.rover.model.Message message);
-        Uri getSoundForNotification(io.rover.model.Message message);
-    }
-
     protected static Rover mSharedInstance = new Rover();
 
     private Context mApplicationContext;

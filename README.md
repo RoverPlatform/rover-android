@@ -105,10 +105,27 @@ __IMPORTANT__ Notice that the example removes itself as an observer in the `onDe
 
 ### Beacons and Places
 
-// Coming soon
+// Coming soon 
 
 ## Messages
 
 // Coming soon
 
 ### Notifications
+
+In order to have notification and messages working, Rover needs your FCM server key. Use [this guide](https://github.com/RoverPlatform/rover-android/wiki/FCM-Setup) to upload your configure Rover with your FCM setup.
+
+If you like fine-grained control over notifications, you must register a [NotificationProvider](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/NotificationProvider.java) during initialization.
+
+```java
+  RoverConfig config = new RoverConfig.Builder()
+          .setApplicationToken("YOUR APPLICATION TOKEN HERE")
+          .setNotificationProvider(new NotificationProvider() {
+            ...
+          })
+          .build();
+
+  Rover.setup(this, config);
+```
+
+Check the [Notification Provider](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/NotificationProvider.java) file for more documentation on methods to customize behavior.

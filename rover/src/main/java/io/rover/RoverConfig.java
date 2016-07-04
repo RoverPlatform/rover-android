@@ -10,7 +10,7 @@ public class RoverConfig {
     public static class Builder {
 
         private String mAppToken;
-        private String mProjectNum;
+        private Rover.NotificationProvider mNotificationProvider;
 
         public Builder() {}
 
@@ -19,21 +19,21 @@ public class RoverConfig {
             return this;
         }
 
-        public Builder setProjectNumber(String number) {
-            mProjectNum = number;
+        public Builder setNotificationProvider(Rover.NotificationProvider provider) {
+            mNotificationProvider = provider;
             return this;
         }
 
         public RoverConfig build() {
-            return new RoverConfig(mAppToken, mProjectNum);
+            return new RoverConfig(mAppToken, mNotificationProvider);
         }
     }
 
     String mAppToken;
-    String mProjectNum;
+    Rover.NotificationProvider mNotificationProvider;
 
-    private RoverConfig(String appToken, String projectNum) {
+    private RoverConfig(String appToken, Rover.NotificationProvider notificationProvider) {
         mAppToken = appToken;
-        mProjectNum = projectNum;
+        mNotificationProvider = notificationProvider;
     }
 }

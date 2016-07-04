@@ -83,18 +83,14 @@ public class Rover implements EventSubmitTask.Callback {
     private PendingIntent mAppLaunchPendingIntent;
     private ExecutorService mEventExecutorService = Executors.newSingleThreadExecutor();
     private ArrayList<RoverObserver> mObservers = new ArrayList<>();
-    private String mProjectNumber;
     private NotificationProvider mNotificationProvider;
 
     private Rover() {}
 
     public static void setup(Application application, RoverConfig config) {
         mSharedInstance.mApplicationContext = application.getApplicationContext();
-        mSharedInstance.mProjectNumber = config.mProjectNum;
         Router.setApiKey(config.mAppToken);
         Router.setDeviceId(Device.getInstance().getIdentifier(mSharedInstance.mApplicationContext));
-
-
     }
 
     public static void startMonitoring() {

@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 
+import io.rover.NotificationProvider;
 import io.rover.Rover;
 import io.rover.RoverConfig;
 import io.rover.model.Message;
@@ -20,7 +21,7 @@ public class MyApplication extends Application {
 
         RoverConfig config = new RoverConfig.Builder()
                 .setApplicationToken("b43963962ea03fc2f4b456a5cbe49b40")
-                .setNotificationProvider(new Rover.NotificationProvider() {
+                .setNotificationProvider(new NotificationProvider() {
                     @Override
                     public PendingIntent getNotificationPendingIntent(Message message) {
                         return null;

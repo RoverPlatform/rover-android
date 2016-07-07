@@ -15,6 +15,8 @@ public class Offset implements Parcelable {
     private Unit mCenter;
     private Unit mMiddle;
 
+    public static Offset ZeroOffset = new Offset(PointsUnit.ZeroUnit, PointsUnit.ZeroUnit,PointsUnit.ZeroUnit,PointsUnit.ZeroUnit,PointsUnit.ZeroUnit,PointsUnit.ZeroUnit);
+
     public Offset(Unit top, Unit right, Unit bottom, Unit left, Unit center, Unit middle) {
         mTop = top;
         mRight = right;

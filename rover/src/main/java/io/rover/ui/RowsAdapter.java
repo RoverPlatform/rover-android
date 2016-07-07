@@ -3,9 +3,13 @@ package io.rover.ui;
 import android.content.Context;
 import android.graphics.drawable.GradientDrawable;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 import java.util.List;
 
@@ -53,6 +57,20 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
         Block block = getBlockAtPosition(position);
 
         if (block == null) { return; }
+
+        if (block instanceof TextBlock) {
+            TextBlock textBlock = (TextBlock) block;
+            TextBlockView textBlockView = ((TextBlockView)holder.itemView);
+
+            textBlockView.setText(textBlock.getText());
+            textBlockView.setTextOffset(textBlock.getTextOffset());
+            textBlockView.setTextColor(textBlock.getTextColor());
+            textBlockView.setTextSize(textBlock.getFont().getSize());
+            textBlockView.setTextAignment(textBlock.getTextAlignment());
+            textBlockView.setTypeface(textBlock.getFont().getTypeface());
+        } else if (block instanceof ImageBlock) {
+            ImageBlock imageBlock = (ImageBlock) block;
+        }
 
         // Appearance
 
@@ -110,7 +128,7 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
     }
 
     public static class TextViewHolder extends RecyclerView.ViewHolder {
-        public TextViewHolder(Context context) { super(new View(context)); }
+        public TextViewHolder(Context context) { super(new TextBlockView(context)); }
     }
 
 

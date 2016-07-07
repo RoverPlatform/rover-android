@@ -28,6 +28,13 @@ public class Image implements Parcelable {
 
     public URI getImageURI() { return mURI; }
 
+    public double getAspectRatio() {
+        if (mHeight != 0) {
+            return mWidth / mHeight;
+        }
+        return 0;
+    }
+
     /** Parcelable
      */
 

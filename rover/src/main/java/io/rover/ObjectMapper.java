@@ -21,6 +21,7 @@ import java.util.Locale;
 
 import io.rover.model.Alignment;
 import io.rover.model.Block;
+import io.rover.model.Font;
 import io.rover.model.GeofenceTransitionEvent;
 import io.rover.model.Image;
 import io.rover.model.ImageBlock;
@@ -218,6 +219,11 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                     }
                     case "text-block": {
                         block = new TextBlock();
+                        ((TextBlock)block).setText(attributes.getString("text"));
+                        ((TextBlock)block).setTextAlignment((Alignment) parseObject("alignments", null, attributes.getJSONObject("text-alignment")));
+                        ((TextBlock)block).setTextColor(getColorFromJSON(attributes.getJSONObject("text-color")));
+                        ((TextBlock)block).setTextOffset((Offset) parseObject("offsets", null, attributes.getJSONObject("text-offset")));
+                        ((TextBlock)block).setFont((Font) parseObject("fonts", null, attributes.getJSONObject("text-font")));
                         break;
                     }
                     default:
@@ -314,6 +320,12 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 } catch (URISyntaxException e) {
                     return null;
                 }
+            }
+            case "fonts": {
+                float size = (float) attributes.getDouble("size");
+                int weight = attributes.getInt("weight");
+
+                return new Font(size, weight);
             }
         }
 

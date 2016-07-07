@@ -30,7 +30,7 @@ public abstract class Block implements Parcelable {
     private Offset mOffset;
 
     public Block() {
-
+        mOffset = Offset.ZeroOffset;
     }
 
     public Position getPosition() { return mPosition; }

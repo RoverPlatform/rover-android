@@ -30,6 +30,8 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
 import java.util.Stack;
 
@@ -37,6 +39,7 @@ import io.rover.GoogleApiConnection;
 import io.rover.RoverObserver;
 import io.rover.model.Alignment;
 import io.rover.model.Block;
+import io.rover.model.Font;
 import io.rover.model.Message;
 import io.rover.Rover;
 import io.rover.model.Offset;
@@ -109,12 +112,16 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
         block2.setBackgroundColor(Color.argb(150, 100, 100, 200));
         block2.setBorderRadius(10.0);
 
-        Block block3 = new TextBlock();
+        TextBlock block3 = new TextBlock();
         block3.setPosition(Block.Position.Stacked);
         block3.setAlignment(new Alignment(Alignment.Horizontal.Right, Alignment.Vertical.Top));
-        block3.setHeight(new PointsUnit(60.0));
+        //block3.setHeight(new PointsUnit(60.0));
+        block3.setText("This is a sample text that is very long. Lorem ipsum and shit. Lorem ipsum and shit. Lorem ipsum and shit. Lorem ibsum and shit. Lorem ipsum and shit. Lorem ipsum and shit. Lorem ipsum and shit. Lorem ipsum and shit. Lorem ipsum and shit. Lorem ibsum and shit. ");
         block3.setWidth(new PercentageUnit(50.0));
-        block3.setOffset(new Offset(PointsUnit.ZeroUnit, PointsUnit.ZeroUnit, PointsUnit.ZeroUnit, PointsUnit.ZeroUnit, PointsUnit.ZeroUnit, PointsUnit.ZeroUnit));
+        block3.setTextOffset(new Offset( new PointsUnit(105.0),  new PointsUnit(5.0), new PointsUnit(5.0),  new PointsUnit(5.0), PointsUnit.ZeroUnit, PointsUnit.ZeroUnit));
+        block3.setTextColor(Color.GREEN);
+        block3.setFont(new Font(20, 200));
+        block3.setTextAlignment(new Alignment(Alignment.Horizontal.Right, Alignment.Vertical.Top));
         block3.setBorderColor(Color.argb(255, 140, 60, 230));
         block3.setBorderRadius(5.0);
         block3.setBorderWidth(2);

@@ -18,7 +18,6 @@ public class ImageBlockView extends BlockView {
         super(context);
         mImageView = new RemoteImageView(context);
         mImageView.setScaleType(ImageView.ScaleType.FIT_XY);
-        //mImageView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         addView(mImageView);
     }
 

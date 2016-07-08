@@ -86,12 +86,6 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
         blockView.setBorder((float) block.getBorderWidth(), block.getBorderColor());
         blockView.setCornerRadius((float) block.getBorderRadius());
 
-//        GradientDrawable borderDrawable = new GradientDrawable();
-//        borderDrawable.setColor(block.getBackgroundColor());
-//        borderDrawable.setStroke((int)(block.getBorderWidth() * screenDensity), block.getBorderColor());
-//        borderDrawable.setCornerRadius((float)(block.getBorderRadius() * screenDensity));
-//        holder.itemView.setBackground(borderDrawable);
-
     }
 
     @Override
@@ -131,9 +125,7 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        public ViewHolder(Context context) {
-            super(new View(context));
-        }
+        public ViewHolder(Context context) { super(new BlockView(context)); }
     }
 
     public static class ImageViewHolder extends RecyclerView.ViewHolder {

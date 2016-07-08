@@ -8,9 +8,7 @@ import android.os.Build;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
-import android.util.Log;
 import android.util.TypedValue;
-import android.view.View;
 
 import io.rover.model.Alignment;
 import io.rover.model.Offset;
@@ -88,14 +86,6 @@ public class TextBlockView extends BlockView {
         if (textWidth > 0) {
             mLayout = new StaticLayout(mText, mPaint, (int) textWidth, Layout.Alignment.ALIGN_NORMAL, 1f, 0f, true);
         }
-//        int textWidthSpec = MeasureSpec.makeMeasureSpec(width, MeasureSpec.AT_MOST);
-//        int textHeightSpec = MeasureSpec.makeMeasureSpec(getHeight(), MeasureSpec.AT_MOST);
-///*
-//        int desiredHeight = getPaddingTop() + getPaddingBottom() + mLayout.getHeight();
-//        int height = getDefaultSize(desiredHeight, h);
-//        setMeasuredDimension(width, height);
-//  */
-//        forceLayout();
     }
 
     @Override

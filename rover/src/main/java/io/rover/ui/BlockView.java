@@ -16,7 +16,7 @@ import android.widget.RelativeLayout;
 /**
  * Created by ata_n on 2016-07-08.
  */
-public abstract class BlockView extends LinearLayout {
+public class BlockView extends LinearLayout {
 
     private RectF mPathRect;
     private Path mPath;

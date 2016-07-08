@@ -14,25 +14,25 @@ public class Image implements Parcelable {
 
     private double mWidth;
     private double mHeight;
-    private URI mURI;
+    private String mUrl;
 
-    public Image(double width, double height, URI uri) {
+    public Image(double width, double height, String url) {
         mWidth = width;
         mHeight = height;
-        mURI = uri;
+        mUrl = url;
     }
 
     public double getWidth() { return mWidth; }
 
     public double getHeight() { return mHeight; }
 
-    public URI getImageURI() { return mURI; }
+    public String getImageUrl() { return mUrl; }
 
     public double getAspectRatio() {
         if (mHeight != 0) {
             return mWidth / mHeight;
         }
-        return 0;
+        return 1;
     }
 
     /** Parcelable
@@ -41,11 +41,7 @@ public class Image implements Parcelable {
     protected Image(Parcel in) {
         mWidth = in.readDouble();
         mHeight = in.readDouble();
-        try {
-            mURI = (URI) new URI(in.readString());
-        } catch (URISyntaxException e) {
-            Log.e("ImageBlock", "Bad URI in parcel");
-        }
+        mUrl = in.readString();
     }
 
     @Override
@@ -57,7 +53,7 @@ public class Image implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeDouble(mWidth);
         dest.writeDouble(mHeight);
-        dest.writeString(mURI.toString());
+        dest.writeString(mUrl);
     }
 
     @SuppressWarnings("unused")

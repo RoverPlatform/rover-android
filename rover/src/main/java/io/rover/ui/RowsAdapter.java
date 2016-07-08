@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.w3c.dom.Text;
@@ -15,6 +16,7 @@ import java.util.List;
 
 import io.rover.R;
 import io.rover.model.Block;
+import io.rover.model.Image;
 import io.rover.model.ImageBlock;
 import io.rover.model.Row;
 import io.rover.model.TextBlock;
@@ -60,7 +62,7 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
 
         if (block instanceof TextBlock) {
             TextBlock textBlock = (TextBlock) block;
-            TextBlockView textBlockView = ((TextBlockView)holder.itemView);
+            TextBlockView textBlockView = (TextBlockView)holder.itemView;
 
             textBlockView.setText(textBlock.getText());
             textBlockView.setTextOffset(textBlock.getTextOffset());
@@ -70,15 +72,26 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
             textBlockView.setTypeface(textBlock.getFont().getTypeface());
         } else if (block instanceof ImageBlock) {
             ImageBlock imageBlock = (ImageBlock) block;
+            ImageBlockView imageBlockView = (ImageBlockView) holder.itemView;
+            Image image = imageBlock.getImage();
+
+            if (image != null) {
+                imageBlockView.setImageUrl(image.getImageUrl());
+            }
         }
 
         // Appearance
+        BlockView blockView = (BlockView) holder.itemView;
+        blockView.setBackgroundColor(block.getBackgroundColor());
+        blockView.setBorder((float) block.getBorderWidth(), block.getBorderColor());
+        blockView.setCornerRadius((float) block.getBorderRadius());
 
-        GradientDrawable borderDrawable = new GradientDrawable();
-        borderDrawable.setColor(block.getBackgroundColor());
-        borderDrawable.setStroke((int)(block.getBorderWidth() * screenDensity), block.getBorderColor());
-        borderDrawable.setCornerRadius((float)(block.getBorderRadius() * screenDensity));
-        holder.itemView.setBackground(borderDrawable);
+//        GradientDrawable borderDrawable = new GradientDrawable();
+//        borderDrawable.setColor(block.getBackgroundColor());
+//        borderDrawable.setStroke((int)(block.getBorderWidth() * screenDensity), block.getBorderColor());
+//        borderDrawable.setCornerRadius((float)(block.getBorderRadius() * screenDensity));
+//        holder.itemView.setBackground(borderDrawable);
+
     }
 
     @Override
@@ -124,7 +137,7 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
     }
 
     public static class ImageViewHolder extends RecyclerView.ViewHolder {
-        public ImageViewHolder(Context context) { super(new View(context)); }
+        public ImageViewHolder(Context context) { super(new ImageBlockView(context)); }
     }
 
     public static class TextViewHolder extends RecyclerView.ViewHolder {

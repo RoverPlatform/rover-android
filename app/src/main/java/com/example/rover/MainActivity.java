@@ -40,6 +40,8 @@ import io.rover.RoverObserver;
 import io.rover.model.Alignment;
 import io.rover.model.Block;
 import io.rover.model.Font;
+import io.rover.model.Image;
+import io.rover.model.ImageBlock;
 import io.rover.model.Message;
 import io.rover.Rover;
 import io.rover.model.Offset;
@@ -103,14 +105,17 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
         block1.setOffset(new Offset(new PointsUnit(10.0), new PointsUnit(10.0), new PointsUnit(10.0), new PointsUnit(10.0), PointsUnit.ZeroUnit, PointsUnit.ZeroUnit));
         block1.setBackgroundColor(Color.argb(255, 230, 40,110));
 
-        Block block2 = new TextBlock();
+        ImageBlock block2 = new ImageBlock();
         block2.setPosition(Block.Position.Stacked);
         block2.setAlignment(new Alignment(Alignment.Horizontal.Left, Alignment.Vertical.Top));
-        block2.setHeight(new PointsUnit(50.0));
+        //block2.setHeight(new PointsUnit(50.0));
         block2.setWidth(new PercentageUnit(70.0));
         block2.setOffset(new Offset(PointsUnit.ZeroUnit, PointsUnit.ZeroUnit, PointsUnit.ZeroUnit, new PointsUnit(5.0), PointsUnit.ZeroUnit, PointsUnit.ZeroUnit));
         block2.setBackgroundColor(Color.argb(150, 100, 100, 200));
         block2.setBorderRadius(10.0);
+        block2.setBorderColor(Color.BLACK);
+        block2.setBorderWidth(2);
+        block2.setImage(new Image(745,745,"http://images.clipartpanda.com/elmo-clip-art-free-vector-elmo-sesame-street_037091_elmo-sesame-street.png"));
 
         TextBlock block3 = new TextBlock();
         block3.setPosition(Block.Position.Stacked);

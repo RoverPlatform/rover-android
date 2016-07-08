@@ -16,6 +16,7 @@ import java.util.List;
 
 import io.rover.model.Alignment;
 import io.rover.model.Block;
+import io.rover.model.Image;
 import io.rover.model.ImageBlock;
 import io.rover.model.Offset;
 import io.rover.model.PercentageUnit;
@@ -259,10 +260,9 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
         if (blockHeight != null) {
             height = getValueFromUnit(blockHeight, rowHeight);
         } else if (block instanceof ImageBlock) {
-            double aspectRatio  = ((ImageBlock) block).getImage().getAspectRatio();
-
-            if (aspectRatio != 0) {
-                height = width / aspectRatio;
+            Image image = ((ImageBlock) block).getImage();
+            if (image != null) {
+                height = width / image.getAspectRatio();
             } else {
                 height = 0;
             }

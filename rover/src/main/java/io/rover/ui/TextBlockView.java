@@ -19,7 +19,7 @@ import io.rover.model.Unit;
 /**
  * Created by ata_n on 2016-07-06.
  */
-public class TextBlockView extends View {
+public class TextBlockView extends BlockView {
 
     private String mText;
     // TODO: This is to be changed to an inset property at the Block level
@@ -99,7 +99,7 @@ public class TextBlockView extends View {
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
+    public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
         if (mLayout != null) {

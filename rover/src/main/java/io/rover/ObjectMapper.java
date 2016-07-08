@@ -314,12 +314,8 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 double width = attributes.getDouble("width");
                 double height = attributes.getDouble("height");
                 String urlString = attributes.getString("url");
-                try {
-                    URI imageURI = new URI(urlString);
-                    return new Image(width, height, imageURI);
-                } catch (URISyntaxException e) {
-                    return null;
-                }
+
+                return new Image(width, height, urlString);
             }
             case "fonts": {
                 float size = (float) attributes.getDouble("size");

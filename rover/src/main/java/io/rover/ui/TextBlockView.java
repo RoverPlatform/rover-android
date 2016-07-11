@@ -63,7 +63,7 @@ public class TextBlockView extends BlockView {
         createLayout();
     }
 
-    public void setTextAignment(Alignment alignment) {
+    public void setTextAlignment(Alignment alignment) {
         mAlignment = alignment;
         mPaint.setTextAlign(getHorizontalAlignment());
         createLayout();

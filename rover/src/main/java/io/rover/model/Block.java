@@ -31,6 +31,7 @@ public abstract class Block implements Parcelable {
 
     public Block() {
         mOffset = Offset.ZeroOffset;
+        mPosition = Position.Stacked;
     }
 
     public Position getPosition() { return mPosition; }

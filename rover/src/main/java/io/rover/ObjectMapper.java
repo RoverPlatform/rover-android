@@ -19,8 +19,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
+import io.rover.model.Action;
 import io.rover.model.Alignment;
+import io.rover.model.Appearance;
 import io.rover.model.Block;
+import io.rover.model.ButtonBlock;
 import io.rover.model.Font;
 import io.rover.model.GeofenceTransitionEvent;
 import io.rover.model.Image;
@@ -226,6 +229,18 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                         ((TextBlock)block).setFont((Font) parseObject("fonts", null, attributes.getJSONObject("text-font")));
                         break;
                     }
+                    case "button-block": {
+                        block = new ButtonBlock();
+                        JSONObject actionAttributes = attributes.getJSONObject("action");
+                        ((ButtonBlock)block).setAction((Action) parseObject("actions", null, actionAttributes));
+
+                        JSONObject states = attributes.getJSONObject("states");
+                        ((ButtonBlock)block).setAppearance((Appearance) parseObject("appearances", null, states.getJSONObject("normal")), ButtonBlock.State.Normal);
+                        ((ButtonBlock)block).setAppearance((Appearance) parseObject("appearances", null, states.getJSONObject("highlighted")), ButtonBlock.State.Highlighted);
+                        ((ButtonBlock)block).setAppearance((Appearance) parseObject("appearances", null, states.getJSONObject("selected")), ButtonBlock.State.Selected);
+                        ((ButtonBlock)block).setAppearance((Appearance) parseObject("appearances", null, states.getJSONObject("disabled")), ButtonBlock.State.Disabled);
+                        break;
+                    }
                     default:
                         return null;
                 }
@@ -322,6 +337,25 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 int weight = attributes.getInt("weight");
 
                 return new Font(size, weight);
+            }
+            case "actions": {
+                String actionType = attributes.getString("type");
+                String actionUrl = attributes.getString("url");
+
+                return new Action(actionType, actionUrl);
+            }
+            case "appearances": {
+                Appearance appearance = new Appearance();
+                appearance.title = attributes.getString("text");
+                appearance.titleAlignment = (Alignment) parseObject("alignments", null, attributes.getJSONObject("text-alignment"));
+                appearance.titleOffset = (Offset) parseObject("offsets", null, attributes.getJSONObject("text-offset"));
+                appearance.titleColor = getColorFromJSON(attributes.getJSONObject("text-color"));
+                appearance.titleFont = (Font) parseObject("fonts", null, attributes.getJSONObject("text-font"));
+                appearance.backgroundColor = getColorFromJSON(attributes.getJSONObject("background-color"));
+                appearance.borderColor = getColorFromJSON(attributes.getJSONObject("border-color"));
+                appearance.borderWidth = attributes.getDouble("border-width");
+                appearance.borderRadius = attributes.getDouble("border-radius");
+                return appearance;
             }
         }
 

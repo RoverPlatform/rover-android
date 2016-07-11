@@ -15,7 +15,10 @@ import org.w3c.dom.Text;
 import java.util.List;
 
 import io.rover.R;
+import io.rover.model.Action;
+import io.rover.model.Appearance;
 import io.rover.model.Block;
+import io.rover.model.ButtonBlock;
 import io.rover.model.Image;
 import io.rover.model.ImageBlock;
 import io.rover.model.Row;
@@ -26,12 +29,20 @@ import io.rover.model.TextBlock;
  */
 public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements BlockLayoutManager.BlockProvider {
 
-    private List<Row> mRows;
-    private float screenDensity;
+    public interface ActionListener {
+        void onAction(Action action);
+    }
 
-    public RowsAdapter(List<Row> rows, float density) {
+    private List<Row> mRows;
+    final private ButtonViewHolder.OnClickListener mButtonClickListener = new ButtonClickListener();
+    private ActionListener mActionListener;
+
+    public RowsAdapter(List<Row> rows) {
         mRows = rows;
-        screenDensity = density;
+    }
+
+    public void setActionListener(ActionListener listener) {
+        mActionListener = listener;
     }
 
     @Override
@@ -41,6 +52,8 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
             return 0;
         } else if (block instanceof TextBlock) {
             return 1;
+        } else if (block instanceof ButtonBlock) {
+            return 2;
         }
         return super.getItemViewType(position);
     }
@@ -50,6 +63,11 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
         switch (viewType) {
             case 0: return new ImageViewHolder(parent.getContext());
             case 1: return new TextViewHolder(parent.getContext());
+            case 2: {
+                ButtonViewHolder viewHolder = new ButtonViewHolder(parent.getContext());
+                viewHolder.setOnClickListener(mButtonClickListener);
+                return viewHolder;
+            }
             default: return new ViewHolder(parent.getContext());
         }
     }
@@ -68,7 +86,7 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
             textBlockView.setTextOffset(textBlock.getTextOffset());
             textBlockView.setTextColor(textBlock.getTextColor());
             textBlockView.setTextSize(textBlock.getFont().getSize());
-            textBlockView.setTextAignment(textBlock.getTextAlignment());
+            textBlockView.setTextAlignment(textBlock.getTextAlignment());
             textBlockView.setTypeface(textBlock.getFont().getTypeface());
         } else if (block instanceof ImageBlock) {
             ImageBlock imageBlock = (ImageBlock) block;
@@ -77,6 +95,27 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
 
             if (image != null) {
                 imageBlockView.setImageUrl(image.getImageUrl());
+            }
+        } else if (block instanceof ButtonBlock) {
+            ButtonBlock buttonBlock = (ButtonBlock) block;
+            ButtonBlockView buttonBlockView = (ButtonBlockView) holder.itemView;
+
+            for (ButtonBlock.State state : ButtonBlock.State.values()) {
+                Appearance appearance = buttonBlock.getAppearance(state);
+                if (appearance == null) {
+                    continue;
+                }
+
+                buttonBlockView.setTitle(appearance.title, getButtonViewState(state));
+                buttonBlockView.setTitleColor(appearance.titleColor, getButtonViewState(state));
+                buttonBlockView.setTitleAlignment(appearance.titleAlignment, getButtonViewState(state));
+                buttonBlockView.setTitleOffset(appearance.titleOffset, getButtonViewState(state));
+                if (appearance.titleFont != null) {
+                    buttonBlockView.setTitleTypeface(appearance.titleFont.getTypeface(), getButtonViewState(state));
+                }
+                buttonBlockView.setBackgroundColor(appearance.backgroundColor, getButtonViewState(state));
+                buttonBlockView.setBorder((float) appearance.borderWidth, appearance.borderColor, getButtonViewState(state));
+                buttonBlockView.setCornerRadius((float) appearance.borderRadius, getButtonViewState(state));
             }
         }
 
@@ -124,6 +163,28 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
         return block;
     }
 
+    private ButtonBlockView.State getButtonViewState(ButtonBlock.State state) {
+        switch (state) {
+            case Normal: return ButtonBlockView.State.Normal;
+            case Highlighted: return ButtonBlockView.State.Highlighted;
+            case Selected: return ButtonBlockView.State.Selected;
+            case Disabled: return ButtonBlockView.State.Disabled;
+            default: return ButtonBlockView.State.Normal;
+        }
+    }
+
+    private class ButtonClickListener implements ButtonViewHolder.OnClickListener {
+        @Override
+        public void onButtonViewClick(ButtonBlockView view, int position) {
+            ButtonBlock block = (ButtonBlock) getBlockAtPosition(position);
+            Action action = block.getAction();
+
+            if (action != null && mActionListener != null) {
+                mActionListener.onAction(action);
+            }
+        }
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public ViewHolder(Context context) { super(new BlockView(context)); }
     }
@@ -136,5 +197,26 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
         public TextViewHolder(Context context) { super(new TextBlockView(context)); }
     }
 
+    public static class ButtonViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
+        public interface OnClickListener {
+            void onButtonViewClick(ButtonBlockView view, int position);
+        }
+
+        private OnClickListener mClickListener;
+
+        public ButtonViewHolder(Context context) {
+            super(new ButtonBlockView(context));
+            itemView.setOnClickListener(this);
+        }
+
+        public void setOnClickListener(OnClickListener listner) { mClickListener = listner; }
+
+        @Override
+        public void onClick(View v) {
+            if (mClickListener != null) {
+                mClickListener.onButtonViewClick((ButtonBlockView) v, getAdapterPosition());
+            }
+        }
+    }
 }

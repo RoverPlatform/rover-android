@@ -37,8 +37,11 @@ import java.util.Stack;
 
 import io.rover.GoogleApiConnection;
 import io.rover.RoverObserver;
+import io.rover.model.Action;
 import io.rover.model.Alignment;
+import io.rover.model.Appearance;
 import io.rover.model.Block;
+import io.rover.model.ButtonBlock;
 import io.rover.model.Font;
 import io.rover.model.Image;
 import io.rover.model.ImageBlock;
@@ -98,12 +101,27 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
 //        });
 
 
-        Block block1 = new TextBlock();
+        ButtonBlock block1 = new ButtonBlock();
         block1.setPosition(Block.Position.Stacked);
         block1.setAlignment(new Alignment(Alignment.Horizontal.Fill, Alignment.Vertical.Top));
         block1.setHeight(new PointsUnit(100.0));
         block1.setOffset(new Offset(new PointsUnit(10.0), new PointsUnit(10.0), new PointsUnit(10.0), new PointsUnit(10.0), PointsUnit.ZeroUnit, PointsUnit.ZeroUnit));
-        block1.setBackgroundColor(Color.argb(255, 230, 40,110));
+        block1.setAction(new Action(Action.WEBSITE_ACTION, "http://www.google.com/"));
+
+        Appearance normalAppearance = new Appearance();
+        normalAppearance.title = "Click Me";
+        normalAppearance.titleColor = Color.MAGENTA;
+        normalAppearance.borderColor = Color.MAGENTA;
+        normalAppearance.borderRadius = 3;
+        normalAppearance.borderWidth = 1;
+        block1.setAppearance(normalAppearance, ButtonBlock.State.Normal);
+
+        Appearance highlightedAppearance = new Appearance();
+        highlightedAppearance.title = "Clicked!!!";
+        highlightedAppearance.titleColor = Color.CYAN;
+        highlightedAppearance.borderColor = Color.CYAN;
+        highlightedAppearance.borderWidth = 1;
+        block1.setAppearance(highlightedAppearance, ButtonBlock.State.Highlighted);
 
         ImageBlock block2 = new ImageBlock();
         block2.setPosition(Block.Position.Stacked);

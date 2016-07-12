@@ -21,10 +21,12 @@ public class MyMessageRecyclerViewAdapter extends RecyclerView.Adapter<MyMessage
 
     private final List<Message> mValues;
     private final OnListFragmentInteractionListener mListener;
+    private final ViewHolder.OnClickListener mClickListener;
 
     public MyMessageRecyclerViewAdapter(List<Message> items, OnListFragmentInteractionListener listener) {
         mValues = items;
         mListener = listener;
+        mClickListener = new MessageClickListener();
     }
 
     @Override
@@ -39,17 +41,7 @@ public class MyMessageRecyclerViewAdapter extends RecyclerView.Adapter<MyMessage
         holder.mItem = mValues.get(position);
         holder.mTitleView.setText(mValues.get(position).getTitle());
         holder.mContentView.setText(mValues.get(position).getText());
-
-        holder.mView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (null != mListener) {
-                    // Notify the active callbacks interface (the activity, if the
-                    // fragment is attached to one) that an item has been selected.
-                    mListener.onListFragmentInteraction(holder.mItem);
-                }
-            }
-        });
+        holder.setOnClickListener(mClickListener);
     }
 
     @Override
@@ -67,22 +59,50 @@ public class MyMessageRecyclerViewAdapter extends RecyclerView.Adapter<MyMessage
         notifyDataSetChanged();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    private class MessageClickListener implements ViewHolder.OnClickListener {
+        @Override
+        public void onClick(View view, int position) {
+            Message message = mValues.get(position);
+            if (mListener != null) {
+                mListener.onListFragmentInteraction(message);
+            }
+        }
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
+        public interface OnClickListener {
+            void onClick(View view, int position);
+        }
+
         public final View mView;
         public final TextView mTitleView;
         public final TextView mContentView;
         public Message mItem;
+        private OnClickListener mClickListener;
 
         public ViewHolder(View view) {
             super(view);
             mView = view;
             mTitleView = (TextView) view.findViewById(R.id.titleTextView);
             mContentView = (TextView) view.findViewById(R.id.messageTextView);
+            mView.setOnClickListener(this);
+        }
+
+        public void setOnClickListener(OnClickListener listener) {
+            mClickListener = listener;
         }
 
         @Override
         public String toString() {
             return super.toString() + " '" + mContentView.getText() + "'";
+        }
+
+        @Override
+        public void onClick(View v) {
+            if (mClickListener != null) {
+                mClickListener.onClick(v, getAdapterPosition());
+            }
         }
     }
 }

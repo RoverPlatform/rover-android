@@ -163,11 +163,16 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
         rows.add(row);
 
         Screen myScreen = new Screen(rows);
+        myScreen.setTitle("My Screen");
+        myScreen.setBackgroundColor(Color.GREEN);
+        myScreen.setTitleColor(Color.BLUE);
+        myScreen.setActionBarColor(Color.BLACK);
+        myScreen.setUseDefaultActionBarStyle(false);
 
         Intent intent = new Intent(getApplicationContext(), ScreenActivity.class);
         intent.putExtra("EXTRA_SCREEN", myScreen);
 
-        startActivity(intent);
+        //startActivity(intent);
     }
 
     public void onUpdateLocationClicked(View view) {
@@ -267,8 +272,13 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
 
     @Override
     public void onListFragmentInteraction(Message item) {
-        Intent intent = new Intent(getApplicationContext(), ScreenActivity.class);
-        startActivity(intent);
+        switch (item.getAction()) {
+            case LandingPage: {
+                Intent intent = new Intent(this, ScreenActivity.class);
+                intent.putExtra(ScreenActivity.INTENT_EXTRA_SCREEN, item.getLandingPage());
+                startActivity(intent);
+            }
+        }
     }
 
 

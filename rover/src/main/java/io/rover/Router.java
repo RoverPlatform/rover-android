@@ -15,7 +15,7 @@ import io.rover.network.NetworkTask;
 class Router implements NetworkTask.NetworkTaskConnectionManager {
 
     private static Router sharedInstance = new Router();
-    private static String baseURL = "https://api.rover.io/v1";
+    private static String baseURL = "https://rover-content-api-development.herokuapp.com/v1";
     private static String apiKey;
     private static String deviceId;
 

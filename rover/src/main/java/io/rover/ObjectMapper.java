@@ -153,7 +153,6 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
             case "screens": {
                 ArrayList<Row> rows = new ArrayList<>();
                 JSONArray rowsAttributes = attributes.getJSONArray("rows");
-                String title = attributes.getString("title");
 
                 for (int i = 0; i < rowsAttributes.length(); i++) {
                     JSONObject rowAttributes = rowsAttributes.getJSONObject(i);
@@ -164,7 +163,23 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 }
 
                 Screen screen = new Screen(rows);
-                screen.setTitle(title);
+                if (!attributes.isNull("title")) {
+                    screen.setTitle(attributes.getString("title"));
+                }
+
+                screen.setBackgroundColor(getColorFromJSON(attributes.getJSONObject("background-color")));
+                screen.setTitleColor(getColorFromJSON(attributes.getJSONObject("title-bar-text-color")));
+                screen.setActionBarColor(getColorFromJSON(attributes.getJSONObject("title-bar-background-color")));
+                screen.setActionItemColor(getColorFromJSON(attributes.getJSONObject("title-bar-button-color")));
+                if (attributes.has("status-bar-color")) {
+                    screen.setStatusBarColor(getColorFromJSON(attributes.getJSONObject("status-bar-color")));
+                }
+                screen.setUseDefaultActionBarStyle(attributes.getBoolean("use-default-title-bar-style"));
+
+                String statusBarStyle = attributes.getString("status-bar-style");
+                if (!statusBarStyle.equals("light")) {
+                    screen.setStatusBarLight(true);
+                }
 
                 return screen;
             }
@@ -217,7 +232,9 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 switch (blockType) {
                     case "image-block": {
                         block = new ImageBlock();
-                        ((ImageBlock)block).setImage((Image) parseObject("images", null, attributes.getJSONObject("image")));
+                        if (!attributes.isNull("image")) {
+                            ((ImageBlock) block).setImage((Image) parseObject("images", null, attributes.getJSONObject("image")));
+                        }
                         break;
                     }
                     case "text-block": {
@@ -231,9 +248,10 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                     }
                     case "button-block": {
                         block = new ButtonBlock();
-                        JSONObject actionAttributes = attributes.getJSONObject("action");
-                        ((ButtonBlock)block).setAction((Action) parseObject("actions", null, actionAttributes));
-
+                        if (!attributes.isNull("action")) {
+                            JSONObject actionAttributes = attributes.getJSONObject("action");
+                            ((ButtonBlock) block).setAction((Action) parseObject("actions", null, actionAttributes));
+                        }
                         JSONObject states = attributes.getJSONObject("states");
                         ((ButtonBlock)block).setAppearance((Appearance) parseObject("appearances", null, states.getJSONObject("normal")), ButtonBlock.State.Normal);
                         ((ButtonBlock)block).setAppearance((Appearance) parseObject("appearances", null, states.getJSONObject("highlighted")), ButtonBlock.State.Highlighted);
@@ -246,10 +264,14 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 }
 
                 // Appearance
-                block.setBackgroundColor(getColorFromJSON(attributes.getJSONObject("background-color")));
-                block.setBorderColor(getColorFromJSON(attributes.getJSONObject("border-color")));
-                block.setBorderRadius(attributes.getDouble("border-radius"));
-                block.setBorderWidth(attributes.getDouble("border-width"));
+                if (!(block instanceof ButtonBlock)) {
+                    block.setBackgroundColor(getColorFromJSON(attributes.getJSONObject("background-color")));
+                    if (attributes.has("border-color")) { // TODO: this shouldnt be needed
+                        block.setBorderColor(getColorFromJSON(attributes.getJSONObject("border-color")));
+                        block.setBorderRadius(attributes.getDouble("border-radius"));
+                        block.setBorderWidth(attributes.getDouble("border-width"));
+                    }
+                }
 
                 // Layout
                 if (!attributes.isNull("width")) {

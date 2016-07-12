@@ -34,10 +34,14 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
     }
 
     private List<Row> mRows;
-    final private ButtonViewHolder.OnClickListener mButtonClickListener = new ButtonClickListener();
+    private final ButtonViewHolder.OnClickListener mButtonClickListener;
     private ActionListener mActionListener;
 
-    public RowsAdapter(List<Row> rows) {
+    public RowsAdapter() {
+        mButtonClickListener = new ButtonClickListener();
+    }
+
+    public void setRows(List<Row> rows) {
         mRows = rows;
     }
 

@@ -70,7 +70,7 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
     @Override
     public int scrollVerticallyBy(int dy, RecyclerView.Recycler recycler, RecyclerView.State state) {
         // TODO: CHECK FOR STATE
-        int travel;
+        int travel = 0;
         int verticalSpace = getVerticalSpace();
 
         if(dy + verticalScrollOffset < 0 /* topLimit */){
@@ -78,8 +78,8 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
             verticalScrollOffset = 0;
         }
         else if(dy + verticalScrollOffset + verticalSpace > bottomLimit){
-            travel = bottomLimit - verticalScrollOffset - verticalSpace;
-            verticalScrollOffset = bottomLimit - verticalSpace;
+            //travel = bottomLimit - verticalScrollOffset - verticalSpace;
+            //verticalScrollOffset = bottomLimit - verticalSpace;
         }
         else{
             travel = dy;

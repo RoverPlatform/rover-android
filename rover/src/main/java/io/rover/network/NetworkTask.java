@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -19,13 +20,22 @@ import io.rover.Rover;
  */
 public class NetworkTask implements Runnable {
 
-    public interface JsonPayloadProvider {
-        void onProvidePayload(JsonWriter writer) throws IOException;
+//    public interface JsonPayloadProvider {
+//        void onProvidePayload(JsonWriter writer) throws IOException;
+//        void onPrepareConnection(HttpURLConnection connection);
+//    }
+//
+//    public interface JsonResponseHandler {
+//        void onHandleResponse(JsonReader reader) throws IOException;
+//    }
+
+    public interface PayloadProvider {
         void onPrepareConnection(HttpURLConnection connection);
+        void onProvidePayload(OutputStreamWriter writer) throws IOException;
     }
 
-    public interface JsonResponseHandler {
-        void onHandleResponse(JsonReader reader) throws IOException;
+    public interface ResponseHandler {
+        void onHandleResponse(InputStreamReader reader) throws IOException;
     }
 
     public interface NetworkTaskConnectionManager {
@@ -35,8 +45,11 @@ public class NetworkTask implements Runnable {
     private URL mURL;
     private String mMethod;
 
-    private JsonPayloadProvider mPayloadProvider;
-    private JsonResponseHandler mResponseHandler;
+    //private JsonPayloadProvider mPayloadProvider;
+    //private JsonResponseHandler mResponseHandler;
+
+    private PayloadProvider mPayloadProvider;
+    private ResponseHandler mResponseHandler;
     private NetworkTaskConnectionManager mConnectionManager;
 
     public NetworkTask(String method, URL url) {
@@ -44,11 +57,11 @@ public class NetworkTask implements Runnable {
         mURL = url;
     }
 
-    public void setPayloadProvider(JsonPayloadProvider payloadProvider) {
+    public void setPayloadProvider(PayloadProvider payloadProvider) {
         mPayloadProvider = payloadProvider;
     }
 
-    public void setResponseHandler(JsonResponseHandler completionHandler) {
+    public void setResponseHandler(ResponseHandler completionHandler) {
         mResponseHandler = completionHandler;
     }
 
@@ -65,11 +78,11 @@ public class NetworkTask implements Runnable {
 
         try {
 
-            Log.i("NetworkTask", "Connection to: " + mURL.toString());
+            Log.i("NetworkTask", "Connection to: " + mMethod + " " + mURL.toString());
 
             connection = (HttpURLConnection)mURL.openConnection();
             connection.setRequestMethod(mMethod);
-            connection.setRequestProperty("Content-Type", "application/json");
+            //connection.setRequestProperty("Content-Type", "application/json");
 
             if (mConnectionManager != null) {
                 mConnectionManager.onPrepareConnection(connection);
@@ -83,12 +96,17 @@ public class NetworkTask implements Runnable {
 
                 connection.setDoOutput(true);
 
-                JsonWriter writer = new JsonWriter(new OutputStreamWriter(connection.getOutputStream()));
-                writer.setIndent("  ");
 
-                mPayloadProvider.onProvidePayload(writer);
+                OutputStream outputStream = connection.getOutputStream();
+                mPayloadProvider.onProvidePayload(new OutputStreamWriter(outputStream));
 
-                writer.close();
+
+//                JsonWriter writer = new JsonWriter(new OutputStreamWriter(connection.getOutputStream()));
+//                writer.setIndent("  ");
+//
+//                mPayloadProvider.onProvidePayload(writer);
+
+                //writer.close();
             }
 
             connection.connect();
@@ -100,8 +118,9 @@ public class NetworkTask implements Runnable {
             is = connection.getInputStream();
 
             if (mResponseHandler != null) {
-                JsonReader jsonReader = new JsonReader(new InputStreamReader(is, "UTF-8"));
-                mResponseHandler.onHandleResponse(jsonReader);
+                //JsonReader jsonReader = new JsonReader(new InputStreamReader(is, "UTF-8"));
+                //mResponseHandler.onHandleResponse(jsonReader);
+                mResponseHandler.onHandleResponse(new InputStreamReader(is, "UTF-8"));
             }
 
         } catch (IOException e) {

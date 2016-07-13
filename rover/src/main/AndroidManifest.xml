@@ -73,8 +73,8 @@
             </intent-filter>
         </receiver-->
 
-        <activity android:name=".ui.ScreenActivity">
-        </activity>
+        <activity android:name=".ui.ScreenActivity"/>
+        <activity android:name=".RemoteScreenActivity"/>
     </application>
 
 </manifest>

@@ -512,21 +512,19 @@ public class Rover implements EventSubmitTask.Callback {
                 switch (message.getAction()) {
                     case Website: {
                         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
-                        TaskStackBuilder stackBuilder = TaskStackBuilder.create(getApplicationContext());
-                        stackBuilder.addNextIntent(intent);
-
-                        Intent inten = new Intent(getApplicationContext(), NearbyMessageService.class);
-                        stackBuilder.addNextIntent(inten);
-                        pendingIntent =  stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+                        pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
                         break;
                     }
                     case LandingPage: {
-                        pendingIntent = mSharedInstance.getAppLaunchPendingIntent();
+                        Intent intent = new Intent(this, RemoteScreenActivity.class);
+                        intent.setData(getUriFromMessageId(message.getId()));
+                        //intent.putExtra(RemoteScreenActivity.INTENT_EXTRA_MESSAGE_ID, message.getId());
+                        pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
                         break;
                     }
                     case DeepLink: {
                         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
-                        pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+                        pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
                         break;
                     }
                     default: {
@@ -546,6 +544,13 @@ public class Rover implements EventSubmitTask.Callback {
 
             NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
             manager.notify(message.getId(), 12345 /* Rover notification id */, builder.build());
+        }
+
+        private Uri getUriFromMessageId(String messageId) {
+            return new Uri.Builder().scheme("rover")
+                    .authority("message-id")
+                    .appendPath(messageId).build();
+
         }
     }
 }

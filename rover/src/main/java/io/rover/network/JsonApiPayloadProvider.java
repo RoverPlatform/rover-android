@@ -8,13 +8,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.util.Iterator;
 
 /**
  * Created by ata_n on 2016-03-31.
  */
-public class JsonApiPayloadProvider implements NetworkTask.JsonPayloadProvider {
+public class JsonApiPayloadProvider implements NetworkTask.PayloadProvider {
 
     public interface JsonApiObjectSerializer {
         String getIdentifier();
@@ -31,27 +32,33 @@ public class JsonApiPayloadProvider implements NetworkTask.JsonPayloadProvider {
     @Override
     public void onPrepareConnection(HttpURLConnection connection) {
         connection.setRequestProperty("Accept", "application/vn.api+json");
+        connection.setRequestProperty("Content-Type", "application/json");
     }
 
     @Override
-    public void onProvidePayload(JsonWriter writer) throws IOException {
-        writer.beginObject();
+    public void onProvidePayload(OutputStreamWriter writer) throws IOException {
+        JsonWriter jsonWriter = new JsonWriter(writer);
+        jsonWriter.setIndent("  ");
+
+        jsonWriter.beginObject();
         {
-            writer.name("data");
-            writer.beginObject();
+            jsonWriter.name("data");
+            jsonWriter.beginObject();
             {
                 String identifier = mSerializer.getIdentifier();
                 if (identifier != null) {
-                    writer.name("id").value(identifier);
+                    jsonWriter.name("id").value(identifier);
                 }
-                writer.name("type").value(mSerializer.getType());
-                writer.name("attributes");
+                jsonWriter.name("type").value(mSerializer.getType());
+                jsonWriter.name("attributes");
                 JSONObject attributes = mSerializer.getAttributes();
-                writeJSONObject(attributes, writer);
+                writeJSONObject(attributes, jsonWriter);
             }
-            writer.endObject();
+            jsonWriter.endObject();
         }
-        writer.endObject();
+        jsonWriter.endObject();
+
+        jsonWriter.close();
     }
 
     private void writeJSONObject(JSONObject object, JsonWriter writer) throws IOException {

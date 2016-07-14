@@ -398,7 +398,7 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
         ArrayList<String> tags = new ArrayList<>(tagsArray.length());
 
         for (int i=0; i<tagsArray.length(); i++) {
-            tags.set(i, tagsArray.getString(i));
+            tags.add(i, tagsArray.getString(i));
         }
 
         return new Place(

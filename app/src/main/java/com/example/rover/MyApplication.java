@@ -15,7 +15,7 @@ public class MyApplication extends Application {
         super.onCreate();
 
         RoverConfig config = new RoverConfig.Builder()
-                .setApplicationToken("b43963962ea03fc2f4b456a5cbe49b40")
+                .setApplicationToken("6c546189dc45df1293bddc18c0b54786")
                 .build();
 
         Rover.setup(this, config);

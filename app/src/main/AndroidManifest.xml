@@ -14,24 +14,15 @@
 
         <meta-data
             android:name="com.google.android.nearby.messages.API_KEY"
-            android:value="AIzaSyDBNcEgh9_Ih6DQwIU54IIWBEJewWNzM7U" />
+            android:value="AIzaSyCDovnSScCp5t6Xr97vKZwkpbljyQ6HeHk" />
 
         <activity
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
-
-
-
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="io.rover.messages.LANDING_PAGE"/>
-                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 

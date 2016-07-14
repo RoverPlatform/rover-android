@@ -17,6 +17,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Locale;
 
 import io.rover.model.Action;
@@ -147,6 +149,20 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                         message.setAction(Message.Action.None);
                         break;
                 }
+
+                HashMap<String, String> propertiesMap = new HashMap<>();
+
+                if (attributes.has("properties")) {
+                    JSONObject properties = attributes.getJSONObject("properties");
+                    Iterator<String> keys = properties.keys();
+                    while (keys.hasNext()) {
+                        String key = keys.next();
+                        String value = properties.getString(key);
+                        propertiesMap.put(key, value);
+                    }
+                }
+
+                message.setProperties(propertiesMap);
 
                 return message;
             }

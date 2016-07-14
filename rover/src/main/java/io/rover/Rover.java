@@ -108,7 +108,7 @@ public class Rover implements EventSubmitTask.Callback {
                 final GoogleApiConnection.Callbacks clientCallbacks = this;
 
                 // Location Updates
-                if (ContextCompat.checkSelfPermission(mSharedInstance.mApplicationContext, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                if (ContextCompat.checkSelfPermission(mSharedInstance.mApplicationContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                     Log.i("LocationServices", "Requesting location updates");
                     LocationServices.FusedLocationApi.requestLocationUpdates(client, locationRequest, mSharedInstance.getLocationPendingIntent())
                             .setResultCallback(new ResultCallback<Status>() {
@@ -285,7 +285,7 @@ public class Rover implements EventSubmitTask.Callback {
             }
         } else if (event instanceof BeaconTransitionEvent) {
             BeaconTransitionEvent btEvent = (BeaconTransitionEvent)event;
-            BeaconConfiguration bc = (BeaconConfiguration)btEvent.getBeaconConfiguration();
+            BeaconConfiguration bc = btEvent.getBeaconConfiguration();
 
             for (RoverObserver observer : mObservers) {
                 if (observer instanceof RoverObserver.BeaconTransitionObserver) {
@@ -363,11 +363,6 @@ public class Rover implements EventSubmitTask.Callback {
     static public void simulateGeofenceExit(String id) {
         Event event = new GeofenceTransitionEvent(id, Geofence.GEOFENCE_TRANSITION_EXIT, new Date());
         mSharedInstance.sendEvent(event);
-    }
-
-    static public void registerForNotifications() {
-    //    Intent intent = new Intent(mSharedInstance.mApplicationContext, GcmRegistrationService.class);
-    //    mSharedInstance.mApplicationContext.startService(intent);
     }
 
     /**
@@ -512,21 +507,19 @@ public class Rover implements EventSubmitTask.Callback {
                 switch (message.getAction()) {
                     case Website: {
                         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
-                        TaskStackBuilder stackBuilder = TaskStackBuilder.create(getApplicationContext());
-                        stackBuilder.addNextIntent(intent);
-
-                        Intent inten = new Intent(getApplicationContext(), NearbyMessageService.class);
-                        stackBuilder.addNextIntent(inten);
-                        pendingIntent =  stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+                        pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
                         break;
                     }
                     case LandingPage: {
-                        pendingIntent = mSharedInstance.getAppLaunchPendingIntent();
+                        Intent intent = new Intent(this, RemoteScreenActivity.class);
+                        intent.setData(getUriFromMessageId(message.getId()));
+                        //intent.putExtra(RemoteScreenActivity.INTENT_EXTRA_MESSAGE_ID, message.getId());
+                        pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
                         break;
                     }
                     case DeepLink: {
                         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
-                        pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+                        pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
                         break;
                     }
                     default: {
@@ -546,6 +539,13 @@ public class Rover implements EventSubmitTask.Callback {
 
             NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
             manager.notify(message.getId(), 12345 /* Rover notification id */, builder.build());
+        }
+
+        private Uri getUriFromMessageId(String messageId) {
+            return new Uri.Builder().scheme("rover")
+                    .authority("message-id")
+                    .appendPath(messageId).build();
+
         }
     }
 }

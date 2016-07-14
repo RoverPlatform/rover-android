@@ -53,6 +53,18 @@ class Router implements NetworkTask.NetworkTaskConnectionManager {
         }
     }
 
+    static NetworkTask getLandingPageNetworkTask(String messageId) {
+        String url = baseURL + "/inbox/" + messageId + "/landing-page";
+        try {
+            NetworkTask networkTask = new NetworkTask("GET", new URL(url));
+            networkTask.setConnectionManager(sharedInstance);
+            return networkTask;
+        } catch (MalformedURLException e) {
+            Log.e("Router", "Bad URL: " + url);
+            return null;
+        }
+    }
+
     @Override
     public void onPrepareConnection(HttpURLConnection connection) {
         connection.setRequestProperty("X-Rover-Api-Key", apiKey);

@@ -19,7 +19,6 @@ import io.rover.network.JsonApiResponseHandler;
 import io.rover.network.JsonApiPayloadProvider.JsonApiObjectSerializer;
 import io.rover.network.JsonApiResponseHandler.JsonApiObjectMapper;
 import io.rover.network.NetworkTask;
-import io.rover.network.NetworkTask.JsonPayloadProvider;
 
 /**
  * Created by ata_n on 2016-04-04.
@@ -56,7 +55,7 @@ public class EventSubmitTask implements Runnable, JsonApiResponseHandler.JsonApi
         }
 
         JsonApiObjectSerializer serializer = new ObjectSerializer(mEvent, mContext);
-        JsonPayloadProvider payloadProvider = new JsonApiPayloadProvider(serializer);
+        NetworkTask.PayloadProvider payloadProvider = new JsonApiPayloadProvider(serializer);
 
         networkTask.setPayloadProvider(payloadProvider);
 

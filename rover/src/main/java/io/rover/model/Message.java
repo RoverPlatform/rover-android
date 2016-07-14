@@ -5,6 +5,7 @@ import android.renderscript.ScriptC;
 import java.net.URI;
 import java.net.URL;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Created by ata_n on 2016-04-05.
@@ -23,6 +24,7 @@ public class Message {
     private Action mAction;
     private URI mURI;
     private Screen mLandingPage;
+    private Map<String, String> mProperties;
 
     public String getId() { return mId; }
 
@@ -58,5 +60,9 @@ public class Message {
     public String getTitle() { return mTitle; }
 
     public String getText() { return mText; }
+
+    public Map<String, String> getProperties() { return mProperties; }
+
+    public void setProperties(Map<String, String> properties) { mProperties = properties; }
 
 }

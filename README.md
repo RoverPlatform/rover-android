@@ -15,7 +15,7 @@ Before continueing with the installation of the Rover SDK, please make sure you 
 The easiest way to get Rover into your Android project is to use the [JCenter](https://bintray.com/bintray/jcenter) Maven repository. Just add the following line to the `dependencies` section of your module's `build.gradle` file:
 
 ```
-compile 'io.rover.library:rover:0.2.1'
+compile 'io.rover.library:rover:0.3.0'
 ```
 
 ### Manual Installation
@@ -109,7 +109,7 @@ __IMPORTANT__ Notice that the example removes itself as an observer in the `onDe
 
 ## Messages
 
-// Coming soon
+Using the [Rover Messages App](https://app.rover.io/messages/) you can create messages that are delivered to your users when a proximity event is triggered or on a specific date and time. You can attach push notifications to your messages that will be delivered along with your messages. Additionally you can attach content to your messages. The content can be a landing page authored in the [Rover Messages App](https://app.rover.io/messages/) or it can simply link to a website. A message can also trigger functionality within your app through a deep link and can have custom data attached.
 
 ### Notifications
 
@@ -129,3 +129,31 @@ If you like fine-grained control over notifications, you must register a [Notifi
 ```
 
 Check the [Notification Provider](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/NotificationProvider.java) file for more documentation on methods to customize behavior.
+
+### Inbox
+
+Most applications provide means for users to recall messages. You can use the `onMessageReceived(Message message)` callback on a [`MessageDeliveryObserver`](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/RoverObserver.java) to map and add Rover messages to your application's inbox as they are delivered. You may also rely solely on Rover for a simple implementation of such inbox if your application doesn't already have one:
+
+```java
+        Rover.reloadInbox(new Rover.OnInboxReloadListener() {
+            public void onSuccess(List<Message> messages) {
+                // Add to your adapter
+            }
+
+            public void onFailure() {}
+        });
+```
+
+Note that the `reloadInbox` method will only return messages that have been marked to be saved in the Rover Messages app.
+
+See the [MessageFragment](https://github.com/RoverPlatform/rover-android/blob/master/app/src/main/java/com/example/rover/MessageFragment.java) in the example app for a quick implementation.
+
+### Screen Activity
+
+If the message contains a landing page you probably want to present an activity for it. The `getLandingPage()` method of a [`Message`](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/model/Message.java) object is of type [`Screen`](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/model/Screen.java). You can launch the `ScreenActivity` using an Intent which has the `Screen` object in its extras under the key `ScreenActivity.INTENT_EXTRA_SCREEN`.
+
+```java
+Intent intent = new Intent(this, ScreenActivity.class);
+intent.putExtra(ScreenActivity.INTENT_EXTRA_SCREEN, message.getLandingPage());
+startActivity(intent);
+```

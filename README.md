@@ -15,7 +15,7 @@ Before continueing with the installation of the Rover SDK, please make sure you 
 The easiest way to get Rover into your Android project is to use the [JCenter](https://bintray.com/bintray/jcenter) Maven repository. Just add the following line to the `dependencies` section of your module's `build.gradle` file:
 
 ```
-compile 'io.rover.library:rover:0.3.0'
+compile 'io.rover.library:rover:0.3.1'
 ```
 
 ### Manual Installation

@@ -153,6 +153,10 @@ public class NetworkTask implements Runnable {
         String line;
         try {
 
+            if (is == null) {
+                return " - No stream -";
+            }
+
             br = new BufferedReader(new InputStreamReader(is));
             while ((line = br.readLine()) != null) {
                 sb.append(line);

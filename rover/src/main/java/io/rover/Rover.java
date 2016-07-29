@@ -46,6 +46,8 @@ import com.google.firebase.messaging.RemoteMessage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -59,6 +61,7 @@ import io.rover.model.Device;
 import io.rover.model.DeviceUpdateEvent;
 import io.rover.model.Event;
 import io.rover.model.GeofenceTransitionEvent;
+import io.rover.model.GimbalPlaceTransitionEvent;
 import io.rover.model.LocationUpdateEvent;
 import io.rover.model.Place;
 
@@ -77,16 +80,33 @@ public class Rover implements EventSubmitTask.Callback {
     private ExecutorService mEventExecutorService = Executors.newSingleThreadExecutor();
     private ArrayList<RoverObserver> mObservers = new ArrayList<>();
     private NotificationProvider mNotificationProvider;
+    private boolean mGimbalMode;
 
     private Rover() {}
 
     public static void setup(Application application, RoverConfig config) {
         mSharedInstance.mApplicationContext = application.getApplicationContext();
+        mSharedInstance.mNotificationProvider = config.mNotificationProvider;
         Router.setApiKey(config.mAppToken);
         Router.setDeviceId(Device.getInstance().getIdentifier(mSharedInstance.mApplicationContext));
+
+        // Gimbal check
+        try {
+            Class gmblPlaceManagerClass = Class.forName("com.gimbal.android.PlaceManager");
+            mSharedInstance.mGimbalMode = true;
+        } catch (ClassNotFoundException e) {
+            mSharedInstance.mGimbalMode = false;
+        }
+
+        Device.getInstance().setGimbalMode(mSharedInstance.mGimbalMode);
     }
 
     public static void startMonitoring() {
+
+        if (mSharedInstance.mGimbalMode) {
+            Log.e("Rover", "Use `PlaceManager.getInstance().startMonitoring();`");
+            return;
+        }
 
         if (!GoogleApiConnection.checkPlayServices(mSharedInstance.mApplicationContext)) {
             Log.e("Rover", "Failed to start monitoring");
@@ -154,6 +174,11 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     public static void stopMonitoring() {
+        if (mSharedInstance.mGimbalMode) {
+            Log.e("Rover", "Use `PlaceManager.getInstance().stopMonitoring();`");
+            return;
+        }
+
         GoogleApiConnection connection = new GoogleApiConnection(mSharedInstance.mApplicationContext);
         connection.setCallbacks(new GoogleApiConnection.Callbacks() {
             @Override
@@ -208,8 +233,8 @@ public class Rover implements EventSubmitTask.Callback {
         task.execute();
     }
 
-    public static void setNotificationProvider(NotificationProvider provider) {
-        mSharedInstance.mNotificationProvider = provider;
+    public static void submitEvent(Event event) {
+        mSharedInstance.sendEvent(event);
     }
 
     private PendingIntent getLocationPendingIntent() {

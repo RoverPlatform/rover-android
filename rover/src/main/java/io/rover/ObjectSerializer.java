@@ -17,6 +17,7 @@ import io.rover.model.Device;
 import io.rover.model.DeviceUpdateEvent;
 import io.rover.model.Event;
 import io.rover.model.GeofenceTransitionEvent;
+import io.rover.model.GimbalPlaceTransitionEvent;
 import io.rover.model.LocationUpdateEvent;
 import io.rover.model.Message;
 import io.rover.network.JsonApiPayloadProvider;
@@ -91,6 +92,7 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
                 jsonObject.put("action", "update");
                 jsonObject.put("latitude", luEvent.getLocation().getLatitude());
                 jsonObject.put("longitude", luEvent.getLocation().getLongitude());
+                jsonObject.put("accuracy", luEvent.getLocation().getAccuracy());
             } else if (event instanceof GeofenceTransitionEvent) {
                 GeofenceTransitionEvent gtEvent = (GeofenceTransitionEvent) event;
 
@@ -108,6 +110,12 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
 
                 jsonObject.put("object", "device");
                 jsonObject.put("action", "update");
+            } else if (event instanceof GimbalPlaceTransitionEvent) {
+                GimbalPlaceTransitionEvent gmblEvent = (GimbalPlaceTransitionEvent)event;
+
+                jsonObject.put("object", "gimbal-place");
+                jsonObject.put("action", gmblEvent.getGimbalPlaceTransition() == GimbalPlaceTransitionEvent.TRANSITION_EXIT ? "exit" : "enter");
+                jsonObject.put("gimbal-place-id", gmblEvent.getPlaceId());
             }
 
         } else if (mObject instanceof Customer) {
@@ -126,7 +134,7 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
 
             jsonObject.put("os-name", "Android");
             jsonObject.put("platform", "Android");
-            jsonObject.put("sdk-version", "4.0.0");
+            jsonObject.put("sdk-version", "0.4.0");
             jsonObject.put("development", true);
             jsonObject.put("udid", device.getIdentifier(mApplicationContext));
             jsonObject.put("locale-lang", device.getLocaleLanguage());

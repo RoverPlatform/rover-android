@@ -23,6 +23,7 @@ public class Device {
     private String mGcmToken;
     private String mAdvertisingId;
     private boolean mAdTrackingEnabled;
+    private boolean mGimbalMode;
 
     private Device() {}
 
@@ -132,6 +133,10 @@ public class Device {
     public String getLocaleLanguage() {
         return Locale.getDefault().getLanguage();
     }
+
+    public boolean isGimbalMode() { return mGimbalMode; }
+
+    public void setGimbalMode(boolean gimbalMode) { mGimbalMode = gimbalMode; }
 
     // TODO: add getNotificationsEnabled()
 }

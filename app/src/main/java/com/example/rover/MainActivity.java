@@ -1,13 +1,18 @@
 package com.example.rover;
 
 import android.Manifest;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Build;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -35,7 +40,9 @@ import org.w3c.dom.Text;
 import java.util.ArrayList;
 import java.util.Stack;
 
+import io.rover.ExperienceActivity;
 import io.rover.GoogleApiConnection;
+import io.rover.RemoteScreenActivity;
 import io.rover.RoverObserver;
 import io.rover.model.Action;
 import io.rover.model.Alignment;
@@ -53,8 +60,6 @@ import io.rover.model.PointsUnit;
 import io.rover.model.Row;
 import io.rover.model.Screen;
 import io.rover.model.TextBlock;
-import io.rover.model.Unit;
-import io.rover.ui.ScreenActivity;
 
 public class MainActivity extends AppCompatActivity implements MessageFragment.OnListFragmentInteractionListener, RegionFragment.OnRegionFragmentInteractionListener {
 
@@ -169,10 +174,33 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
         myScreen.setActionBarColor(Color.BLACK);
         myScreen.setUseDefaultActionBarStyle(false);
 
-        Intent intent = new Intent(getApplicationContext(), ScreenActivity.class);
-        intent.putExtra("EXTRA_SCREEN", myScreen);
+        Uri uri = new Uri.Builder().scheme("rover")
+                .authority("experience")
+                .appendPath("57b32c299514ac00271a7425").build();
 
-        //startActivity(intent);
+        Intent intent = new Intent(getApplicationContext(), ExperienceActivity.class);
+        intent.setData(uri);
+
+
+        startActivity(intent);
+//        TaskStackBuilder stackBuilder = TaskStackBuilder.create(getApplicationContext());
+//
+//        stackBuilder.addParentStack(MainActivity.class);
+//        stackBuilder.addNextIntent(intent);
+//
+//        PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT); //PendingIntent.getActivity(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+//
+//        NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext())
+//                .setAutoCancel(true)
+//                .setSmallIcon(io.rover.R.drawable.rover_notification_icon)
+//                //.setLargeIcon(largeIcon)
+//                //.setSound(sound)
+//                .setContentTitle("TITLE")
+//                .setContentText("HELLO FROM THE OTHER SIDE")
+//                .setContentIntent(pendingIntent);
+//
+//        NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+//        manager.notify("asdf", 12345 /* Rover notification id */, builder.build());
     }
 
     public void onUpdateLocationClicked(View view) {
@@ -274,9 +302,9 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
     public void onListFragmentInteraction(Message item) {
         switch (item.getAction()) {
             case LandingPage: {
-                Intent intent = new Intent(this, ScreenActivity.class);
-                intent.putExtra(ScreenActivity.INTENT_EXTRA_SCREEN, item.getLandingPage());
-                startActivity(intent);
+                //Intent intent = new Intent(this, ScreenActivity.class);
+                //intent.putExtra(ScreenActivity.INTENT_EXTRA_SCREEN, item.getLandingPage());
+                //startActivity(intent);
             }
         }
     }

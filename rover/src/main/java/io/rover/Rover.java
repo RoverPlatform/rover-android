@@ -568,7 +568,7 @@ public class Rover implements EventSubmitTask.Callback {
 
         private Uri getUriFromMessageId(String messageId) {
             return new Uri.Builder().scheme("rover")
-                    .authority("message-id")
+                    .authority("message")
                     .appendPath(messageId).build();
 
         }

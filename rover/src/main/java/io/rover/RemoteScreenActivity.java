@@ -3,7 +3,12 @@ package io.rover;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.util.JsonReader;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -15,18 +20,44 @@ import io.rover.model.Screen;
 import io.rover.network.JsonApiResponseHandler;
 import io.rover.network.JsonResponseHandler;
 import io.rover.network.NetworkTask;
-import io.rover.ui.ScreenActivity;
+import io.rover.ui.ScreenFragment;
 
 /**
  * Created by ata_n on 2016-07-11.
  */
-public class RemoteScreenActivity extends ScreenActivity {
+public class RemoteScreenActivity extends AppCompatActivity {
+
+    public static String INTENT_EXTRA_SCREEN = "INTENT_EXTRA_SCREEN";
 
     private FetchLandingPageTask mFetchTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        RelativeLayout layout = new RelativeLayout(this);
+        layout.setLayoutParams(new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+
+        layout.setId(View.generateViewId());
+
+        setContentView(layout);
+
+        Bundle bundle = getIntent().getExtras();
+        if (bundle != null) {
+
+        Fragment screenFragment = ScreenFragment.newInstance((Screen) bundle.getParcelable(INTENT_EXTRA_SCREEN));
+
+
+        getSupportFragmentManager()
+                .beginTransaction()
+                .add(layout.getId(), screenFragment, ScreenFragment.TAG)
+                .commit();
+
+
+
+        }
 
         Uri data = getIntent().getData();
         if (data != null) {
@@ -37,6 +68,13 @@ public class RemoteScreenActivity extends ScreenActivity {
 
             }
         }
+    }
+
+    @Override
+    public void onAttachFragment(Fragment fragment) {
+        super.onAttachFragment(fragment);
+
+
     }
 
     private class FetchLandingPageTask extends AsyncTask<String, Void, Screen> implements JsonResponseHandler.JsonCompletionHandler {
@@ -76,8 +114,14 @@ public class RemoteScreenActivity extends ScreenActivity {
         @Override
         protected void onPostExecute(Screen screen) {
             if (screen == null) { return; }
-            setScreen(screen);
-            getAdapter().notifyDataSetChanged();
+
+            ScreenFragment screenFragment = (ScreenFragment) getSupportFragmentManager().findFragmentByTag(ScreenFragment.TAG);
+            if (screenFragment == null) {
+                return;
+            }
+
+            screenFragment.setScreen(screen);
+            screenFragment.getAdapter().notifyDataSetChanged();
         }
     }
 }

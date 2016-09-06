@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.util.Log;
 import android.view.MotionEvent;
 
@@ -107,7 +109,7 @@ public class ButtonBlockView extends TextBlockView {
         if (title == null) {
             title = mTitles.get(State.Normal);
         }
-        super.setText(title);
+        super.setText(new SpannableString(title));
     }
 
     private void updateTitleColor() {
@@ -227,7 +229,7 @@ public class ButtonBlockView extends TextBlockView {
     public void setCornerRadius(float radius) { /* Do nothing */ }
 
     @Override
-    public void setText(String text) { /* Do nothing */ }
+    public void setText(Spanned text) { /* Do nothing */ }
 
     @Override
     public void setTextAlignment(Alignment alignment) { /* Do nothing */ }

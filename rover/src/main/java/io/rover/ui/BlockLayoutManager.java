@@ -4,12 +4,20 @@ import android.content.Context;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
+import android.text.Html;
 import android.text.Layout;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
+
+import org.w3c.dom.Text;
+import org.xml.sax.XMLReader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +26,7 @@ import io.rover.model.Alignment;
 import io.rover.model.Block;
 import io.rover.model.Image;
 import io.rover.model.ImageBlock;
+import io.rover.model.Inset;
 import io.rover.model.Offset;
 import io.rover.model.PercentageUnit;
 import io.rover.model.PointsUnit;
@@ -112,13 +121,15 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
                 Block block = getBlock(i, j);
                 boolean isStacked = block.getPosition() == Block.Position.Stacked;
 
-                mLayoutInfo[i][j] = getRectForBlock(block, isStacked ? yOffset : rowHeight, rowHeight);
+                mLayoutInfo[i][j] = getRectForBlock(block, isStacked ? yOffset : height, rowHeight);
 
-                yOffset += getFullHeightForItem(block, rowHeight);
-                bottomLimit = Math.max(bottomLimit, (int)yOffset);
+                if (isStacked) {
+                    yOffset += getFullHeightForItem(block, rowHeight);
+                }
             }
 
             height += rowHeight;
+            bottomLimit = Math.max(bottomLimit, (int)height);
         }
     }
 
@@ -271,16 +282,27 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
             paint.setTextSize(((TextBlock) block).getFont().getSize() * density);
             paint.setTypeface(((TextBlock) block).getFont().getTypeface());
 
-            // TODO: This textOffset attribute is to be removed and replaced with `inset` at the Block level
+            double leftInset = 0, rightInset = 0, topInset = 0, bottomInset = 0;
+
             Offset textOffset = ((TextBlock) block).getTextOffset();
-            double leftInset = getValueFromUnit(textOffset.getLeft(), 0);
-            double rightInset = getValueFromUnit(textOffset.getRight(), 0);
-            double topInset = getValueFromUnit(textOffset.getTop(), 0);
-            double bottomInset = getValueFromUnit(textOffset.getBottom(), 0);
+            if (textOffset != null) {
+                leftInset = getValueFromUnit(textOffset.getLeft(), 0);
+                rightInset = getValueFromUnit(textOffset.getRight(), 0);
+                topInset = getValueFromUnit(textOffset.getTop(), 0);
+                bottomInset = getValueFromUnit(textOffset.getBottom(), 0);
+            } else if (block.getInset() != null) {
+                Inset inset = block.getInset();
+                leftInset = getDPIValueFrom(inset.left);
+                rightInset = getDPIValueFrom(inset.right);
+                topInset = getDPIValueFrom(inset.top);
+                bottomInset = getDPIValueFrom(inset.bottom);
+            }
 
             int textWidth = (int)(width - leftInset - rightInset);
 
-            StaticLayout layout = new StaticLayout(((TextBlock) block).getText(), paint, textWidth, Layout.Alignment.ALIGN_NORMAL, 1f, 0f, true);
+            Spanned spannedText = ((TextBlock)block).getSpannedText();
+
+            StaticLayout layout = new StaticLayout(spannedText, paint, textWidth, Layout.Alignment.ALIGN_NORMAL, 1f, 0f, true);
             height = layout.getHeight() + layout.getBottomPadding() + layout.getTopPadding() + topInset + bottomInset;
         } else {
             height = 0;
@@ -327,6 +349,10 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
         } else {
             return unit.getValue() * density;
         }
+    }
+
+    private double getDPIValueFrom(double value) {
+        return value * density;
     }
 
     private Block getBlock(int row, int index) {

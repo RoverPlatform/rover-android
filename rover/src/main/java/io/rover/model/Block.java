@@ -6,15 +6,20 @@ import android.os.Parcelable;
 /**
  * Created by ata_n on 2016-06-16.
  */
-public abstract class Block implements Parcelable {
+public class Block implements Parcelable {
 
     /** Appearance
      */
 
+    private String mId;
     private int mBackgroundColor;
     private int mBorderColor;
     private double mBorderRadius;
     private double mBorderWidth;
+    private Inset mInset;
+    private Image mBackgroundImage;
+    private Image.ContentMode mBackgroundContentMode;
+    private double mBackgroundScale;
 
     /** Layout
      */
@@ -28,6 +33,8 @@ public abstract class Block implements Parcelable {
     private Unit mWidth;
     private Alignment mAlignment;
     private Offset mOffset;
+    private Action mAction;
+    private double mOpacity = 1;
 
     public Block() {
         mOffset = Offset.ZeroOffset;
@@ -35,6 +42,10 @@ public abstract class Block implements Parcelable {
     }
 
     public Position getPosition() { return mPosition; }
+
+    public String getId() { return mId; }
+
+    public void setId(String id) { mId = id; }
 
     public void setPosition(Position position) { mPosition = position; }
 
@@ -70,6 +81,30 @@ public abstract class Block implements Parcelable {
 
     public void setBorderWidth(double width) { mBorderWidth = width; }
 
+    public Inset getInset() {return  mInset;}
+
+    public void setInset(Inset inset) { mInset = inset; }
+
+    public Action getAction() { return mAction; }
+
+    public void setAction(Action action) { mAction = action; }
+
+    public double getOpacity() { return mOpacity; }
+
+    public void setOpacity(double opacity) { mOpacity = opacity; }
+
+    public Image getBackgroundImage() { return mBackgroundImage; }
+
+    public void setBackgroundImage(Image image) { mBackgroundImage = image; }
+
+    public Image.ContentMode getBackgroundContentMode() { return mBackgroundContentMode; }
+
+    public void setBackgroundContentMode(Image.ContentMode mode) { mBackgroundContentMode = mode; }
+
+    public double getBackgroundScale() { return mBackgroundScale; }
+
+    public void setBackgroundScale(double scale) { mBackgroundScale = scale; }
+
     // TODO: Appearance
 
     /** Parcelable
@@ -85,6 +120,12 @@ public abstract class Block implements Parcelable {
         mBorderColor = in.readInt();
         mBorderRadius = in.readDouble();
         mBorderWidth = in.readDouble();
+        mInset = (Inset) in.readValue(Inset.class.getClassLoader());
+        mAction = (Action) in.readValue(Action.class.getClassLoader());
+        mOpacity = in.readDouble();
+        mBackgroundImage = (Image) in.readValue(Image.class.getClassLoader());
+        mBackgroundScale = in.readDouble();
+        mBackgroundContentMode = (Image.ContentMode) in.readSerializable();
     }
 
     @Override
@@ -103,5 +144,24 @@ public abstract class Block implements Parcelable {
         dest.writeInt(mBorderColor);
         dest.writeDouble(mBorderRadius);
         dest.writeDouble(mBorderWidth);
+        dest.writeValue(mInset);
+        dest.writeValue(mAction);
+        dest.writeDouble(mOpacity);
+        dest.writeValue(mBackgroundImage);
+        dest.writeDouble(mBackgroundScale);
+        dest.writeSerializable(mBackgroundContentMode);
     }
+
+    @SuppressWarnings("unused")
+    public static final Parcelable.Creator<Block> CREATOR = new Parcelable.Creator<Block>() {
+        @Override
+        public Block createFromParcel(Parcel in) {
+            return new Block(in);
+        }
+
+        @Override
+        public Block[] newArray(int size) {
+            return new Block[size];
+        }
+    };
 }

@@ -1,5 +1,6 @@
 package io.rover;
 
+import android.net.NetworkRequest;
 import android.util.Log;
 
 import java.net.HttpURLConnection;
@@ -55,6 +56,18 @@ class Router implements NetworkTask.NetworkTaskConnectionManager {
 
     static NetworkTask getLandingPageNetworkTask(String messageId) {
         String url = baseURL + "/inbox/" + messageId + "/landing-page";
+        try {
+            NetworkTask networkTask = new NetworkTask("GET", new URL(url));
+            networkTask.setConnectionManager(sharedInstance);
+            return networkTask;
+        } catch (MalformedURLException e) {
+            Log.e("Router", "Bad URL: " + url);
+            return null;
+        }
+    }
+
+    static NetworkTask getExperienceNetworkTask(String experienceId) {
+        String url = baseURL + "/experiences/" + experienceId;
         try {
             NetworkTask networkTask = new NetworkTask("GET", new URL(url));
             networkTask.setConnectionManager(sharedInstance);

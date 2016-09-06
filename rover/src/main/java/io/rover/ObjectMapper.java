@@ -4,10 +4,12 @@ import android.graphics.Color;
 import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
+import com.google.android.gms.nearby.messages.Strategy;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -26,10 +28,12 @@ import io.rover.model.Alignment;
 import io.rover.model.Appearance;
 import io.rover.model.Block;
 import io.rover.model.ButtonBlock;
+import io.rover.model.Experience;
 import io.rover.model.Font;
 import io.rover.model.GeofenceTransitionEvent;
 import io.rover.model.Image;
 import io.rover.model.ImageBlock;
+import io.rover.model.Inset;
 import io.rover.model.Message;
 import io.rover.model.Offset;
 import io.rover.model.PercentageUnit;
@@ -191,11 +195,23 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                     screen.setStatusBarColor(getColorFromJSON(attributes.getJSONObject("status-bar-color")));
                 }
                 screen.setUseDefaultActionBarStyle(attributes.getBoolean("use-default-title-bar-style"));
+                if (attributes.has("background-image") && !attributes.isNull("background-image")) {
+                    screen.setBackgroundImage((Image)parseObject("images", null, attributes.getJSONObject("background-image")));
+                }
+                if (attributes.has("background-content-mode") && !attributes.isNull("background-content-mode")) {
+                    screen.setBackgroundContentMode(getContentModeFromString(attributes.getString("background-content-mode")));
+                }
+                if (attributes.has("background-scale") && !attributes.isNull("background-scale")) {
+                    screen.setBackgroundScale(attributes.getDouble("background-scale"));
+                }
 
                 String statusBarStyle = attributes.getString("status-bar-style");
                 if (!statusBarStyle.equals("light")) {
                     screen.setStatusBarLight(true);
                 }
+
+                if (attributes.has("id"))
+                    screen.setId(attributes.getString("id"));
 
                 return screen;
             }
@@ -217,6 +233,19 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                     Unit height = (Unit) parseObject("units", null, heightAttributes);
 
                     row.setHeight(height);
+                }
+
+                if (attributes.has("background-color") && !attributes.isNull("background-color")) {
+                    row.getBackgroundBlock().setBackgroundColor(getColorFromJSON(attributes.getJSONObject("background-color")));
+                }
+                if (attributes.has("background-image") && !attributes.isNull("background-image")) {
+                    row.getBackgroundBlock().setBackgroundImage((Image) parseObject("images", null, attributes.getJSONObject("background-image")));
+                }
+                if (attributes.has("background-scale") && !attributes.isNull("background-scale")) {
+                    row.getBackgroundBlock().setBackgroundScale(attributes.getDouble("background-scale"));
+                }
+                if (attributes.has("background-content-mode") && !attributes.isNull("background-content-mode")) {
+                    row.getBackgroundBlock().setBackgroundContentMode(getContentModeFromString(attributes.getString("background-content-mode")));
                 }
 
                 return row;
@@ -246,6 +275,7 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 String blockType = attributes.getString("type");
 
                 switch (blockType) {
+                    case "barcode-block":
                     case "image-block": {
                         block = new ImageBlock();
                         if (!attributes.isNull("image")) {
@@ -256,18 +286,34 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                     case "text-block": {
                         block = new TextBlock();
                         ((TextBlock)block).setText(attributes.getString("text"));
-                        ((TextBlock)block).setTextAlignment((Alignment) parseObject("alignments", null, attributes.getJSONObject("text-alignment")));
+                        Object textAlignment = attributes.get("text-alignment");
+                        if (textAlignment instanceof JSONObject) {
+                            ((TextBlock) block).setTextAlignment((Alignment) parseObject("alignments", null, (JSONObject) textAlignment));
+                        } else if (textAlignment instanceof String) {
+                            switch ((String)textAlignment) {
+                                case "left": {
+                                    ((TextBlock) block).setTextAlignment(new Alignment(Alignment.Horizontal.Left, Alignment.Vertical.Top));
+                                    break;
+                                }
+                                case "right": {
+                                    ((TextBlock) block).setTextAlignment(new Alignment(Alignment.Horizontal.Right, Alignment.Vertical.Top));
+                                    break;
+                                }
+                                case "center": {
+                                    ((TextBlock) block).setTextAlignment(new Alignment(Alignment.Horizontal.Center, Alignment.Vertical.Top));
+                                    break;
+                                }
+                            }
+                        }
                         ((TextBlock)block).setTextColor(getColorFromJSON(attributes.getJSONObject("text-color")));
-                        ((TextBlock)block).setTextOffset((Offset) parseObject("offsets", null, attributes.getJSONObject("text-offset")));
+                        if (attributes.has("text-offset")) {
+                            ((TextBlock) block).setTextOffset((Offset) parseObject("offsets", null, attributes.getJSONObject("text-offset")));
+                        }
                         ((TextBlock)block).setFont((Font) parseObject("fonts", null, attributes.getJSONObject("text-font")));
                         break;
                     }
                     case "button-block": {
                         block = new ButtonBlock();
-                        if (!attributes.isNull("action")) {
-                            JSONObject actionAttributes = attributes.getJSONObject("action");
-                            ((ButtonBlock) block).setAction((Action) parseObject("actions", null, actionAttributes));
-                        }
                         JSONObject states = attributes.getJSONObject("states");
                         ((ButtonBlock)block).setAppearance((Appearance) parseObject("appearances", null, states.getJSONObject("normal")), ButtonBlock.State.Normal);
                         ((ButtonBlock)block).setAppearance((Appearance) parseObject("appearances", null, states.getJSONObject("highlighted")), ButtonBlock.State.Highlighted);
@@ -276,7 +322,16 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                         break;
                     }
                     default:
-                        return null;
+                        block = new Block();
+                }
+
+                if (attributes.has("id")) {
+                    block.setId(attributes.getString("id"));
+                }
+
+                if (attributes.has("action") && !attributes.isNull("action")) {
+                    JSONObject actionAttributes = attributes.getJSONObject("action");
+                    block.setAction((Action) parseObject("actions", null, actionAttributes));
                 }
 
                 // Appearance
@@ -287,6 +342,12 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                         block.setBorderRadius(attributes.getDouble("border-radius"));
                         block.setBorderWidth(attributes.getDouble("border-width"));
                     }
+                }
+                if (attributes.has("opacity")) {
+                    block.setOpacity(attributes.getDouble("opacity"));
+                }
+                if (attributes.has("auto-height") && attributes.getBoolean("auto-height")) {
+                    block.setHeight(null);
                 }
 
                 // Layout
@@ -303,6 +364,29 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                     block.setPosition(Block.Position.Floating);
                 } else {
                     block.setPosition(Block.Position.Stacked);
+                }
+
+                if (attributes.has("inset")) {
+                    block.setInset((Inset)parseObject("insets", null, attributes.getJSONObject("inset")));
+                } else {
+                    block.setInset(Inset.ZeroInset);
+                }
+
+                if (attributes.has("auto-height") && attributes.getBoolean("auto-height")) {
+                    block.setHeight(null);
+                }
+
+
+                // BackgroundImage
+
+                if (attributes.has("background-image") && !attributes.isNull("background-image")) {
+                    block.setBackgroundImage((Image)parseObject("images", null, attributes.getJSONObject("background-image")));
+                }
+                if (attributes.has("background-content-mode") && !attributes.isNull("background-content-mode")) {
+                    block.setBackgroundContentMode(getContentModeFromString(attributes.getString("background-content-mode")));
+                }
+                if (attributes.has("background-scale") && !attributes.isNull("background-scale")) {
+                    block.setBackgroundScale(attributes.getDouble("background-scale"));
                 }
 
                 return block;
@@ -378,15 +462,48 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
             }
             case "actions": {
                 String actionType = attributes.getString("type");
-                String actionUrl = attributes.getString("url");
 
-                return new Action(actionType, actionUrl);
+                switch (actionType) {
+                    case "open-url":
+                    case "website-action":
+                    case "deep-link-action": {
+                        String actionUrl = attributes.getString("url");
+                        return new Action(actionType, actionUrl);
+                    }
+                    case "go-to-screen":{
+                        String screenId = attributes.getString("screen-id");
+                        return new Action(actionType, screenId);
+                    }
+                }
+
+
+
             }
             case "appearances": {
                 Appearance appearance = new Appearance();
                 appearance.title = attributes.getString("text");
-                appearance.titleAlignment = (Alignment) parseObject("alignments", null, attributes.getJSONObject("text-alignment"));
-                appearance.titleOffset = (Offset) parseObject("offsets", null, attributes.getJSONObject("text-offset"));
+                Object titleAlignment = attributes.get("text-alignment");
+                if (titleAlignment instanceof JSONObject) {
+                    appearance.titleAlignment = (Alignment) parseObject("alignments", null, (JSONObject) titleAlignment);
+                } else if (titleAlignment instanceof String) {
+                    switch ((String)titleAlignment) {
+                        case "left": {
+                            appearance.titleAlignment = new Alignment(Alignment.Horizontal.Left, Alignment.Vertical.Middle);
+                            break;
+                        }
+                        case "right": {
+                            appearance.titleAlignment = new Alignment(Alignment.Horizontal.Right, Alignment.Vertical.Middle);
+                            break;
+                        }
+                        case "center": {
+                            appearance.titleAlignment = new Alignment(Alignment.Horizontal.Center, Alignment.Vertical.Middle);
+                            break;
+                        }
+                    }
+                }
+                if (attributes.has("text-offset")) {
+                    appearance.titleOffset = (Offset) parseObject("offsets", null, attributes.getJSONObject("text-offset"));
+                }
                 appearance.titleColor = getColorFromJSON(attributes.getJSONObject("text-color"));
                 appearance.titleFont = (Font) parseObject("fonts", null, attributes.getJSONObject("text-font"));
                 appearance.backgroundColor = getColorFromJSON(attributes.getJSONObject("background-color"));
@@ -394,6 +511,24 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 appearance.borderWidth = attributes.getDouble("border-width");
                 appearance.borderRadius = attributes.getDouble("border-radius");
                 return appearance;
+            }
+            case "experiences": {
+                JSONArray screensAttributes = attributes.getJSONArray("screens");
+                String homeScreenId = attributes.getString("home-screen-id");
+
+                ArrayList<Screen> screens = new ArrayList<>();
+                for (int i = 0; i < screensAttributes.length(); i++) {
+                    JSONObject screenAttributes = screensAttributes.getJSONObject(i);
+                    Screen screen = (Screen) parseObject("screens", null, screenAttributes);
+                    if (screen != null) {
+                        screens.add(screen);
+                    }
+                }
+
+                return new Experience(screens, homeScreenId);
+            }
+            case "insets": {
+                return new Inset(attributes.getInt("top"), attributes.getInt("right"), attributes.getInt("bottom"), attributes.getInt("left"));
             }
         }
 
@@ -435,6 +570,16 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
             return Color.argb((int)(alpha * 255), (int)red, (int)green, (int)blue);
         } catch (JSONException e) {
             return 0;
+        }
+    }
+
+    private Image.ContentMode getContentModeFromString(String contentMode) {
+        switch (contentMode) {
+            case "stretch": return Image.ContentMode.Stretch;
+            case "tile": return Image.ContentMode.Tile;
+            case "fill": return Image.ContentMode.Fill;
+            case "fit": return Image.ContentMode.Fit;
+            default: return Image.ContentMode.Original;
         }
     }
 }

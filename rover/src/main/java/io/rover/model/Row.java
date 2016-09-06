@@ -12,9 +12,17 @@ public class Row implements Parcelable {
 
     private Unit mHeight;
     private ArrayList<Block> mBlocks;
+    private Block mBackgroundBlock;
 
     public Row(ArrayList<Block> blocks) {
+
+        mBackgroundBlock = new Block();
+        mBackgroundBlock.setPosition(Block.Position.Floating);
+        mBackgroundBlock.setAlignment(new Alignment(Alignment.Horizontal.Fill, Alignment.Vertical.Fill));
+
         mBlocks = blocks;
+
+        mBlocks.add(mBackgroundBlock);
     }
 
     public ArrayList<Block> getBlocks() { return mBlocks; }
@@ -22,6 +30,8 @@ public class Row implements Parcelable {
     public Unit getHeight() { return mHeight; }
 
     public void setHeight(Unit height) { mHeight = height; }
+
+    public Block getBackgroundBlock() { return mBackgroundBlock; }
 
     /** Parcelable
      */

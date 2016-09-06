@@ -10,6 +10,8 @@ public class Action implements Parcelable {
 
     public final static String WEBSITE_ACTION = "website-action";
     public final static String DEEPLINK_ACTION = "deep-link-action";
+    public final static String GOTO_SCREEN_ACTION = "go-to-screen";
+    public final static String OPEN_URL_ACTION = "open-url-action";
 
     private String mType;
     private String mUrl;

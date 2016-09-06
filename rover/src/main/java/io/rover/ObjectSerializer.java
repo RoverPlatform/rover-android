@@ -134,7 +134,7 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
 
             jsonObject.put("os-name", "Android");
             jsonObject.put("platform", "Android");
-            jsonObject.put("sdk-version", "0.4.0");
+            jsonObject.put("sdk-version", "0.4.1");
             jsonObject.put("development", true);
             jsonObject.put("udid", device.getIdentifier(mApplicationContext));
             jsonObject.put("locale-lang", device.getLocaleLanguage());

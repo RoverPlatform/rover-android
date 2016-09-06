@@ -517,7 +517,7 @@ public class Rover implements EventSubmitTask.Callback {
 
         private void sendNotification(io.rover.model.Message message) {
             PendingIntent pendingIntent = null;
-            int smallIcon = 0;
+            int smallIcon = R.drawable.rover_notification_icon;
             Bitmap largeIcon = null;
             Uri sound = null;
             if (mSharedInstance.mNotificationProvider != null) {
@@ -555,7 +555,7 @@ public class Rover implements EventSubmitTask.Callback {
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext())
                     .setAutoCancel(true)
-                    .setSmallIcon(R.drawable.rover_notification_icon)
+                    .setSmallIcon(smallIcon)
                     .setLargeIcon(largeIcon)
                     .setSound(sound)
                     .setContentTitle(message.getTitle())

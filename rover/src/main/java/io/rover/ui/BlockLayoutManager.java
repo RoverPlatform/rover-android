@@ -20,7 +20,9 @@ import org.w3c.dom.Text;
 import org.xml.sax.XMLReader;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.rover.model.Alignment;
 import io.rover.model.Block;
@@ -49,13 +51,23 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
     private float density;
     private int verticalScrollOffset = 0;
     private int bottomLimit = 0;
+    private Map<Integer,Rect> mClipBounds;
 
     public BlockLayoutManager(Context context) {
         density = context.getResources().getDisplayMetrics().density;
+        mClipBounds = new HashMap<>();
     }
 
     public void setBlockProvider(BlockProvider blockProvider) {
         mBlockProvider = blockProvider;
+    }
+
+    public Rect getBlockBounds(int position) {
+        if (mClipBounds == null) {
+            return null;
+        }
+
+        return mClipBounds.get(position);
     }
 
     @Override
@@ -106,6 +118,8 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
 
         double height = 0;
 
+        int position = 0;
+
         int numRows = mBlockProvider.getRowCount();
         mLayoutInfo = new Rect[numRows][];
         for (int i = 0; i < numRows; i++) {
@@ -121,7 +135,16 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
                 Block block = getBlock(i, j);
                 boolean isStacked = block.getPosition() == Block.Position.Stacked;
 
-                mLayoutInfo[i][j] = getRectForBlock(block, isStacked ? yOffset : height, rowHeight);
+                Rect layoutRect = getRectForBlock(block, isStacked ? yOffset : height, rowHeight);
+
+                mLayoutInfo[i][j] = layoutRect;
+
+                if (layoutRect.bottom > height + rowHeight || layoutRect.top < height) {
+                    int clippedTop = Math.max(0, (int)(height - layoutRect.top));
+                    int clippedHeight = Math.min((int)(height + rowHeight - layoutRect.top), layoutRect.bottom - layoutRect.top);
+                    mClipBounds.put(position, new Rect(0, clippedTop, layoutRect.width(), clippedHeight));
+                }
+                position++;
 
                 if (isStacked) {
                     yOffset += getFullHeightForItem(block, rowHeight);

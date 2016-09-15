@@ -1,5 +1,6 @@
 package io.rover.model;
 
+import android.net.Uri;
 import android.renderscript.ScriptC;
 
 import java.net.URI;
@@ -13,7 +14,7 @@ import java.util.Map;
 public class Message {
 
     public enum Action {
-        None, Website, DeepLink, LandingPage
+        None, Website, DeepLink, LandingPage, Experience
     }
 
     private String mId;
@@ -25,6 +26,7 @@ public class Message {
     private URI mURI;
     private Screen mLandingPage;
     private Map<String, String> mProperties;
+    private String mExperienceId;
 
     public String getId() { return mId; }
 
@@ -49,6 +51,18 @@ public class Message {
     public void setLandingPage(Screen screen) { mLandingPage = screen; }
 
     public Screen getLandingPage() { return mLandingPage; }
+
+    public Date getTimestamp() { return mTimestamp; }
+
+    public String getExperienceId() { return mExperienceId; }
+
+    public void setExperienceId(String id) { mExperienceId = id; }
+
+    public Uri getExperienceUri() {
+        return new Uri.Builder().scheme("rover")
+                .authority("experience")
+                .appendPath(getExperienceId()).build();
+    }
 
     public Message(String title, String text, Date timestamp, String id) {
         mId = id;

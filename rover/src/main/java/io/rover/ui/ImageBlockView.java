@@ -1,6 +1,7 @@
 package io.rover.ui;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.view.Gravity;
 import android.widget.ImageView;
@@ -19,10 +20,23 @@ public class ImageBlockView extends BlockView {
         mImageView = new RemoteImageView(context);
         mImageView.setScaleType(ImageView.ScaleType.FIT_XY);
         addView(mImageView);
+        //mImageView.setWillNotDraw(true);
+    }
+
+    public void setImageBitmap(Bitmap bitmap) {
+        mImageView.setImageBitmap(bitmap);
+    }
+
+    public void clearImage() {
+        mImageView.setImageDrawable(null);
     }
 
     public void setImageUrl(String url) {
         mImageView.setImage(url);
+    }
+
+    public void cancelDownload() {
+        mImageView.cancelCurrentImageLoad();
     }
 
     @Override
@@ -32,4 +46,9 @@ public class ImageBlockView extends BlockView {
         mImageView.setLayoutParams(new LayoutParams(w, h));
     }
 
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        //mImageView.draw(canvas);
+    }
 }

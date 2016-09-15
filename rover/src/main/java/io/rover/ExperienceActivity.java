@@ -12,6 +12,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
@@ -20,9 +22,16 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Date;
+
 import io.rover.model.Action;
+import io.rover.model.Block;
+import io.rover.model.BlockPressEvent;
 import io.rover.model.Experience;
+import io.rover.model.ExperienceDismissEvent;
+import io.rover.model.ExperienceLaunchEvent;
 import io.rover.model.Screen;
+import io.rover.model.ScreenViewEvent;
 import io.rover.network.JsonResponseHandler;
 import io.rover.network.NetworkTask;
 import io.rover.ui.ScreenFragment;
@@ -30,7 +39,7 @@ import io.rover.ui.ScreenFragment;
 /**
  * Created by ata_n on 2016-08-15.
  */
-public class ExperienceActivity extends AppCompatActivity implements ScreenFragment.OnActionListener{
+public class ExperienceActivity extends AppCompatActivity implements ScreenFragment.OnBlockListener {
 
     private static String EXPERIENCE_STATE_KEY = "EXPERIENCE_STATE_KEY";
 
@@ -68,19 +77,34 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
     }
 
     @Override
-    public void onAction(Action action) {
+    protected void onDestroy() {
+        super.onDestroy();
+        if (isFinishing() && mExperience != null) {
+            Rover.submitEvent(new ExperienceDismissEvent(mExperience, new Date()));
+        }
+    }
+
+    @Override
+    public void onBlockClick(Block block, Screen screen) {
+        Action action = block.getAction();
+        if (action == null) {
+            return;
+        }
+
         switch (action.getType()) {
             case Action.GOTO_SCREEN_ACTION: {
                 String screenId = action.getUrl();
-                Screen screen = mExperience.getScreen(screenId);
+                Screen newScreen = mExperience.getScreen(screenId);
                 if (screen != null) {
-                    Fragment screenFragment = ScreenFragment.newInstance(screen);
+                    Fragment screenFragment = ScreenFragment.newInstance(newScreen);
 
                     getSupportFragmentManager()
                             .beginTransaction()
                             .replace(mLayout.getId(), screenFragment)
                             .addToBackStack(null)
                             .commit();
+
+                    Rover.submitEvent(new ScreenViewEvent(newScreen, mExperience, screen, block, new Date()));
                 }
                 break;
             }
@@ -89,6 +113,18 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
                 startActivity(intent);
                 break;
             }
+        }
+
+        Rover.submitEvent(new BlockPressEvent(block, screen, mExperience, new Date()));
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            getSupportFragmentManager().popBackStack();
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
     }
 
@@ -150,10 +186,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
 
             mExperience = experience;
 
-            //ScreenFragment screenFragment = (ScreenFragment) getSupportFragmentManager().findFragmentByTag(ScreenFragment.TAG);
-            //if (screenFragment == null) {
-            //    return;
-            //}
+            Rover.submitEvent(new ExperienceLaunchEvent(experience, new Date()));
 
             Screen homeScreen = experience.getHomeScreen();
             if (homeScreen != null) {
@@ -165,8 +198,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
                         .replace(mLayout.getId(), screenFragment, "SCREEN")
                         .commit();
 
-                //screenFragment.setScreen(experience.getHomeScreen());
-                //screenFragment.getAdapter().notifyDataSetChanged();
+                Rover.submitEvent(new ScreenViewEvent(homeScreen, experience, null, null, new Date()));
             }
         }
     }

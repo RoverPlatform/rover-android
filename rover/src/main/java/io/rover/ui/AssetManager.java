@@ -8,7 +8,9 @@ import android.util.Log;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by ata_n on 2016-07-07.
@@ -21,6 +23,7 @@ public class AssetManager {
     }
 
     private static AssetManager sAssetManager;
+    private Map<String, AssetDownloader> mDownloaders;
 
     public static AssetManager getSharedAssetManager(Context context) {
         if (sAssetManager == null) {
@@ -30,7 +33,16 @@ public class AssetManager {
     }
 
     private AssetManager(Context context) {
+        mDownloaders = new HashMap<>();
+    }
 
+    public void cancelAsset(AssetManagerListener listener) {
+        String key = listener.toString();
+        AssetDownloader downloader = mDownloaders.get(key);
+        if (downloader != null) {
+            downloader.cancel(true);
+            mDownloaders.remove(downloader);
+        }
     }
 
     public void fetchAsset(String url, final AssetManagerListener listener) {
@@ -38,20 +50,36 @@ public class AssetManager {
             return;
         }
 
+        final String key = listener.toString();
+
+        AssetDownloader remainingDownloader = mDownloaders.get(key);
+        if (remainingDownloader != null) {
+            remainingDownloader.cancel(true);
+            mDownloaders.remove(url);
+        }
+
         // TODO: setup cache
         // TODO: setup downloaders map so we dont download the same url multiple times
 
-        new AssetDownloader(new AssetDownloader.AssetDownloaderListener() {
+
+
+        AssetDownloader downloader = new AssetDownloader(new AssetDownloader.AssetDownloaderListener() {
             @Override
             public void onAssetDownloadSuccess(Bitmap bitmap) {
+                mDownloaders.remove(key);
                 listener.onAssetSuccess(bitmap);
             }
 
             @Override
             public void onAssetDownloadFailure() {
+                mDownloaders.remove(key);
                 listener.onAssetFailure();
             }
-        }).execute(url);
+        });
+
+        mDownloaders.put(key, downloader);
+
+        downloader.execute(url);
     }
 
 

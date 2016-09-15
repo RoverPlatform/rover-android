@@ -10,6 +10,10 @@ import java.util.ArrayList;
  */
 public class Screen implements Parcelable {
 
+    public enum ActionBarButtons {
+        Close, Back, Both, None
+    }
+
     private String mId;
     private String mTitle;
     private ArrayList<Row> mHeaderRows;
@@ -25,6 +29,7 @@ public class Screen implements Parcelable {
     private Image mBackgroundImage;
     private double mBackgroundScale;
     private Image.ContentMode mBackgroundContentMode;
+    private ActionBarButtons mBarButtons;
 
 
     public Screen(ArrayList<Row> rows) {
@@ -89,6 +94,12 @@ public class Screen implements Parcelable {
 
     public void setBackgroundScale(double scale) { mBackgroundScale = scale; }
 
+    public ActionBarButtons getBarButtons() {
+        return mBarButtons;
+    }
+
+    public void setBarButtons(ActionBarButtons buttons) { mBarButtons = buttons; }
+
     /** Parcelable
      */
 
@@ -123,6 +134,7 @@ public class Screen implements Parcelable {
         mBackgroundImage = (Image) in.readValue(Image.class.getClassLoader());
         mBackgroundScale = in.readDouble();
         mBackgroundContentMode = (Image.ContentMode) in.readSerializable();
+        mBarButtons = (ActionBarButtons) in.readSerializable();
     }
 
     @Override
@@ -162,6 +174,7 @@ public class Screen implements Parcelable {
         dest.writeValue(mBackgroundImage);
         dest.writeDouble(mBackgroundScale);
         dest.writeSerializable(mBackgroundContentMode);
+        dest.writeSerializable(mBarButtons);
     }
 
     @SuppressWarnings("unused")

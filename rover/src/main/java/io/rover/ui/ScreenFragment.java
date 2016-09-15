@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
@@ -26,6 +27,9 @@ import android.text.style.ForegroundColorSpan;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -43,10 +47,10 @@ import io.rover.model.Image;
 import io.rover.model.Row;
 import io.rover.model.Screen;
 
-public class ScreenFragment extends Fragment implements RowsAdapter.ActionListener {
+public class ScreenFragment extends Fragment implements RowsAdapter.BlockListener, RowsAdapter.BoundsProvider {
 
-    public interface OnActionListener {
-        void onAction(Action action);
+    public interface OnBlockListener {
+        void onBlockClick(Block block, Screen screen);
     }
 
     public static String TAG = "SCREEN_FRAGMENT";
@@ -55,6 +59,7 @@ public class ScreenFragment extends Fragment implements RowsAdapter.ActionListen
     private Screen mScreen;
     private RowsAdapter mAdapter;
     private ImageView mBackgroundView;
+    private BlockLayoutManager mLayoutManager;
 
     public ScreenFragment() {}
 
@@ -69,6 +74,7 @@ public class ScreenFragment extends Fragment implements RowsAdapter.ActionListen
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
 
         if (getArguments() != null) {
             mScreen = getArguments().getParcelable(ARG_SCREEN);
@@ -80,15 +86,16 @@ public class ScreenFragment extends Fragment implements RowsAdapter.ActionListen
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         mAdapter = new RowsAdapter();
-        mAdapter.setActionListener(this);
+        mAdapter.setBlockListener(this);
         mAdapter.setRows(new ArrayList<Row>(0));
+        mAdapter.setBoundsProvider(this);
 
-        BlockLayoutManager layoutManager = new BlockLayoutManager(getActivity());
-        layoutManager.setBlockProvider(mAdapter);
+        mLayoutManager = new BlockLayoutManager(getActivity());
+        mLayoutManager.setBlockProvider(mAdapter);
 
         RecyclerView recyclerView = new RecyclerView(getActivity());
         recyclerView.setAdapter(mAdapter);
-        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setLayoutParams(new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
@@ -133,18 +140,37 @@ public class ScreenFragment extends Fragment implements RowsAdapter.ActionListen
     }
 
     @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == 1) {
+            getActivity().finish();
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override
-    public void onAction(Action action) {
-        if (getActivity() instanceof OnActionListener) {
-            ((OnActionListener) getActivity()).onAction(action);
-        } else {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(action.getUrl()));
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        if (mScreen != null && (mScreen.getBarButtons() == Screen.ActionBarButtons.Close || mScreen.getBarButtons() == Screen.ActionBarButtons.Both )) {
+            menu.add(0, 1, 0, "Close");
+            menu.getItem(0).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        }
+    }
+
+    @Override
+    public void onBlockClick(Block block) {
+        if (getActivity() instanceof OnBlockListener) {
+            ((OnBlockListener) getActivity()).onBlockClick(block, mScreen);
+        } else if (block.getAction() != null) {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(block.getAction().getUrl()));
             startActivity(intent);
         }
+    }
+
+    @Override
+    public Rect getBounds(int position) {
+        return mLayoutManager.getBlockBounds(position);
     }
 
     public void setScreen(final Screen screen) {
@@ -183,6 +209,14 @@ public class ScreenFragment extends Fragment implements RowsAdapter.ActionListen
 
             ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
             if (actionBar != null) {
+                // back button
+                if (screen.getBarButtons() == Screen.ActionBarButtons.Back || screen.getBarButtons() == Screen.ActionBarButtons.Both)
+                    actionBar.setDisplayHomeAsUpEnabled(true);
+                else
+                    actionBar.setDisplayHomeAsUpEnabled(false);
+                // close button
+                getActivity().invalidateOptionsMenu();
+
                 actionBar.setBackgroundDrawable(new ColorDrawable(screen.getActionBarColor()));
 
                 if (title != null) {

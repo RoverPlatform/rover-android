@@ -5,21 +5,29 @@ import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 
+import io.rover.model.Action;
 import io.rover.model.BeaconTransitionEvent;
+import io.rover.model.BlockPressEvent;
 import io.rover.model.Customer;
 import io.rover.model.Device;
 import io.rover.model.DeviceUpdateEvent;
 import io.rover.model.Event;
+import io.rover.model.ExperienceDismissEvent;
+import io.rover.model.ExperienceLaunchEvent;
 import io.rover.model.GeofenceTransitionEvent;
 import io.rover.model.GimbalPlaceTransitionEvent;
 import io.rover.model.LocationUpdateEvent;
 import io.rover.model.Message;
+import io.rover.model.ScreenViewEvent;
 import io.rover.network.JsonApiPayloadProvider;
 
 /**
@@ -116,18 +124,62 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
                 jsonObject.put("object", "gimbal-place");
                 jsonObject.put("action", gmblEvent.getGimbalPlaceTransition() == GimbalPlaceTransitionEvent.TRANSITION_EXIT ? "exit" : "enter");
                 jsonObject.put("gimbal-place-id", gmblEvent.getPlaceId());
+            } else if (event instanceof ExperienceLaunchEvent) {
+                ExperienceLaunchEvent expEvent = (ExperienceLaunchEvent)event;
+
+                jsonObject.put("object", "experience");
+                jsonObject.put("action", "launched");
+                jsonObject.put("experience-id", expEvent.getExperience().getId());
+            } else if (event instanceof ExperienceDismissEvent) {
+                ExperienceDismissEvent expEvent = (ExperienceDismissEvent)event;
+
+                jsonObject.put("object", "experience");
+                jsonObject.put("action", "dismissed");
+                jsonObject.put("experience-id", expEvent.getExperience().getId());
+            } else if (event instanceof ScreenViewEvent) {
+                ScreenViewEvent expEvent = (ScreenViewEvent)event;
+
+                jsonObject.put("object", "experience");
+                jsonObject.put("action", "screen-viewed");
+                jsonObject.put("experience-id", expEvent.getExperience().getId());
+                if (expEvent.getScreen() != null) {
+                    jsonObject.put("screen-id", expEvent.getScreen().getId());
+                }
+                if (expEvent.getFromScreen() != null) {
+                    jsonObject.put("from-screen-id", expEvent.getFromScreen().getId());
+                }
+                if (expEvent.getFromBlock() != null) {
+                    jsonObject.put("from-block-id", expEvent.getFromBlock().getId());
+                }
+            } else if (event instanceof BlockPressEvent) {
+                BlockPressEvent expEvent = (BlockPressEvent) event;
+
+                jsonObject.put("object", "experience");
+                jsonObject.put("action", "block-clicked");
+                if (expEvent.getBlock() != null) {
+                    jsonObject.put("block-id", expEvent.getBlock().getId());
+                }
+                if (expEvent.getExperience() != null) {
+                    jsonObject.put("experience-id", expEvent.getExperience().getId());
+                }
+                if (expEvent.getBlock() != null) {
+                    jsonObject.put("block-action", getActionJSON(expEvent.getBlock().getAction()));
+                }
             }
 
         } else if (mObject instanceof Customer) {
             Customer customer = (Customer)mObject;
 
             jsonObject.put("identifier", customer.getIdentifier());
-            jsonObject.put("name", customer.getName());
+            jsonObject.put("first-name", customer.getFirstName());
+            jsonObject.put("last-name", customer.getLastName());
             jsonObject.put("email", customer.getEmail());
             jsonObject.put("phone-number", customer.getPhoneNumber());
-            //jsonObject.put("gender", customer.getGender());
-            //jsonObject.put("age", customer.getAge());
-            //jsonObject.put("tags", new JSONArray(customer.getTags()));
+            jsonObject.put("gender", customer.getGender());
+            jsonObject.put("age", customer.getAge());
+            if (customer.getTags() != null) {
+                jsonObject.put("tags", new JSONArray(Arrays.asList(customer.getTags())));
+            }
 
         } else if (mObject instanceof Device) {
             Device device = (Device)mObject;
@@ -158,5 +210,24 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
 
             jsonObject.put("read", message.isRead());
         }
+    }
+
+    private JSONObject getActionJSON(Action action) throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+
+        switch (action.getType()) {
+            case Action.DEEPLINK_ACTION: {
+                jsonObject.put("type", "open-url");
+                jsonObject.put("url", action.getUrl());
+                break;
+            }
+            case Action.GOTO_SCREEN_ACTION: {
+                jsonObject.put("type", "go-to-screen");
+                jsonObject.put("screen-id", action.getUrl());
+                break;
+            }
+        }
+
+        return jsonObject;
     }
 }

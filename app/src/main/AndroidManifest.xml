@@ -13,7 +13,7 @@
 
         <meta-data
             android:name="com.google.android.nearby.messages.API_KEY"
-            android:value="AIzaSyCDovnSScCp5t6Xr97vKZwkpbljyQ6HeHk" />
+            android:value="AIzaSyC5Ojn9xbBwYfv6nO1uiOY7XSfzl-zTILA" />
 
         <activity
             android:name=".MainActivity"
@@ -25,6 +25,12 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="io.rover.ExperienceActivity"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity"/>
+        </activity>
 
     </application>
 

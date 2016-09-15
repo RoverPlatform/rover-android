@@ -182,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
         intent.setData(uri);
 
 
-        startActivity(intent);
+        //startActivity(intent);
 //        TaskStackBuilder stackBuilder = TaskStackBuilder.create(getApplicationContext());
 //
 //        stackBuilder.addParentStack(MainActivity.class);
@@ -302,9 +302,16 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
     public void onListFragmentInteraction(Message item) {
         switch (item.getAction()) {
             case LandingPage: {
-                //Intent intent = new Intent(this, ScreenActivity.class);
-                //intent.putExtra(ScreenActivity.INTENT_EXTRA_SCREEN, item.getLandingPage());
-                //startActivity(intent);
+                Intent intent = new Intent(this, RemoteScreenActivity.class);
+                intent.putExtra(RemoteScreenActivity.INTENT_EXTRA_SCREEN, item.getLandingPage());
+                startActivity(intent);
+                break;
+            }
+            case Experience: {
+                Intent intent = new Intent(this, ExperienceActivity.class);
+                intent.setData(item.getExperienceUri());
+                startActivity(intent);
+                break;
             }
         }
     }

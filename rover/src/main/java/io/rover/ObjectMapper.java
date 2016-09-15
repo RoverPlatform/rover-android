@@ -43,6 +43,7 @@ import io.rover.model.Row;
 import io.rover.model.Screen;
 import io.rover.model.TextBlock;
 import io.rover.model.Unit;
+import io.rover.model.WebBlock;
 import io.rover.network.JsonApiResponseHandler;
 
 /**
@@ -149,6 +150,12 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                         }
                         break;
                     }
+                    case "experience": {
+                        String experienceId = attributes.getString("experience-id");
+                        message.setAction(Message.Action.Experience);
+                        message.setExperienceId(experienceId);
+                        break;
+                    }
                     default:
                         message.setAction(Message.Action.None);
                         break;
@@ -204,6 +211,9 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 if (attributes.has("background-scale") && !attributes.isNull("background-scale")) {
                     screen.setBackgroundScale(attributes.getDouble("background-scale"));
                 }
+                if (attributes.has("title-bar-buttons") && !attributes.isNull("title-bar-buttons")) {
+                    screen.setBarButtons(getBarButtons(attributes.getString("title-bar-buttons")));
+                }
 
                 String statusBarStyle = attributes.getString("status-bar-style");
                 if (!statusBarStyle.equals("light")) {
@@ -246,6 +256,9 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 }
                 if (attributes.has("background-content-mode") && !attributes.isNull("background-content-mode")) {
                     row.getBackgroundBlock().setBackgroundContentMode(getContentModeFromString(attributes.getString("background-content-mode")));
+                }
+                if (attributes.has("auto-height") && attributes.getBoolean("auto-height")) {
+                    row.setHeight(null);
                 }
 
                 return row;
@@ -319,6 +332,12 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                         ((ButtonBlock)block).setAppearance((Appearance) parseObject("appearances", null, states.getJSONObject("highlighted")), ButtonBlock.State.Highlighted);
                         ((ButtonBlock)block).setAppearance((Appearance) parseObject("appearances", null, states.getJSONObject("selected")), ButtonBlock.State.Selected);
                         ((ButtonBlock)block).setAppearance((Appearance) parseObject("appearances", null, states.getJSONObject("disabled")), ButtonBlock.State.Disabled);
+                        break;
+                    }
+                    case "web-view-block": {
+                        block = new WebBlock();
+                        ((WebBlock) block).setURL(attributes.getString("url"));
+                        ((WebBlock) block).setScrollable(attributes.getBoolean("scrollable"));
                         break;
                     }
                     default:
@@ -475,9 +494,6 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                         return new Action(actionType, screenId);
                     }
                 }
-
-
-
             }
             case "appearances": {
                 Appearance appearance = new Appearance();
@@ -525,7 +541,7 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                     }
                 }
 
-                return new Experience(screens, homeScreenId);
+                return new Experience(screens, homeScreenId, id);
             }
             case "insets": {
                 return new Inset(attributes.getInt("top"), attributes.getInt("right"), attributes.getInt("bottom"), attributes.getInt("left"));
@@ -580,6 +596,15 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
             case "fill": return Image.ContentMode.Fill;
             case "fit": return Image.ContentMode.Fit;
             default: return Image.ContentMode.Original;
+        }
+    }
+
+    private Screen.ActionBarButtons getBarButtons(String string) {
+        switch (string) {
+            case "close": return Screen.ActionBarButtons.Close;
+            case "back": return Screen.ActionBarButtons.Back;
+            case "both": return Screen.ActionBarButtons.Both;
+            default: return Screen.ActionBarButtons.None;
         }
     }
 }

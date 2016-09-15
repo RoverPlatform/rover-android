@@ -1,8 +1,11 @@
 package io.rover;
 
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.graphics.Bitmap;
 import android.net.Uri;
+
+import io.rover.model.Message;
 
 /**
  * Created by ata_n on 2016-07-04.

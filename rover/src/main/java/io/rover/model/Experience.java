@@ -12,11 +12,15 @@ import java.util.List;
 public class Experience implements Parcelable {
     private List<Screen> mScreens;
     private String mHomeScreenId;
+    private String mId;
 
-    public Experience(List<Screen> screens, String homeScreenId) {
+    public Experience(List<Screen> screens, String homeScreenId, String id) {
         mScreens = screens;
         mHomeScreenId = homeScreenId;
+        mId = id;
     }
+
+    public String getId() { return mId; }
 
     public List<Screen> getScreens() {
         return mScreens;

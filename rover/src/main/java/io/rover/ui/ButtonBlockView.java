@@ -35,6 +35,7 @@ public class ButtonBlockView extends TextBlockView {
     private Map<State, Integer> mBorderColors;
     private Map<State, Float> mBorderWidths;
     private Map<State, Float> mCornerRadii;
+    private Map<State, Float> mTitleTextSizes;
 
     public ButtonBlockView(Context context) {
         super(context);
@@ -56,6 +57,8 @@ public class ButtonBlockView extends TextBlockView {
         mBorderWidths.put(State.Normal, 0.0f);
         mCornerRadii = new HashMap<>();
         mCornerRadii.put(State.Normal, 0.0f);
+        mTitleTextSizes = new HashMap<>();
+        mTitleTextSizes.put(State.Normal, 12.0f);
         setState(State.Normal);
     }
 
@@ -102,6 +105,11 @@ public class ButtonBlockView extends TextBlockView {
     public void setCornerRadius(float radius, State state) {
         mCornerRadii.put(state, radius);
         updateCornerRadius();
+    }
+
+    public void setTitleTextSize(float size, State state) {
+        mTitleTextSizes.put(state, size);
+        updateTitleTextSize();
     }
 
     private void updateTitle() {
@@ -172,6 +180,14 @@ public class ButtonBlockView extends TextBlockView {
         super.setCornerRadius(radius);
     }
 
+    private void updateTitleTextSize() {
+        Float size = mTitleTextSizes.get(mCurrentState);
+        if (size == null) {
+            size = mTitleTextSizes.get(State.Normal);
+        }
+        super.setTextSize(size);
+    }
+
     private void setState(State state) {
         mCurrentState = state;
         updateTitle();
@@ -182,6 +198,7 @@ public class ButtonBlockView extends TextBlockView {
         updateBackgroundColor();
         updateBorder();
         updateCornerRadius();
+        updateTitleTextSize();
     }
 
     @Override

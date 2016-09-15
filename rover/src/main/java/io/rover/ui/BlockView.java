@@ -2,6 +2,7 @@ package io.rover.ui;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.drawable.ColorDrawable;
@@ -9,6 +10,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.support.v7.widget.LinearLayoutCompat;
 import android.util.TypedValue;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -20,7 +22,7 @@ import io.rover.model.Inset;
 /**
  * Created by ata_n on 2016-07-08.
  */
-public class BlockView extends LinearLayout {
+public class BlockView extends FrameLayout {
 
     private RectF mPathRect;
     private Path mPath;
@@ -48,11 +50,15 @@ public class BlockView extends LinearLayout {
 
         mInset = Inset.ZeroInset;
 
-        mBackgroundView = new ImageView(context);
-        addView(mBackgroundView);
-
-        mBackgroundView.setWillNotDraw(true);
+        if (hasBackgroundImage()) {
+            mBackgroundView = new ImageView(context);
+            addView(mBackgroundView);
+            mBackgroundView.setWillNotDraw(true);
+            //mBackgroundView.setVisibility(INVISIBLE);
+        }
     }
+
+    public boolean hasBackgroundImage() { return true; }
 
     public void setBackgroundColor(int color) {
         mBackgroundDrawable.setColor(color);
@@ -76,6 +82,8 @@ public class BlockView extends LinearLayout {
         return mBackgroundView;
     }
 
+    public Drawable getDefaultBackground() { return mBackgroundDrawable; }
+
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         mPath.reset();
@@ -85,12 +93,16 @@ public class BlockView extends LinearLayout {
 
         mBorderDrawable.setBounds(0,0,w,h);
 
-        mBackgroundView.setLayoutParams(new LinearLayout.LayoutParams(w, h));
+        if (mBackgroundView != null) {
+            mBackgroundView.setLayoutParams(new FrameLayout.LayoutParams(w, h));
+        }
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        mBackgroundView.draw(canvas);
+        if (mBackgroundView != null) {
+            mBackgroundView.draw(canvas);
+        }
         canvas.clipPath(mPath);
         super.onDraw(canvas);
     }

@@ -31,7 +31,7 @@ public class RemoteImageView extends ImageView implements AssetManager.AssetMana
     }
 
     public void cancelCurrentImageLoad() {
-        //AssetManager.getSharedAssetManager(getContext()).cancel(this);
+        AssetManager.getSharedAssetManager(getContext()).cancelAsset(this);
     }
 
     @Override

@@ -5,7 +5,11 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.Build;
+import android.text.Html;
 import android.text.Layout;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.SpannedString;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.TypedValue;
@@ -19,7 +23,7 @@ import io.rover.model.Unit;
  */
 public class TextBlockView extends BlockView {
 
-    private String mText;
+    private Spanned mText;
     // TODO: This is to be changed to an inset property at the Block level
     private Offset mTextOffset;
     private Alignment mAlignment;
@@ -38,7 +42,7 @@ public class TextBlockView extends BlockView {
         createLayout();
     }
 
-    public void setText(String text) {
+    public void setText(Spanned text) {
         mText = text;
         createLayout();
     }
@@ -77,14 +81,14 @@ public class TextBlockView extends BlockView {
 
     private void createLayout() {
         if (mText == null) {
-            mText = "";
+            mText = new SpannedString("");
         }
 
         int width = getWidth();
 
         double textWidth = width - getPaddingLeft() - getPaddingRight() - getLeftInset() - getRightInset();
         if (textWidth > 0) {
-            mLayout = new StaticLayout(mText, mPaint, (int) textWidth, Layout.Alignment.ALIGN_NORMAL, 1f, 0f, true);
+            mLayout = new StaticLayout(mText, mPaint, (int) textWidth, Layout.Alignment.ALIGN_NORMAL, 1f, 0f, false);
         }
     }
 
@@ -156,21 +160,28 @@ public class TextBlockView extends BlockView {
         if (mTextOffset != null) {
             return (float) getValueFromUnit(mTextOffset.getLeft());
         }
-        return 0;
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (float) mInset.left, getResources().getDisplayMetrics());
     }
 
     private float getRightInset() {
         if (mTextOffset != null) {
             return (float) getValueFromUnit(mTextOffset.getRight());
         }
-        return 0;
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (float) mInset.right, getResources().getDisplayMetrics());
     }
 
     private float getTopInset() {
         if (mTextOffset != null) {
             return (float) getValueFromUnit(mTextOffset.getTop());
         }
-        return 0;
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (float) mInset.top, getResources().getDisplayMetrics());
+    }
+
+    private float getBottomInset() {
+        if (mTextOffset != null) {
+            return (float) getValueFromUnit(mTextOffset.getBottom());
+        }
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (float) mInset.bottom, getResources().getDisplayMetrics());
     }
 
     private double getValueFromUnit(Unit unit) {

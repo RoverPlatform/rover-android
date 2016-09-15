@@ -3,7 +3,10 @@ package io.rover.model;
 import android.graphics.Paint;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.text.Html;
 import android.text.Layout;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 
@@ -26,6 +29,7 @@ public class TextBlock extends Block {
     private int mTextColor;
     private Offset mTextOffset;
     private Font mFont;
+    private Spanned mSpannedText;
     
 
     public TextBlock() {
@@ -52,6 +56,37 @@ public class TextBlock extends Block {
     public Font getFont() { return mFont; }
 
     public void setFont(Font font) { mFont = font; }
+
+    public Spanned getSpannedText() {
+        if (mSpannedText != null) {
+            return mSpannedText;
+        }
+
+        Spanned text = Html.fromHtml(mText);
+        if (text instanceof SpannableStringBuilder) {
+            SpannableStringBuilder spannableStringBuilder = (SpannableStringBuilder) text;
+            String plainString = spannableStringBuilder.toString();
+
+            int lastCharPosition = plainString.length() - 1;
+            char lastChar = plainString.charAt(lastCharPosition);
+            if (lastChar == '\n') {
+                spannableStringBuilder.replace(lastCharPosition -1, lastCharPosition + 1, "");
+            }
+
+            plainString = spannableStringBuilder.toString();
+
+            int indexOfDoubleNewLine = plainString.indexOf("\n\n\n");
+            while (indexOfDoubleNewLine != -1) {
+                spannableStringBuilder.replace(indexOfDoubleNewLine, indexOfDoubleNewLine + 3, "\n\n");
+                plainString = spannableStringBuilder.toString();
+                indexOfDoubleNewLine = plainString.indexOf("\n\n\n", indexOfDoubleNewLine + 1);
+            }
+        }
+
+        mSpannedText = text;
+
+        return mSpannedText;
+    }
 
     /** Parcelable
      */

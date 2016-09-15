@@ -1,14 +1,15 @@
 package com.example.rover;
 
+import android.app.Activity;
 import android.app.Application;
-import android.location.Location;
+import android.app.PendingIntent;
+import android.graphics.Bitmap;
+import android.net.Uri;
 
-import java.util.Date;
-
+import io.rover.NotificationProvider;
 import io.rover.Rover;
 import io.rover.RoverConfig;
-import io.rover.model.GimbalPlaceTransitionEvent;
-import io.rover.model.LocationUpdateEvent;
+import io.rover.model.Message;
 
 /**
  * Created by ata_n on 2016-03-21.

@@ -1,6 +1,7 @@
 package io.rover;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Application;
 import android.app.IntentService;
 import android.app.NotificationManager;
@@ -11,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.v4.app.NavUtils;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.ContextCompat;
@@ -114,8 +116,8 @@ public class Rover implements EventSubmitTask.Callback {
         }
 
         final LocationRequest locationRequest = new LocationRequest()
-                .setInterval(60000)
-                .setFastestInterval(60000)
+                .setInterval(900000)
+                .setFastestInterval(900000)
                 .setSmallestDisplacement(0)
                 .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
@@ -520,6 +522,7 @@ public class Rover implements EventSubmitTask.Callback {
             int smallIcon = R.drawable.rover_notification_icon;
             Bitmap largeIcon = null;
             Uri sound = null;
+            android.app.TaskStackBuilder taskStackBuilder = android.app.TaskStackBuilder.create(this);
             if (mSharedInstance.mNotificationProvider != null) {
                 pendingIntent = mSharedInstance.mNotificationProvider.getNotificationPendingIntent(message);
                 smallIcon = mSharedInstance.mNotificationProvider.getSmallIconForNotification(message);
@@ -528,23 +531,36 @@ public class Rover implements EventSubmitTask.Callback {
             }
 
 
+
+
             if (pendingIntent == null) {
                 switch (message.getAction()) {
                     case Website: {
                         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
-                        pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                        taskStackBuilder.addNextIntent(intent);
+                        pendingIntent = taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
                         break;
                     }
                     case LandingPage: {
                         Intent intent = new Intent(this, RemoteScreenActivity.class);
                         intent.setData(getUriFromMessageId(message.getId()));
-                        //intent.putExtra(RemoteScreenActivity.INTENT_EXTRA_MESSAGE_ID, message.getId());
-                        pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                        taskStackBuilder.addParentStack(RemoteScreenActivity.class);
+                        taskStackBuilder.addNextIntent(intent);
+                        pendingIntent = taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
                         break;
                     }
                     case DeepLink: {
                         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
-                        pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                        taskStackBuilder.addNextIntent(intent);
+                        pendingIntent = taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+                        break;
+                    }
+                    case Experience: {
+                        Intent intent = new Intent(this, ExperienceActivity.class);
+                        intent.setData(message.getExperienceUri());
+                        taskStackBuilder.addParentStack(ExperienceActivity.class);
+                        taskStackBuilder.addNextIntent(intent);
+                        pendingIntent = taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
                         break;
                     }
                     default: {
@@ -568,7 +584,7 @@ public class Rover implements EventSubmitTask.Callback {
 
         private Uri getUriFromMessageId(String messageId) {
             return new Uri.Builder().scheme("rover")
-                    .authority("message-id")
+                    .authority("message")
                     .appendPath(messageId).build();
 
         }

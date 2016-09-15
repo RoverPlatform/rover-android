@@ -12,6 +12,10 @@ import java.net.URISyntaxException;
  */
 public class Image implements Parcelable {
 
+    public enum ContentMode {
+        Original, Stretch, Tile, Fill, Fit
+    }
+
     private double mWidth;
     private double mHeight;
     private String mUrl;

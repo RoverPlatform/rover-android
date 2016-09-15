@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.util.Log;
 import android.view.MotionEvent;
 
@@ -33,6 +35,7 @@ public class ButtonBlockView extends TextBlockView {
     private Map<State, Integer> mBorderColors;
     private Map<State, Float> mBorderWidths;
     private Map<State, Float> mCornerRadii;
+    private Map<State, Float> mTitleTextSizes;
 
     public ButtonBlockView(Context context) {
         super(context);
@@ -54,6 +57,8 @@ public class ButtonBlockView extends TextBlockView {
         mBorderWidths.put(State.Normal, 0.0f);
         mCornerRadii = new HashMap<>();
         mCornerRadii.put(State.Normal, 0.0f);
+        mTitleTextSizes = new HashMap<>();
+        mTitleTextSizes.put(State.Normal, 12.0f);
         setState(State.Normal);
     }
 
@@ -102,12 +107,17 @@ public class ButtonBlockView extends TextBlockView {
         updateCornerRadius();
     }
 
+    public void setTitleTextSize(float size, State state) {
+        mTitleTextSizes.put(state, size);
+        updateTitleTextSize();
+    }
+
     private void updateTitle() {
         String title = mTitles.get(mCurrentState);
         if (title == null) {
             title = mTitles.get(State.Normal);
         }
-        super.setText(title);
+        super.setText(new SpannableString(title));
     }
 
     private void updateTitleColor() {
@@ -170,6 +180,14 @@ public class ButtonBlockView extends TextBlockView {
         super.setCornerRadius(radius);
     }
 
+    private void updateTitleTextSize() {
+        Float size = mTitleTextSizes.get(mCurrentState);
+        if (size == null) {
+            size = mTitleTextSizes.get(State.Normal);
+        }
+        super.setTextSize(size);
+    }
+
     private void setState(State state) {
         mCurrentState = state;
         updateTitle();
@@ -180,6 +198,7 @@ public class ButtonBlockView extends TextBlockView {
         updateBackgroundColor();
         updateBorder();
         updateCornerRadius();
+        updateTitleTextSize();
     }
 
     @Override
@@ -227,7 +246,7 @@ public class ButtonBlockView extends TextBlockView {
     public void setCornerRadius(float radius) { /* Do nothing */ }
 
     @Override
-    public void setText(String text) { /* Do nothing */ }
+    public void setText(Spanned text) { /* Do nothing */ }
 
     @Override
     public void setTextAlignment(Alignment alignment) { /* Do nothing */ }

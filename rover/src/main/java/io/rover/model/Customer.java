@@ -20,7 +20,10 @@ import java.util.Set;
 public class Customer {
 
     private String mIdentifier;
-    private String mName;
+    private String mFirstName;
+    private String mLastName;
+    private String mGender;
+    private int mAge;
     private String mEmail;
     private String mPhoneNumber;
     private String[] mTags;
@@ -44,14 +47,20 @@ public class Customer {
     }
 
     public String getIdentifier() { return mIdentifier; }
-    public String getName() { return mName; }
+    public String getFirstName() { return mFirstName; }
+    public String getLastName() { return mLastName; }
+    public String getGender() { return mGender; }
+    public int getAge() { return mAge; }
     public String getEmail() { return mEmail; }
     public String getPhoneNumber() { return mPhoneNumber; }
     public String[] getTags() { return mTags; }
-    public Map<String, Object> getTraits() { return mTraits; }
+    //public Map<String, Object> getTraits() { return mTraits; }
 
     public void setIdentifier(String identifier) { mIdentifier = identifier; }
-    public void setName(String name) { mName = name; }
+    public void setFirstName(String name) { mFirstName = name; }
+    public void setLastName(String name) { mLastName = name; }
+    public void setGender(String gender) { mGender = gender; }
+    public void setAge(int age) { mAge = age; }
     public void setEmail(String email) { mEmail = email; }
     public void setPhoneNumber(String phoneNumber) { mPhoneNumber = phoneNumber; }
     public void setTags(String[] tags) { mTags = tags; }
@@ -61,7 +70,11 @@ public class Customer {
         editor.clear();
 
         editor.putString("identifier", getIdentifier());
-        editor.putString("name", getName());
+        editor.putString("first-name", getFirstName());
+        editor.putString("last-name", getLastName());
+        editor.putString("gender", getGender());
+        editor.putInt("age", getAge());
+
         editor.putString("email", getEmail());
         editor.putString("phoneNumber", getPhoneNumber());
         if (mTags != null) {
@@ -96,7 +109,10 @@ public class Customer {
 
         SharedPreferences sharedData = context.getSharedPreferences(SHARED_CUSTOMER, 0);
         customer.mIdentifier = sharedData.getString("identifier", null);
-        customer.mName = sharedData.getString("name", null);
+        customer.mFirstName = sharedData.getString("first-name", null);
+        customer.mLastName = sharedData.getString("last-name", null);
+        customer.mGender = sharedData.getString("gender", null);
+        customer.mAge = sharedData.getInt("age", 0);
         customer.mEmail = sharedData.getString("email", null);
         customer.mPhoneNumber = sharedData.getString("phoneNumber", null);
 

@@ -19,15 +19,10 @@ public class ButtonBlock extends Block {
     private Appearance mHighlightedAppearance;
     private Appearance mSelectedAppearance;
     private Appearance mDisabledAppearance;
-    private Action mAction;
 
     public ButtonBlock() {
         super();
     }
-
-    public Action getAction() { return mAction; }
-
-    public void setAction(Action action) { mAction = action; }
 
     public void setAppearance(Appearance appearance, State state) {
         switch (state) {
@@ -71,7 +66,6 @@ public class ButtonBlock extends Block {
         mHighlightedAppearance = (Appearance) in.readValue(Appearance.class.getClassLoader());
         mSelectedAppearance = (Appearance) in.readValue(Appearance.class.getClassLoader());
         mDisabledAppearance = (Appearance) in.readValue(Appearance.class.getClassLoader());
-        mAction = (Action) in.readValue(Action.class.getClassLoader());
     }
 
     @Override
@@ -86,7 +80,6 @@ public class ButtonBlock extends Block {
         dest.writeValue(mHighlightedAppearance);
         dest.writeValue(mSelectedAppearance);
         dest.writeValue(mDisabledAppearance);
-        dest.writeValue(mAction);
     }
 
     @SuppressWarnings("unused")

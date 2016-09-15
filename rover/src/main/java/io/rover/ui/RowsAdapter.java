@@ -1,6 +1,10 @@
 package io.rover.ui;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -14,7 +18,6 @@ import org.w3c.dom.Text;
 
 import java.util.List;
 
-import io.rover.R;
 import io.rover.model.Action;
 import io.rover.model.Appearance;
 import io.rover.model.Block;
@@ -23,30 +26,38 @@ import io.rover.model.Image;
 import io.rover.model.ImageBlock;
 import io.rover.model.Row;
 import io.rover.model.TextBlock;
+import io.rover.model.WebBlock;
 
 /**
  * Created by ata_n on 2016-06-28.
  */
 public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements BlockLayoutManager.BlockProvider {
 
-    public interface ActionListener {
-        void onAction(Action action);
+    public interface BlockListener {
+        void onBlockClick(Block block);
+    }
+
+    public interface BoundsProvider {
+        Rect getBounds(int position);
     }
 
     private List<Row> mRows;
-    private final ButtonViewHolder.OnClickListener mButtonClickListener;
-    private ActionListener mActionListener;
+    private BlockListener mBlockListener;
+    private BoundsProvider mBoundsProvider;
 
     public RowsAdapter() {
-        mButtonClickListener = new ButtonClickListener();
     }
 
     public void setRows(List<Row> rows) {
         mRows = rows;
     }
 
-    public void setActionListener(ActionListener listener) {
-        mActionListener = listener;
+    public void setBlockListener(BlockListener listener) {
+        mBlockListener = listener;
+    }
+
+    public void setBoundsProvider(BoundsProvider provider) {
+        mBoundsProvider = provider;
     }
 
     @Override
@@ -58,35 +69,60 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
             return 1;
         } else if (block instanceof ButtonBlock) {
             return 2;
+        } else if (block instanceof WebBlock) {
+            return 3;
         }
         return super.getItemViewType(position);
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        final RecyclerView.ViewHolder viewHolder;
         switch (viewType) {
-            case 0: return new ImageViewHolder(parent.getContext());
-            case 1: return new TextViewHolder(parent.getContext());
-            case 2: {
-                ButtonViewHolder viewHolder = new ButtonViewHolder(parent.getContext());
-                viewHolder.setOnClickListener(mButtonClickListener);
-                return viewHolder;
+            case 0: {
+                viewHolder = new ImageViewHolder(parent.getContext());
+                break;
             }
-            default: return new ViewHolder(parent.getContext());
+            case 1: {
+                viewHolder = new TextViewHolder(parent.getContext());
+                break;
+            }
+            case 2: {
+                viewHolder = new ButtonViewHolder(parent.getContext());
+                break;
+            }
+            case 3: {
+                viewHolder = new WebViewHolder(parent.getContext());
+                break;
+            }
+            default: {
+                viewHolder = new ViewHolder(parent.getContext());
+                break;
+            }
         }
+
+        final RowsAdapter adapter = this;
+
+        return viewHolder;
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        Block block = getBlockAtPosition(position);
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
+        final Block block = getBlockAtPosition(position);
 
-        if (block == null) { return; }
+        if (holder.itemView instanceof ImageBlockView) {
+            ((ImageBlockView) holder.itemView).clearImage();
+        }
+
+        if (block == null) {
+            return;
+        }
 
         if (block instanceof TextBlock) {
             TextBlock textBlock = (TextBlock) block;
-            TextBlockView textBlockView = (TextBlockView)holder.itemView;
+            TextBlockView textBlockView = (TextBlockView) holder.itemView;
 
-            textBlockView.setText(textBlock.getText());
+            textBlockView.setText(textBlock.getSpannedText());
             textBlockView.setTextOffset(textBlock.getTextOffset());
             textBlockView.setTextColor(textBlock.getTextColor());
             textBlockView.setTextSize(textBlock.getFont().getSize());
@@ -97,9 +133,14 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
             ImageBlockView imageBlockView = (ImageBlockView) holder.itemView;
             Image image = imageBlock.getImage();
 
+            imageBlockView.clearImage();
+            imageBlockView.cancelDownload();
             if (image != null) {
                 imageBlockView.setImageUrl(image.getImageUrl());
+            } else {
+
             }
+
         } else if (block instanceof ButtonBlock) {
             ButtonBlock buttonBlock = (ButtonBlock) block;
             ButtonBlockView buttonBlockView = (ButtonBlockView) holder.itemView;
@@ -116,19 +157,67 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
                 buttonBlockView.setTitleOffset(appearance.titleOffset, getButtonViewState(state));
                 if (appearance.titleFont != null) {
                     buttonBlockView.setTitleTypeface(appearance.titleFont.getTypeface(), getButtonViewState(state));
+                    buttonBlockView.setTitleTextSize(appearance.titleFont.getSize(), getButtonViewState(state));
                 }
                 buttonBlockView.setBackgroundColor(appearance.backgroundColor, getButtonViewState(state));
                 buttonBlockView.setBorder((float) appearance.borderWidth, appearance.borderColor, getButtonViewState(state));
                 buttonBlockView.setCornerRadius((float) appearance.borderRadius, getButtonViewState(state));
             }
+        } else if (block instanceof WebBlock) {
+            WebBlock webBlock = (WebBlock) block;
+            WebBlockView webBlockView = (WebBlockView) holder.itemView;
+
+            webBlockView.loadUrl(webBlock.getURL());
+            webBlockView.setScrollable(webBlock.isScrollable());
         }
 
         // Appearance
-        BlockView blockView = (BlockView) holder.itemView;
+        final BlockView blockView = (BlockView) holder.itemView;
         blockView.setBackgroundColor(block.getBackgroundColor());
         blockView.setBorder((float) block.getBorderWidth(), block.getBorderColor());
         blockView.setCornerRadius((float) block.getBorderRadius());
+        blockView.setInset(block.getInset());
+        blockView.setAlpha((float) block.getOpacity());
 
+        if (!(blockView instanceof WebBlockView)) {
+            if (block.getBackgroundImage() != null) {
+                AssetManager.getSharedAssetManager(blockView.getContext())
+                        .fetchAsset(block.getBackgroundImage().getImageUrl(), new AssetManager.AssetManagerListener() {
+                            @Override
+                            public void onAssetSuccess(Bitmap bitmap) {
+                                BackgroundImageHelper.setBackgroundImage(
+                                        blockView.getBackgroundView(),
+                                        bitmap,
+                                        blockView.getResources().getDisplayMetrics().density,
+                                        (float) block.getBackgroundScale(),
+                                        block.getBackgroundContentMode(),
+                                        blockView.getResources());
+                            }
+
+                            @Override
+                            public void onAssetFailure() {
+
+                            }
+                        });
+            } else {
+                blockView.getBackgroundView().setImageDrawable(null);
+            }
+        }
+
+        if (mBoundsProvider != null && mBoundsProvider.getBounds(position) != null) {
+            blockView.setClipBounds(mBoundsProvider.getBounds(position));
+        } else {
+            blockView.setClipBounds(null);
+        }
+
+        final RowsAdapter adapter = this;
+
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                adapter.onBlockClick(v, position);
+            }
+        });
     }
 
     @Override
@@ -169,58 +258,54 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
 
     private ButtonBlockView.State getButtonViewState(ButtonBlock.State state) {
         switch (state) {
-            case Normal: return ButtonBlockView.State.Normal;
-            case Highlighted: return ButtonBlockView.State.Highlighted;
-            case Selected: return ButtonBlockView.State.Selected;
-            case Disabled: return ButtonBlockView.State.Disabled;
-            default: return ButtonBlockView.State.Normal;
+            case Normal:
+                return ButtonBlockView.State.Normal;
+            case Highlighted:
+                return ButtonBlockView.State.Highlighted;
+            case Selected:
+                return ButtonBlockView.State.Selected;
+            case Disabled:
+                return ButtonBlockView.State.Disabled;
+            default:
+                return ButtonBlockView.State.Normal;
         }
     }
 
-    private class ButtonClickListener implements ButtonViewHolder.OnClickListener {
-        @Override
-        public void onButtonViewClick(ButtonBlockView view, int position) {
-            ButtonBlock block = (ButtonBlock) getBlockAtPosition(position);
-            Action action = block.getAction();
+    private void onBlockClick(View view, int position) {
+        Block block = getBlockAtPosition(position);
 
-            if (action != null && mActionListener != null) {
-                mActionListener.onAction(action);
-            }
+        if (block != null && mBlockListener != null) {
+            mBlockListener.onBlockClick(block);
         }
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        public ViewHolder(Context context) { super(new BlockView(context)); }
+        public ViewHolder(Context context) {
+            super(new BlockView(context));
+        }
     }
 
     public static class ImageViewHolder extends RecyclerView.ViewHolder {
-        public ImageViewHolder(Context context) { super(new ImageBlockView(context)); }
+        public ImageViewHolder(Context context) {
+            super(new ImageBlockView(context));
+        }
     }
 
     public static class TextViewHolder extends RecyclerView.ViewHolder {
-        public TextViewHolder(Context context) { super(new TextBlockView(context)); }
+        public TextViewHolder(Context context) {
+            super(new TextBlockView(context));
+        }
     }
 
-    public static class ButtonViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-
-        public interface OnClickListener {
-            void onButtonViewClick(ButtonBlockView view, int position);
-        }
-
-        private OnClickListener mClickListener;
-
+    public static class ButtonViewHolder extends RecyclerView.ViewHolder {
         public ButtonViewHolder(Context context) {
             super(new ButtonBlockView(context));
-            itemView.setOnClickListener(this);
         }
+    }
 
-        public void setOnClickListener(OnClickListener listner) { mClickListener = listner; }
-
-        @Override
-        public void onClick(View v) {
-            if (mClickListener != null) {
-                mClickListener.onButtonViewClick((ButtonBlockView) v, getAdapterPosition());
-            }
+    public static class WebViewHolder extends RecyclerView.ViewHolder {
+        public WebViewHolder(Context context) {
+            super(new WebBlockView(context));
         }
     }
 }

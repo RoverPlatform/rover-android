@@ -48,6 +48,10 @@ public class AssetDownloader extends AsyncTask<String, Void, Bitmap> {
 
     @Override
     protected void onPostExecute(Bitmap bitmap) {
+        if (this.isCancelled()) {
+            return;
+        }
+
         if (bitmap == null) {
             mListener.onAssetDownloadFailure();
             return;

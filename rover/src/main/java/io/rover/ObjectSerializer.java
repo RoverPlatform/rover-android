@@ -130,18 +130,24 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
                 jsonObject.put("object", "experience");
                 jsonObject.put("action", "launched");
                 jsonObject.put("experience-id", expEvent.getExperience().getId());
+                jsonObject.put("version-id", expEvent.getExperience().getVersion());
+                jsonObject.put("experience-session-id", expEvent.getSessionId());
             } else if (event instanceof ExperienceDismissEvent) {
                 ExperienceDismissEvent expEvent = (ExperienceDismissEvent)event;
 
                 jsonObject.put("object", "experience");
                 jsonObject.put("action", "dismissed");
                 jsonObject.put("experience-id", expEvent.getExperience().getId());
+                jsonObject.put("version-id", expEvent.getExperience().getVersion());
+                jsonObject.put("experience-session-id", expEvent.getSessionId());
             } else if (event instanceof ScreenViewEvent) {
                 ScreenViewEvent expEvent = (ScreenViewEvent)event;
 
                 jsonObject.put("object", "experience");
                 jsonObject.put("action", "screen-viewed");
                 jsonObject.put("experience-id", expEvent.getExperience().getId());
+                jsonObject.put("version-id", expEvent.getExperience().getVersion());
+                jsonObject.put("experience-session-id", expEvent.getSessionId());
                 if (expEvent.getScreen() != null) {
                     jsonObject.put("screen-id", expEvent.getScreen().getId());
                 }
@@ -156,6 +162,8 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
 
                 jsonObject.put("object", "experience");
                 jsonObject.put("action", "block-clicked");
+                jsonObject.put("version-id", expEvent.getExperience().getVersion());
+                jsonObject.put("experience-session-id", expEvent.getSessionId());
                 if (expEvent.getBlock() != null) {
                     jsonObject.put("block-id", expEvent.getBlock().getId());
                 }
@@ -164,6 +172,9 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
                 }
                 if (expEvent.getBlock() != null) {
                     jsonObject.put("block-action", getActionJSON(expEvent.getBlock().getAction()));
+                }
+                if (expEvent.getScreen() != null) {
+                    jsonObject.put("screen-id", expEvent.getScreen().getId());
                 }
             }
 
@@ -186,7 +197,7 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
 
             jsonObject.put("os-name", "Android");
             jsonObject.put("platform", "Android");
-            jsonObject.put("sdk-version", "1.0.0");
+            jsonObject.put("sdk-version", Rover.VERSION);
             jsonObject.put("development", true);
             jsonObject.put("udid", device.getIdentifier(mApplicationContext));
             jsonObject.put("locale-lang", device.getLocaleLanguage());

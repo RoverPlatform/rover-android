@@ -541,7 +541,12 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                     }
                 }
 
-                return new Experience(screens, homeScreenId, id);
+                Experience experience = new Experience(screens, homeScreenId, id);
+                if (attributes.has("version-id")) {
+                    experience.setVersion(attributes.getString("version-id"));
+                }
+
+                return experience;
             }
             case "insets": {
                 return new Inset(attributes.getInt("top"), attributes.getInt("right"), attributes.getInt("bottom"), attributes.getInt("left"));

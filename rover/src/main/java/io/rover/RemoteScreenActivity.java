@@ -72,8 +72,9 @@ public class RemoteScreenActivity extends AppCompatActivity {
 
         Uri data = getIntent().getData();
         if (data != null) {
-            String messageId = data.getPath();
-            if (messageId != null) {
+            String path = data.getPath();
+            if (path != null) {
+                String messageId = path.substring(1);
                 mFetchTask = new FetchLandingPageTask();
                 mFetchTask.execute(messageId);
 

@@ -13,6 +13,7 @@ public class Experience implements Parcelable {
     private List<Screen> mScreens;
     private String mHomeScreenId;
     private String mId;
+    private String mVersion;
 
     public Experience(List<Screen> screens, String homeScreenId, String id) {
         mScreens = screens;
@@ -44,6 +45,10 @@ public class Experience implements Parcelable {
         return null;
     }
 
+    public String getVersion() { return mVersion; }
+
+    public void setVersion(String version) { mVersion = version; }
+
 
     protected Experience(Parcel in) {
         if (in.readByte() == 0x01) {
@@ -53,6 +58,7 @@ public class Experience implements Parcelable {
             mScreens = null;
         }
         mHomeScreenId = in.readString();
+        mVersion = in.readString();
     }
 
     @Override
@@ -69,6 +75,7 @@ public class Experience implements Parcelable {
             dest.writeList(mScreens);
         }
         dest.writeString(mHomeScreenId);
+        dest.writeString(mVersion);
     }
 
     @SuppressWarnings("unused")

@@ -23,6 +23,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Date;
+import java.util.UUID;
 
 import io.rover.model.Action;
 import io.rover.model.Block;
@@ -42,10 +43,12 @@ import io.rover.ui.ScreenFragment;
 public class ExperienceActivity extends AppCompatActivity implements ScreenFragment.OnBlockListener {
 
     private static String EXPERIENCE_STATE_KEY = "EXPERIENCE_STATE_KEY";
+    private static String EXPERIENCE_SESSION_KEY = "EXPERIENCE_SESSION_KEY";
 
     private RelativeLayout mLayout;
     private FetchExperienceTask mFetchTask;
     private Experience mExperience;
+    private String mSessionId;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -73,6 +76,8 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
 
                 }
             }
+
+            mSessionId = UUID.randomUUID().toString();
         }
     }
 
@@ -80,7 +85,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
     protected void onDestroy() {
         super.onDestroy();
         if (isFinishing() && mExperience != null) {
-            Rover.submitEvent(new ExperienceDismissEvent(mExperience, new Date()));
+            Rover.submitEvent(new ExperienceDismissEvent(mExperience, mSessionId, new Date()));
         }
     }
 
@@ -104,7 +109,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
                             .addToBackStack(null)
                             .commit();
 
-                    Rover.submitEvent(new ScreenViewEvent(newScreen, mExperience, screen, block, new Date()));
+                    Rover.submitEvent(new ScreenViewEvent(newScreen, mExperience, screen, block, mSessionId, new Date()));
                 }
                 break;
             }
@@ -115,7 +120,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
             }
         }
 
-        Rover.submitEvent(new BlockPressEvent(block, screen, mExperience, new Date()));
+        Rover.submitEvent(new BlockPressEvent(block, screen, mExperience, mSessionId, new Date()));
     }
 
     @Override
@@ -132,12 +137,14 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putParcelable(EXPERIENCE_STATE_KEY, mExperience);
+        outState.putString(EXPERIENCE_SESSION_KEY, mSessionId);
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         mExperience = savedInstanceState.getParcelable(EXPERIENCE_STATE_KEY);
+        mSessionId = savedInstanceState.getString(EXPERIENCE_SESSION_KEY);
     }
 
     private class FetchExperienceTask extends AsyncTask<String, Void, Experience> implements JsonResponseHandler.JsonCompletionHandler {
@@ -186,7 +193,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
 
             mExperience = experience;
 
-            Rover.submitEvent(new ExperienceLaunchEvent(experience, new Date()));
+            Rover.submitEvent(new ExperienceLaunchEvent(experience, mSessionId, new Date()));
 
             Screen homeScreen = experience.getHomeScreen();
             if (homeScreen != null) {
@@ -198,7 +205,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
                         .replace(mLayout.getId(), screenFragment, "SCREEN")
                         .commit();
 
-                Rover.submitEvent(new ScreenViewEvent(homeScreen, experience, null, null, new Date()));
+                Rover.submitEvent(new ScreenViewEvent(homeScreen, experience, null, null, mSessionId, new Date()));
             }
         }
     }

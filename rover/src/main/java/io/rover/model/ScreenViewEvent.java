@@ -10,13 +10,15 @@ public class ScreenViewEvent extends Event {
     private Experience mExperience;
     private Screen mFromScreen;
     private Block mFromBlock;
+    private String mSessionId;
 
-    public ScreenViewEvent(Screen screen, Experience experience, Screen fromScreen, Block fromBlock, Date date) {
+    public ScreenViewEvent(Screen screen, Experience experience, Screen fromScreen, Block fromBlock, String session, Date date) {
         mScreen = screen;
         mExperience = experience;
         mFromScreen = fromScreen;
         mFromBlock = fromBlock;
         mDate = date;
+        mSessionId = session;
     }
 
     public Screen getScreen() {
@@ -34,4 +36,6 @@ public class ScreenViewEvent extends Event {
     public Block getFromBlock() {
         return mFromBlock;
     }
+
+    public String getSessionId() { return mSessionId; }
 }

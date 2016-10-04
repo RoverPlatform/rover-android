@@ -88,6 +88,10 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
         return true;
     }
 
+    public int getVerticalScrollOffset() { return verticalScrollOffset; }
+
+    public void setVerticalScrollOffset(int offset) { verticalScrollOffset = offset; }
+
     @Override
     public int scrollVerticallyBy(int dy, RecyclerView.Recycler recycler, RecyclerView.State state) {
         // TODO: CHECK FOR STATE

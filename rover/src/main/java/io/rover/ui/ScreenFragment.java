@@ -11,6 +11,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
@@ -55,6 +56,7 @@ public class ScreenFragment extends Fragment implements RowsAdapter.BlockListene
 
     public static String TAG = "SCREEN_FRAGMENT";
     public static String ARG_SCREEN = "SCREEN_KEY";
+    private static String RECYCLER_STATE_KEY = "RECYCLER_STATE_KEY";
 
     private Screen mScreen;
     private RowsAdapter mAdapter;
@@ -165,6 +167,22 @@ public class ScreenFragment extends Fragment implements RowsAdapter.BlockListene
         } else if (block.getAction() != null) {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(block.getAction().getUrl()));
             startActivity(intent);
+        }
+    }
+
+    private int verticalScrollOffset = 0;
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        verticalScrollOffset = mLayoutManager.getVerticalScrollOffset();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (verticalScrollOffset != 0) {
+            mLayoutManager.setVerticalScrollOffset(verticalScrollOffset);
         }
     }
 

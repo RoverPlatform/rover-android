@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.net.http.HttpResponseCache;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.NotificationCompat;
@@ -48,6 +49,8 @@ import com.google.firebase.messaging.RemoteMessage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -72,6 +75,7 @@ import io.rover.model.Place;
  */
 public class Rover implements EventSubmitTask.Callback {
 
+    protected static String VERSION = "1.1.0";
     protected static Rover mSharedInstance = new Rover();
 
     private Context mApplicationContext;
@@ -101,6 +105,18 @@ public class Rover implements EventSubmitTask.Callback {
         }
 
         Device.getInstance().setGimbalMode(mSharedInstance.mGimbalMode);
+
+        // Set Cache
+
+        try {
+            if (HttpResponseCache.getInstalled() == null) {
+                File httpCacheDir = new File(mSharedInstance.mApplicationContext.getCacheDir(), "http");
+                long httpCacheSize = 10 * 1024 * 1024; // 10 MiB
+                HttpResponseCache.install(httpCacheDir, httpCacheSize);
+            }
+        } catch (IOException e) {
+            Log.i("Rover", "HTTP response cache installation failed:" + e);
+        }
     }
 
     public static void startMonitoring() {

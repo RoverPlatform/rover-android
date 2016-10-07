@@ -552,6 +552,10 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
     }
 
     private Geofence getGeofence(String id, double lattitude, double longitude, float radius) {
+        if (id == null) {
+            return null;
+        }
+
         return new Geofence.Builder()
                 .setRequestId(id)
                 .setCircularRegion(lattitude, longitude, radius)

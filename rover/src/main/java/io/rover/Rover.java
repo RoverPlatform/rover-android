@@ -84,7 +84,7 @@ public class Rover implements EventSubmitTask.Callback {
     private PendingIntent mNearbyMessagesPendingIntent;
     private PendingIntent mAppLaunchPendingIntent;
     private ExecutorService mEventExecutorService = Executors.newSingleThreadExecutor();
-    private ArrayList<RoverObserver> mObservers = new ArrayList<>();
+    protected ArrayList<RoverObserver> mObservers = new ArrayList<>();
     private NotificationProvider mNotificationProvider;
     private boolean mGimbalMode;
 

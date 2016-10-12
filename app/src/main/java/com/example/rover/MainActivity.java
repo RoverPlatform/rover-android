@@ -181,6 +181,10 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
         Intent intent = new Intent(getApplicationContext(), ExperienceActivity.class);
         intent.setData(uri);
 
+        startActivity(intent);
+
+        Intent intent = ExperienceActivity.createIntent(getApplicationContext(), "57b32c299514ac00271a7425");
+
 
         //startActivity(intent);
 //        TaskStackBuilder stackBuilder = TaskStackBuilder.create(getApplicationContext());

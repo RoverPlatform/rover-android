@@ -1,6 +1,7 @@
 package io.rover;
 
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -86,6 +87,31 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
         super.onDestroy();
         if (isFinishing() && mExperience != null) {
             Rover.submitEvent(new ExperienceDismissEvent(mExperience, mSessionId, new Date()));
+
+            for (RoverObserver observer : Rover.mSharedInstance.mObservers) {
+                if (observer instanceof RoverObserver.ExperienceObserver) {
+                    ((RoverObserver.ExperienceObserver) observer).onExperienceDismiss(
+                            mExperience,
+                            mSessionId
+                    );
+                }
+            }
+        }
+    }
+
+    private void trackScreenView(Screen screen, Screen fromScreen, Block block) {
+        Rover.submitEvent(new ScreenViewEvent(screen, mExperience, fromScreen, block, mSessionId, new Date()));
+
+        for (RoverObserver observer : Rover.mSharedInstance.mObservers) {
+            if (observer instanceof RoverObserver.ExperienceObserver) {
+                ((RoverObserver.ExperienceObserver) observer).onScreenView(
+                        screen,
+                        mExperience,
+                        fromScreen,
+                        block,
+                        mSessionId
+                );
+            }
         }
     }
 
@@ -109,7 +135,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
                             .addToBackStack(null)
                             .commit();
 
-                    Rover.submitEvent(new ScreenViewEvent(newScreen, mExperience, screen, block, mSessionId, new Date()));
+                    trackScreenView(newScreen, screen, block);
                 }
                 break;
             }
@@ -121,6 +147,17 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
         }
 
         Rover.submitEvent(new BlockPressEvent(block, screen, mExperience, mSessionId, new Date()));
+
+        for (RoverObserver observer : Rover.mSharedInstance.mObservers) {
+            if (observer instanceof RoverObserver.ExperienceObserver) {
+                ((RoverObserver.ExperienceObserver) observer).onBlockClick(
+                        block,
+                        screen,
+                        mExperience,
+                        mSessionId
+                );
+            }
+        }
     }
 
     @Override
@@ -145,6 +182,17 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
         super.onRestoreInstanceState(savedInstanceState);
         mExperience = savedInstanceState.getParcelable(EXPERIENCE_STATE_KEY);
         mSessionId = savedInstanceState.getString(EXPERIENCE_SESSION_KEY);
+    }
+
+    public static Intent createIntent(Context context, String id) {
+        Uri uri = new Uri.Builder().scheme("rover")
+                .authority("experience")
+                .appendPath(id).build();
+
+        Intent intent = new Intent(context, ExperienceActivity.class);
+        intent.setData(uri);
+
+        return intent;
     }
 
     private class FetchExperienceTask extends AsyncTask<String, Void, Experience> implements JsonResponseHandler.JsonCompletionHandler {
@@ -195,6 +243,15 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
 
             Rover.submitEvent(new ExperienceLaunchEvent(experience, mSessionId, new Date()));
 
+            for (RoverObserver observer : Rover.mSharedInstance.mObservers) {
+                if (observer instanceof RoverObserver.ExperienceObserver) {
+                    ((RoverObserver.ExperienceObserver) observer).onExperienceLaunch(
+                            mExperience,
+                            mSessionId
+                    );
+                }
+            }
+
             Screen homeScreen = experience.getHomeScreen();
             if (homeScreen != null) {
 
@@ -205,7 +262,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
                         .replace(mLayout.getId(), screenFragment, "SCREEN")
                         .commit();
 
-                Rover.submitEvent(new ScreenViewEvent(homeScreen, experience, null, null, mSessionId, new Date()));
+                trackScreenView(homeScreen, null, null);
             }
         }
     }

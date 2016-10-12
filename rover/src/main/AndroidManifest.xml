@@ -26,7 +26,10 @@
         <service
             android:name=".Rover$LocationUpdateService"
             android:exported="false" />
-
+        <service
+            android:name=".Rover$GeofenceTransitionService"
+            android:exported="false" />
+        
         <service
             android:name=".Rover$RoverFirebaseInstanceIdService">
             <intent-filter>
@@ -41,36 +44,6 @@
             </intent-filter>
         </service>
 
-        <!--service
-            android:name=".Rover$GcmRegistrationService"
-            android:exported="false" />
-        <service
-            android:name=".Rover$RoverInstanceIDListenerService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.android.gms.iid.InstanceID" />
-            </intent-filter>
-        </service>
-        <service
-            android:name=".Rover$RoverGcmListenerService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-            </intent-filter>
-        </service-->
-
-        <!-- Receivers -->
-
-        <!--receiver
-            android:name="com.google.android.gms.gcm.GcmReceiver"
-            android:exported="true"
-            android:permission="com.google.android.c2dm.permission.SEND">
-            <intent-filter>
-                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-
-                <category android:name="${applicationId}" />
-            </intent-filter>
-        </receiver-->
 
         <activity android:name=".ExperienceActivity"/>
         <activity android:name=".RemoteScreenActivity"/>

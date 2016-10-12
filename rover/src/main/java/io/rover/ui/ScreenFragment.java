@@ -191,6 +191,11 @@ public class ScreenFragment extends Fragment implements RowsAdapter.BlockListene
         return mLayoutManager.getBlockBounds(position);
     }
 
+    @Override
+    public Rect getRect(int position) {
+        return mLayoutManager.getLayout(position);
+    }
+
     public void setScreen(final Screen screen) {
         String title = screen.getTitle();
         if (title != null) {

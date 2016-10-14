@@ -52,10 +52,12 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
     private int verticalScrollOffset = 0;
     private int bottomLimit = 0;
     private Map<Integer,Rect> mClipBounds;
+    private Map<Integer,Rect> mLayouts;
 
     public BlockLayoutManager(Context context) {
         density = context.getResources().getDisplayMetrics().density;
         mClipBounds = new HashMap<>();
+        mLayouts = new HashMap<>();
     }
 
     public void setBlockProvider(BlockProvider blockProvider) {
@@ -68,6 +70,14 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
         }
 
         return mClipBounds.get(position);
+    }
+
+    public Rect getLayout(int position) {
+        if (mLayouts == null) {
+            return null;
+        }
+
+        return mLayouts.get(position);
     }
 
     @Override
@@ -142,6 +152,8 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
                 Rect layoutRect = getRectForBlock(block, isStacked ? yOffset : height, rowHeight);
 
                 mLayoutInfo[i][j] = layoutRect;
+
+                mLayouts.put(position, layoutRect);
 
                 if (layoutRect.bottom > height + rowHeight || layoutRect.top < height) {
                     int clippedTop = Math.max(0, (int)(height - layoutRect.top));

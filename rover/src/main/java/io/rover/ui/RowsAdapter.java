@@ -39,6 +39,7 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
 
     public interface BoundsProvider {
         Rect getBounds(int position);
+        Rect getRect(int position);
     }
 
     private List<Row> mRows;
@@ -118,6 +119,10 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
             return;
         }
 
+        Rect blockLayout = mBoundsProvider.getRect(position);
+        int blockWidth = blockLayout.width();
+        int blockHeight = blockLayout.height();
+
         if (block instanceof TextBlock) {
             TextBlock textBlock = (TextBlock) block;
             TextBlockView textBlockView = (TextBlockView) holder.itemView;
@@ -133,10 +138,12 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
             ImageBlockView imageBlockView = (ImageBlockView) holder.itemView;
             Image image = imageBlock.getImage();
 
+
             imageBlockView.clearImage();
             imageBlockView.cancelDownload();
             if (image != null) {
-                imageBlockView.setImageUrl(image.getImageUrl());
+                String imageUrl = ImageUrlHelper.getOptimizedImageUrl(blockWidth,blockHeight,image, Image.ContentMode.Stretch, 1.0);
+                imageBlockView.setImageUrl(imageUrl);
             } else {
 
             }
@@ -181,8 +188,9 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
 
         if (!(blockView instanceof WebBlockView)) {
             if (block.getBackgroundImage() != null) {
+                String imageUrl = ImageUrlHelper.getOptimizedImageUrl(blockWidth, blockHeight, block.getBackgroundImage(), block.getBackgroundContentMode(), block.getBackgroundScale());
                 AssetManager.getSharedAssetManager(blockView.getContext())
-                        .fetchAsset(block.getBackgroundImage().getImageUrl(), new AssetManager.AssetManagerListener() {
+                        .fetchAsset(imageUrl, new AssetManager.AssetManagerListener() {
                             @Override
                             public void onAssetSuccess(Bitmap bitmap) {
                                 BackgroundImageHelper.setBackgroundImage(

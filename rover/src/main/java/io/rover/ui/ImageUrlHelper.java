@@ -12,9 +12,6 @@ import io.rover.model.Image;
 public class ImageUrlHelper {
     public static String getOptimizedImageUrl(int blockWidth, int blockHeight, @NonNull Image image, Image.ContentMode mode, Double scale) {
 
-        Log.i("OPTIMIZEDIMAGE", image.getImageUrl());
-        Log.i("OPTIMIZEDIMAGE", Integer.toString(blockWidth));
-        Log.i("OPTIMIZEDIMAGE", Integer.toString(blockHeight));
         if ((image.getWidth() < blockWidth) || blockWidth == 0 || blockHeight == 0) {
             // Don't optimize that is already smaller
             return image.getImageUrl();
@@ -84,7 +81,7 @@ public class ImageUrlHelper {
                 }
             }
         }
-        Log.i("OPTIMIZEDIMAGE", "getOptimizedImageUrl: " + builder.build().toString());
+        
         return builder.build().toString();
     }
 }

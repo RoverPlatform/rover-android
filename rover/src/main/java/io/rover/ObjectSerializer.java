@@ -218,7 +218,6 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
             jsonObject.put("os-name", "Android");
             jsonObject.put("platform", "Android");
             jsonObject.put("sdk-version", Rover.VERSION);
-            jsonObject.put("development", true);
             jsonObject.put("udid", device.getIdentifier(mApplicationContext));
             jsonObject.put("locale-lang", device.getLocaleLanguage());
             jsonObject.put("locale-region", device.getLocaleRegion());

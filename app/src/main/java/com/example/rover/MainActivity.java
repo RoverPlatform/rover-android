@@ -176,7 +176,7 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
 
         Uri uri = new Uri.Builder().scheme("rover")
                 .authority("experience")
-                .appendPath("5803a1529727c600375df8be").build();
+                .appendPath("57b32c299514ac00271a7425").build();
 
         Intent intent = new Intent(getApplicationContext(), ExperienceActivity.class);
         intent.setData(uri);

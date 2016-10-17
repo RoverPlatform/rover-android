@@ -22,7 +22,7 @@ public class MyApplication extends Application {
 
 
         RoverConfig config = new RoverConfig.Builder()
-                .setApplicationToken("6c546189dc45df1293bddc18c0b54786")
+                .setApplicationToken("37638bb00e6ba35eb7b4bbdd6586f00e")
                 .build();
 
         Rover.setup(this, config);

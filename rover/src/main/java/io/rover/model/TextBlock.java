@@ -10,6 +10,9 @@ import android.text.Spanned;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Created by ata_n on 2016-06-16.
  */
@@ -75,12 +78,31 @@ public class TextBlock extends Block {
 
             plainString = spannableStringBuilder.toString();
 
-            int indexOfDoubleNewLine = plainString.indexOf("\n\n\n");
-            while (indexOfDoubleNewLine != -1) {
-                spannableStringBuilder.replace(indexOfDoubleNewLine, indexOfDoubleNewLine + 3, "\n\n");
-                plainString = spannableStringBuilder.toString();
-                indexOfDoubleNewLine = plainString.indexOf("\n\n\n", indexOfDoubleNewLine + 1);
+//            int indexOfDoubleNewLine = plainString.indexOf("\n\n\n");
+//            while (indexOfDoubleNewLine != -1) {
+//                spannableStringBuilder.replace(indexOfDoubleNewLine, indexOfDoubleNewLine + 3, "\n\n");
+//                plainString = spannableStringBuilder.toString();
+//                indexOfDoubleNewLine = plainString.indexOf("\n\n\n", indexOfDoubleNewLine + 1);
+//            }
+
+
+            Pattern pattern = Pattern.compile("\n\n+");
+            Matcher matcher = pattern.matcher(plainString);
+
+            int indexOffset = 0;
+
+            while (matcher.find()) {
+                int start = matcher.start() - indexOffset;
+                int end = matcher.end() - indexOffset;
+                int length = end - start - 1;
+
+                String replacementString = new String(new char[length]).replace("\0", "\n");
+
+                spannableStringBuilder.replace(start, end, replacementString);
+
+                indexOffset++;
             }
+
         }
 
         mSpannedText = text;

@@ -24,6 +24,7 @@ public class AssetManager {
 
     private static AssetManager sAssetManager;
     private Map<String, AssetDownloader> mDownloaders;
+    private String mCacheDir;
 
     public static AssetManager getSharedAssetManager(Context context) {
         if (sAssetManager == null) {
@@ -33,6 +34,7 @@ public class AssetManager {
     }
 
     private AssetManager(Context context) {
+        mCacheDir = context.getCacheDir().getAbsolutePath();
         mDownloaders = new HashMap<>();
     }
 
@@ -45,7 +47,7 @@ public class AssetManager {
         }
     }
 
-    public void fetchAsset(String url, final AssetManagerListener listener) {
+    public void fetchAsset(final String url, final AssetManagerListener listener) {
         if (url == null || listener == null) {
             return;
         }
@@ -58,24 +60,35 @@ public class AssetManager {
             mDownloaders.remove(url);
         }
 
-        // TODO: setup cache
-        // TODO: setup downloaders map so we dont download the same url multiple times
+        // Check caches
 
+        final String cacheKey = url.toLowerCase();
 
+//        Bitmap cachedBitmap = mMemoryCache.get(cacheKey);
+//        if (cachedBitmap != null) {
+//            listener.onAssetSuccess(cachedBitmap);
+//            return;
+//        }
 
-        AssetDownloader downloader = new AssetDownloader(new AssetDownloader.AssetDownloaderListener() {
+        // TODO: setup downloaders map so we dont download the same url multiple times (This may no longer be required)
+
+        // Setup asset download
+
+        final AssetDownloader downloader = new AssetDownloader(new AssetDownloader.AssetDownloaderListener() {
             @Override
             public void onAssetDownloadSuccess(Bitmap bitmap) {
                 mDownloaders.remove(key);
+                //mMemoryCache.put(cacheKey, bitmap);
                 listener.onAssetSuccess(bitmap);
             }
 
             @Override
             public void onAssetDownloadFailure() {
                 mDownloaders.remove(key);
+                //mMemoryCache.remove(cacheKey);
                 listener.onAssetFailure();
             }
-        });
+        }, mCacheDir);
 
         mDownloaders.put(key, downloader);
 

@@ -75,7 +75,7 @@ import io.rover.model.Place;
  */
 public class Rover implements EventSubmitTask.Callback {
 
-    protected static String VERSION = "1.2.1";
+    protected static String VERSION = "1.3.0";
     protected static Rover mSharedInstance = new Rover();
 
     private Context mApplicationContext;

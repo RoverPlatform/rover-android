@@ -176,6 +176,9 @@ Rover.identify(new Traits()
         .putPhoneNumber("555-555-5555"));
 ```
 
-Traits are persisted to and restored from disk. This insures once traits have been set they stay set until changed. However if your app has a login logout feature you will want to make sure to clear all the previous traits that have been stored. To do this simply call ```java Rover.clearCustomer()```
+Traits are persisted to and restored from disk. This insures once traits have been set they stay set until changed. However if your app has a login logout feature you will want to make sure to clear all the previous traits that have been stored. To do this simply call 
+```java 
+Rover.clearCustomer() 
+```
 
 

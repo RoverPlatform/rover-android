@@ -122,12 +122,44 @@ public class Rover implements EventSubmitTask.Callback {
         }
     }
 
-    public static Customer getCustomer() {
-        if (mSharedInstance.mApplicationContext != null) {
-            return Customer.getInstance(mSharedInstance.mApplicationContext);
-        } else {
-            Log.w(TAG, "Attempted to grab customer before initializing Rover");
-            return null;
+    public static synchronized void identify(Traits traits) {
+        Customer customer = getCustomer();
+        if (customer != null) {
+            if (traits.hasIdentifier())
+                customer.setIdentifier(traits.getIdentifier());
+
+            if (traits.hasFirstName())
+                customer.setFirstName(traits.getFirstName());
+
+            if (traits.hasLastName())
+                customer.setLastName(traits.getLastName());
+
+            if (traits.hasGender())
+                customer.setGender(traits.getGender());
+
+            if (traits.hasAge())
+                customer.setAge(traits.getAge());
+
+            if (traits.hasEmail())
+                customer.setEmail(traits.getEmail());
+
+            if (traits.hasPhoneNumber())
+                customer.setPhoneNumber(traits.getPhoneNumber());
+
+            if (traits.hasTags())
+                customer.setTags(traits.getTags());
+
+            if (traits.hasCustomTraits())
+                customer.setTraits(traits.getCustomTraits());
+
+            customer.save(mSharedInstance.mApplicationContext);
+        }
+    }
+
+    public static void clearCustomer() {
+        Customer customer = getCustomer();
+        if (customer != null) {
+            customer.clear(mSharedInstance.mApplicationContext);
         }
     }
 
@@ -265,6 +297,15 @@ public class Rover implements EventSubmitTask.Callback {
 
     public static void submitEvent(Event event) {
         mSharedInstance.sendEvent(event);
+    }
+
+    private static Customer getCustomer() {
+        if (mSharedInstance.mApplicationContext != null) {
+            return Customer.getInstance(mSharedInstance.mApplicationContext);
+        } else {
+            Log.w(TAG, "Attempted to grab customer before initializing Rover");
+            return null;
+        }
     }
 
     private PendingIntent getLocationPendingIntent() {

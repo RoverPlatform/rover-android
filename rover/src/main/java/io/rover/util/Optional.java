@@ -1,7 +1,5 @@
 package io.rover.util;
 
-import android.support.annotation.Nullable;
-
 /**
  * Created by chrisrecalis on 2016-11-01.
  */

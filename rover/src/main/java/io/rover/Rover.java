@@ -62,6 +62,7 @@ import java.util.concurrent.Executors;
 
 import io.rover.model.BeaconConfiguration;
 import io.rover.model.BeaconTransitionEvent;
+import io.rover.model.Customer;
 import io.rover.model.Device;
 import io.rover.model.DeviceUpdateEvent;
 import io.rover.model.Event;
@@ -77,6 +78,8 @@ public class Rover implements EventSubmitTask.Callback {
 
     protected static String VERSION = "1.3.0";
     protected static Rover mSharedInstance = new Rover();
+
+    private static final String TAG = "Rover";
 
     private Context mApplicationContext;
     private PendingIntent mLocationPendingIntent;
@@ -115,19 +118,28 @@ public class Rover implements EventSubmitTask.Callback {
                 HttpResponseCache.install(httpCacheDir, httpCacheSize);
             }
         } catch (IOException e) {
-            Log.i("Rover", "HTTP response cache installation failed:" + e);
+            Log.i(TAG, "HTTP response cache installation failed:" + e);
+        }
+    }
+
+    public static Customer getCustomer() {
+        if (mSharedInstance.mApplicationContext != null) {
+            return Customer.getInstance(mSharedInstance.mApplicationContext);
+        } else {
+            Log.w(TAG, "Attempted to grab customer before initializing Rover");
+            return null;
         }
     }
 
     public static void startMonitoring() {
 
         if (mSharedInstance.mGimbalMode) {
-            Log.e("Rover", "Use `PlaceManager.getInstance().startMonitoring();`");
+            Log.e(TAG, "Use `PlaceManager.getInstance().startMonitoring();`");
             return;
         }
 
         if (!GoogleApiConnection.checkPlayServices(mSharedInstance.mApplicationContext)) {
-            Log.e("Rover", "Failed to start monitoring");
+            Log.e(TAG, "Failed to start monitoring");
             return;
         }
 
@@ -193,7 +205,7 @@ public class Rover implements EventSubmitTask.Callback {
 
     public static void stopMonitoring() {
         if (mSharedInstance.mGimbalMode) {
-            Log.e("Rover", "Use `PlaceManager.getInstance().stopMonitoring();`");
+            Log.e(TAG, "Use `PlaceManager.getInstance().stopMonitoring();`");
             return;
         }
 

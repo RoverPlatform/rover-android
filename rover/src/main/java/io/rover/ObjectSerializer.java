@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 import io.rover.model.Action;
@@ -181,16 +182,29 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
         } else if (mObject instanceof Customer) {
             Customer customer = (Customer)mObject;
 
-            jsonObject.put("identifier", customer.getIdentifier());
-            jsonObject.put("first-name", customer.getFirstName());
-            jsonObject.put("last-name", customer.getLastName());
-            jsonObject.put("email", customer.getEmail());
-            jsonObject.put("phone-number", customer.getPhoneNumber());
-            jsonObject.put("gender", customer.getGender());
-            jsonObject.put("age", customer.getAge());
-            if (customer.getTags() != null) {
-                jsonObject.put("tags", new JSONArray(Arrays.asList(customer.getTags())));
-            }
+            if (customer.getIdentifier().hasBeenSet())
+                jsonObject.put("identifier", customer.getIdentifier().getOrElse(null));
+
+            if (customer.getFirstName().hasBeenSet())
+                jsonObject.put("first-name", customer.getFirstName().getOrElse(null));
+
+            if (customer.getLastName().hasBeenSet())
+                jsonObject.put("last-name", customer.getLastName().getOrElse(null));
+
+            if (customer.getEmail().hasBeenSet())
+                jsonObject.put("email", customer.getEmail().getOrElse(null));
+
+            if (customer.getPhoneNumber().hasBeenSet())
+                jsonObject.put("phone-number", customer.getPhoneNumber().getOrElse(null));
+
+            if (customer.getGender().hasBeenSet())
+                jsonObject.put("gender", customer.getGender().getOrElse(null));
+
+            if (customer.getAge().hasBeenSet())
+                jsonObject.put("age", customer.getAge().getOrElse(null));
+
+            if (customer.getTags().hasBeenSet())
+                jsonObject.put("tags", new JSONArray(Arrays.asList(customer.getTags().getOrElse(new String[0]))));
 
         } else if (mObject instanceof Device) {
             Device device = (Device)mObject;

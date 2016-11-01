@@ -157,3 +157,25 @@ Intent intent = new Intent(this, ScreenActivity.class);
 intent.putExtra(ScreenActivity.INTENT_EXTRA_SCREEN, message.getLandingPage());
 startActivity(intent);
 ```
+
+
+### Customer Identity
+
+By default the Rover platform will assign a unique identifier to each customer who installs your application. However you may choose to assign your own identifiers. This is particularly useful for mapping data from the Rover Analytics app or if a customer is using your application on multiple platforms. To accomodate this Rover saves customer info to device storage so that it persists across sessions. The following snippet demonstrates assigning your own customer identifier:
+
+```java
+Rover.identify(new Traits().putIdentifier("hello123"));
+```
+
+In addition to identifiers, you may provide other user attributes for more personlized and segmented messaging via the Rover Messages app.
+
+```java
+Rover.identify(new Traits()
+        .putAge(44)
+        .putEmail("hello@example.com")
+        .putPhoneNumber("555-555-5555"));
+```
+
+Traits are persisted to and restored from disk. This insures once traits have been set they stay set until changed. However if your app has a login logout feature you will want to make sure to clear all the previous traits that have been stored. To do this simply call ```java Rover.clearCustomer()```
+
+

@@ -545,10 +545,8 @@ public class Rover implements EventSubmitTask.Callback {
         @Override
         public void onTokenRefresh() {
             String token = FirebaseInstanceId.getInstance().getToken();
-            Device.setGcmToken(token, mSharedInstance.mApplicationContext);
-
-            Log.i("TOKEN", token);
-
+            Log.i(TAG, "Refreshed token: " + token);
+            Device.getInstance().setGcmToken(token);
             Event event = new DeviceUpdateEvent(new Date());
             mSharedInstance.sendEvent(event);
         }

@@ -8,6 +8,8 @@ import android.os.Build;
 import android.support.v4.app.NotificationManagerCompat;
 import android.telephony.TelephonyManager;
 
+import com.google.firebase.iid.FirebaseInstanceId;
+
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.UUID;
@@ -79,24 +81,18 @@ public class Device {
         return false;
     }
 
-    public String getGcmToken(Context context) {
+    public String getGcmToken() {
         if (mGcmToken != null) {
             return mGcmToken;
         }
 
-        SharedPreferences sharedData = context.getSharedPreferences(SHARED_DEVICE, 0);
-        mGcmToken = sharedData.getString("GCM_TOKEN", null);
+        mGcmToken = FirebaseInstanceId.getInstance().getToken();
 
         return mGcmToken;
     }
 
-    public static void setGcmToken(String token, Context context) {
-        Device.getInstance().mGcmToken = token;
-
-        SharedPreferences sharedData = context.getSharedPreferences(SHARED_DEVICE, 0);
-        SharedPreferences.Editor editor = sharedData.edit();
-        editor.putString("GCM_TOKEN", token);
-        editor.apply();
+    public void setGcmToken(String token) {
+       mGcmToken = token;
     }
 
     public String getAdvertisingIdentifier() {

@@ -475,10 +475,8 @@ public class Rover implements EventSubmitTask.Callback {
             }
 
             String jsonString = data.get("message");
-
             if (jsonString == null) {
                 return null;
-
             }
 
             try {
@@ -502,6 +500,7 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     public static PendingIntent getPendingIntentFromRoverMessage(io.rover.model.Message message) {
+        
         if (message == null) {
             return null;
         }

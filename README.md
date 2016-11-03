@@ -113,6 +113,8 @@ Using the [Rover Messages App](https://app.rover.io/messages/) you can create me
 
 ### Notifications
 
+**IMPORTANT** Rover reserves the key `_rover` in the notification's data payload. Please ensure all notifications not originating from the Rover Platform do not specifiy this key.
+
 In order to have notification and messages working, Rover needs your FCM server key. Use [this guide](https://github.com/RoverPlatform/rover-android/wiki/FCM-Setup) to upload your configure Rover with your FCM setup.
 
 If you like fine-grained control over notifications, you must register a [NotificationProvider](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/NotificationProvider.java) during initialization.
@@ -129,6 +131,45 @@ If you like fine-grained control over notifications, you must register a [Notifi
 ```
 
 Check the [Notification Provider](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/NotificationProvider.java) file for more documentation on methods to customize behavior.
+
+### Custom FirebaseMessagingService
+
+If your app is already currently using FCM and implements the `FirebaseMessagingService`, helper methods have been provided to handle Rover notifications. The following example demonstrates these methods
+
+```java
+import com.google.firebase.messaging.FirebaseMessagingService;
+import com.google.firebase.messaging.RemoteMessage;
+
+import io.rover.Rover;
+
+public class MyFirebaseMessagingService extends FirebaseMessagingService {
+    @Override
+    public void onMessageReceived(RemoteMessage remoteMessage) {
+        if (Rover.isRoverMessage(remoteMessage)) {
+            Rover.handleRemoteMessage(remoteMessage);
+            return;
+        }
+
+        // ...
+        // Parse the message as your own
+    }
+}
+```
+
+### Default Back Button Behaviour
+
+If you do not provide a [Notification Provider](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/NotificationProvider.java) to Rover the default back behaviour is to use the parent activity provided in your AndroidManifest file. This is only the case when a message will launch a LandingPage or an Experience. The following example demonstrates that when the back button is pressed after launching an Experience from a notification the MainActivity will run. 
+
+```xml
+...
+ <activity android:name="io.rover.ExperienceActivity"
+    android:parentActivityName=".MainActivity">
+    <meta-data
+        android:name="android.support.PARENT_ACTIVITY"
+        android:value=".MainActivity"/>
+</activity>
+...
+```
 
 ### Inbox
 
@@ -159,7 +200,7 @@ startActivity(intent);
 ```
 
 
-### Customer Identity
+## Customer Identity
 
 By default the Rover platform will assign a unique identifier to each customer who installs your application. However you may choose to assign your own identifiers. This is particularly useful for mapping data from the Rover Analytics app or if a customer is using your application on multiple platforms. To accomodate this Rover saves customer info to device storage so that it persists across sessions. The following snippet demonstrates assigning your own customer identifier:
 

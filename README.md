@@ -154,6 +154,21 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 }
 ```
 
+### Default Back Button Behaviour
+
+If you do not provide a [Notification Provider](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/NotificationProvider.java) to Rover the default back behaviour is to use the parent activity provided in your AndroidManifest file. This is only the case when a message will launch a LandingPage or an Experience. The following example demonstrates that when the back button is pressed after launching an Experience from a notification the MainActivity will run. 
+
+```xml
+...
+ <activity android:name="io.rover.ExperienceActivity"
+    android:parentActivityName=".MainActivity">
+    <meta-data
+        android:name="android.support.PARENT_ACTIVITY"
+        android:value=".MainActivity"/>
+</activity>
+...
+```
+
 ### Inbox
 
 Most applications provide means for users to recall messages. You can use the `onMessageReceived(Message message)` callback on a [`MessageDeliveryObserver`](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/RoverObserver.java) to map and add Rover messages to your application's inbox as they are delivered. You may also rely solely on Rover for a simple implementation of such inbox if your application doesn't already have one:

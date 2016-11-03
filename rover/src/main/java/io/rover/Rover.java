@@ -501,7 +501,7 @@ public class Rover implements EventSubmitTask.Callback {
         return  null;
     }
 
-    public static PendingIntent getIntentFromRoverMessage(io.rover.model.Message message) {
+    public static PendingIntent getPendingIntentFromRoverMessage(io.rover.model.Message message) {
         if (message == null) {
             return null;
         }
@@ -576,7 +576,7 @@ public class Rover implements EventSubmitTask.Callback {
             largeIcon = mSharedInstance.mNotificationProvider.getLargeIconForNotification(message);
             sound = mSharedInstance.mNotificationProvider.getSoundForNotification(message);
         } else {
-            pendingIntent = getIntentFromRoverMessage(message);
+            pendingIntent = getPendingIntentFromRoverMessage(message);
         }
 
         if (pendingIntent == null) {

@@ -574,12 +574,10 @@ public class Rover implements EventSubmitTask.Callback {
             smallIcon = mSharedInstance.mNotificationProvider.getSmallIconForNotification(message);
             largeIcon = mSharedInstance.mNotificationProvider.getLargeIconForNotification(message);
             sound = mSharedInstance.mNotificationProvider.getSoundForNotification(message);
-        } else {
-            pendingIntent = getPendingIntentFromRoverMessage(message);
         }
 
         if (pendingIntent == null) {
-            Log.d(TAG, "No Intent specified");
+            pendingIntent = getPendingIntentFromRoverMessage(message);
         }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)

@@ -461,6 +461,147 @@ public class Rover implements EventSubmitTask.Callback {
         mSharedInstance.sendEvent(event);
     }
 
+    public static boolean isRoverMessage(RemoteMessage remoteMessage) {
+        Map<String,String> data = remoteMessage.getData();
+        return (data != null && data.containsKey("_rover"));
+    }
+
+    public static io.rover.model.Message getRoverMessageFromRemoteMessage(RemoteMessage remoteMessage) {
+        if (isRoverMessage(remoteMessage)) {
+            Map<String,String> data = remoteMessage.getData();
+
+            if (data == null) {
+                return null;
+            }
+
+            String jsonString = data.get("message");
+
+            if (jsonString == null) {
+                return null;
+
+            }
+
+            try {
+                JSONObject messageJson = new JSONObject(jsonString);
+                if (!messageJson.isNull("id") && !messageJson.isNull("attributes")) {
+                    String id = messageJson.getString("id");
+                    JSONObject attributes = messageJson.getJSONObject("attributes");
+
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    io.rover.model.Message message = (io.rover.model.Message) objectMapper.getObject("messages", id, attributes);
+                    return message;
+                }
+
+            } catch (JSONException e) {
+                Log.e(TAG, "Unable to parse json from remote message");
+                return null;
+            }
+        }
+
+        return  null;
+    }
+
+    public static PendingIntent getIntentFromRoverMessage(io.rover.model.Message message) {
+        if (message == null) {
+            return null;
+        }
+
+        Context context = mSharedInstance.mApplicationContext;
+
+        if (context == null) {
+            return null;
+        }
+
+        android.app.TaskStackBuilder taskStackBuilder = android.app.TaskStackBuilder.create(mSharedInstance.mApplicationContext);
+
+        switch (message.getAction()) {
+            case Website: {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
+                taskStackBuilder.addNextIntent(intent);
+                return taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+            }
+            case LandingPage: {
+                Intent intent = new Intent(context, RemoteScreenActivity.class);
+                intent.setData(getUriFromRoverMessage(message));
+                taskStackBuilder.addParentStack(RemoteScreenActivity.class);
+                taskStackBuilder.addNextIntent(intent);
+                return taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+            }
+            case DeepLink: {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
+                taskStackBuilder.addNextIntent(intent);
+                return taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+            }
+            case Experience: {
+                Intent intent = new Intent(context, ExperienceActivity.class);
+                intent.setData(message.getExperienceUri());
+                taskStackBuilder.addParentStack(ExperienceActivity.class);
+                taskStackBuilder.addNextIntent(intent);
+                return taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+            }
+            default: {
+                return mSharedInstance.getAppLaunchPendingIntent();
+            }
+        }
+    }
+
+    public static void handleRemoteMessage(RemoteMessage remoteMessage) {
+
+        if (!isRoverMessage(remoteMessage)) {
+            return;
+        }
+
+        io.rover.model.Message message = getRoverMessageFromRemoteMessage(remoteMessage);
+
+        if (message == null) {
+            Log.w(TAG, "Unable to handle remote message. Message was null");
+            return;
+        }
+
+        Context context = mSharedInstance.mApplicationContext;
+
+        if (context == null) {
+            Log.w(TAG, "Unable to handle remote message. ApplicationContext was null");
+            return;
+        }
+
+        PendingIntent pendingIntent = null;
+        int smallIcon = R.drawable.rover_notification_icon;
+        Bitmap largeIcon = null;
+        Uri sound = null;
+
+        if (mSharedInstance.mNotificationProvider != null) {
+            pendingIntent = mSharedInstance.mNotificationProvider.getNotificationPendingIntent(message);
+            smallIcon = mSharedInstance.mNotificationProvider.getSmallIconForNotification(message);
+            largeIcon = mSharedInstance.mNotificationProvider.getLargeIconForNotification(message);
+            sound = mSharedInstance.mNotificationProvider.getSoundForNotification(message);
+        } else {
+            pendingIntent = getIntentFromRoverMessage(message);
+        }
+
+        if (pendingIntent == null) {
+            Log.d(TAG, "No Intent specified");
+        }
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+                .setAutoCancel(true)
+                .setSmallIcon(smallIcon)
+                .setLargeIcon(largeIcon)
+                .setSound(sound)
+                .setContentTitle(message.getTitle())
+                .setContentText(message.getText())
+                .setContentIntent(pendingIntent);
+
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        manager.notify(message.getId(), 12345 /* Rover notification id */, builder.build());
+    }
+
+    private static Uri getUriFromRoverMessage(io.rover.model.Message message) {
+        return new Uri.Builder().scheme("rover")
+                .authority("message")
+                .appendPath(message.getId()).build();
+    }
+
     /**
      * Services
      */
@@ -555,105 +696,7 @@ public class Rover implements EventSubmitTask.Callback {
     static public class RoverFirebaseMessagingService extends FirebaseMessagingService {
         @Override
         public void onMessageReceived(RemoteMessage remoteMessage) {
-            Map<String,String> data = remoteMessage.getData();
-            if (data == null) { return; }
-            String jsonString = data.get("message");
-            if (jsonString == null) { return; }
-            try {
-                JSONObject messageJson = new JSONObject(jsonString);
-                if (!messageJson.isNull("id") && !messageJson.isNull("attributes")) {
-                    String id = messageJson.getString("id");
-                    JSONObject attributes = messageJson.getJSONObject("attributes");
-
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    io.rover.model.Message message = (io.rover.model.Message) objectMapper.getObject("messages", id, attributes);
-                    if (message != null) {
-                        // Rover message observer
-                        for (RoverObserver observer : mSharedInstance.mObservers) {
-                            if (observer instanceof RoverObserver.MessageDeliveryObserver) {
-                                ((RoverObserver.MessageDeliveryObserver) observer).onMessageReceived(message);
-                            }
-                        }
-
-                        sendNotification(message);
-                    }
-                }
-
-            } catch (JSONException e) {
-                Log.e("RoverFBMessagingService", "Bad JSON in message payload.");
-            }
-        }
-
-        private void sendNotification(io.rover.model.Message message) {
-            PendingIntent pendingIntent = null;
-            int smallIcon = R.drawable.rover_notification_icon;
-            Bitmap largeIcon = null;
-            Uri sound = null;
-            android.app.TaskStackBuilder taskStackBuilder = android.app.TaskStackBuilder.create(this);
-            if (mSharedInstance.mNotificationProvider != null) {
-                pendingIntent = mSharedInstance.mNotificationProvider.getNotificationPendingIntent(message);
-                smallIcon = mSharedInstance.mNotificationProvider.getSmallIconForNotification(message);
-                largeIcon = mSharedInstance.mNotificationProvider.getLargeIconForNotification(message);
-                sound = mSharedInstance.mNotificationProvider.getSoundForNotification(message);
-            }
-
-
-
-
-            if (pendingIntent == null) {
-                switch (message.getAction()) {
-                    case Website: {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
-                        taskStackBuilder.addNextIntent(intent);
-                        pendingIntent = taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-                        break;
-                    }
-                    case LandingPage: {
-                        Intent intent = new Intent(this, RemoteScreenActivity.class);
-                        intent.setData(getUriFromMessageId(message.getId()));
-                        taskStackBuilder.addParentStack(RemoteScreenActivity.class);
-                        taskStackBuilder.addNextIntent(intent);
-                        pendingIntent = taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-                        break;
-                    }
-                    case DeepLink: {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
-                        taskStackBuilder.addNextIntent(intent);
-                        pendingIntent = taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-                        break;
-                    }
-                    case Experience: {
-                        Intent intent = new Intent(this, ExperienceActivity.class);
-                        intent.setData(message.getExperienceUri());
-                        taskStackBuilder.addParentStack(ExperienceActivity.class);
-                        taskStackBuilder.addNextIntent(intent);
-                        pendingIntent = taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-                        break;
-                    }
-                    default: {
-                        pendingIntent = mSharedInstance.getAppLaunchPendingIntent();
-                    }
-                }
-            }
-
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext())
-                    .setAutoCancel(true)
-                    .setSmallIcon(smallIcon)
-                    .setLargeIcon(largeIcon)
-                    .setSound(sound)
-                    .setContentTitle(message.getTitle())
-                    .setContentText(message.getText())
-                    .setContentIntent(pendingIntent);
-
-            NotificationManager manager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-            manager.notify(message.getId(), 12345 /* Rover notification id */, builder.build());
-        }
-
-        private Uri getUriFromMessageId(String messageId) {
-            return new Uri.Builder().scheme("rover")
-                    .authority("message")
-                    .appendPath(messageId).build();
-
+            Rover.handleRemoteMessage(remoteMessage);
         }
     }
 }

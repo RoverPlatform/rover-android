@@ -130,7 +130,7 @@ If you like fine-grained control over notifications, you must register a [Notifi
 
 Check the [Notification Provider](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/NotificationProvider.java) file for more documentation on methods to customize behavior.
 
-#### Custom FirebaseMessagingService
+### Custom FirebaseMessagingService
 
 If your app is already currently using FCM and implements the `FirebaseMessagingService`, helper methods have been provided to handle Rover notifications. The following example demonstrates these methods
 
@@ -183,7 +183,7 @@ startActivity(intent);
 ```
 
 
-### Customer Identity
+## Customer Identity
 
 By default the Rover platform will assign a unique identifier to each customer who installs your application. However you may choose to assign your own identifiers. This is particularly useful for mapping data from the Rover Analytics app or if a customer is using your application on multiple platforms. To accomodate this Rover saves customer info to device storage so that it persists across sessions. The following snippet demonstrates assigning your own customer identifier:
 

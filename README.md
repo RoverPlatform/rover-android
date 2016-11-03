@@ -130,6 +130,30 @@ If you like fine-grained control over notifications, you must register a [Notifi
 
 Check the [Notification Provider](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/NotificationProvider.java) file for more documentation on methods to customize behavior.
 
+#### Custom FirebaseMessagingService
+
+If your app is already currently using FCM and implements the `FirebaseMessagingService`, helper methods have been provided to handle Rover notifications. The following example demonstrates these methods
+
+```java
+import com.google.firebase.messaging.FirebaseMessagingService;
+import com.google.firebase.messaging.RemoteMessage;
+
+import io.rover.Rover;
+
+public class MyFirebaseMessagingService extends FirebaseMessagingService {
+    @Override
+    public void onMessageReceived(RemoteMessage remoteMessage) {
+        if (Rover.isRoverMessage(remoteMessage)) {
+            Rover.handleRemoteMessage(remoteMessage);
+            return;
+        }
+
+        // ...
+        // Parse the message as your own
+    }
+}
+```
+
 ### Inbox
 
 Most applications provide means for users to recall messages. You can use the `onMessageReceived(Message message)` callback on a [`MessageDeliveryObserver`](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/RoverObserver.java) to map and add Rover messages to your application's inbox as they are delivered. You may also rely solely on Rover for a simple implementation of such inbox if your application doesn't already have one:

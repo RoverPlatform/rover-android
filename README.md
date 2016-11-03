@@ -113,6 +113,8 @@ Using the [Rover Messages App](https://app.rover.io/messages/) you can create me
 
 ### Notifications
 
+**IMPORTANT** Rover reserves the key `_rover` in the notification's data payload. Please ensure all notifications not originating from the Rover Platform do not specifiy this key.
+
 In order to have notification and messages working, Rover needs your FCM server key. Use [this guide](https://github.com/RoverPlatform/rover-android/wiki/FCM-Setup) to upload your configure Rover with your FCM setup.
 
 If you like fine-grained control over notifications, you must register a [NotificationProvider](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/NotificationProvider.java) during initialization.

@@ -153,6 +153,8 @@ public class Rover implements EventSubmitTask.Callback {
                 customer.setTraits(traits.getCustomTraits());
 
             customer.save(mSharedInstance.mApplicationContext);
+            Event event = new DeviceUpdateEvent(new Date());
+            mSharedInstance.sendEvent(event);
         }
     }
 
@@ -160,6 +162,8 @@ public class Rover implements EventSubmitTask.Callback {
         Customer customer = getCustomer();
         if (customer != null) {
             customer.clear(mSharedInstance.mApplicationContext);
+            Event event = new DeviceUpdateEvent(new Date());
+            mSharedInstance.sendEvent(event);
         }
     }
 

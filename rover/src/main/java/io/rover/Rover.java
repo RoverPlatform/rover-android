@@ -249,24 +249,44 @@ public class Rover implements EventSubmitTask.Callback {
         connection.setCallbacks(new GoogleApiConnection.Callbacks() {
             @Override
             public int onConnected(final GoogleApiClient client) {
-                // Location Updates
-                LocationServices.FusedLocationApi.removeLocationUpdates(client, mSharedInstance.getLocationPendingIntent());
 
-                // Nearby Messages
-                Nearby.Messages.unsubscribe(client, mSharedInstance.getNearbyMessagesPendingIntent())
+                LocationServices.GeofencingApi.removeGeofences(client, mSharedInstance.getGeofencePendingIntent())
                         .setResultCallback(new ResultCallback<Status>() {
                             @Override
-                            public void onResult(Status status) {
+                            public void onResult(@NonNull Status status) {
                                 if (status.isSuccess()) {
-                                    Log.i("Nearby", "Unsubscribed successfuly.");
+                                    Log.i("GeofenceService", "Successfully stopped monitoring for geofences");
                                 } else {
-                                    Log.i("Nearby", "Could not unsubscribe");
+                                    Log.w("GeofenceService", "Failed to stop monitoring for geofences");
                                 }
 
-                                client.disconnect();
+                                Nearby.Messages.unsubscribe(client, mSharedInstance.getNearbyMessagesPendingIntent())
+                                        .setResultCallback(new ResultCallback<Status>() {
+                                            @Override
+                                            public void onResult(@NonNull Status status) {
+                                                if (status.isSuccess()) {
+                                                    Log.i("Nearby", "Unsubscribed successfuly.");
+                                                } else {
+                                                    Log.w("Nearby", "Could not unsubscribe");
+                                                }
+
+                                                LocationServices.FusedLocationApi.removeLocationUpdates(client, mSharedInstance.getLocationPendingIntent())
+                                                        .setResultCallback(new ResultCallback<Status>() {
+                                                            @Override
+                                                            public void onResult(@NonNull Status status) {
+                                                                if (status.isSuccess()) {
+                                                                    Log.i("LocationServices", "Successfully unregistered for updates");
+                                                                } else {
+                                                                    Log.e("LocationServices", "Could not unregister for updates. " + status.getStatusMessage());
+                                                                }
+
+                                                                client.disconnect();
+                                                            }
+                                                        });
+                                            }
+                                        });
                             }
                         });
-
                 return GoogleApiConnection.KEEP_ALIVE;
             }
         });

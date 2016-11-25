@@ -15,7 +15,7 @@ import java.util.ArrayList;
 /**
  * Created by ata_n on 2016-07-13.
  */
-public class JsonResponseHandler implements NetworkTask.ResponseHandler {
+public class JsonResponseHandler {
 
     public interface JsonCompletionHandler {
         void onReceivedJSONObject(JSONObject jsonObject);
@@ -28,9 +28,10 @@ public class JsonResponseHandler implements NetworkTask.ResponseHandler {
         mComletionHandler = handler;
     }
 
-    @Override
-    public void onHandleResponse(InputStreamReader reader) throws IOException {
-        JsonReader jsonReader = new JsonReader(reader);
+    public void onHandleResponse(HttpResponse response) throws IOException {
+        if (response.getBody() == null) { return; }
+
+        JsonReader jsonReader = new JsonReader(response.getBody());
         JsonToken token = jsonReader.peek();
 
         switch (token) {

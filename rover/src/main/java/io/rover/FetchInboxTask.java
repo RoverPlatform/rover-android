@@ -2,11 +2,13 @@ package io.rover;
 
 import android.os.AsyncTask;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
 import io.rover.model.Message;
+import io.rover.network.HttpResponse;
 import io.rover.network.JsonApiResponseHandler;
 import io.rover.network.JsonApiResponseHandler.JsonApiObjectMapper;
 import io.rover.network.NetworkTask;
@@ -40,9 +42,15 @@ public class FetchInboxTask extends AsyncTask<Void, Void, Void> implements JsonA
         JsonApiResponseHandler responseHandler = new JsonApiResponseHandler(mapper);
         responseHandler.setCompletionHandler(this);
 
-        networkTask.setResponseHandler(responseHandler);
+        HttpResponse response = networkTask.run();
 
-        networkTask.run();
+        try {
+            responseHandler.onHandleResponse(response);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        response.release();
 
         return null;
     }

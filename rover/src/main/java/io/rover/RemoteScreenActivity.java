@@ -19,6 +19,7 @@ import java.util.List;
 
 import io.rover.model.Screen;
 import io.rover.model.ScreenViewEvent;
+import io.rover.network.HttpResponse;
 import io.rover.network.JsonApiResponseHandler;
 import io.rover.network.JsonResponseHandler;
 import io.rover.network.NetworkTask;
@@ -100,9 +101,13 @@ public class RemoteScreenActivity extends AppCompatActivity {
             responseHandler.setCompletionHandler(this);
 
             NetworkTask networkTask = Router.getLandingPageNetworkTask(messageId);
-            networkTask.setResponseHandler(responseHandler);
+            HttpResponse response = networkTask.run();
 
-            networkTask.run();
+            try {
+                responseHandler.onHandleResponse(response);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             return screen;
         }

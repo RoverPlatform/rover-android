@@ -91,6 +91,25 @@ public class Rover implements EventSubmitTask.Callback {
     private NotificationProvider mNotificationProvider;
     private boolean mGimbalMode;
 
+    /*
+        Interfaces
+     */
+
+    public interface OnDeleteMessageListener {
+        void onScucces();
+        void onFailure();
+    }
+
+    public interface OnInboxReloadListener {
+        void onSuccess(List<io.rover.model.Message> messages);
+        void onFailure();
+    }
+
+
+    /*
+        Main
+     */
+    
     private Rover() {}
 
     public static void setup(Application application, RoverConfig config) {
@@ -301,10 +320,6 @@ public class Rover implements EventSubmitTask.Callback {
         mSharedInstance.mObservers.remove(observer);
     }
 
-    public interface OnInboxReloadListener {
-        void onSuccess(List<io.rover.model.Message> messages);
-        void onFailure();
-    }
 
     public static void reloadInbox(final OnInboxReloadListener listener) {
         FetchInboxTask task = new FetchInboxTask();
@@ -317,6 +332,27 @@ public class Rover implements EventSubmitTask.Callback {
             }
         });
         task.execute();
+    }
+
+
+
+    public static void deleteMessage(io.rover.model.Message message, OnDeleteMessageListener listener) {
+        deleteMessage(message.getId(), listener);
+    }
+
+    public static void deleteMessage(String messageId, final OnDeleteMessageListener listener) {
+        DeleteMessageTask task = new DeleteMessageTask();
+        task.setCallback(new DeleteMessageTask.Callback() {
+            @Override
+            public void onComplete() {
+                listener.onScucces();
+            }
+
+            @Override
+            public void onFailure() {
+                listener.onFailure();
+            }
+        });
     }
 
     public static void submitEvent(Event event) {

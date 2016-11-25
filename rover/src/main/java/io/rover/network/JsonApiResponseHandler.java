@@ -40,8 +40,8 @@ public class JsonApiResponseHandler extends JsonResponseHandler {
     }
 
     @Override
-    public void onHandleResponse(InputStreamReader reader) throws IOException {
-        JsonReader jsonReader = new JsonReader(reader);
+    public void onHandleResponse(HttpResponse httpResponse) throws IOException {
+        JsonReader jsonReader = new JsonReader(httpResponse.getBody());
 
         Object response = null;
         ArrayList<Object> includedObjects = new ArrayList<>();

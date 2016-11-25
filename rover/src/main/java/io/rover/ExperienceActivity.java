@@ -23,6 +23,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.UUID;
 
@@ -34,6 +35,7 @@ import io.rover.model.ExperienceDismissEvent;
 import io.rover.model.ExperienceLaunchEvent;
 import io.rover.model.Screen;
 import io.rover.model.ScreenViewEvent;
+import io.rover.network.HttpResponse;
 import io.rover.network.JsonResponseHandler;
 import io.rover.network.NetworkTask;
 import io.rover.ui.ScreenFragment;
@@ -213,9 +215,16 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
             responseHandler.setCompletionHandler(this);
 
             NetworkTask networkTask = Router.getExperienceNetworkTask(experienceId);
-            networkTask.setResponseHandler(responseHandler);
+            HttpResponse response = networkTask.run();
 
-            networkTask.run();
+            try {
+                responseHandler.onHandleResponse(response);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            response.release();
 
             return experience;
         }

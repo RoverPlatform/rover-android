@@ -6,15 +6,10 @@ import android.util.Log;
 import com.google.android.gms.location.internal.ParcelableGeofence;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.rover.model.Device;
 import io.rover.model.Event;
-import io.rover.model.Message;
 import io.rover.network.HttpResponse;
 import io.rover.network.JsonApiPayloadProvider;
 import io.rover.network.JsonApiResponseHandler;
@@ -72,9 +67,11 @@ public class EventSubmitTask implements Runnable, JsonApiResponseHandler.JsonApi
                 responseHandler.onHandleResponse(response);
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                response.close();
             }
 
-            response.release();
+
         }
 
         // TODO:

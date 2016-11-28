@@ -43,6 +43,10 @@ class DeleteMessageTask extends AsyncTask<String, Void, Boolean> {
 
         HttpResponse response = networkTask.run();
 
+        if (response != null) {
+            response.close();
+        }
+
         return response != null && response.isSuccessful();
     }
 

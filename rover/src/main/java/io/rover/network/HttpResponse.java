@@ -36,7 +36,7 @@ public class HttpResponse {
         this.mStatus = status;
     }
 
-    public void release() {
+    public void close() {
         if (mBody != null) {
             try {
                 mBody.close();

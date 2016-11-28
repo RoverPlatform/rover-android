@@ -3,8 +3,6 @@ package io.rover;
 import android.os.AsyncTask;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
 
 import io.rover.model.Message;
@@ -48,9 +46,11 @@ public class FetchInboxTask extends AsyncTask<Void, Void, Void> implements JsonA
             responseHandler.onHandleResponse(response);
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            response.close();
         }
 
-        response.release();
+
 
         return null;
     }

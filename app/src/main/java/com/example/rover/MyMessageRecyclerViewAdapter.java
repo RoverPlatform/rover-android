@@ -80,6 +80,12 @@ public class MyMessageRecyclerViewAdapter extends RecyclerView.Adapter<MyMessage
         holder.mItem = mValues.get(position);
         holder.mTitleView.setText(message.getTitle());
         holder.mContentView.setText(message.getText());
+
+        if (message.isRead()) {
+            holder.mReadStatusView.setVisibility(View.INVISIBLE);
+        } else {
+            holder.mReadStatusView.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -106,12 +112,22 @@ public class MyMessageRecyclerViewAdapter extends RecyclerView.Adapter<MyMessage
         }
     }
 
+    public void messageUpdated(Message message) {
+        int position = mValues.indexOf(message);
+
+        if (position >= 0) {
+            notifyItemChanged(position);
+        }
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
         public final View mView;
         public final TextView mTitleView;
         public final TextView mContentView;
         public final Button mDeleteButton;
+        public final View mReadStatusView;
+
         public Message mItem;
 
         public ViewHolder(View view) {
@@ -120,6 +136,7 @@ public class MyMessageRecyclerViewAdapter extends RecyclerView.Adapter<MyMessage
             mTitleView = (TextView) view.findViewById(R.id.titleTextView);
             mContentView = (TextView) view.findViewById(R.id.messageTextView);
             mDeleteButton = (Button) view.findViewById(R.id.messageDeleteButton);
+            mReadStatusView = view.findViewById(R.id.messageReadStatus);
         }
 
         @Override

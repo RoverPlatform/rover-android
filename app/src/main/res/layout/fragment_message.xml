@@ -1,26 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_weight="1"
     android:layout_margin="16dp">
 
-    <Button
-        android:id="@+id/messageDeleteButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="6dp"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
-        android:background="@color/deleteButton"
-        android:textColor="@color/white"
-        android:text="Delete"/>
+
+
+    <View
+        android:id="@+id/messageReadStatus"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:background="@drawable/message_read_status"
+        android:layout_gravity="center_vertical"
+       />
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
         android:orientation="vertical"
-        android:layout_alignParentLeft="true"
-        android:layout_toLeftOf="@id/messageDeleteButton">
+        android:layout_weight="1"
+        >
 
         <TextView
             android:id="@+id/titleTextView"
@@ -41,6 +43,14 @@
             android:textAppearance="?attr/textAppearanceListItem" />
     </LinearLayout>
 
+    <Button
+        android:id="@+id/messageDeleteButton"
+        android:layout_width="64dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center_vertical"
+        android:background="@color/deleteButton"
+        android:textColor="@color/white"
+        android:text="Delete"/>
 
 
-</RelativeLayout>
+</LinearLayout>

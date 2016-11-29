@@ -135,7 +135,7 @@ public class MessageFragment extends Fragment implements SwipeRefreshLayout.OnRe
     public void onDelete(final Message message) {
         Rover.deleteMessage(message, new Rover.OnDeleteMessageListener() {
             @Override
-            public void onScucces() {
+            public void onSuccess() {
                 mAdapter.remove(message);
             }
 

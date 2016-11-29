@@ -97,7 +97,7 @@ public class Rover implements EventSubmitTask.Callback {
      */
 
     public interface OnDeleteMessageListener {
-        void onScucces();
+        void onSuccess();
         void onFailure();
     }
 
@@ -355,7 +355,7 @@ public class Rover implements EventSubmitTask.Callback {
                 }
 
                 if (listener != null) {
-                    listener.onScucces();
+                    listener.onSuccess();
                 }
             }
 

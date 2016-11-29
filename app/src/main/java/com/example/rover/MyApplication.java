@@ -9,6 +9,7 @@ import android.net.Uri;
 import io.rover.NotificationProvider;
 import io.rover.Rover;
 import io.rover.RoverConfig;
+import io.rover.Traits;
 import io.rover.model.Message;
 
 /**
@@ -26,6 +27,8 @@ public class MyApplication extends Application {
                 .build();
 
         Rover.setup(this, config);
+
+        Rover.identify(new Traits().putFirstName("Android").putIdentifier("Nexus6"));
 
     }
 }

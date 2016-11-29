@@ -42,6 +42,18 @@ class Router implements NetworkTask.NetworkTaskConnectionManager {
         }
     }
 
+    static NetworkTask deleteMessageNetworkTask(String messageId) {
+        String url = baseURL + "/inbox/messages/" + messageId;
+        try {
+            NetworkTask networkTask = new NetworkTask("DELETE", new URL(url));
+            networkTask.setConnectionManager(sharedInstance);
+            return networkTask;
+        } catch (MalformedURLException e) {
+            Log.e("Router", "Bad URL: " + url);
+            return null;
+        }
+    }
+
     static NetworkTask getEventsNetworkTask() {
         String url = baseURL + "/events";
         try {

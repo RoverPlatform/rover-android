@@ -1,10 +1,12 @@
 package io.rover.network;
 
+import android.support.annotation.Nullable;
 import android.util.JsonReader;
 import android.util.JsonWriter;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -18,7 +20,7 @@ import io.rover.Rover;
 /**
  * Created by ata_n on 2016-03-23.
  */
-public class NetworkTask implements Runnable {
+public class NetworkTask {
 
 //    public interface JsonPayloadProvider {
 //        void onProvidePayload(JsonWriter writer) throws IOException;
@@ -34,10 +36,6 @@ public class NetworkTask implements Runnable {
         void onProvidePayload(OutputStreamWriter writer) throws IOException;
     }
 
-    public interface ResponseHandler {
-        void onHandleResponse(InputStreamReader reader) throws IOException;
-    }
-
     public interface NetworkTaskConnectionManager {
         void onPrepareConnection(HttpURLConnection connection);
     }
@@ -49,7 +47,6 @@ public class NetworkTask implements Runnable {
     //private JsonResponseHandler mResponseHandler;
 
     private PayloadProvider mPayloadProvider;
-    private ResponseHandler mResponseHandler;
     private NetworkTaskConnectionManager mConnectionManager;
 
     public NetworkTask(String method, URL url) {
@@ -61,18 +58,15 @@ public class NetworkTask implements Runnable {
         mPayloadProvider = payloadProvider;
     }
 
-    public void setResponseHandler(ResponseHandler completionHandler) {
-        mResponseHandler = completionHandler;
-    }
-
     public void setConnectionManager(NetworkTaskConnectionManager manager) {
         mConnectionManager = manager;
     }
 
-    @Override
-    public void run() {
+    @Nullable
+    public HttpResponse run() {
 
         InputStream is = null;
+        HttpResponse response = null;
 
         HttpURLConnection connection = null;
 
@@ -112,17 +106,17 @@ public class NetworkTask implements Runnable {
 
             connection.connect();
 
-            int status = connection.getResponseCode();
+            response = new HttpResponse();
+            response.setStatus(connection.getResponseCode());
 
-            Log.i("NetworkTask", "HTTP Status: " + status);
-
-            is = connection.getInputStream();
-
-            if (mResponseHandler != null) {
-                //JsonReader jsonReader = new JsonReader(new InputStreamReader(is, "UTF-8"));
-                //mResponseHandler.onHandleResponse(jsonReader);
-                mResponseHandler.onHandleResponse(new InputStreamReader(is, "UTF-8"));
+            try {
+                is = connection.getInputStream();
+                response.setBody(new InputStreamReader(is, "UTF-8"));
+            } catch (Exception e) {
+                Log.w("NetworkTask", "Failed to get input stream");
             }
+
+            Log.i("NetworkTask", "HTTP Status: " + response.getStatus());
 
         } catch (IOException e) {
 
@@ -131,19 +125,19 @@ public class NetworkTask implements Runnable {
             }
 
             String error = getStringFromInputStream(is);
+
             Log.e("NetworkTask", error);
             Log.e("NetworkTask", "Error making HTTP connection: ");
             e.printStackTrace();
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    // Silence this exception from closing the stream
-                }
+
+            try {
+                is.close();
+            } catch (IOException ignored) {
+
             }
         }
 
+        return response;
     }
 
     private static String getStringFromInputStream(InputStream is) {

@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -61,7 +62,7 @@ import io.rover.model.Row;
 import io.rover.model.Screen;
 import io.rover.model.TextBlock;
 
-public class MainActivity extends AppCompatActivity implements MessageFragment.OnListFragmentInteractionListener, RegionFragment.OnRegionFragmentInteractionListener {
+public class MainActivity extends AppCompatActivity implements RegionFragment.OnRegionFragmentInteractionListener {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -192,24 +193,6 @@ public class MainActivity extends AppCompatActivity implements MessageFragment.O
         return super.onOptionsItemSelected(item);
     }
 
-
-    @Override
-    public void onListFragmentInteraction(Message item) {
-        switch (item.getAction()) {
-            case LandingPage: {
-                Intent intent = new Intent(this, RemoteScreenActivity.class);
-                intent.putExtra(RemoteScreenActivity.INTENT_EXTRA_SCREEN, item.getLandingPage());
-                startActivity(intent);
-                break;
-            }
-            case Experience: {
-                Intent intent = new Intent(this, ExperienceActivity.class);
-                intent.setData(item.getExperienceUri());
-                startActivity(intent);
-                break;
-            }
-        }
-    }
 
 
     @Override

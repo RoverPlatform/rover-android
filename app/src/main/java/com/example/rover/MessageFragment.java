@@ -1,12 +1,14 @@
 package com.example.rover;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,22 +16,17 @@ import android.view.ViewGroup;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.rover.ExperienceActivity;
+import io.rover.RemoteScreenActivity;
 import io.rover.model.Message;
 import io.rover.Rover;
 
-/**
- * A fragment representing a list of Items.
- * <p/>
- * Activities containing this fragment MUST implement the {@link OnListFragmentInteractionListener}
- * interface.
- */
-public class MessageFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
+public class MessageFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener, MyMessageRecyclerViewAdapter.OnClickListener, MyMessageRecyclerViewAdapter.OnDeleteListener {
 
     // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
     // TODO: Customize parameters
     private int mColumnCount = 1;
-    private OnListFragmentInteractionListener mListener;
     private SwipeRefreshLayout mSwipeLayout;
     private MyMessageRecyclerViewAdapter mAdapter;
 
@@ -81,7 +78,9 @@ public class MessageFragment extends Fragment implements SwipeRefreshLayout.OnRe
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            mAdapter = new MyMessageRecyclerViewAdapter(new ArrayList<Message>(), mListener);
+            mAdapter = new MyMessageRecyclerViewAdapter(new ArrayList<Message>());
+            mAdapter.setOnClickListener(this);
+            mAdapter.setOnDeleteMessageListener(this);
             recyclerView.setAdapter(mAdapter);
         }
         return view;
@@ -91,12 +90,6 @@ public class MessageFragment extends Fragment implements SwipeRefreshLayout.OnRe
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnListFragmentInteractionListener) {
-            mListener = (OnListFragmentInteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnListFragmentInteractionListener");
-        }
         onRefresh();
     }
 
@@ -118,21 +111,38 @@ public class MessageFragment extends Fragment implements SwipeRefreshLayout.OnRe
     @Override
     public void onDetach() {
         super.onDetach();
-        mListener = null;
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnListFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onListFragmentInteraction(Message item);
+    @Override
+    public void onClick(Message message) {
+        switch (message.getAction()) {
+            case LandingPage: {
+                Intent intent = new Intent(getActivity(), RemoteScreenActivity.class);
+                intent.putExtra(RemoteScreenActivity.INTENT_EXTRA_SCREEN, message.getLandingPage());
+                startActivity(intent);
+                break;
+            }
+            case Experience: {
+                Intent intent = new Intent(getActivity(), ExperienceActivity.class);
+                intent.setData(message.getExperienceUri());
+                startActivity(intent);
+                break;
+            }
+        }
+    }
+
+    @Override
+    public void onDelete(final Message message) {
+        Rover.deleteMessage(message, new Rover.OnDeleteMessageListener() {
+            @Override
+            public void onScucces() {
+                mAdapter.remove(message);
+            }
+
+            @Override
+            public void onFailure() {
+                Log.w("Rover", "Failed to delete message");
+            }
+        });
     }
 }

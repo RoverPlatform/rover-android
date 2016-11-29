@@ -101,6 +101,11 @@ public class Rover implements EventSubmitTask.Callback {
         void onFailure();
     }
 
+    public interface OnPatchMessageListener {
+        void onSuccess();
+        void onFailure();
+    }
+
     public interface OnInboxReloadListener {
         void onSuccess(List<io.rover.model.Message> messages);
         void onFailure();
@@ -335,7 +340,25 @@ public class Rover implements EventSubmitTask.Callback {
         task.execute();
     }
 
+    public static void patchMessage(final io.rover.model.Message message, final OnPatchMessageListener listener) {
+        PatchMessageTask task = new PatchMessageTask();
+        task.setCallback(new PatchMessageTask.Callback() {
+            @Override
+            public void onSuccess() {
+                if (listener != null) {
+                    listener.onSuccess();
+                }
+            }
 
+            @Override
+            public void onFailure() {
+                if (listener != null) {
+                    listener.onFailure();
+                }
+            }
+        });
+        task.execute(message);
+    }
 
     public static void deleteMessage(io.rover.model.Message message, OnDeleteMessageListener listener) {
         deleteMessage(message.getId(), listener);

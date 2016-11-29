@@ -29,8 +29,7 @@ public class PatchMessageTask extends AsyncTask<Message, Void, Boolean> {
 
     @Override
     protected Boolean doInBackground(Message... messages) {
-
-        Log.i("Async", "here");
+        
         if (messages.length == 0)
             return false;
 

@@ -114,7 +114,25 @@ public class MessageFragment extends Fragment implements SwipeRefreshLayout.OnRe
     }
 
     @Override
-    public void onClick(Message message) {
+    public void onClick(final Message message) {
+
+        if (!message.isRead()) {
+            message.setRead(true);
+            Rover.patchMessage(message, new Rover.OnPatchMessageListener() {
+                @Override
+                public void onSuccess() {
+                    if (mAdapter != null) {
+                        mAdapter.messageUpdated(message);
+                    }
+                }
+
+                @Override
+                public void onFailure() {
+                    Log.e("RoverApp", "Failed to update message");
+                }
+            });
+        }
+
         switch (message.getAction()) {
             case LandingPage: {
                 Intent intent = new Intent(getActivity(), RemoteScreenActivity.class);

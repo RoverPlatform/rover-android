@@ -78,6 +78,7 @@ public class Rover implements EventSubmitTask.Callback {
 
     protected static String VERSION = "1.5.1";
     protected static Rover mSharedInstance = new Rover();
+    protected static int NOTIIFCATION_ID = 12345;
 
     private static final String TAG = "Rover";
 
@@ -340,19 +341,32 @@ public class Rover implements EventSubmitTask.Callback {
         deleteMessage(message.getId(), listener);
     }
 
-    public static void deleteMessage(String messageId, final OnDeleteMessageListener listener) {
+    public static void deleteMessage(final String messageId, final OnDeleteMessageListener listener) {
         DeleteMessageTask task = new DeleteMessageTask();
         task.setCallback(new DeleteMessageTask.Callback() {
             @Override
             public void onComplete() {
-                listener.onScucces();
+
+                Context context = mSharedInstance.mApplicationContext;
+
+                if (context != null) {
+                    NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                    manager.cancel(messageId, Rover.NOTIIFCATION_ID);
+                }
+
+                if (listener != null) {
+                    listener.onScucces();
+                }
             }
 
             @Override
             public void onFailure() {
-                listener.onFailure();
+                if (listener != null) {
+                    listener.onFailure();
+                }
             }
         });
+        task.execute(messageId);
     }
 
     public static void submitEvent(Event event) {
@@ -650,7 +664,7 @@ public class Rover implements EventSubmitTask.Callback {
                 .setContentIntent(pendingIntent);
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.notify(message.getId(), 12345 /* Rover notification id */, builder.build());
+        manager.notify(message.getId(), Rover.NOTIIFCATION_ID, builder.build());
     }
 
     private static Uri getUriFromRoverMessage(io.rover.model.Message message) {

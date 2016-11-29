@@ -108,6 +108,8 @@ public class RemoteScreenActivity extends AppCompatActivity {
                     responseHandler.onHandleResponse(response);
                 } catch (IOException e) {
                     e.printStackTrace();
+                } finally {
+                    response.close();
                 }
             }
 

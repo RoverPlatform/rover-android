@@ -70,8 +70,6 @@ public class EventSubmitTask implements Runnable, JsonApiResponseHandler.JsonApi
             } finally {
                 response.close();
             }
-
-
         }
 
         // TODO:

@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,6 +42,12 @@ public class JsonApiResponseHandler extends JsonResponseHandler {
 
     @Override
     public void onHandleResponse(HttpResponse httpResponse) throws IOException {
+
+        if (httpResponse.getBody() == null) {
+            handleCompletion(null, Collections.emptyList());
+            return;
+        }
+
         JsonReader jsonReader = new JsonReader(httpResponse.getBody());
 
         Object response = null;
@@ -83,8 +90,13 @@ public class JsonApiResponseHandler extends JsonResponseHandler {
                 jsonReader.skipValue();
             }
         }
+
         jsonReader.endObject();
 
+        handleCompletion(response, includedObjects);
+    }
+
+    private void handleCompletion(Object response, List includedObjects) {
         if (mCompletionHandler != null) {
             mCompletionHandler.onHandleCompletion(response, includedObjects);
         }

@@ -42,12 +42,15 @@ public class FetchInboxTask extends AsyncTask<Void, Void, Void> implements JsonA
 
         HttpResponse response = networkTask.run();
 
-        try {
-            responseHandler.onHandleResponse(response);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            response.close();
+
+        if (response != null) {
+            try {
+                responseHandler.onHandleResponse(response);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                response.close();
+            }
         }
 
 
@@ -68,7 +71,7 @@ public class FetchInboxTask extends AsyncTask<Void, Void, Void> implements JsonA
             if (mInbox != null) {
                 mCallback.onSuccess(mInbox);
             } else {
-                //mCallback.onFailure(error);
+//                mCallback.onFailure(error);
             }
         }
     }

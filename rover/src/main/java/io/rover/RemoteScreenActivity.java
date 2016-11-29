@@ -103,10 +103,12 @@ public class RemoteScreenActivity extends AppCompatActivity {
             NetworkTask networkTask = Router.getLandingPageNetworkTask(messageId);
             HttpResponse response = networkTask.run();
 
-            try {
-                responseHandler.onHandleResponse(response);
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (response != null) {
+                try {
+                    responseHandler.onHandleResponse(response);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
             return screen;

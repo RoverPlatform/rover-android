@@ -212,16 +212,15 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
             NetworkTask networkTask = Router.getExperienceNetworkTask(experienceId);
             HttpResponse response = networkTask.run();
 
-            try {
-                responseHandler.onHandleResponse(response);
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                response.close();
+            if (response != null) {
+                try {
+                    responseHandler.onHandleResponse(response);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    response.close();
+                }
             }
-
-
 
             return experience;
         }

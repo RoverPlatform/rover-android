@@ -1,7 +1,6 @@
 package io.rover;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.Application;
 import android.app.IntentService;
 import android.app.NotificationManager;
@@ -13,13 +12,10 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.HttpResponseCache;
 import android.support.annotation.NonNull;
-import android.support.v4.app.NavUtils;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
-import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
@@ -51,8 +47,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -67,7 +61,6 @@ import io.rover.model.Device;
 import io.rover.model.DeviceUpdateEvent;
 import io.rover.model.Event;
 import io.rover.model.GeofenceTransitionEvent;
-import io.rover.model.GimbalPlaceTransitionEvent;
 import io.rover.model.LocationUpdateEvent;
 import io.rover.model.Place;
 
@@ -78,7 +71,7 @@ public class Rover implements EventSubmitTask.Callback {
 
     protected static String VERSION = "1.5.1";
     protected static Rover mSharedInstance = new Rover();
-    protected static int NOTIIFCATION_ID = 12345;
+    protected static int NOTIFICATION_ID = 12345;
 
     private static final String TAG = "Rover";
 
@@ -374,7 +367,7 @@ public class Rover implements EventSubmitTask.Callback {
 
                 if (context != null) {
                     NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-                    manager.cancel(messageId, Rover.NOTIIFCATION_ID);
+                    manager.cancel(messageId, Rover.NOTIFICATION_ID);
                 }
 
                 if (listener != null) {
@@ -687,7 +680,7 @@ public class Rover implements EventSubmitTask.Callback {
                 .setContentIntent(pendingIntent);
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.notify(message.getId(), Rover.NOTIIFCATION_ID, builder.build());
+        manager.notify(message.getId(), Rover.NOTIFICATION_ID, builder.build());
     }
 
     private static Uri getUriFromRoverMessage(io.rover.model.Message message) {

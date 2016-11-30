@@ -189,6 +189,46 @@ Note that the `reloadInbox` method will only return messages that have been mark
 
 See the [MessageFragment](https://github.com/RoverPlatform/rover-android/blob/master/app/src/main/java/com/example/rover/MessageFragment.java) in the example app for a quick implementation.
 
+#### Deleting messages from the Rover inbox
+
+Rover provides a simple method for deleting messages from the inbox, this can be accomplished with just the message id or the message object itself. Refer to the following snippet on how deletion works
+
+```java
+// message -> io.rover.model.Message
+Rover.deleteMessage(message, new Rover.OnDeleteMessageListener() {
+    @Override
+    public void onSuccess() {
+       // update your adapter here if presenting messages in a listview
+       Log.i("MyApp", "Message has been deleted");
+    }
+
+    @Override
+    public void onFailure() {
+        Log.e("MyApp", "Failed to delete message");
+    }
+});
+```
+
+#### Updating read status of a message
+
+Every Rover message has a flag indicating if the message has been read or not. This can be useful in your application if you wish to display an indicator if the user has interacted with the message before. To accomplish this behaviour Rover provides a `patchMessage` method to update the flag. The following demonstrates how to set a message read status to true
+
+```java
+if (!message.isRead()) {
+    message.setRead(true);
+    Rover.patchMessage(message, new Rover.OnPatchMessageListener() {
+        @Override
+        public void onSuccess() {
+            Log.i("MyApp", "Message has now been read");
+        }
+
+        @Override
+        public void onFailure() {
+            Log.e("MyApp", "Something failed while trying to update the status");
+        }
+    });
+}
+```
 ### Screen Activity
 
 If the message contains a landing page you probably want to present an activity for it. The `getLandingPage()` method of a [`Message`](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/model/Message.java) object is of type [`Screen`](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/model/Screen.java). You can launch the `ScreenActivity` using an Intent which has the `Screen` object in its extras under the key `ScreenActivity.INTENT_EXTRA_SCREEN`.

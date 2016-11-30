@@ -46,7 +46,6 @@ public class ButtonBlockView extends TextBlockView {
         mTitleAlignments = new HashMap<>();
         mTitleAlignments.put(State.Normal, new Alignment(Alignment.Horizontal.Center, Alignment.Vertical.Middle));
         mTitleOffsets = new HashMap<>();
-        mTitleOffsets.put(State.Normal, Offset.ZeroOffset);
         mTitleTypefaces = new HashMap<>();
         mTitleTypefaces.put(State.Normal, (new Font(12, 400).getTypeface()));
         mBackgroundColors = new HashMap<>();

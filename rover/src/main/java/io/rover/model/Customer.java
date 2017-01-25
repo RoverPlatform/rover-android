@@ -158,16 +158,12 @@ public class Customer {
             }
 
             if (mTraits != null) {
-                JSONObject jsonObject = new JSONObject();
-                for (Map.Entry<String, Object> entry : mTraits.entrySet()) {
-                    try {
-                        jsonObject.put(entry.getKey(), entry.getValue());
-                    } catch (Exception e) {
-                        Log.e("Customer", "Failed to add trait: " + entry.getKey());
-                    }
+                try {
+                    JSONObject jsonObject = new JSONObject(mTraits);
+                    editor.putString("traits", jsonObject.toString());
+                } catch (NullPointerException e) {
+                    Log.e("Customer", "Failed to save traits");
                 }
-
-                editor.putString("traits", jsonObject.toString());
             }
 
             editor.apply();

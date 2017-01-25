@@ -204,13 +204,21 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
             if (customer.getTags().hasBeenSet())
                 jsonObject.put("tags", new JSONArray(Arrays.asList(customer.getTags().getOrElse(new String[0]))));
 
+            if (customer.getTraits() != null) {
+                try {
+                    jsonObject.put("traits", new JSONObject(customer.getTraits()));
+                } catch (NullPointerException e) {
+                    Log.e("ObjectSerializer", "Failed to serialize customer traits");
+                }
+            }
+
         } else if (mObject instanceof Device) {
             Device device = (Device)mObject;
 
             jsonObject.put("os-name", "Android");
             jsonObject.put("platform", "Android");
             jsonObject.put("sdk-version", Rover.VERSION);
-            jsonObject.put("development", true);
+            jsonObject.put("development", false);
             jsonObject.put("udid", device.getIdentifier(mApplicationContext));
             jsonObject.put("locale-lang", device.getLocaleLanguage());
             jsonObject.put("locale-region", device.getLocaleRegion());

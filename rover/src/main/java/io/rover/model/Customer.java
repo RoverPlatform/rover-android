@@ -7,6 +7,7 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,8 +54,6 @@ public class Customer {
         mEmail = new Optional<>();
         mPhoneNumber = new Optional<>();
         mTags = new Optional<>();
-        mTraits = new HashMap<>();
-        mTraits = new HashMap<>();
     }
 
     public Optional<String> getIdentifier() { return mIdentifier; }
@@ -65,7 +64,7 @@ public class Customer {
     public Optional<String> getEmail() { return mEmail; }
     public Optional<String> getPhoneNumber() { return mPhoneNumber; }
     public Optional<String[]> getTags() { return mTags; }
-    //public Map<String, Object> getTraits() { return mTraits; }
+    public Map<String, Object> getTraits() { return mTraits; }
 
     public void setIdentifier(String identifier) { mIdentifier.set(identifier); }
     public void setFirstName(String name) { mFirstName.set(name); }
@@ -75,7 +74,26 @@ public class Customer {
     public void setEmail(String email) { mEmail.set(email); }
     public void setPhoneNumber(String phoneNumber) { mPhoneNumber.set(phoneNumber); }
     public void setTags(String[] tags) { mTags.set(tags); }
-    public void setTraits(Map<String, Object> traits) { mTraits = traits; }
+    public void setTraits(Map<String, Object> traits) {
+        if (traits == null)
+            return;
+
+        if (mTraits == null)
+            mTraits = new HashMap<String, Object>();
+
+        // Merge the new traits into the existing traits
+        for (Map.Entry<String, Object> entry : traits.entrySet()) {
+            mTraits.put(entry.getKey(), entry.getValue());
+        }
+
+        // Remove any key which was set to null
+
+        for (Iterator<Map.Entry<String, Object>> it = mTraits.entrySet().iterator(); it.hasNext();) {
+            Map.Entry<String, Object> entry = it.next();
+            if (entry.getValue() == null)
+                it.remove();
+        }
+    }
 
     public void clearIdentifier() { mIdentifier.clear(); }
     public void clearFirstName() { mFirstName.clear(); }
@@ -85,6 +103,7 @@ public class Customer {
     public void clearEmail() { mEmail.clear(); }
     public void clearPhoneNumber() { mPhoneNumber.clear(); }
     public void clearTags() { mTags.clear(); }
+    public void clearTraits() { mTraits.clear(); }
 
     public void clear(Context context) {
         synchronized (this) {
@@ -97,6 +116,7 @@ public class Customer {
             clearEmail();
             clearPhoneNumber();
             clearTags();
+            clearTraits();
 
             SharedPreferences.Editor editor = context.getSharedPreferences(SHARED_CUSTOMER, 0).edit();
             editor.clear();
@@ -138,25 +158,17 @@ public class Customer {
 
             if (mTraits != null) {
                 JSONObject jsonObject = new JSONObject();
-
-                Iterator<String> keys = mTraits.keySet().iterator();
-                while (keys.hasNext()) {
-                    String key = keys.next();
-
+                for (Map.Entry<String, Object> entry : mTraits.entrySet()) {
                     try {
-                        Object value = mTraits.get(key);
-                        if (value instanceof Double) {
-                            jsonObject.put(key, ((Double) value).doubleValue());
-                        } else if (value instanceof String) {
-                            jsonObject.put(key, value);
-                        }
-                    } catch (JSONException e) {
-                        Log.e("Customer", "Error storing traits");
+                        jsonObject.put(entry.getKey(), entry.getValue());
+                    } catch (Exception e) {
+                        Log.e("Customer", "Failed to add trait: " + entry.getKey());
                     }
                 }
 
                 editor.putString("traits", jsonObject.toString());
             }
+
             editor.apply();
         }
     }
@@ -194,31 +206,33 @@ public class Customer {
             }
         }
 
-        String traitsString = sharedData.getString("traits", null);
-        if (traitsString != null) {
+        if (sharedData.contains("traits")) {
+            String traitsJSONString = sharedData.getString("traits", null);
 
-            JSONObject jsonObject = null;
+            if (traitsJSONString != null) {
+                JSONObject jsonObject = null;
 
-            try {
-                jsonObject = new JSONObject(traitsString);
-            } catch (JSONException e) {
-                Log.e("Customer", "Invalid traits");
-            }
+                try {
+                    jsonObject = new JSONObject(traitsJSONString);
+                } catch (JSONException e) {
+                    Log.e("Customer", "Invalid traits stored in shard prefs");
+                }
 
-            if (jsonObject != null) {
-                Iterator<String> keys = jsonObject.keys();
-                while (keys.hasNext()) {
-                    String key = keys.next();
+                HashMap<String, Object> parsedTraits = new HashMap<>();
 
-                    try {
-                        double number = jsonObject.getDouble(key);
+                if (jsonObject != null) {
+                    Iterator<String> keys = jsonObject.keys();
 
-                        customer.mTraits.put(key, new Double(number));
-                    } catch (JSONException e) {
-                        String string = jsonObject.optString(key, "");
-
-                        customer.mTraits.put(key, string);
+                    while (keys.hasNext()) {
+                        String key = keys.next();
+                        try {
+                            parsedTraits.put(key, jsonObject.get(key));
+                        } catch (JSONException e) {
+                            Log.e("Customer", "Failed to parse trait: " + key);
+                        }
                     }
+
+                    customer.setTraits(parsedTraits);
                 }
             }
         }

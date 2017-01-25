@@ -54,6 +54,7 @@ public class Customer {
         mEmail = new Optional<>();
         mPhoneNumber = new Optional<>();
         mTags = new Optional<>();
+        mTraits = new HashMap<>();
     }
 
     public Optional<String> getIdentifier() { return mIdentifier; }

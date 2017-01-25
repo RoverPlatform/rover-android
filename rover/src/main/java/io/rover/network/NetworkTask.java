@@ -131,7 +131,8 @@ public class NetworkTask {
             e.printStackTrace();
 
             try {
-                is.close();
+                if(is != null)
+                    is.close();
             } catch (IOException ignored) {
 
             }

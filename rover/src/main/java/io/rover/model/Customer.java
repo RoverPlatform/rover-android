@@ -53,7 +53,7 @@ public class Customer {
         mEmail = new Optional<>();
         mPhoneNumber = new Optional<>();
         mTags = new Optional<>();
-        mTraits = new HashMap<>();
+        mTraits = null;
     }
 
     public Optional<String> getIdentifier() { return mIdentifier; }
@@ -75,7 +75,7 @@ public class Customer {
     public void setPhoneNumber(String phoneNumber) { mPhoneNumber.set(phoneNumber); }
     public void setTags(String[] tags) { mTags.set(tags); }
     public void setTraits(Map<String, Object> traits) {
-        if (traits == null)
+        if (traits == null || traits.isEmpty())
             return;
 
         if (mTraits == null)
@@ -93,17 +93,20 @@ public class Customer {
             if (entry.getValue() == null)
                 it.remove();
         }
+
+        if (mTraits.isEmpty())
+            clearTraits();
     }
 
-    public void clearIdentifier() { mIdentifier.clear(); }
-    public void clearFirstName() { mFirstName.clear(); }
-    public void clearLastName() { mLastName.clear(); }
-    public void clearGender() { mGender.clear(); }
-    public void clearAge() { mAge.clear(); }
-    public void clearEmail() { mEmail.clear(); }
-    public void clearPhoneNumber() { mPhoneNumber.clear(); }
-    public void clearTags() { mTags.clear(); }
-    public void clearTraits() { mTraits.clear(); }
+    public void clearIdentifier() { mIdentifier.set(null); }
+    public void clearFirstName() { mFirstName.set(null); }
+    public void clearLastName() { mLastName.set(null); }
+    public void clearGender() { mGender.set(null); }
+    public void clearAge() { mAge.set(null); }
+    public void clearEmail() { mEmail.set(null); }
+    public void clearPhoneNumber() { mPhoneNumber.set(null); }
+    public void clearTags() { mTags.set(new String[0]); }
+    public void clearTraits() { mTraits = null; }
 
     public void clear(Context context) {
         synchronized (this) {

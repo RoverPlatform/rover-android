@@ -211,7 +211,7 @@ public class Customer {
                 try {
                     jsonObject = new JSONObject(traitsJSONString);
                 } catch (JSONException e) {
-                    Log.e("Customer", "Invalid traits stored in shard prefs");
+                    Log.e("Customer", "Invalid traits stored in shared prefs");
                 }
 
                 HashMap<String, Object> parsedTraits = new HashMap<>();

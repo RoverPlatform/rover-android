@@ -145,7 +145,7 @@ public class Customer {
             if (mGender.hasBeenSet())
                 editor.putString("gender", mGender.get());
 
-            if (mAge.hasBeenSet())
+            if (mAge.hasBeenSet() && mAge.get() != null)
                 editor.putInt("age", mAge.get());
 
             if (mEmail.hasBeenSet())

@@ -219,6 +219,7 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
             jsonObject.put("model", device.getModel());
             jsonObject.put("time-zone", device.getTimeZone());
             jsonObject.put("bluetooth-enabled", device.getBluetoothEnabled(mApplicationContext));
+            jsonObject.put("notifications-enabled", device.areNotificationsEnabled(mApplicationContext));
             jsonObject.put("token", device.getGcmToken());
             jsonObject.put("aid", device.getAdvertisingIdentifier());
             jsonObject.put("ad-tracking", device.getAdTrackingEnabled());

@@ -3,12 +3,14 @@ package io.rover;
 import android.content.Context;
 import android.util.Log;
 
+import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.android.gms.location.internal.ParcelableGeofence;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.rover.model.Device;
 import io.rover.model.Event;
 import io.rover.network.HttpResponse;
 import io.rover.network.JsonApiPayloadProvider;
@@ -59,6 +61,24 @@ public class EventSubmitTask implements Runnable, JsonApiResponseHandler.JsonApi
         JsonApiObjectMapper mapper = new ObjectMapper();
         JsonApiResponseHandler responseHandler = new JsonApiResponseHandler(mapper);
         responseHandler.setCompletionHandler(this);
+
+        Device device = Device.getInstance();
+
+        if (!device.hasCheckedForAdTracking()) {
+            Log.d("EventSubmitTask", "Getting advertising id");
+            AdvertisingIdTask advertisingIdTask = new AdvertisingIdTask(mContext);
+            AdvertisingIdClient.Info info = advertisingIdTask.execute();
+
+            device.setCheckedForAdTracking(true);
+
+            if (info != null) {
+                device.setAdTrackingEnabled(true);
+                device.setAdvertisingId(info.getId());
+            } else {
+                device.setAdTrackingEnabled(false);
+            }
+
+        }
 
         HttpResponse response = networkTask.run();
 

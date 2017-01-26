@@ -1,71 +1,39 @@
 package io.rover;
 
 import android.content.Context;
-import android.os.AsyncTask;
 
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
-//import com.google.android.gms.auth.GooglePlayServicesAvailabilityException;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 
 import java.io.IOException;
 
+import io.rover.model.Device;
+
 /**
  * Created by ata_n on 2016-04-18.
  */
-public class AdvertisingIdTask extends AsyncTask<Void, Void, Void> {
+public class AdvertisingIdTask {
 
     private Context mContext;
-    private Callback mCallback;
-
-    static private String id;
-    static private boolean isLAT;
-
-    public interface Callback {
-        void onFinished(String advertisingId, boolean isLAT);
-    }
-
-    public void setCallback(Callback callback) {
-        mCallback = callback;
-    }
 
     public AdvertisingIdTask(Context context) {
-        super();
         mContext = context;
     }
 
-    @Override
-    protected Void doInBackground(Void... params) {
-
-        if (id != null) {
-            // We already have the Id
-            return null;
-        }
-
-        AdvertisingIdClient.Info adInfo = null;
+    public AdvertisingIdClient.Info execute() {
         try {
-            adInfo = AdvertisingIdClient.getAdvertisingIdInfo(mContext);
+            AdvertisingIdClient.Info info = AdvertisingIdClient.getAdvertisingIdInfo(mContext);
+            return info;
         } catch (IOException e) {
-            // Unrecoverable error connecting to Google Play services (e.g.,
-            // the old version of the service doesn't support getting AdvertisingId).
-
+            e.printStackTrace();
         } catch (GooglePlayServicesNotAvailableException e) {
-            // Google Play services is not available entirely.
+            e.printStackTrace();
         } catch (GooglePlayServicesRepairableException e) {
-            // Encountered a recoverable error connecting to Google Play services.
+            e.printStackTrace();
         }
-        id = adInfo.getId();
-        isLAT = adInfo.isLimitAdTrackingEnabled();
 
         return null;
     }
 
-    @Override
-    protected void onPostExecute(Void aVoid) {
-        if (mCallback == null) {
-            return;
-        }
-
-        mCallback.onFinished(id, isLAT);
-    }
 }

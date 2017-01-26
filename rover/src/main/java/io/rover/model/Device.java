@@ -13,6 +13,8 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.UUID;
 
+import io.rover.AdvertisingIdTask;
+
 /**
  * Created by ata_n on 2016-03-31.
  */
@@ -24,9 +26,12 @@ public class Device {
     private String mGcmToken;
     private String mAdvertisingId;
     private boolean mAdTrackingEnabled;
+    private boolean mCheckedForAdTracking;
     private boolean mGimbalMode;
 
-    private Device() {}
+    private Device() {
+        mCheckedForAdTracking = false;
+    }
 
     public static Device getInstance() {
         if (mInstance == null) {
@@ -99,11 +104,17 @@ public class Device {
        mGcmToken = token;
     }
 
+    public void setCheckedForAdTracking(boolean checked) {
+        mCheckedForAdTracking = checked;
+    }
+
     public String getAdvertisingIdentifier() {
         return mAdvertisingId;
     }
 
     public boolean getAdTrackingEnabled() { return mAdTrackingEnabled; }
+
+    public boolean hasCheckedForAdTracking() { return  mCheckedForAdTracking; }
 
     public void setAdvertisingId(String id) { mAdvertisingId = id; }
 

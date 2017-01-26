@@ -13,10 +13,8 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.UUID;
 
-import io.rover.AdvertisingIdTask;
-
 /**
- * Created by ata_n on 2016-03-31.
+ * Created by Roverlabs Inc. on 2016-03-31.
  */
 public class Device {
     private static Device mInstance;

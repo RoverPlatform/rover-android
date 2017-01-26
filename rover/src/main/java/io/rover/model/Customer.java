@@ -21,14 +21,14 @@ import io.rover.util.Optional;
  */
 public class Customer {
 
-    private Optional<String> mIdentifier;
-    private Optional<String> mFirstName;
-    private Optional<String> mLastName;
-    private Optional<String> mGender;
-    private Optional<Integer> mAge;
-    private Optional<String> mEmail;
-    private Optional<String> mPhoneNumber;
-    private Optional<String[]> mTags;
+    private String mIdentifier;
+    private String mFirstName;
+    private String mLastName;
+    private String mGender;
+    private Integer mAge;
+    private String mEmail;
+    private String mPhoneNumber;
+    private String[] mTags;
     private Map<String, Object> mTraits;
 
     private static Customer mSharedCustomer;
@@ -45,35 +45,35 @@ public class Customer {
     }
 
     private Customer() {
-        mIdentifier = new Optional<>();
-        mFirstName = new Optional<>();
-        mLastName = new Optional<>();
-        mGender = new Optional<>();
-        mAge = new Optional<>();
-        mEmail = new Optional<>();
-        mPhoneNumber = new Optional<>();
-        mTags = new Optional<>();
+        mIdentifier = null;
+        mFirstName = null;
+        mLastName = null;
+        mGender = null;
+        mAge = null;
+        mEmail = null;
+        mPhoneNumber = null;
+        mTags = new String[0];
         mTraits = null;
     }
 
-    public Optional<String> getIdentifier() { return mIdentifier; }
-    public Optional<String> getFirstName() { return mFirstName; }
-    public Optional<String> getLastName() { return mLastName; }
-    public Optional<String> getGender() { return mGender; }
-    public Optional<Integer> getAge() { return mAge; }
-    public Optional<String> getEmail() { return mEmail; }
-    public Optional<String> getPhoneNumber() { return mPhoneNumber; }
-    public Optional<String[]> getTags() { return mTags; }
+    public String getIdentifier() { return mIdentifier; }
+    public String getFirstName() { return mFirstName; }
+    public String getLastName() { return mLastName; }
+    public String getGender() { return mGender; }
+    public Integer getAge() { return mAge; }
+    public String getEmail() { return mEmail; }
+    public String getPhoneNumber() { return mPhoneNumber; }
+    public String[] getTags() { return mTags; }
     public Map<String, Object> getTraits() { return mTraits; }
 
-    public void setIdentifier(String identifier) { mIdentifier.set(identifier); }
-    public void setFirstName(String name) { mFirstName.set(name); }
-    public void setLastName(String name) { mLastName.set(name); }
-    public void setGender(String gender) { mGender.set(gender); }
-    public void setAge(int age) { mAge.set(age); }
-    public void setEmail(String email) { mEmail.set(email); }
-    public void setPhoneNumber(String phoneNumber) { mPhoneNumber.set(phoneNumber); }
-    public void setTags(String[] tags) { mTags.set(tags); }
+    public void setIdentifier(String identifier) { mIdentifier = identifier; }
+    public void setFirstName(String name) { mFirstName = name; }
+    public void setLastName(String name) { mLastName = name; }
+    public void setGender(String gender) { mGender = gender; }
+    public void setAge(int age) { mAge = age; }
+    public void setEmail(String email) { mEmail = email; }
+    public void setPhoneNumber(String phoneNumber) { mPhoneNumber = phoneNumber; }
+    public void setTags(String[] tags) { mTags = tags; }
     public void setTraits(Map<String, Object> traits) {
         if (traits == null || traits.isEmpty())
             return;
@@ -98,14 +98,14 @@ public class Customer {
             clearTraits();
     }
 
-    public void clearIdentifier() { mIdentifier.set(null); }
-    public void clearFirstName() { mFirstName.set(null); }
-    public void clearLastName() { mLastName.set(null); }
-    public void clearGender() { mGender.set(null); }
-    public void clearAge() { mAge.set(null); }
-    public void clearEmail() { mEmail.set(null); }
-    public void clearPhoneNumber() { mPhoneNumber.set(null); }
-    public void clearTags() { mTags.set(new String[0]); }
+    public void clearIdentifier() { mIdentifier = null; }
+    public void clearFirstName() { mFirstName = null; }
+    public void clearLastName() { mLastName = null; }
+    public void clearGender() { mGender = null; }
+    public void clearAge() { mAge = null; }
+    public void clearEmail() { mEmail = null; }
+    public void clearPhoneNumber() { mPhoneNumber = null; }
+    public void clearTags() { mTags = new String[0]; }
     public void clearTraits() { mTraits = null; }
 
     public void clear(Context context) {
@@ -133,29 +133,21 @@ public class Customer {
             SharedPreferences.Editor editor = context.getSharedPreferences(SHARED_CUSTOMER, 0).edit();
             editor.clear();
 
-            if (mIdentifier.hasBeenSet())
-                editor.putString("identifier", mIdentifier.get());
+            editor.putString("identifier", mIdentifier);
+            editor.putString("first-name", mFirstName);
+            editor.putString("last-name", mLastName);
+            editor.putString("gender", mGender);
+            editor.putString("email", mEmail);
+            editor.putString("phoneNumber", mPhoneNumber);
 
-            if (mFirstName.hasBeenSet())
-                editor.putString("first-name", mFirstName.get());
 
-            if (mLastName.hasBeenSet())
-                editor.putString("last-name", mLastName.get());
+            if (mAge != null)
+            editor.putInt("age", mAge);
 
-            if (mGender.hasBeenSet())
-                editor.putString("gender", mGender.get());
 
-            if (mAge.hasBeenSet() && mAge.get() != null)
-                editor.putInt("age", mAge.get());
 
-            if (mEmail.hasBeenSet())
-                editor.putString("email", mEmail.get());
-
-            if (mPhoneNumber.hasBeenSet())
-                editor.putString("phoneNumber", mPhoneNumber.get());
-
-            if (mTags.hasBeenSet()) {
-                Set<String> tagsSet = new HashSet<>(Arrays.asList(mTags.getOrElse(new String [0])));
+            if (mTags != null) {
+                Set<String> tagsSet = new HashSet<>(Arrays.asList(mTags));
                 editor.putStringSet("tags", tagsSet);
             }
 

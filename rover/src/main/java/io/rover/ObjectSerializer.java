@@ -180,29 +180,20 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
         } else if (mObject instanceof Customer) {
             Customer customer = (Customer)mObject;
 
-            if (customer.getIdentifier().hasBeenSet())
-                jsonObject.put("identifier", nullableValue(customer.getIdentifier().getOrElse(null)));
 
-            if (customer.getFirstName().hasBeenSet())
-                jsonObject.put("first-name", nullableValue(customer.getFirstName().getOrElse(null)));
+            jsonObject.put("identifier", nullableValue(customer.getIdentifier()));
+            jsonObject.put("first-name", nullableValue(customer.getFirstName()));
+            jsonObject.put("last-name", nullableValue(customer.getLastName()));
+            jsonObject.put("email", nullableValue(customer.getEmail()));
+            jsonObject.put("phone-number", nullableValue(customer.getPhoneNumber()));
+            jsonObject.put("gender", nullableValue(customer.getGender()));
+            jsonObject.put("age", nullableValue(customer.getAge()));
 
-            if (customer.getLastName().hasBeenSet())
-                jsonObject.put("last-name", nullableValue(customer.getLastName().getOrElse(null)));
-
-            if (customer.getEmail().hasBeenSet())
-                jsonObject.put("email", nullableValue(customer.getEmail().getOrElse(null)));
-
-            if (customer.getPhoneNumber().hasBeenSet())
-                jsonObject.put("phone-number", nullableValue(customer.getPhoneNumber().getOrElse(null)));
-
-            if (customer.getGender().hasBeenSet())
-                jsonObject.put("gender", nullableValue(customer.getGender().getOrElse(null)));
-
-            if (customer.getAge().hasBeenSet())
-                jsonObject.put("age", nullableValue(customer.getAge().getOrElse(null)));
-
-            if (customer.getTags().hasBeenSet())
-                jsonObject.put("tags", new JSONArray(Arrays.asList(customer.getTags().getOrElse(new String[0]))));
+            if (customer.getTags() != null) {
+                jsonObject.put("tags", new JSONArray(Arrays.asList(customer.getTags())));
+            } else {
+                jsonObject.put("tags", new JSONArray(Arrays.asList(new String[0])));
+            }
 
             if (customer.getTraits() != null) {
                 try {

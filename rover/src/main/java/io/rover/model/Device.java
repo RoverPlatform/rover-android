@@ -1,6 +1,5 @@
 package io.rover.model;
 
-import android.app.NotificationManager;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -79,6 +78,11 @@ public class Device {
             }
         //}
         return false;
+    }
+
+    public boolean areNotificationsEnabled(Context context) {
+        NotificationManagerCompat manager = NotificationManagerCompat.from(context);
+        return manager.areNotificationsEnabled();
     }
 
     public String getGcmToken() {

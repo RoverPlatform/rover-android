@@ -113,7 +113,7 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
                 jsonObject.put("action", btEvent.getTransition() == BeaconTransitionEvent.TRANSITION_EXIT ? "exit" : "enter");
                 jsonObject.put("configuration-id", btEvent.getId());
             } else if (event instanceof DeviceUpdateEvent) {
-                DeviceUpdateEvent duEvent = (DeviceUpdateEvent)event;
+                DeviceUpdateEvent duEvent = (DeviceUpdateEvent) event;
 
                 jsonObject.put("object", "device");
                 jsonObject.put("action", "update");
@@ -180,29 +180,30 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
         } else if (mObject instanceof Customer) {
             Customer customer = (Customer)mObject;
 
-            if (customer.getIdentifier().hasBeenSet())
-                jsonObject.put("identifier", customer.getIdentifier().getOrElse(null));
 
-            if (customer.getFirstName().hasBeenSet())
-                jsonObject.put("first-name", customer.getFirstName().getOrElse(null));
+            jsonObject.put("identifier", nullableValue(customer.getIdentifier()));
+            jsonObject.put("first-name", nullableValue(customer.getFirstName()));
+            jsonObject.put("last-name", nullableValue(customer.getLastName()));
+            jsonObject.put("email", nullableValue(customer.getEmail()));
+            jsonObject.put("phone-number", nullableValue(customer.getPhoneNumber()));
+            jsonObject.put("gender", nullableValue(customer.getGender()));
+            jsonObject.put("age", nullableValue(customer.getAge()));
 
-            if (customer.getLastName().hasBeenSet())
-                jsonObject.put("last-name", customer.getLastName().getOrElse(null));
+            if (customer.getTags() != null) {
+                jsonObject.put("tags", new JSONArray(Arrays.asList(customer.getTags())));
+            } else {
+                jsonObject.put("tags", new JSONArray(Arrays.asList(new String[0])));
+            }
 
-            if (customer.getEmail().hasBeenSet())
-                jsonObject.put("email", customer.getEmail().getOrElse(null));
-
-            if (customer.getPhoneNumber().hasBeenSet())
-                jsonObject.put("phone-number", customer.getPhoneNumber().getOrElse(null));
-
-            if (customer.getGender().hasBeenSet())
-                jsonObject.put("gender", customer.getGender().getOrElse(null));
-
-            if (customer.getAge().hasBeenSet())
-                jsonObject.put("age", customer.getAge().getOrElse(null));
-
-            if (customer.getTags().hasBeenSet())
-                jsonObject.put("tags", new JSONArray(Arrays.asList(customer.getTags().getOrElse(new String[0]))));
+            if (customer.getTraits() != null) {
+                try {
+                    jsonObject.put("traits", new JSONObject(customer.getTraits()));
+                } catch (NullPointerException e) {
+                    Log.e("ObjectSerializer", "Failed to serialize customer traits");
+                }
+            } else {
+                jsonObject.put("traits", JSONObject.NULL);
+            }
 
         } else if (mObject instanceof Device) {
             Device device = (Device)mObject;
@@ -210,7 +211,7 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
             jsonObject.put("os-name", "Android");
             jsonObject.put("platform", "Android");
             jsonObject.put("sdk-version", Rover.VERSION);
-            jsonObject.put("development", true);
+            jsonObject.put("development", false);
             jsonObject.put("udid", device.getIdentifier(mApplicationContext));
             jsonObject.put("locale-lang", device.getLocaleLanguage());
             jsonObject.put("locale-region", device.getLocaleRegion());
@@ -253,5 +254,13 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
         }
 
         return jsonObject;
+    }
+
+
+    private Object nullableValue(Object value) {
+        if (value == null)
+            return JSONObject.NULL;
+
+        return value;
     }
 }

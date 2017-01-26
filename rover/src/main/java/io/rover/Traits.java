@@ -133,10 +133,10 @@ public class Traits {
     }
 
     public boolean hasCustomTraits() {
-        return false;
+        return getCustomTraits().size() > 0;
     }
 
-    private Traits putValue(String key, Object value) {
+    public Traits putValue(String key, Object value) {
         mValueMap.put(key, value);
         return this;
     }

@@ -329,6 +329,13 @@ public class Rover implements EventSubmitTask.Callback {
                     listener.onSuccess(messages);
                 }
             }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                if (listener != null) {
+                    listener.onFailure();
+                }
+            }
         });
         task.execute();
     }

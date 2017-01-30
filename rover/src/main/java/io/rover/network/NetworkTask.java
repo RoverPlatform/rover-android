@@ -43,6 +43,9 @@ public class NetworkTask {
     private URL mURL;
     private String mMethod;
 
+    private boolean mTaskFailed;
+    private String mTaskFailureMessage;
+
     //private JsonPayloadProvider mPayloadProvider;
     //private JsonResponseHandler mResponseHandler;
 
@@ -52,6 +55,7 @@ public class NetworkTask {
     public NetworkTask(String method, URL url) {
         mMethod = method;
         mURL = url;
+        mTaskFailed = false;
     }
 
     public void setPayloadProvider(PayloadProvider payloadProvider) {
@@ -60,6 +64,14 @@ public class NetworkTask {
 
     public void setConnectionManager(NetworkTaskConnectionManager manager) {
         mConnectionManager = manager;
+    }
+
+    public boolean hasTaskFailed() {
+        return mTaskFailed;
+    }
+
+    public String getTaskFailureMessage() {
+        return mTaskFailureMessage;
     }
 
     @Nullable
@@ -124,11 +136,12 @@ public class NetworkTask {
                 is = connection.getErrorStream();
             }
 
+            mTaskFailed = true;
+
             String error = getStringFromInputStream(is);
+            mTaskFailureMessage = error;
 
             Log.e("NetworkTask", error);
-            Log.e("NetworkTask", "Error making HTTP connection: ");
-            e.printStackTrace();
 
             try {
                 if(is != null)

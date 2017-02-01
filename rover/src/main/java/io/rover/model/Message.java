@@ -77,17 +77,6 @@ public class Message implements Parcelable {
     }
 
     public Message(Parcel in) {
-        /* private String mId;
-        private String mTitle;
-        private String mText;
-        private Date mTimestamp;
-        private boolean mRead;
-        private Action mAction;
-        private URI mURI;
-        private Screen mLandingPage;
-        private Map<String, String> mProperties;
-        private String mExperienceId;
-        */
         mId = in.readString();
         mTitle = in.readString();
         mText = in.readString();
@@ -135,17 +124,6 @@ public class Message implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        /* private String mId;
-        private String mTitle;
-        private String mText;
-        private Date mTimestamp;
-        private boolean mRead;
-        private Action mAction;
-        private URI mURI;
-        private Screen mLandingPage;
-        private Map<String, String> mProperties;
-        private String mExperienceId;
-        */
         dest.writeString(mId);
         dest.writeString(mTitle);
         dest.writeString(mText);

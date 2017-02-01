@@ -5,15 +5,17 @@ import android.app.Application;
 import android.app.PendingIntent;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.util.Log;
 
 import io.rover.NotificationProvider;
 import io.rover.Rover;
 import io.rover.RoverConfig;
+import io.rover.RoverObserver;
 import io.rover.Traits;
 import io.rover.model.Message;
 
 /**
- * Created by ata_n on 2016-03-21.
+ * Created by Roverlabs Inc. on 2016-03-21.
  */
 public class MyApplication extends Application {
 
@@ -23,12 +25,24 @@ public class MyApplication extends Application {
 
 
         RoverConfig config = new RoverConfig.Builder()
-                .setApplicationToken("6c546189dc45df1293bddc18c0b54786")
+                .setApplicationToken(BuildConfig.ROVER_API_KEY)
                 .build();
 
         Rover.setup(this, config);
 
-        Rover.identify(new Traits().putFirstName("Android").putIdentifier("Nexus6"));
+        Rover.addObserver(new RoverObserver.NotificationInteractionObserver() {
+            @Override
+            public void onNotificationOpened(Message message) {
+                if (!message.isRead()) {
+                    message.setRead(true);
+                    Rover.patchMessage(message, null);
+                }
+            }
 
+            @Override
+            public void onNotificationDeleted(Message message) {
+                Rover.deleteMessage(message, null);
+            }
+        });
     }
 }

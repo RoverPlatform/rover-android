@@ -34,6 +34,11 @@ public interface RoverObserver {
         void onMessageReceived(Message message);
     }
 
+    interface NotificationInteractionObserver extends RoverObserver {
+        void onNotificationOpened(Message message);
+        void onNotificationDeleted(Message message);
+    }
+
     interface ExperienceObserver extends RoverObserver {
         void onExperienceLaunch(Experience experience, String sessionId);
         void onExperienceDismiss(Experience experience, String sessionId);

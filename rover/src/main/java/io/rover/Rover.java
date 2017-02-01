@@ -11,6 +11,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.HttpResponseCache;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
@@ -62,6 +64,7 @@ import io.rover.model.DeviceUpdateEvent;
 import io.rover.model.Event;
 import io.rover.model.GeofenceTransitionEvent;
 import io.rover.model.LocationUpdateEvent;
+import io.rover.model.MessageOpenEvent;
 import io.rover.model.Place;
 
 /**
@@ -73,6 +76,7 @@ public class Rover implements EventSubmitTask.Callback {
     protected static Rover mSharedInstance = new Rover();
     protected static int NOTIFICATION_ID = 12345;
 
+
     private static final String TAG = "Rover";
 
     private Context mApplicationContext;
@@ -83,6 +87,7 @@ public class Rover implements EventSubmitTask.Callback {
     private ExecutorService mEventExecutorService = Executors.newSingleThreadExecutor();
     protected ArrayList<RoverObserver> mObservers = new ArrayList<>();
     private NotificationProvider mNotificationProvider;
+    private Handler mMainHandler = new Handler(Looper.getMainLooper());
     private boolean mGimbalMode;
 
     /*
@@ -551,6 +556,40 @@ public class Rover implements EventSubmitTask.Callback {
         mSharedInstance.sendEvent(event);
     }
 
+    static void didOpenNotificationWithMessage(final io.rover.model.Message message) {
+
+        didOpenMessage(message);
+
+        for (final RoverObserver observer : Rover.mSharedInstance.mObservers) {
+            if (observer instanceof RoverObserver.NotificationInteractionObserver) {
+                mSharedInstance.mMainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        ((RoverObserver.NotificationInteractionObserver) observer).onNotificationOpened(message);
+                    }
+                });
+            }
+        }
+    }
+
+    static void didDeleteNotificationWithMessage(final io.rover.model.Message message) {
+        for (final RoverObserver observer : Rover.mSharedInstance.mObservers) {
+            if (observer instanceof RoverObserver.NotificationInteractionObserver) {
+                mSharedInstance.mMainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        ((RoverObserver.NotificationInteractionObserver) observer).onNotificationDeleted(message);
+                    }
+                });
+            }
+        }
+    }
+
+    static void didOpenMessage(final io.rover.model.Message message) {
+        MessageOpenEvent openEvent = new MessageOpenEvent(message, MessageOpenEvent.Source.Inbox, new Date());
+        submitEvent(openEvent);
+    }
+
     public static boolean isRoverMessage(RemoteMessage remoteMessage) {
         Map<String,String> data = remoteMessage.getData();
         return (data != null && data.containsKey("_rover"));
@@ -589,8 +628,8 @@ public class Rover implements EventSubmitTask.Callback {
         return  null;
     }
 
-    public static PendingIntent getPendingIntentFromRoverMessage(io.rover.model.Message message) {
-        
+
+    private static PendingIntent getPendingIntentFromRoverMessage(io.rover.model.Message message, MessageInteractionService.Source source) {
         if (message == null) {
             return null;
         }
@@ -601,38 +640,58 @@ public class Rover implements EventSubmitTask.Callback {
             return null;
         }
 
+        PendingIntent pendingIntent = mSharedInstance.getAppLaunchPendingIntent();
+
         android.app.TaskStackBuilder taskStackBuilder = android.app.TaskStackBuilder.create(mSharedInstance.mApplicationContext);
 
         switch (message.getAction()) {
             case Website: {
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
                 taskStackBuilder.addNextIntent(intent);
-                return taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+                pendingIntent =  taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
+                break;
             }
             case LandingPage: {
                 Intent intent = new Intent(context, RemoteScreenActivity.class);
-                intent.setData(getUriFromRoverMessage(message));
+                if (message.getLandingPage() != null) {
+                    intent.putExtra(RemoteScreenActivity.INTENT_EXTRA_SCREEN, message.getLandingPage());
+                } else {
+                    intent.setData(getUriFromRoverMessage(message));
+                }
                 taskStackBuilder.addParentStack(RemoteScreenActivity.class);
                 taskStackBuilder.addNextIntent(intent);
-                return taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+                pendingIntent = taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
+                break;
             }
             case DeepLink: {
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
                 taskStackBuilder.addNextIntent(intent);
-                return taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+                pendingIntent = taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
+                break;
             }
             case Experience: {
                 Intent intent = new Intent(context, ExperienceActivity.class);
                 intent.setData(message.getExperienceUri());
                 taskStackBuilder.addParentStack(ExperienceActivity.class);
                 taskStackBuilder.addNextIntent(intent);
-                return taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-            }
-            default: {
-                return mSharedInstance.getAppLaunchPendingIntent();
+                pendingIntent = taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
+                break;
             }
         }
+
+        Intent messageInteractionServiceOpenIntent = new Intent(context, MessageInteractionService.class);
+        messageInteractionServiceOpenIntent.putExtra("message", message);
+        messageInteractionServiceOpenIntent.putExtra("launch-intent", pendingIntent);
+        messageInteractionServiceOpenIntent.putExtra("source", source);
+        messageInteractionServiceOpenIntent.putExtra("type", MessageInteractionService.Type.OPEN);
+        int requestCode = (message.getId() + source.name() + MessageInteractionService.Type.OPEN.name()).hashCode();
+        return PendingIntent.getService(context, requestCode, messageInteractionServiceOpenIntent, PendingIntent.FLAG_ONE_SHOT);
     }
+
+    public static PendingIntent getPendingIntentFromRoverMessage(io.rover.model.Message message) {
+        return getPendingIntentFromRoverMessage(message, MessageInteractionService.Source.INBOX);
+    }
+
 
     public static void handleRemoteMessage(RemoteMessage remoteMessage) {
 
@@ -641,6 +700,7 @@ public class Rover implements EventSubmitTask.Callback {
         }
 
         io.rover.model.Message message = getRoverMessageFromRemoteMessage(remoteMessage);
+
 
         if (message == null) {
             Log.w(TAG, "Unable to handle remote message. Message was null");
@@ -654,21 +714,38 @@ public class Rover implements EventSubmitTask.Callback {
             return;
         }
 
-        PendingIntent pendingIntent = null;
+        PendingIntent userIntent = null;
         int smallIcon = R.drawable.rover_notification_icon;
         Bitmap largeIcon = null;
         Uri sound = null;
 
         if (mSharedInstance.mNotificationProvider != null) {
-            pendingIntent = mSharedInstance.mNotificationProvider.getNotificationPendingIntent(message);
+            userIntent = mSharedInstance.mNotificationProvider.getNotificationPendingIntent(message);
             smallIcon = mSharedInstance.mNotificationProvider.getSmallIconForNotification(message);
             largeIcon = mSharedInstance.mNotificationProvider.getLargeIconForNotification(message);
             sound = mSharedInstance.mNotificationProvider.getSoundForNotification(message);
         }
 
-        if (pendingIntent == null) {
-            pendingIntent = getPendingIntentFromRoverMessage(message);
+        PendingIntent contentIntent = null;
+
+        if (userIntent != null){
+            Intent messageInteractionServiceOpenIntent = new Intent(context, MessageInteractionService.class);
+            messageInteractionServiceOpenIntent.putExtra("message", message);
+            messageInteractionServiceOpenIntent.putExtra("launch-intent", userIntent);
+            messageInteractionServiceOpenIntent.putExtra("source", MessageInteractionService.Source.NOTIFICATION);
+            messageInteractionServiceOpenIntent.putExtra("type", MessageInteractionService.Type.OPEN);
+            int requestCode = ( message.getId() + MessageInteractionService.Source.NOTIFICATION.name() + MessageInteractionService.Type.OPEN.name()).hashCode();
+            contentIntent = PendingIntent.getService(context, requestCode, messageInteractionServiceOpenIntent, PendingIntent.FLAG_ONE_SHOT);
+        } else {
+            contentIntent = getPendingIntentFromRoverMessage(message, MessageInteractionService.Source.NOTIFICATION);
         }
+
+        Intent notificationServiceCloseIntent = new Intent(context, MessageInteractionService.class);
+        notificationServiceCloseIntent.putExtra("type", MessageInteractionService.Type.DELETE);
+        notificationServiceCloseIntent.putExtra("message", message);
+        notificationServiceCloseIntent.putExtra("source", MessageInteractionService.Source.NOTIFICATION);
+        int requestCode = ( message.getId() + MessageInteractionService.Source.NOTIFICATION.name() + MessageInteractionService.Type.DELETE.name()).hashCode();
+        PendingIntent deleteIntent = PendingIntent.getService(context, requestCode, notificationServiceCloseIntent, PendingIntent.FLAG_ONE_SHOT);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
                 .setAutoCancel(true)
@@ -677,7 +754,8 @@ public class Rover implements EventSubmitTask.Callback {
                 .setSound(sound)
                 .setContentTitle(message.getTitle())
                 .setContentText(message.getText())
-                .setContentIntent(pendingIntent);
+                .setContentIntent(contentIntent)
+                .setDeleteIntent(deleteIntent);
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.notify(message.getId(), Rover.NOTIFICATION_ID, builder.build());

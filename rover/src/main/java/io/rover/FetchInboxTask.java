@@ -12,12 +12,13 @@ import io.rover.network.JsonApiResponseHandler.JsonApiObjectMapper;
 import io.rover.network.NetworkTask;
 
 /**
- * Created by ata_n on 2016-04-07.
+ * Created by Roverlabs Inc. on 2016-04-07.
  */
-public class FetchInboxTask extends AsyncTask<Void, Void, Void> implements JsonApiResponseHandler.JsonApiCompletionHandler {
+public class FetchInboxTask extends AsyncTask<Void, Void, Boolean> implements JsonApiResponseHandler.JsonApiCompletionHandler {
 
     private Callback mCallback;
     private List<Message> mInbox;
+    private String mErrorMessage = "";
 
     public void setCallback(Callback callback) {
         mCallback = callback;
@@ -25,10 +26,11 @@ public class FetchInboxTask extends AsyncTask<Void, Void, Void> implements JsonA
 
     public interface Callback {
         void onSuccess(List<Message> inbox);
+        void onFailure(String errorMessage);
     }
 
     @Override
-    protected Void doInBackground(Void... params) {
+    protected Boolean doInBackground(Void... params) {
 
         NetworkTask networkTask = Router.getInboxNetworkTask();
 
@@ -42,20 +44,28 @@ public class FetchInboxTask extends AsyncTask<Void, Void, Void> implements JsonA
 
         HttpResponse response = networkTask.run();
 
-
-        if (response != null) {
+        if (response != null && response.isSuccessful()) {
             try {
                 responseHandler.onHandleResponse(response);
+                return true;
             } catch (Exception e) {
                 e.printStackTrace();
+                return false;
             } finally {
                 response.close();
             }
+        } else {
+
+            if (networkTask.hasTaskFailed()) {
+                mErrorMessage = networkTask.getTaskFailureMessage();
+            } else if(response != null) {
+                mErrorMessage = "Status: " + response.getStatus();
+                mErrorMessage += " Body: ";
+                mErrorMessage += ((response.getBody() == null) ? "" : response.getBody().toString());
+            }
+
+            return false;
         }
-
-
-
-        return null;
     }
 
     @Override
@@ -66,12 +76,12 @@ public class FetchInboxTask extends AsyncTask<Void, Void, Void> implements JsonA
     }
 
     @Override
-    protected void onPostExecute(Void aVoid) {
+    protected void onPostExecute(Boolean successful) {
         if (mCallback != null) {
-            if (mInbox != null) {
+            if (successful) {
                 mCallback.onSuccess(mInbox);
             } else {
-//                mCallback.onFailure(error);
+                mCallback.onFailure(mErrorMessage);
             }
         }
     }

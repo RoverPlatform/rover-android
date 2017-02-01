@@ -26,6 +26,7 @@ import io.rover.model.GeofenceTransitionEvent;
 import io.rover.model.GimbalPlaceTransitionEvent;
 import io.rover.model.LocationUpdateEvent;
 import io.rover.model.Message;
+import io.rover.model.MessageOpenEvent;
 import io.rover.model.ScreenViewEvent;
 import io.rover.network.JsonApiPayloadProvider;
 
@@ -175,6 +176,21 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
                 if (expEvent.getScreen() != null) {
                     jsonObject.put("screen-id", expEvent.getScreen().getId());
                 }
+            } else if (event instanceof MessageOpenEvent) {
+                MessageOpenEvent messageOpenEvent = (MessageOpenEvent) event;
+
+                jsonObject.put("object", "message");
+                jsonObject.put("action", "open");
+                if (messageOpenEvent.getMessage() != null) {
+                    jsonObject.put("message-id", messageOpenEvent.getMessage().getId());
+                }
+
+                if (messageOpenEvent.getSource() == MessageOpenEvent.Source.Notification) {
+                    jsonObject.put("source", "notification");
+                } else {
+                    jsonObject.put("source", "inbox");
+                }
+
             }
 
         } else if (mObject instanceof Customer) {

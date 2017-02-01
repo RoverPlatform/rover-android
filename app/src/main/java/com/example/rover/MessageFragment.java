@@ -1,5 +1,6 @@
 package com.example.rover;
 
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -133,18 +134,13 @@ public class MessageFragment extends Fragment implements SwipeRefreshLayout.OnRe
             });
         }
 
-        switch (message.getAction()) {
-            case LandingPage: {
-                Intent intent = new Intent(getActivity(), RemoteScreenActivity.class);
-                intent.putExtra(RemoteScreenActivity.INTENT_EXTRA_SCREEN, message.getLandingPage());
-                startActivity(intent);
-                break;
-            }
-            case Experience: {
-                Intent intent = new Intent(getActivity(), ExperienceActivity.class);
-                intent.setData(message.getExperienceUri());
-                startActivity(intent);
-                break;
+        PendingIntent pendingIntent = Rover.getPendingIntentFromRoverMessage(message);
+
+        if (pendingIntent != null) {
+            try {
+                pendingIntent.send();
+            } catch (PendingIntent.CanceledException e) {
+                e.printStackTrace();
             }
         }
     }

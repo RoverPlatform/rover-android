@@ -8,10 +8,23 @@ import java.util.Date;
 public class MessageOpenEvent extends Event {
 
     public enum Source {
-        Notification, Message
+        Inbox, Notification
     }
 
+    private Message mMessage;
+    private Source mSource;
+
     public MessageOpenEvent(Message message, Source source, Date date) {
+        mMessage = message;
+        mSource = source;
         mDate = date;
+    }
+
+    public Message getMessage() {
+        return mMessage;
+    }
+
+    public Source getSource() {
+        return mSource;
     }
 }

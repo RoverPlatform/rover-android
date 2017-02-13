@@ -636,7 +636,7 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
 
-    private static PendingIntent getPendingIntentFromRoverMessage(io.rover.model.Message message, MessageInteractionService.Source source) {
+    public static PendingIntent getPendingIntentFromRoverMessage(io.rover.model.Message message, MessageInteractionService.Source source) {
         if (message == null) {
             return null;
         }

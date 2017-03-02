@@ -1,5 +1,6 @@
 package io.rover;
 
+import android.app.Activity;
 import android.os.Build;
 
 /**
@@ -11,6 +12,7 @@ public class RoverConfig {
 
         private String mAppToken;
         private NotificationProvider mNotificationProvider;
+        private Class mExperienceActivity;
 
         public Builder() {}
 
@@ -24,16 +26,23 @@ public class RoverConfig {
             return this;
         }
 
+        public Builder setExperienceActivity(Class<? extends Activity> klass) {
+            mExperienceActivity = klass;
+            return this;
+        }
+
         public RoverConfig build() {
-            return new RoverConfig(mAppToken, mNotificationProvider);
+            return new RoverConfig(mAppToken, mNotificationProvider, mExperienceActivity);
         }
     }
 
     String mAppToken;
     NotificationProvider mNotificationProvider;
+    Class mExperienceActivity;
 
-    private RoverConfig(String appToken, NotificationProvider notificationProvider) {
+    private RoverConfig(String appToken, NotificationProvider notificationProvider, Class<? extends Activity> klass) {
         mAppToken = appToken;
         mNotificationProvider = notificationProvider;
+        mExperienceActivity = klass;
     }
 }

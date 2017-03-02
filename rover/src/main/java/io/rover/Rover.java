@@ -89,6 +89,7 @@ public class Rover implements EventSubmitTask.Callback {
     private NotificationProvider mNotificationProvider;
     private Handler mMainHandler = new Handler(Looper.getMainLooper());
     private boolean mGimbalMode;
+    private Class mExperienceActivity;
 
     /*
         Interfaces
@@ -114,11 +115,16 @@ public class Rover implements EventSubmitTask.Callback {
         Main
      */
     
-    private Rover() {}
+    private Rover() {
+        mExperienceActivity = ExperienceActivity.class;
+    }
 
     public static void setup(Application application, RoverConfig config) {
         mSharedInstance.mApplicationContext = application.getApplicationContext();
         mSharedInstance.mNotificationProvider = config.mNotificationProvider;
+        if (config.mExperienceActivity != null) {
+            mSharedInstance.mExperienceActivity = config.mExperienceActivity;
+        }
         Router.setApiKey(config.mAppToken);
         Router.setDeviceId(Device.getInstance().getIdentifier(mSharedInstance.mApplicationContext));
 
@@ -677,9 +683,9 @@ public class Rover implements EventSubmitTask.Callback {
                 break;
             }
             case Experience: {
-                Intent intent = new Intent(context, ExperienceActivity.class);
+                Intent intent = new Intent(context, mSharedInstance.mExperienceActivity);
                 intent.setData(message.getExperienceUri());
-                taskStackBuilder.addParentStack(ExperienceActivity.class);
+                taskStackBuilder.addParentStack(mSharedInstance.mExperienceActivity);
                 taskStackBuilder.addNextIntent(intent);
                 pendingIntent = taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
                 break;

@@ -99,7 +99,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
     public void setExperience(Experience experience) {
         mExperience = experience;
 
-        Rover.submitEvent(new ExperienceLaunchEvent(experience, mSessionId, new Date()));
+        Rover.submitEvent(new ExperienceLaunchEvent(mExperience, mSessionId, new Date()));
 
         for (RoverObserver observer : Rover.mSharedInstance.mObservers) {
             if (observer instanceof RoverObserver.ExperienceObserver) {
@@ -110,7 +110,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
             }
         }
 
-        Screen homeScreen = experience.getHomeScreen();
+        Screen homeScreen = mExperience.getHomeScreen();
         if (homeScreen != null) {
 
             Fragment screenFragment = ScreenFragment.newInstance(homeScreen);

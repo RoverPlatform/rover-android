@@ -36,7 +36,7 @@ import io.rover.network.NetworkTask;
 import io.rover.ui.ScreenFragment;
 
 /**
- * Created by ata_n on 2016-08-15.
+ * Created by Rover Labs Inc on 2016-08-15.
  */
 public class ExperienceActivity extends AppCompatActivity implements ScreenFragment.OnBlockListener {
 
@@ -96,19 +96,31 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
         }
     }
 
-    private void trackScreenView(Screen screen, Screen fromScreen, Block block) {
-        Rover.submitEvent(new ScreenViewEvent(screen, mExperience, fromScreen, block, mSessionId, new Date()));
+    public void setExperience(Experience experience) {
+        mExperience = experience;
+
+        Rover.submitEvent(new ExperienceLaunchEvent(mExperience, mSessionId, new Date()));
 
         for (RoverObserver observer : Rover.mSharedInstance.mObservers) {
             if (observer instanceof RoverObserver.ExperienceObserver) {
-                ((RoverObserver.ExperienceObserver) observer).onScreenView(
-                        screen,
+                ((RoverObserver.ExperienceObserver) observer).onExperienceLaunch(
                         mExperience,
-                        fromScreen,
-                        block,
                         mSessionId
                 );
             }
+        }
+
+        Screen homeScreen = mExperience.getHomeScreen();
+        if (homeScreen != null) {
+
+            Fragment screenFragment = ScreenFragment.newInstance(homeScreen);
+
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(mLayout.getId(), screenFragment, "SCREEN")
+                    .commit();
+
+            trackScreenView(homeScreen, null, null);
         }
     }
 
@@ -192,6 +204,23 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
         return intent;
     }
 
+    private void trackScreenView(Screen screen, Screen fromScreen, Block block) {
+        Rover.submitEvent(new ScreenViewEvent(screen, mExperience, fromScreen, block, mSessionId, new Date()));
+
+        for (RoverObserver observer : Rover.mSharedInstance.mObservers) {
+            if (observer instanceof RoverObserver.ExperienceObserver) {
+                ((RoverObserver.ExperienceObserver) observer).onScreenView(
+                        screen,
+                        mExperience,
+                        fromScreen,
+                        block,
+                        mSessionId
+                );
+            }
+        }
+    }
+
+
     private class FetchExperienceTask extends AsyncTask<String, Void, Experience> implements JsonResponseHandler.JsonCompletionHandler {
 
         private ObjectMapper mObjectMapper;
@@ -244,31 +273,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
         protected void onPostExecute(Experience experience) {
             if (experience == null) { return; }
 
-            mExperience = experience;
-
-            Rover.submitEvent(new ExperienceLaunchEvent(experience, mSessionId, new Date()));
-
-            for (RoverObserver observer : Rover.mSharedInstance.mObservers) {
-                if (observer instanceof RoverObserver.ExperienceObserver) {
-                    ((RoverObserver.ExperienceObserver) observer).onExperienceLaunch(
-                            mExperience,
-                            mSessionId
-                    );
-                }
-            }
-
-            Screen homeScreen = experience.getHomeScreen();
-            if (homeScreen != null) {
-
-                Fragment screenFragment = ScreenFragment.newInstance(homeScreen);
-
-                getSupportFragmentManager()
-                        .beginTransaction()
-                        .replace(mLayout.getId(), screenFragment, "SCREEN")
-                        .commit();
-
-                trackScreenView(homeScreen, null, null);
-            }
+            setExperience(experience);
         }
     }
 }

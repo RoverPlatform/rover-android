@@ -26,6 +26,7 @@ import java.util.Locale;
 import io.rover.model.Action;
 import io.rover.model.Alignment;
 import io.rover.model.Appearance;
+import io.rover.model.BarcodeBlock;
 import io.rover.model.Block;
 import io.rover.model.ButtonBlock;
 import io.rover.model.Experience;
@@ -288,7 +289,20 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 String blockType = attributes.getString("type");
 
                 switch (blockType) {
-                    case "barcode-block":
+                    case "barcode-block": {
+                        String barcodeText = attributes.getString("barcode-text");
+                        String barcodeType = attributes.getString("barcode-type");
+
+                        block = new BarcodeBlock();
+                        ((BarcodeBlock) block).setBarcodeText(barcodeText);
+                        ((BarcodeBlock) block).setBarcodeType(barcodeType);
+
+                        if (!attributes.isNull("image")) {
+                            ((BarcodeBlock) block).setImage((Image) parseObject("images", null, attributes.getJSONObject("image")));
+                        }
+
+                        break;
+                    }
                     case "image-block": {
                         block = new ImageBlock();
                         if (!attributes.isNull("image")) {

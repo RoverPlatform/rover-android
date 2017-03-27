@@ -117,7 +117,7 @@ public class Traits {
         return putTags(tags.toArray(new String[tags.size()]));
     }
 
-    public Traits putTags(String[] tags) {
+    public Traits putTags(String... tags) {
         return putValue(TAGS_KEY, tags);
     }
 
@@ -133,7 +133,8 @@ public class Traits {
         return hasKey(TAGS_KEY);
     }
 
-    public Traits addTags(String[] tags) {
+
+    public Traits addTags(String... tags) {
         return putValue(TAGS_TO_ADD_KEY, tags);
     }
 
@@ -153,7 +154,7 @@ public class Traits {
         return hasKey(TAGS_TO_ADD_KEY);
     }
 
-    public Traits removeTags(String[] tags) {
+    public Traits removeTags(String... tags) {
         return putValue(TAGS_TO_REMOVE_KEY, tags);
     }
 

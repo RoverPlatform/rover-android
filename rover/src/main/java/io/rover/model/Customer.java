@@ -74,7 +74,9 @@ public class Customer {
     public void setEmail(String email) { mEmail = email; }
     public void setPhoneNumber(String phoneNumber) { mPhoneNumber = phoneNumber; }
     public void setTags(String[] tags) {
-        if (tags != null) {
+        if (tags == null) {
+            clearTags();
+        } else {
             mTags = tags;
         }
     }

@@ -64,7 +64,7 @@ public class Util {
 
     public static <T> T[] subtractArrays(T[] first, T[] second) {
         if (first == null)
-            return second;
+            return null;
 
         if (second == null)
             return first;

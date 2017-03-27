@@ -254,6 +254,7 @@ In addition to identifiers, you may provide other user attributes for more perso
 Rover.identify(new Traits()
         .putAge(44)
         .putEmail("hello@example.com")
+        .addTags("a", "b", "c")
         .putPhoneNumber("555-555-5555"));
 ```
 

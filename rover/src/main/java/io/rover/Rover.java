@@ -90,6 +90,7 @@ public class Rover implements EventSubmitTask.Callback {
     private NotificationProvider mNotificationProvider;
     private Handler mMainHandler = new Handler(Looper.getMainLooper());
     private boolean mGimbalMode;
+    private boolean mNotificationsEnabled = true;
     private Class mExperienceActivity;
 
     /*
@@ -207,6 +208,15 @@ public class Rover implements EventSubmitTask.Callback {
             Event event = new DeviceUpdateEvent(new Date());
             mSharedInstance.sendEvent(event);
         }
+    }
+
+
+    public static synchronized void setNotificationsEnabled(boolean enabled) {
+        if (mSharedInstance == null) {
+            throw new Error("Attempted to access rover before setup");
+        }
+
+        mSharedInstance.mNotificationsEnabled = enabled;
     }
 
     public static void startMonitoring() {
@@ -720,6 +730,14 @@ public class Rover implements EventSubmitTask.Callback {
 
 
     public static void handleRemoteMessage(RemoteMessage remoteMessage) {
+
+        if (mSharedInstance == null) {
+            return;
+        }
+
+        if (mSharedInstance.mNotificationsEnabled == false) {
+            return;
+        }
 
         if (!isRoverMessage(remoteMessage)) {
             return;

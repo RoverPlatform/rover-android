@@ -3,6 +3,7 @@ package io.rover;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -18,7 +19,9 @@ public class Traits {
     private static final String EMAIL_KEY = "email";
     private static final String PHONE_NUMBER_KEY = "phone-number";
     private static final String TAGS_KEY = "tags";
-    private static final Set<String> DEFINED_TRAIT_KEYS = new HashSet<String>(Arrays.asList(IDENTIFIER_KEY, FIRST_NAME_KEY, LAST_NAME_KEY, GENDER_KEY, AGE_KEY, EMAIL_KEY, PHONE_NUMBER_KEY, TAGS_KEY));
+    private static final String TAGS_TO_ADD_KEY = "tags-to-add";
+    private static final String TAGS_TO_REMOVE_KEY = "tags-to-remove";
+    private static final Set<String> DEFINED_TRAIT_KEYS = new HashSet<String>(Arrays.asList(IDENTIFIER_KEY, FIRST_NAME_KEY, LAST_NAME_KEY, GENDER_KEY, AGE_KEY, EMAIL_KEY, PHONE_NUMBER_KEY, TAGS_KEY, TAGS_TO_ADD_KEY, TAGS_TO_REMOVE_KEY));
 
     private HashMap<String, Object> mValueMap;
 
@@ -114,8 +117,12 @@ public class Traits {
         return putTags(tags.toArray(new String[tags.size()]));
     }
 
-    public Traits putTags(String[] tags) {
+    public Traits putTags(String... tags) {
         return putValue(TAGS_KEY, tags);
+    }
+
+    public Traits putTags(List<String> tags) {
+        return putValue(TAGS_KEY, tags.toArray(new String[tags.size()]));
     }
 
     public String[] getTags() {
@@ -124,6 +131,47 @@ public class Traits {
 
     public boolean hasTags() {
         return hasKey(TAGS_KEY);
+    }
+
+
+    public Traits addTags(String... tags) {
+        return putValue(TAGS_TO_ADD_KEY, tags);
+    }
+
+    public Traits addTags(List<String> tags) {
+        return putValue(TAGS_TO_ADD_KEY, tags.toArray(new String[tags.size()]));
+    }
+
+    public Traits addTag(String tag) {
+        return putValue(TAGS_TO_ADD_KEY, new String[] { tag });
+    }
+
+    public String[] getTagsToAdd() {
+        return getStringArray(TAGS_TO_ADD_KEY);
+    }
+
+    public boolean hasTagsToAdd() {
+        return hasKey(TAGS_TO_ADD_KEY);
+    }
+
+    public Traits removeTags(String... tags) {
+        return putValue(TAGS_TO_REMOVE_KEY, tags);
+    }
+
+    public Traits removeTags(List<String> tags) {
+        return putValue(TAGS_TO_REMOVE_KEY, tags.toArray(new String[tags.size()]));
+    }
+
+    public Traits removeTag(String tag) {
+        return putValue(TAGS_TO_REMOVE_KEY, new String[] { tag });
+    }
+
+    public String[] getTagsToRemove() {
+        return getStringArray(TAGS_TO_REMOVE_KEY);
+    }
+
+    public boolean hasTagsToRemove() {
+        return hasKey(TAGS_TO_REMOVE_KEY);
     }
 
     public HashMap<String, Object> getCustomTraits() {

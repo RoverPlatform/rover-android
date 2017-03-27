@@ -73,7 +73,13 @@ public class Customer {
     public void setAge(int age) { mAge = age; }
     public void setEmail(String email) { mEmail = email; }
     public void setPhoneNumber(String phoneNumber) { mPhoneNumber = phoneNumber; }
-    public void setTags(String[] tags) { mTags = tags; }
+    public void setTags(String[] tags) {
+        if (tags == null) {
+            clearTags();
+        } else {
+            mTags = tags;
+        }
+    }
     public void setTraits(Map<String, Object> traits) {
         if (traits == null || traits.isEmpty())
             return;

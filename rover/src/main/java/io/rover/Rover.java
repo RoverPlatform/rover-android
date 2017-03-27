@@ -66,6 +66,7 @@ import io.rover.model.GeofenceTransitionEvent;
 import io.rover.model.LocationUpdateEvent;
 import io.rover.model.MessageOpenEvent;
 import io.rover.model.Place;
+import io.rover.util.Util;
 
 /**
  * Created by ata_n on 2016-03-21.
@@ -152,7 +153,9 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     public static synchronized void identify(Traits traits) {
+
         Customer customer = getCustomer();
+
         if (customer != null) {
             if (traits.hasIdentifier())
                 customer.setIdentifier(traits.getIdentifier());
@@ -175,8 +178,18 @@ public class Rover implements EventSubmitTask.Callback {
             if (traits.hasPhoneNumber())
                 customer.setPhoneNumber(traits.getPhoneNumber());
 
-            if (traits.hasTags())
-                customer.setTags(traits.getTags());
+            if (traits.hasTags()) {
+                customer.setTags(Util.uniqueArray(traits.getTags()));
+            } else {
+
+                if (traits.hasTagsToAdd()) {
+                    customer.setTags(Util.uniqueArray(Util.concatArrays(customer.getTags(), traits.getTagsToAdd())));
+                }
+
+                if (traits.hasTagsToRemove()) {
+                    customer.setTags(Util.uniqueArray(Util.subtractArrays(customer.getTags(), traits.getTagsToRemove())));
+                }
+            }
 
             if (traits.hasCustomTraits())
                 customer.setTraits(traits.getCustomTraits());

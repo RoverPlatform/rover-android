@@ -65,7 +65,7 @@ public class RemoteScreenActivity extends AppCompatActivity {
                 getSupportFragmentManager()
                         .beginTransaction()
                         .add(layout.getId(), screenFragment, ScreenFragment.TAG)
-                        .commit();
+                        .commitAllowingStateLoss();
 
                 //Rover.submitEvent(new ScreenViewEvent(screen, null, null, null, new Date()));
             }
@@ -134,7 +134,7 @@ public class RemoteScreenActivity extends AppCompatActivity {
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(mLayout.getId(), screenFragment, "SCREEN")
-                    .commit();
+                    .commitAllowingStateLoss();
 
 
         }

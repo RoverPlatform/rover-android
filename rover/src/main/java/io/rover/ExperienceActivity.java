@@ -118,7 +118,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(mLayout.getId(), screenFragment, "SCREEN")
-                    .commit();
+                    .commitAllowingStateLoss();
 
             trackScreenView(homeScreen, null, null);
         }
@@ -142,7 +142,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
                             .beginTransaction()
                             .replace(mLayout.getId(), screenFragment)
                             .addToBackStack(null)
-                            .commit();
+                            .commitAllowingStateLoss();
 
                     trackScreenView(newScreen, screen, block);
                 }

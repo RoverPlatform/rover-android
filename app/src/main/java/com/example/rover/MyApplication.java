@@ -25,7 +25,7 @@ public class MyApplication extends Application {
 
 
         RoverConfig config = new RoverConfig.Builder()
-                .setApplicationToken(BuildConfig.ROVER_API_KEY)
+                .setApplicationToken("API_TOKEN_HERE")
                 .setExperienceActivity(MyCustomExperience.class)
                 .build();
 

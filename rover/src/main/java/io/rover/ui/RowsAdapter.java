@@ -108,7 +108,7 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         final Block block = getBlockAtPosition(position);
 
         if (holder.itemView instanceof ImageBlockView) {
@@ -223,7 +223,7 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                adapter.onBlockClick(v, position);
+                adapter.onBlockClick(v, block);
             }
         });
     }
@@ -279,8 +279,7 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
         }
     }
 
-    private void onBlockClick(View view, int position) {
-        Block block = getBlockAtPosition(position);
+    private void onBlockClick(View view, Block block) {
 
         if (block != null && mBlockListener != null) {
             mBlockListener.onBlockClick(block);

@@ -51,7 +51,7 @@ import io.rover.model.Screen;
 public class ScreenFragment extends Fragment implements RowsAdapter.BlockListener, RowsAdapter.BoundsProvider {
 
     public interface OnBlockListener {
-        void onBlockClick(Block block, Screen screen);
+        void onBlockClick(Fragment screenFragment, Screen screen, Block block);
     }
 
     public static String TAG = "SCREEN_FRAGMENT";
@@ -163,7 +163,7 @@ public class ScreenFragment extends Fragment implements RowsAdapter.BlockListene
     @Override
     public void onBlockClick(Block block) {
         if (getActivity() instanceof OnBlockListener) {
-            ((OnBlockListener) getActivity()).onBlockClick(block, mScreen);
+            ((OnBlockListener) getActivity()).onBlockClick(this, mScreen, block);
         } else if (block.getAction() != null) {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(block.getAction().getUrl()));
             startActivity(intent);

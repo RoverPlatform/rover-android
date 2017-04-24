@@ -1,5 +1,7 @@
 package io.rover;
 
+import android.support.v4.app.Fragment;
+
 import com.google.android.gms.location.Geofence;
 
 import java.util.List;
@@ -44,5 +46,18 @@ public interface RoverObserver {
         void onExperienceDismiss(Experience experience, String sessionId);
         void onScreenView(Screen screen, Experience experience, Screen fromScreen, Block fromBlock, String sessionId);
         void onBlockClick(Block block, Screen screen, Experience experience, String sessionId);
+    }
+
+    interface ExtendedExperienceObserver extends RoverObserver {
+        void onExperienceLaunch(ExperienceActivity activity, Experience experience, String sessionId);
+        void onExperienceDismiss(ExperienceActivity activity, Experience experience, String sessionId);
+
+        void onScreenView(ExperienceActivity activity, Fragment screenFragment, Experience experience, Screen screen, Screen fromScreen, Block fromBlock, String sessionId);
+        void onBlockClick(ExperienceActivity activity, Fragment screenFragment, Screen screen, Block block, String sessionId);
+        /*
+            The ExperienceActivity is about to present the next screen
+            This gives you the option to return your own Fragment or let it continue
+         */
+        Fragment willPresentScreen(ExperienceActivity activity, Fragment screenFragment, Screen screen);
     }
 }

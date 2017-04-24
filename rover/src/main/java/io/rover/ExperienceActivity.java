@@ -6,8 +6,10 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.AnimRes;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
@@ -33,6 +35,7 @@ import io.rover.model.ScreenViewEvent;
 import io.rover.network.HttpResponse;
 import io.rover.network.JsonResponseHandler;
 import io.rover.network.NetworkTask;
+import io.rover.ui.ExperienceScreenAnimation;
 import io.rover.ui.ScreenFragment;
 
 /**
@@ -42,11 +45,16 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
 
     private static String EXPERIENCE_STATE_KEY = "EXPERIENCE_STATE_KEY";
     private static String EXPERIENCE_SESSION_KEY = "EXPERIENCE_SESSION_KEY";
+    private static String HAS_PRESENTED_FIRST_SCREEN_STATE_KEY = "HAS_PRESENTED_FIRST_SCREEN_STATE_KEY";
+    private static String TAG = "ExperienceActivity";
+
 
     private RelativeLayout mLayout;
     private FetchExperienceTask mFetchTask;
     private Experience mExperience;
     private String mSessionId;
+    private boolean mHasPresentedFirstScreen = false;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -108,51 +116,87 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
                         mSessionId
                 );
             }
+
+            if (observer instanceof RoverObserver.ExtendedExperienceObserver ) {
+                ((RoverObserver.ExtendedExperienceObserver) observer).onExperienceLaunch(
+                        this,
+                        mExperience,
+                        mSessionId
+                );
+            }
         }
 
         Screen homeScreen = mExperience.getHomeScreen();
-        if (homeScreen != null) {
 
-            Fragment screenFragment = ScreenFragment.newInstance(homeScreen);
-
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(mLayout.getId(), screenFragment, "SCREEN")
-                    .commitAllowingStateLoss();
-
-            trackScreenView(homeScreen, null, null);
-        }
+        presentNextScreen(homeScreen);
     }
 
-    @Override
-    public void onBlockClick(Block block, Screen screen) {
-        Action action = block.getAction();
-        if (action == null) {
+    public void presentNextScreen(Screen screen) {
+        if (screen == null) {
             return;
         }
 
-        switch (action.getType()) {
-            case Action.GOTO_SCREEN_ACTION: {
-                String screenId = action.getUrl();
-                Screen newScreen = mExperience.getScreen(screenId);
-                if (screen != null) {
-                    Fragment screenFragment = ScreenFragment.newInstance(newScreen);
+        Fragment screenFragment = ScreenFragment.newInstance(screen);
 
-                    getSupportFragmentManager()
-                            .beginTransaction()
-                            .replace(mLayout.getId(), screenFragment)
-                            .addToBackStack(null)
-                            .commitAllowingStateLoss();
+        presentNextScreen(screenFragment, screen, new ExperienceScreenAnimation());
+    }
 
-                    trackScreenView(newScreen, screen, block);
-                }
-                break;
+    public void presentNextScreen(Fragment screenFragment, Screen screen, ExperienceScreenAnimation animation) {
+        presentNextScreen(screenFragment, screen, animation, null, null);
+    }
+
+    public void presentNextScreen(Fragment screenFragment, Screen screen, ExperienceScreenAnimation animation, Screen fromScreen, Block fromBlock) {
+        if (screenFragment == null) {
+            return;
+        }
+
+        for (RoverObserver observer : Rover.mSharedInstance.mObservers) {
+            if (observer instanceof RoverObserver.ExtendedExperienceObserver) {
+                screenFragment = ((RoverObserver.ExtendedExperienceObserver) observer).willPresentScreen(this, screenFragment, screen);
             }
-            default: {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(action.getUrl()));
-                startActivity(intent);
-                break;
-            }
+        }
+
+        if (screenFragment == null) {
+            return;
+        }
+
+
+
+        FragmentTransaction transaction = getSupportFragmentManager()
+                .beginTransaction()
+                .replace(mLayout.getId(), screenFragment, "SCREEN");
+
+
+        if (animation != null) {
+            transaction.setCustomAnimations(animation.getEnter(), animation.getExit(), animation.getPopEnter(), animation.getPopExit());
+        }
+
+        if (mHasPresentedFirstScreen) {
+            transaction.addToBackStack(null);
+        }
+
+        transaction.commitAllowingStateLoss();
+
+        if (!mHasPresentedFirstScreen) {
+            mHasPresentedFirstScreen = true;
+        }
+
+        if (screenFragment instanceof ScreenFragment) {
+            trackScreenView(screenFragment, screen, fromScreen, fromBlock);
+        }
+    }
+
+    public void popCurrentScreen() {
+        getSupportFragmentManager()
+                .popBackStack();
+    }
+
+    @Override
+    public void onBlockClick(Fragment screenFragment, Screen screen, Block block) {
+        Action action = block.getAction();
+
+        if (action == null) {
+            return;
         }
 
         Rover.submitEvent(new BlockPressEvent(block, screen, mExperience, mSessionId, new Date()));
@@ -166,7 +210,33 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
                         mSessionId
                 );
             }
+
+            if (observer instanceof RoverObserver.ExtendedExperienceObserver) {
+                ((RoverObserver.ExtendedExperienceObserver) observer).onBlockClick(
+                        this,
+                        screenFragment,
+                        screen,
+                        block,
+                        mSessionId
+                );
+            }
         }
+
+        switch (action.getType()) {
+            case Action.GOTO_SCREEN_ACTION: {
+                String screenId = action.getUrl();
+                Screen newScreen = mExperience.getScreen(screenId);
+                presentNextScreen(newScreen);
+                break;
+            }
+            default: {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(action.getUrl()));
+                startActivity(intent);
+                break;
+            }
+        }
+
+
     }
 
     @Override
@@ -184,6 +254,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
         super.onSaveInstanceState(outState);
         outState.putParcelable(EXPERIENCE_STATE_KEY, mExperience);
         outState.putString(EXPERIENCE_SESSION_KEY, mSessionId);
+        outState.putBoolean(HAS_PRESENTED_FIRST_SCREEN_STATE_KEY, mHasPresentedFirstScreen);
     }
 
     @Override
@@ -191,6 +262,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
         super.onRestoreInstanceState(savedInstanceState);
         mExperience = savedInstanceState.getParcelable(EXPERIENCE_STATE_KEY);
         mSessionId = savedInstanceState.getString(EXPERIENCE_SESSION_KEY);
+        mHasPresentedFirstScreen = savedInstanceState.getBoolean(HAS_PRESENTED_FIRST_SCREEN_STATE_KEY);
     }
 
     public static Intent createIntent(Context context, String id) {
@@ -204,8 +276,8 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
         return intent;
     }
 
-    private void trackScreenView(Screen screen, Screen fromScreen, Block block) {
-        Rover.submitEvent(new ScreenViewEvent(screen, mExperience, fromScreen, block, mSessionId, new Date()));
+    private void trackScreenView(Fragment screenFragment, Screen screen, Screen fromScreen, Block fromBlock) {
+        Rover.submitEvent(new ScreenViewEvent(screen, mExperience, fromScreen, fromBlock, mSessionId, new Date()));
 
         for (RoverObserver observer : Rover.mSharedInstance.mObservers) {
             if (observer instanceof RoverObserver.ExperienceObserver) {
@@ -213,7 +285,19 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
                         screen,
                         mExperience,
                         fromScreen,
-                        block,
+                        fromBlock,
+                        mSessionId
+                );
+            }
+
+            if (observer instanceof RoverObserver.ExtendedExperienceObserver) {
+                ((RoverObserver.ExtendedExperienceObserver) observer).onScreenView(
+                        this,
+                        screenFragment,
+                        mExperience,
+                        screen,
+                        fromScreen,
+                        fromBlock,
                         mSessionId
                 );
             }

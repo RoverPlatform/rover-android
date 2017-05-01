@@ -8,10 +8,8 @@ import com.google.android.gms.common.GooglePlayServicesRepairableException;
 
 import java.io.IOException;
 
-import io.rover.model.Device;
-
 /**
- * Created by ata_n on 2016-04-18.
+ * Created by Rover Labs Inc on 2016-04-18.
  */
 public class AdvertisingIdTask {
 
@@ -23,14 +21,12 @@ public class AdvertisingIdTask {
 
     public AdvertisingIdClient.Info execute() {
         try {
-            AdvertisingIdClient.Info info = AdvertisingIdClient.getAdvertisingIdInfo(mContext);
-            return info;
-        } catch (IOException e) {
+            return AdvertisingIdClient.getAdvertisingIdInfo(mContext);
+        } catch (IllegalStateException | GooglePlayServicesNotAvailableException | IOException | GooglePlayServicesRepairableException e) {
             e.printStackTrace();
-        } catch (GooglePlayServicesNotAvailableException e) {
-            e.printStackTrace();
-        } catch (GooglePlayServicesRepairableException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            // Ignore
+            // Bug with google's internal implementation
         }
 
         return null;

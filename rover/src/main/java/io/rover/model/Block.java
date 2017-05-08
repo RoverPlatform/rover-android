@@ -20,6 +20,7 @@ public class Block implements Parcelable {
     private Image mBackgroundImage;
     private Image.ContentMode mBackgroundContentMode;
     private double mBackgroundScale;
+    private CustomKeys mCustomKeys = new CustomKeys(0);
 
     /** Layout
      */
@@ -105,6 +106,10 @@ public class Block implements Parcelable {
 
     public void setBackgroundScale(double scale) { mBackgroundScale = scale; }
 
+    public CustomKeys getCustomKeys() { return mCustomKeys; }
+
+    public void setCustomKeys(CustomKeys keys) { mCustomKeys = keys; }
+
     // TODO: Appearance
 
     /** Parcelable
@@ -126,6 +131,7 @@ public class Block implements Parcelable {
         mBackgroundImage = (Image) in.readValue(Image.class.getClassLoader());
         mBackgroundScale = in.readDouble();
         mBackgroundContentMode = (Image.ContentMode) in.readSerializable();
+        mCustomKeys = in.readParcelable(CustomKeys.class.getClassLoader());
     }
 
     @Override
@@ -150,6 +156,7 @@ public class Block implements Parcelable {
         dest.writeValue(mBackgroundImage);
         dest.writeDouble(mBackgroundScale);
         dest.writeSerializable(mBackgroundContentMode);
+        dest.writeParcelable(mCustomKeys, 0);
     }
 
     @SuppressWarnings("unused")

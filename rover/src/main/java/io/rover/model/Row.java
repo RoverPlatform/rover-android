@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 import java.util.ArrayList;
 
+
 /**
  * Created by ata_n on 2016-06-16.
  */
@@ -13,6 +14,7 @@ public class Row implements Parcelable {
     private Unit mHeight;
     private ArrayList<Block> mBlocks;
     private Block mBackgroundBlock;
+    private CustomKeys mCustomKeys = new CustomKeys(0);
 
     public Row(ArrayList<Block> blocks) {
 
@@ -33,6 +35,14 @@ public class Row implements Parcelable {
 
     public Block getBackgroundBlock() { return mBackgroundBlock; }
 
+    public CustomKeys getCustomKeys() {
+        return mCustomKeys;
+    }
+
+    public void setCustomKeys(CustomKeys keys) {
+        mCustomKeys = keys;
+    }
+
     /** Parcelable
      */
 
@@ -44,6 +54,8 @@ public class Row implements Parcelable {
         } else {
             mBlocks = null;
         }
+
+        mCustomKeys = in.readParcelable(CustomKeys.class.getClassLoader());
     }
 
     @Override
@@ -60,6 +72,8 @@ public class Row implements Parcelable {
             dest.writeByte((byte) (0x01));
             dest.writeList(mBlocks);
         }
+
+        dest.writeParcelable(mCustomKeys, 0);
     }
 
     @SuppressWarnings("unused")

@@ -4,6 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by ata_n on 2016-06-16.
@@ -30,7 +31,7 @@ public class Screen implements Parcelable {
     private double mBackgroundScale;
     private Image.ContentMode mBackgroundContentMode;
     private ActionBarButtons mBarButtons;
-
+    private CustomKeys mCustomKeys = new CustomKeys(0);
 
     public Screen(ArrayList<Row> rows) {
         mRows = rows;
@@ -100,6 +101,14 @@ public class Screen implements Parcelable {
 
     public void setBarButtons(ActionBarButtons buttons) { mBarButtons = buttons; }
 
+    public HashMap<String, String> getCustomKeys() {
+        return mCustomKeys;
+    }
+
+    public void setCustomKeys(CustomKeys keys) {
+        mCustomKeys = keys;
+    }
+
     /** Parcelable
      */
 
@@ -135,6 +144,7 @@ public class Screen implements Parcelable {
         mBackgroundScale = in.readDouble();
         mBackgroundContentMode = (Image.ContentMode) in.readSerializable();
         mBarButtons = (ActionBarButtons) in.readSerializable();
+        mCustomKeys = in.readParcelable(CustomKeys.class.getClassLoader());
     }
 
     @Override
@@ -175,6 +185,8 @@ public class Screen implements Parcelable {
         dest.writeDouble(mBackgroundScale);
         dest.writeSerializable(mBackgroundContentMode);
         dest.writeSerializable(mBarButtons);
+        dest.writeParcelable(mCustomKeys, 0);
+
     }
 
     @SuppressWarnings("unused")

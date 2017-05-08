@@ -88,10 +88,9 @@ public class AssetManager {
             the default AssetDownloadManager get the asset using HTTP
             Specs: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs
          */
-        DataUri dataUri;
-
+        
         try {
-            dataUri = new DataUri(url);
+            DataUri dataUri = new DataUri(url);
             byte[] decodedString;
 
             if (dataUri.getEncodingType().equals("base64")) {

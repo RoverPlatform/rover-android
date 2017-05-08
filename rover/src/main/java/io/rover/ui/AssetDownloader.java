@@ -15,7 +15,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 
 /**
- * Created by ata_n on 2016-07-07.
+ * Created by Rover Labs Inc on 2016-07-07.
  */
 public class AssetDownloader extends AsyncTask<String, Void, Bitmap> {
 
@@ -41,8 +41,11 @@ public class AssetDownloader extends AsyncTask<String, Void, Bitmap> {
 
         try {
             // Check disk cache first
+
+
             String encodedUrl = URLEncoder.encode(urlString, "UTF-8");
             File file = new File(mCacheDir, encodedUrl);
+
             if (file.exists()) {
                 return BitmapFactory.decodeFile(file.getAbsolutePath());
             }

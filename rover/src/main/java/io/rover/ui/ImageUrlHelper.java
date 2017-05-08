@@ -5,12 +5,19 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 
 import io.rover.model.Image;
+import io.rover.util.DataUri;
 
 /**
- * Created by ata_n on 2016-10-12.
+ * Created by Rover Labs Inc on 2016-10-12.
  */
 public class ImageUrlHelper {
     public static String getOptimizedImageUrl(int blockWidth, int blockHeight, @NonNull Image image, Image.ContentMode mode, Double scale) {
+
+        /* Do not try to optimize the url if its a data uri */
+
+        if (DataUri.isDataUri(image.getImageUrl())) {
+            return image.getImageUrl();
+        }
 
         if ((image.getWidth() < blockWidth) || blockWidth == 0 || blockHeight == 0) {
             // Don't optimize that is already smaller

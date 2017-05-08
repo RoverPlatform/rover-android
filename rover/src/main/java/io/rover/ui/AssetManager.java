@@ -5,13 +5,19 @@ import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
 import android.util.Log;
 import android.util.LruCache;
 
+
+import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 
 import io.rover.Rover;
+
+import io.rover.util.DataUri;
 
 /**
  * Created by Rover Labs Inc on 2016-07-07.
@@ -19,8 +25,7 @@ import io.rover.Rover;
 public class AssetManager {
     private static final String TAG = "AssetManager";
 
-    private LruCache<String, Bitmap> mBitmapLruCache;
-    private Handler mMainHandler = new Handler(Looper.getMainLooper());
+
 
     public interface AssetManagerListener {
         void onAssetSuccess(Bitmap bitmap);
@@ -30,6 +35,8 @@ public class AssetManager {
     private static AssetManager sAssetManager;
     private Map<String, AssetDownloader> mDownloaders;
     private String mCacheDir;
+    private Handler mMainHandler = new Handler(Looper.getMainLooper());
+    private LruCache<String, Bitmap> mBitmapLruCache;
 
     public synchronized static AssetManager getSharedAssetManager(Context context) {
         if (sAssetManager == null) {
@@ -74,6 +81,51 @@ public class AssetManager {
         if (url == null || listener == null) {
             return;
         }
+
+
+        /*
+            Try to parse the url as a data-uri string. If we fail to parse as a data-uri just move on and let
+            the default AssetDownloadManager get the asset using HTTP
+            Specs: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs
+         */
+        DataUri dataUri;
+
+        try {
+            dataUri = new DataUri(url);
+            byte[] decodedString;
+
+            if (dataUri.getEncodingType().equals("base64")) {
+                decodedString = Base64.decode(dataUri.getData(), Base64.DEFAULT);
+            } else {
+                decodedString = dataUri.getData().getBytes();
+            }
+
+            final Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+
+            if (bitmap == null) {
+                mMainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        listener.onAssetFailure();
+                    }
+                });
+
+                return;
+            } else {
+                mMainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        listener.onAssetSuccess(bitmap);
+                    }
+                });
+
+                return;
+            }
+
+        } catch (MalformedURLException e) {
+            // This isn't a datauri lets just continue
+        }
+
 
         final String key = listener.toString();
 

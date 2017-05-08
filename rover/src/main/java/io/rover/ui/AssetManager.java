@@ -2,20 +2,25 @@ package io.rover.ui;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+import android.util.LruCache;
 
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
+import io.rover.Rover;
+
 /**
- * Created by ata_n on 2016-07-07.
+ * Created by Rover Labs Inc on 2016-07-07.
  */
 public class AssetManager {
+    private static final String TAG = "AssetManager";
+
+    private LruCache<String, Bitmap> mBitmapLruCache;
+    private Handler mMainHandler = new Handler(Looper.getMainLooper());
 
     public interface AssetManagerListener {
         void onAssetSuccess(Bitmap bitmap);
@@ -26,16 +31,34 @@ public class AssetManager {
     private Map<String, AssetDownloader> mDownloaders;
     private String mCacheDir;
 
-    public static AssetManager getSharedAssetManager(Context context) {
+    public synchronized static AssetManager getSharedAssetManager(Context context) {
         if (sAssetManager == null) {
-            sAssetManager = new AssetManager(context);
+            sAssetManager = new AssetManager(context, Rover.getConfig().getImageCacheSize());
         }
         return sAssetManager;
     }
 
-    private AssetManager(Context context) {
+    private AssetManager(Context context, int memoryCacheSize) {
         mCacheDir = context.getCacheDir().getAbsolutePath();
         mDownloaders = new HashMap<>();
+
+
+        // Memory Cache is stored in kilobytes
+        Log.d(TAG, "Using: " + memoryCacheSize + "kb for image caching");
+        mBitmapLruCache = new LruCache<String, Bitmap>(memoryCacheSize) {
+            @Override
+            protected int sizeOf(String key, Bitmap value) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    return value.getAllocationByteCount() / 1024;
+                } else {
+                    return value.getByteCount() / 1024;
+                }
+            }
+        };
+    }
+
+    public void flushMemoryCache() {
+        mBitmapLruCache.evictAll();
     }
 
     public void cancelAsset(AssetManagerListener listener) {
@@ -64,13 +87,16 @@ public class AssetManager {
 
         final String cacheKey = url.toLowerCase();
 
-//        Bitmap cachedBitmap = mMemoryCache.get(cacheKey);
-//        if (cachedBitmap != null) {
-//            listener.onAssetSuccess(cachedBitmap);
-//            return;
-//        }
+        final Bitmap cachedImage = mBitmapLruCache.get(cacheKey);
 
-        // TODO: setup downloaders map so we dont download the same url multiple times (This may no longer be required)
+        if (cachedImage != null) {
+            mMainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    listener.onAssetSuccess(cachedImage);
+                }
+            });
+        }
 
         // Setup asset download
 
@@ -78,14 +104,13 @@ public class AssetManager {
             @Override
             public void onAssetDownloadSuccess(Bitmap bitmap) {
                 mDownloaders.remove(key);
-                //mMemoryCache.put(cacheKey, bitmap);
+                mBitmapLruCache.put(cacheKey, bitmap);
                 listener.onAssetSuccess(bitmap);
             }
 
             @Override
             public void onAssetDownloadFailure() {
                 mDownloaders.remove(key);
-                //mMemoryCache.remove(cacheKey);
                 listener.onAssetFailure();
             }
         }, mCacheDir);

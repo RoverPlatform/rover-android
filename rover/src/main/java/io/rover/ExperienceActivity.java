@@ -35,6 +35,7 @@ import io.rover.model.ScreenViewEvent;
 import io.rover.network.HttpResponse;
 import io.rover.network.JsonResponseHandler;
 import io.rover.network.NetworkTask;
+import io.rover.ui.AssetManager;
 import io.rover.ui.ExperienceScreenAnimation;
 import io.rover.ui.ScreenFragment;
 
@@ -90,6 +91,13 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        /*
+            Clean up the image memory cache. We don't want to hold onto bitmaps when we aren't displaying the experience
+         */
+        AssetManager manager = AssetManager.getSharedAssetManager(getApplicationContext());
+        manager.flushMemoryCache();
+
         if (isFinishing() && mExperience != null) {
             Rover.submitEvent(new ExperienceDismissEvent(mExperience, mSessionId, new Date()));
 

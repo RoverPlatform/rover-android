@@ -12,7 +12,6 @@ import java.util.Map;
 
 public class CustomKeys extends HashMap<String,String> implements Parcelable {
 
-    private HashMap<String,String> mKeys;
 
     public CustomKeys(Parcel in) {
         super();
@@ -37,8 +36,8 @@ public class CustomKeys extends HashMap<String,String> implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(mKeys.size());
-        for (Map.Entry<String, String> entry : mKeys.entrySet()) {
+        dest.writeInt(size());
+        for (Map.Entry<String, String> entry : entrySet()) {
             dest.writeString(entry.getKey());
             dest.writeString(entry.getValue());
         }

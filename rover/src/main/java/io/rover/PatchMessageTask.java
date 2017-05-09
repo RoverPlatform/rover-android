@@ -1,5 +1,6 @@
 package io.rover;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -11,7 +12,7 @@ import io.rover.network.JsonApiPayloadProvider;
 import io.rover.network.NetworkTask;
 
 /**
- * Created by chrisrecalis on 2016-11-29.
+ * Created by Rover Labs Inc on 2016-11-29.
  */
 
 public class PatchMessageTask extends AsyncTask<Message, Void, Boolean> {
@@ -21,7 +22,12 @@ public class PatchMessageTask extends AsyncTask<Message, Void, Boolean> {
         void onFailure();
     }
 
+    private Context mContext;
     private Callback mCallback;
+
+    public PatchMessageTask(Context context) {
+        mContext = context;
+    }
 
     public void setCallback(Callback callback) {
         mCallback = callback;
@@ -42,7 +48,7 @@ public class PatchMessageTask extends AsyncTask<Message, Void, Boolean> {
             return false;
         }
 
-        JsonApiPayloadProvider.JsonApiObjectSerializer serializer = new ObjectSerializer(message, null);
+        JsonApiPayloadProvider.JsonApiObjectSerializer serializer = new ObjectSerializer(message, mContext);
         NetworkTask.PayloadProvider payloadProvider = new JsonApiPayloadProvider(serializer);
 
         networkTask.setPayloadProvider(payloadProvider);

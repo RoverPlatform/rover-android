@@ -90,12 +90,21 @@ public class AssetManager {
         final Bitmap cachedImage = mBitmapLruCache.get(cacheKey);
 
         if (cachedImage != null) {
+            /*
+                Make sure our callback is running on the main thread
+                The listeners are usually modifying ui elements
+             */
             mMainHandler.post(new Runnable() {
                 @Override
                 public void run() {
                     listener.onAssetSuccess(cachedImage);
                 }
             });
+
+            /*
+                Cached image was found make sure to break execution and return
+             */
+            return;
         }
 
         // Setup asset download

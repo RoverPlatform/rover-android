@@ -66,6 +66,7 @@ import io.rover.model.GeofenceTransitionEvent;
 import io.rover.model.LocationUpdateEvent;
 import io.rover.model.MessageOpenEvent;
 import io.rover.model.Place;
+import io.rover.ui.AssetManager;
 import io.rover.util.Util;
 
 /**
@@ -81,6 +82,7 @@ public class Rover implements EventSubmitTask.Callback {
     private static final String TAG = "Rover";
 
     private Context mApplicationContext;
+    private RoverConfig mConfig;
     private PendingIntent mLocationPendingIntent;
     private PendingIntent mGeofencePendingIntent;
     private PendingIntent mNearbyMessagesPendingIntent;
@@ -123,6 +125,7 @@ public class Rover implements EventSubmitTask.Callback {
 
     public static void setup(Application application, RoverConfig config) {
         mSharedInstance.mApplicationContext = application.getApplicationContext();
+        mSharedInstance.mConfig = config;
         mSharedInstance.mNotificationProvider = config.mNotificationProvider;
         if (config.mExperienceActivity != null) {
             mSharedInstance.mExperienceActivity = config.mExperienceActivity;
@@ -151,6 +154,7 @@ public class Rover implements EventSubmitTask.Callback {
         } catch (IOException e) {
             Log.i(TAG, "HTTP response cache installation failed:" + e);
         }
+
     }
 
     public static synchronized void identify(Traits traits) {
@@ -289,6 +293,10 @@ public class Rover implements EventSubmitTask.Callback {
             }
         });
         connection.connect();
+    }
+
+    public static RoverConfig getConfig() {
+        return mSharedInstance.mConfig;
     }
 
     public static void stopMonitoring() {

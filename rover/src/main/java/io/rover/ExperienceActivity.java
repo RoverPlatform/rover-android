@@ -43,10 +43,7 @@ import io.rover.ui.ScreenFragment;
  * Created by Rover Labs Inc on 2016-08-15.
  */
 public class ExperienceActivity extends AppCompatActivity implements ScreenFragment.OnBlockListener {
-
-    private static String EXPERIENCE_STATE_KEY = "EXPERIENCE_STATE_KEY";
-    private static String EXPERIENCE_SESSION_KEY = "EXPERIENCE_SESSION_KEY";
-    private static String HAS_PRESENTED_FIRST_SCREEN_STATE_KEY = "HAS_PRESENTED_FIRST_SCREEN_STATE_KEY";
+    
     private static String TAG = "ExperienceActivity";
 
 
@@ -61,7 +58,6 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
         RelativeLayout layout = new RelativeLayout(this);
         layout.setLayoutParams(new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -73,20 +69,20 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
 
         setContentView(layout);
 
-        if (savedInstanceState == null) {
-            Uri data = getIntent().getData();
-            if (data != null) {
-                String experienceId = data.getPath();
-                if (experienceId != null) {
-                    mFetchTask = new FetchExperienceTask();
-                    mFetchTask.execute(experienceId);
 
-                }
+        Uri data = getIntent().getData();
+        if (data != null) {
+            String experienceId = data.getPath();
+            if (experienceId != null) {
+                mFetchTask = new FetchExperienceTask();
+                mFetchTask.execute(experienceId);
             }
-
-            mSessionId = UUID.randomUUID().toString();
         }
+
+        mSessionId = UUID.randomUUID().toString();
     }
+
+
 
     @Override
     protected void onDestroy() {
@@ -257,21 +253,6 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
         }
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putParcelable(EXPERIENCE_STATE_KEY, mExperience);
-        outState.putString(EXPERIENCE_SESSION_KEY, mSessionId);
-        outState.putBoolean(HAS_PRESENTED_FIRST_SCREEN_STATE_KEY, mHasPresentedFirstScreen);
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        mExperience = savedInstanceState.getParcelable(EXPERIENCE_STATE_KEY);
-        mSessionId = savedInstanceState.getString(EXPERIENCE_SESSION_KEY);
-        mHasPresentedFirstScreen = savedInstanceState.getBoolean(HAS_PRESENTED_FIRST_SCREEN_STATE_KEY);
-    }
 
     public static Intent createIntent(Context context, String id) {
         Uri uri = new Uri.Builder().scheme("rover")

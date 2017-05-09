@@ -383,7 +383,7 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     public static void patchMessage(final io.rover.model.Message message, final OnPatchMessageListener listener) {
-        PatchMessageTask task = new PatchMessageTask();
+        PatchMessageTask task = new PatchMessageTask(mSharedInstance.mApplicationContext);
         task.setCallback(new PatchMessageTask.Callback() {
             @Override
             public void onSuccess() {

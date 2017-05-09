@@ -20,6 +20,7 @@ import io.rover.util.Optional;
  * Created by ata_n on 2016-03-24.
  */
 public class Customer {
+    private static final String TAG = "RoverCustomer";
 
     private String mIdentifier;
     private String mFirstName;
@@ -129,7 +130,6 @@ public class Customer {
 
             SharedPreferences.Editor editor = context.getSharedPreferences(SHARED_CUSTOMER, 0).edit();
             editor.clear();
-            editor.commit();
             editor.apply();
         }
     }
@@ -172,6 +172,11 @@ public class Customer {
 
     private static Customer pullSharedCustomerFromSharedPrefs(Context context) {
         Customer customer = new Customer();
+
+        if (context == null) {
+            Log.w(TAG, "Context was null while trying to read custom from shared prefs");
+            return customer;
+        }
 
         SharedPreferences sharedData = context.getSharedPreferences(SHARED_CUSTOMER, 0);
 

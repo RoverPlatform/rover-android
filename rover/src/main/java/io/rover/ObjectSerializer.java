@@ -31,7 +31,7 @@ import io.rover.model.ScreenViewEvent;
 import io.rover.network.JsonApiPayloadProvider;
 
 /**
- * Created by ata_n on 2016-03-31.
+ * Created by Rover Labs Inc on 2016-03-31.
  */
 public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSerializer {
 

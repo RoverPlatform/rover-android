@@ -33,11 +33,7 @@ public class BackgroundImageHelper {
                 break;
             }
             case Tile: {
-                imageView.setScaleType(ImageView.ScaleType.MATRIX);
-                Matrix matrix = new Matrix();
-                float scaleFactor = imageView.getContext().getResources().getDisplayMetrics().density / backgroundScale;
-                matrix.setScale(scaleFactor, scaleFactor);
-                imageView.setImageMatrix(matrix);
+                imageView.setScaleType(ImageView.ScaleType.FIT_XY);
                 BitmapDrawable bitmapDrawable = new BitmapDrawable(resources, bitmap);
                 bitmapDrawable.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
                 imageView.setImageDrawable(bitmapDrawable);

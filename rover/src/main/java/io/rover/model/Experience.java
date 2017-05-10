@@ -4,6 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -14,6 +15,7 @@ public class Experience implements Parcelable {
     private String mHomeScreenId;
     private String mId;
     private String mVersion;
+    private CustomKeys mCustomKeys = new CustomKeys(0);
 
     public Experience(List<Screen> screens, String homeScreenId, String id) {
         mScreens = screens;
@@ -47,8 +49,11 @@ public class Experience implements Parcelable {
 
     public String getVersion() { return mVersion; }
 
+    public CustomKeys getCustomKeys() { return mCustomKeys; }
+
     public void setVersion(String version) { mVersion = version; }
 
+    public void setCustomKeys(CustomKeys keys) { mCustomKeys = keys; }
 
     protected Experience(Parcel in) {
         if (in.readByte() == 0x01) {
@@ -59,6 +64,7 @@ public class Experience implements Parcelable {
         }
         mHomeScreenId = in.readString();
         mVersion = in.readString();
+        mCustomKeys = (CustomKeys)in.readValue(CustomKeys.class.getClassLoader());
     }
 
     @Override
@@ -76,6 +82,7 @@ public class Experience implements Parcelable {
         }
         dest.writeString(mHomeScreenId);
         dest.writeString(mVersion);
+        dest.writeParcelable(mCustomKeys, 0);
     }
 
     @SuppressWarnings("unused")

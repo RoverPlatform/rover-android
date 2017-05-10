@@ -29,6 +29,7 @@ import io.rover.model.Appearance;
 import io.rover.model.BarcodeBlock;
 import io.rover.model.Block;
 import io.rover.model.ButtonBlock;
+import io.rover.model.CustomKeys;
 import io.rover.model.Experience;
 import io.rover.model.Font;
 import io.rover.model.GeofenceTransitionEvent;
@@ -178,6 +179,16 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
 
                 return message;
             }
+            case "custom-keys": {
+                CustomKeys customKeys = new CustomKeys(0);
+                Iterator<String> iterator = attributes.keys();
+                while (iterator.hasNext()) {
+                    String key = iterator.next();
+                    String value = attributes.optString(key, "");
+                    customKeys.put(key, value);
+                }
+                return customKeys;
+            }
             case "screens": {
                 ArrayList<Row> rows = new ArrayList<>();
                 JSONArray rowsAttributes = attributes.getJSONArray("rows");
@@ -224,6 +235,10 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 if (attributes.has("id"))
                     screen.setId(attributes.getString("id"));
 
+                if (attributes.has("custom-keys")) {
+                    CustomKeys keys = (CustomKeys) parseObject("custom-keys", null, attributes.getJSONObject("custom-keys"));
+                    screen.setCustomKeys(keys);
+                }
                 return screen;
             }
             case "rows": {
@@ -260,6 +275,11 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 }
                 if (attributes.has("auto-height") && attributes.getBoolean("auto-height")) {
                     row.setHeight(null);
+                }
+
+                if (attributes.has("custom-keys")) {
+                    CustomKeys keys = (CustomKeys) parseObject("custom-keys", null, attributes.getJSONObject("custom-keys"));
+                    row.setCustomKeys(keys);
                 }
 
                 return row;
@@ -422,6 +442,11 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                     block.setBackgroundScale(attributes.getDouble("background-scale"));
                 }
 
+                if (attributes.has("custom-keys")) {
+                    CustomKeys keys = (CustomKeys) parseObject("custom-keys", null, attributes.getJSONObject("custom-keys"));
+                    block.setCustomKeys(keys);
+                }
+
                 return block;
             }
             case "alignments": {
@@ -558,6 +583,11 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 Experience experience = new Experience(screens, homeScreenId, id);
                 if (attributes.has("version-id")) {
                     experience.setVersion(attributes.getString("version-id"));
+                }
+
+                if (attributes.has("custom-keys")) {
+                    CustomKeys keys = (CustomKeys) parseObject("custom-keys", null, attributes.getJSONObject("custom-keys"));
+                    experience.setCustomKeys(keys);
                 }
 
                 return experience;

@@ -196,12 +196,19 @@ public class ScreenFragment extends Fragment implements RowsAdapter.BlockListene
         return mLayoutManager.getLayout(position);
     }
 
+    public Screen getScreen() {
+        return mScreen;
+    }
+
     public void setScreen(final Screen screen) {
         String title = screen.getTitle();
         if (title != null) {
             getActivity().setTitle(screen.getTitle());
         }
+
         mAdapter.setRows(screen.getRows());
+        mAdapter.notifyDataSetChanged();
+
 
         if (!screen.useDefaultActionBarStyle()) {
 

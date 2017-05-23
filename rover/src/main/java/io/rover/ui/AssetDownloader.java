@@ -79,7 +79,7 @@ public class AssetDownloader extends AsyncTask<String, Void, Bitmap> {
             }
 
         } catch (Exception e) {
-            Log.e("AssetDownloader", "Error downloading asset: " + e.getMessage());
+            Log.e(TAG, "Error downloading asset: " + e.getMessage());
             return null;
         }
     }

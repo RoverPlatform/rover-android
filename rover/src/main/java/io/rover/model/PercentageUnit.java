@@ -4,14 +4,15 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Created by ata_n on 2016-06-16.
+ * Created by Rover Labs Inc on 2016-06-16.
  */
 public class PercentageUnit extends Unit {
     public PercentageUnit(Double value) {
         super(value);
     }
 
-    /** Parcelable
+    /*
+        Parcelable
      */
 
     protected PercentageUnit(Parcel in) {

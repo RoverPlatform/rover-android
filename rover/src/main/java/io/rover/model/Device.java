@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.support.v4.app.NotificationManagerCompat;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 public class Device {
     private static Device mInstance;
     private static String SHARED_DEVICE = "ROVER_SHARED_DEVICE";
+    private static final String TAG = "Rover:Device";
 
     private String mUDID;
     private String mGcmToken;
@@ -40,6 +42,17 @@ public class Device {
 
     public String getIdentifier(Context context) {
         if (mUDID != null) {
+            return mUDID;
+        }
+
+        if (context == null) {
+            /*
+                if context is null there is no sensible default.
+                We should never get here unless a function call to Rover was called before initialization and it slipped through
+                initialization checks.
+                Instead use a temporary uuid in memory. This means a new device is created on each launch of the app if Rover was not initialized
+            */
+            mUDID = UUID.randomUUID().toString();
             return mUDID;
         }
 
@@ -84,6 +97,11 @@ public class Device {
     }
 
     public boolean areNotificationsEnabled(Context context) {
+        if (context == null) {
+            Log.w(TAG, "Unable to get device's notification status");
+            return false;
+        }
+
         NotificationManagerCompat manager = NotificationManagerCompat.from(context);
         return manager.areNotificationsEnabled();
     }
@@ -93,7 +111,11 @@ public class Device {
             return mGcmToken;
         }
 
-        mGcmToken = FirebaseInstanceId.getInstance().getToken();
+        try {
+            mGcmToken = FirebaseInstanceId.getInstance().getToken();
+        } catch (Exception e) {
+            Log.w(TAG, "Unable to get device's push token");
+        }
 
         return mGcmToken;
     }

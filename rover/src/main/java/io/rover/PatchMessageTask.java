@@ -2,9 +2,6 @@ package io.rover;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
-
-import org.json.JSONObject;
 
 import io.rover.model.Message;
 import io.rover.network.HttpResponse;
@@ -37,6 +34,9 @@ public class PatchMessageTask extends AsyncTask<Message, Void, Boolean> {
     protected Boolean doInBackground(Message... messages) {
         
         if (messages.length == 0)
+            return false;
+
+        if (mContext == null)
             return false;
 
         Message message = messages[0];

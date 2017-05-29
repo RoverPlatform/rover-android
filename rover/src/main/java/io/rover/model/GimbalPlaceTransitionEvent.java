@@ -3,7 +3,7 @@ package io.rover.model;
 import java.util.Date;
 
 /**
- * Created by ata_n on 2016-07-28.
+ * Created by Rover Labs Inc on 2016-07-28.
  */
 public class GimbalPlaceTransitionEvent extends Event {
 

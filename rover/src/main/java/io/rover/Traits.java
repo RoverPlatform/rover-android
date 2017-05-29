@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created by chrisrecalis on 2016-11-01.
+ * Created by Rover Labs Inc on 2016-11-01.
  */
 public class Traits {
 

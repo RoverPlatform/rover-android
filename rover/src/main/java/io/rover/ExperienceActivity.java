@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.AnimRes;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -92,7 +91,10 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
             Clean up the image memory cache. We don't want to hold onto bitmaps when we aren't displaying the experience
          */
         AssetManager manager = AssetManager.getSharedAssetManager(getApplicationContext());
-        manager.flushMemoryCache();
+
+        if (manager != null) {
+            manager.flushMemoryCache();
+        }
 
         if (isFinishing() && mExperience != null) {
             Rover.submitEvent(new ExperienceDismissEvent(mExperience, mSessionId, new Date()));

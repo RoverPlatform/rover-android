@@ -1,12 +1,9 @@
 package io.rover.network;
 
 import android.support.annotation.Nullable;
-import android.util.JsonReader;
-import android.util.JsonWriter;
 import android.util.Log;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,10 +12,8 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import io.rover.Rover;
-
 /**
- * Created by ata_n on 2016-03-23.
+ * Created by Rover Labs Inc on 2016-03-23.
  */
 public class NetworkTask {
 

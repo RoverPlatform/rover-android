@@ -1,15 +1,11 @@
 package io.rover.model;
 
-import android.os.Parcelable;
-
 import java.util.Date;
 
-import dalvik.annotation.TestTargetClass;
-
 /**
- * Created by ata_n on 2016-03-23.
+ * Created by Rover Labs Inc on 2016-03-23.
  */
-public abstract class Event /*implements Parcelable */{
+public abstract class Event {
     Date mDate;
     String mId;
 

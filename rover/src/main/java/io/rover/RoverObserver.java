@@ -14,7 +14,7 @@ import io.rover.model.Place;
 import io.rover.model.Screen;
 
 /**
- * Created by ata_n on 2016-04-07.
+ * Created by Rover Labs Inc on 2016-04-07.
  */
 public interface RoverObserver {
 

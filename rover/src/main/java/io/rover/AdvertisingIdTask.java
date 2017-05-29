@@ -1,6 +1,7 @@
 package io.rover;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
@@ -13,6 +14,8 @@ import java.io.IOException;
  */
 public class AdvertisingIdTask {
 
+    private static final String TAG = "Rover:AdvertisingIdTask";
+
     private Context mContext;
 
     public AdvertisingIdTask(Context context) {
@@ -20,6 +23,12 @@ public class AdvertisingIdTask {
     }
 
     public AdvertisingIdClient.Info execute() {
+
+        if (mContext == null) {
+            Log.w(TAG, "Unable to grab device's advertising id");
+            return null;
+        }
+
         try {
             return AdvertisingIdClient.getAdvertisingIdInfo(mContext);
         } catch (IllegalStateException | GooglePlayServicesNotAvailableException | IOException | GooglePlayServicesRepairableException e) {

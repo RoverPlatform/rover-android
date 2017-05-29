@@ -4,7 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Created by ata_n on 2016-06-16.
+ * Created by Rover Labs Inc on 2016-06-16.
  */
 public abstract class Unit implements Parcelable {
     private double mValue;
@@ -15,7 +15,8 @@ public abstract class Unit implements Parcelable {
 
     public double getValue() { return  mValue; }
 
-    /** Parcelable
+    /*
+        Parcelable
      */
 
     protected Unit(Parcel in) {

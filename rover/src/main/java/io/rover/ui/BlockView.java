@@ -2,25 +2,20 @@ package io.rover.ui;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.RectF;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.support.v7.widget.LinearLayoutCompat;
+import android.support.annotation.NonNull;
 import android.util.TypedValue;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
+
 
 import io.rover.model.Inset;
 
 /**
- * Created by ata_n on 2016-07-08.
+ * Created by Rover Labs Inc on 2016-07-08.
  */
 public class BlockView extends FrameLayout {
 
@@ -32,7 +27,7 @@ public class BlockView extends FrameLayout {
     protected Inset mInset;
     private ImageView mBackgroundView;
 
-    public BlockView(Context context) {
+    public BlockView(@NonNull Context context) {
         super(context);
 
         mCornerRadius = 0;

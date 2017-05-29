@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 /**
- * Created by chrisrecalis on 2016-11-25.
+ * Created by Rover Labs Inc on 2016-11-25.
  */
 
 public class HttpResponse {

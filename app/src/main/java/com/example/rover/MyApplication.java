@@ -1,13 +1,8 @@
 package com.example.rover;
 
-import android.app.Activity;
-import android.app.Application;
-import android.app.PendingIntent;
-import android.graphics.Bitmap;
-import android.net.Uri;
-import android.util.Log;
 
-import io.rover.NotificationProvider;
+import android.app.Application;
+
 import io.rover.Rover;
 import io.rover.RoverConfig;
 import io.rover.RoverObserver;
@@ -30,6 +25,7 @@ public class MyApplication extends Application {
                 .build();
 
         Rover.setup(this, config);
+
 
         Rover.addObserver(new RoverObserver.NotificationInteractionObserver() {
             @Override

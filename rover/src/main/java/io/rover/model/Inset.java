@@ -4,7 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Created by ata_n on 2016-08-16.
+ * Created by Rover Labs Inc on 2016-08-16.
  */
 public class Inset implements Parcelable {
     public int top;

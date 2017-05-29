@@ -2,18 +2,16 @@ package io.rover.network;
 
 import android.util.JsonWriter;
 import android.util.Log;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.util.Iterator;
 
 /**
- * Created by ata_n on 2016-03-31.
+ * Created by Rover Labs Inc on 2016-03-31.
  */
 public class JsonApiPayloadProvider implements NetworkTask.PayloadProvider {
 

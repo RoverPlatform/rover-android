@@ -2,21 +2,14 @@ package io.rover.network;
 
 import android.util.JsonReader;
 import android.util.JsonToken;
-import android.util.Log;
-
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by ata_n on 2016-03-31.
+ * Created by Rover Labs Inc on 2016-03-31.
  */
 public class JsonApiResponseHandler extends JsonResponseHandler {
 

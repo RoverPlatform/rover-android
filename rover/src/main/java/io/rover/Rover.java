@@ -14,6 +14,7 @@ import android.net.http.HttpResponseCache;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -70,7 +71,7 @@ import io.rover.ui.AssetManager;
 import io.rover.util.Util;
 
 /**
- * Created by ata_n on 2016-03-21.
+ * Created by Rover Labs Inc on 2016-03-21.
  */
 public class Rover implements EventSubmitTask.Callback {
 
@@ -80,6 +81,8 @@ public class Rover implements EventSubmitTask.Callback {
 
 
     private static final String TAG = "Rover";
+    private static final String NOT_INITIALIZED_WARNING = "Rover was accessed but not initialized: %s";
+    private static Handler mMainHandler = new Handler(Looper.getMainLooper());
 
     private Context mApplicationContext;
     private RoverConfig mConfig;
@@ -90,7 +93,7 @@ public class Rover implements EventSubmitTask.Callback {
     private ExecutorService mEventExecutorService = Executors.newSingleThreadExecutor();
     protected ArrayList<RoverObserver> mObservers = new ArrayList<>();
     private NotificationProvider mNotificationProvider;
-    private Handler mMainHandler = new Handler(Looper.getMainLooper());
+
     private boolean mGimbalMode;
     private boolean mNotificationsEnabled = true;
     private Class mExperienceActivity;
@@ -157,7 +160,27 @@ public class Rover implements EventSubmitTask.Callback {
 
     }
 
+    public static boolean isInitialized() {
+        return (mSharedInstance != null && mSharedInstance.mApplicationContext != null);
+    }
+
+    protected static void warnNotInitialized(String functionName) {
+        if (functionName == null) {
+            functionName = "unknown";
+        }
+        try {
+            Log.w(TAG, String.format(NOT_INITIALIZED_WARNING, functionName));
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
     public static synchronized void identify(Traits traits) {
+
+        if (!isInitialized()) {
+            warnNotInitialized("identify");
+            return;
+        }
 
         Customer customer = getCustomer();
 
@@ -206,6 +229,12 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     public static void clearCustomer() {
+
+        if (!isInitialized()) {
+            warnNotInitialized("clearCustomer");
+            return;
+        }
+
         Customer customer = getCustomer();
         if (customer != null) {
             customer.clear(mSharedInstance.mApplicationContext);
@@ -216,14 +245,21 @@ public class Rover implements EventSubmitTask.Callback {
 
 
     public static synchronized void setNotificationsEnabled(boolean enabled) {
-        if (mSharedInstance == null) {
-            throw new Error("Attempted to access rover before setup");
+
+        if (!isInitialized()) {
+            warnNotInitialized("setNotificationsEnabled");
+            return;
         }
 
         mSharedInstance.mNotificationsEnabled = enabled;
     }
 
     public static void startMonitoring() {
+
+        if (!isInitialized()) {
+            warnNotInitialized("startMonitoring");
+            return;
+        }
 
         if (mSharedInstance.mGimbalMode) {
             Log.e(TAG, "Use `PlaceManager.getInstance().startMonitoring();`");
@@ -300,6 +336,12 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     public static void stopMonitoring() {
+
+        if (!isInitialized()) {
+            warnNotInitialized("stopMonitoring");
+            return;
+        }
+
         if (mSharedInstance.mGimbalMode) {
             Log.e(TAG, "Use `PlaceManager.getInstance().stopMonitoring();`");
             return;
@@ -354,15 +396,38 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     public static void addObserver(RoverObserver observer) {
+        if (!isInitialized()) {
+            warnNotInitialized("addObserver");
+            return;
+        }
+
         mSharedInstance.mObservers.add(observer);
     }
 
     public static void deleteObserver(RoverObserver observer) {
+        if (!isInitialized()) {
+            warnNotInitialized("deleteObserver");
+            return;
+        }
+
         mSharedInstance.mObservers.remove(observer);
     }
 
 
     public static void reloadInbox(final OnInboxReloadListener listener) {
+        if (!isInitialized()) {
+            warnNotInitialized("reloadInbox");
+            if (listener != null) {
+                mMainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        listener.onFailure();
+                    }
+                });
+            }
+            return;
+        }
+
         FetchInboxTask task = new FetchInboxTask();
         task.setCallback(new FetchInboxTask.Callback() {
             @Override
@@ -383,6 +448,19 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     public static void patchMessage(final io.rover.model.Message message, final OnPatchMessageListener listener) {
+        if (!isInitialized()) {
+            warnNotInitialized("patchMessage");
+            if (listener != null) {
+                mMainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        listener.onFailure();
+                    }
+                });
+            }
+            return;
+        }
+
         PatchMessageTask task = new PatchMessageTask(mSharedInstance.mApplicationContext);
         task.setCallback(new PatchMessageTask.Callback() {
             @Override
@@ -407,6 +485,19 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     public static void deleteMessage(final String messageId, final OnDeleteMessageListener listener) {
+        if (!isInitialized()) {
+            warnNotInitialized("deleteMessage");
+            if (listener != null) {
+                mMainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        listener.onFailure();
+                    }
+                });
+            }
+            return;
+        }
+
         DeleteMessageTask task = new DeleteMessageTask();
         task.setCallback(new DeleteMessageTask.Callback() {
             @Override
@@ -435,27 +526,46 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     public static void submitEvent(Event event) {
+        if (!isInitialized()) {
+            warnNotInitialized("submitEvent");
+            return;
+        }
+
         mSharedInstance.sendEvent(event);
     }
 
+    @Nullable
     private static Customer getCustomer() {
-        if (mSharedInstance.mApplicationContext != null) {
-            return Customer.getInstance(mSharedInstance.mApplicationContext);
-        } else {
-            Log.w(TAG, "Attempted to grab customer before initializing Rover");
+        if (!isInitialized()) {
+            warnNotInitialized("getCustomer");
             return null;
         }
+
+        return Customer.getInstance(mSharedInstance.mApplicationContext);
     }
 
+    @Nullable
     private PendingIntent getLocationPendingIntent() {
+        if (!isInitialized()) {
+            warnNotInitialized("getLocationPendingIntent");
+            return null;
+        }
+
         if (mLocationPendingIntent == null) {
             Intent intent = new Intent(mApplicationContext, LocationUpdateService.class);
             mLocationPendingIntent = PendingIntent.getService(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
+
         return mLocationPendingIntent;
     }
 
+    @Nullable
     private PendingIntent getGeofencePendingIntent() {
+        if (!isInitialized()) {
+            warnNotInitialized("getGeofencePendingIntent");
+            return null;
+        }
+
         if (mGeofencePendingIntent == null) {
             Intent intent = new Intent(mApplicationContext, GeofenceTransitionService.class);
             mGeofencePendingIntent = PendingIntent.getService(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -463,7 +573,13 @@ public class Rover implements EventSubmitTask.Callback {
         return mGeofencePendingIntent;
     }
 
+    @Nullable
     private PendingIntent getNearbyMessagesPendingIntent() {
+        if (!isInitialized()) {
+            warnNotInitialized("getNearbyMessagesPendingIntent");
+            return null;
+        }
+
         if (mNearbyMessagesPendingIntent == null) {
             Intent intent = new Intent(mApplicationContext, NearbyMessageService.class);
             mNearbyMessagesPendingIntent = PendingIntent.getService(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -471,7 +587,13 @@ public class Rover implements EventSubmitTask.Callback {
         return mNearbyMessagesPendingIntent;
     }
 
+    @Nullable
     private PendingIntent getAppLaunchPendingIntent() {
+        if (!isInitialized()) {
+            warnNotInitialized("getAppLaunchPendingIntent");
+            return null;
+        }
+
         // TODO: intent needs to contain message id
         if (mAppLaunchPendingIntent == null) {
             String packageName = mApplicationContext.getPackageName();
@@ -494,6 +616,11 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     protected void sendEvent(Event event) {
+        if (!isInitialized()) {
+            warnNotInitialized("sendEvent");
+            return;
+        }
+
         EventSubmitTask eventTask = new EventSubmitTask(mApplicationContext, event);
         eventTask.setCallback(this);
         // TODO: this may have to be synchronous
@@ -539,6 +666,11 @@ public class Rover implements EventSubmitTask.Callback {
 
     @Override
     public void onReceivedGeofences(final List geofences) {
+        if (!isInitialized()) {
+            warnNotInitialized("onReceivedGeofences");
+            return;
+        }
+
         GoogleApiConnection connection = new GoogleApiConnection(mApplicationContext);
         connection.setCallbacks(new GoogleApiConnection.Callbacks() {
             @Override
@@ -602,11 +734,16 @@ public class Rover implements EventSubmitTask.Callback {
 
     static void didOpenNotificationWithMessage(final io.rover.model.Message message) {
 
+        if (!isInitialized()) {
+            warnNotInitialized("didOpenNotificationWithMessage");
+            return;
+        }
+
         didOpenMessage(message);
 
         for (final RoverObserver observer : Rover.mSharedInstance.mObservers) {
             if (observer instanceof RoverObserver.NotificationInteractionObserver) {
-                mSharedInstance.mMainHandler.post(new Runnable() {
+                mMainHandler.post(new Runnable() {
                     @Override
                     public void run() {
                         ((RoverObserver.NotificationInteractionObserver) observer).onNotificationOpened(message);
@@ -617,9 +754,14 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     static void didDeleteNotificationWithMessage(final io.rover.model.Message message) {
+        if (!isInitialized()) {
+            warnNotInitialized("didDeleteNotificationWithMessage");
+            return;
+        }
+
         for (final RoverObserver observer : Rover.mSharedInstance.mObservers) {
             if (observer instanceof RoverObserver.NotificationInteractionObserver) {
-                mSharedInstance.mMainHandler.post(new Runnable() {
+                mMainHandler.post(new Runnable() {
                     @Override
                     public void run() {
                         ((RoverObserver.NotificationInteractionObserver) observer).onNotificationDeleted(message);
@@ -629,7 +771,7 @@ public class Rover implements EventSubmitTask.Callback {
         }
     }
 
-    static void didOpenMessage(final io.rover.model.Message message) {
+    public static void didOpenMessage(final io.rover.model.Message message) {
         MessageOpenEvent openEvent = new MessageOpenEvent(message, MessageOpenEvent.Source.Inbox, new Date());
         submitEvent(openEvent);
     }
@@ -673,7 +815,14 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
 
+    @Nullable
     public static PendingIntent getPendingIntentFromRoverMessage(io.rover.model.Message message, MessageInteractionService.Source source) {
+
+        if (!isInitialized()) {
+            warnNotInitialized("getPendingIntentFromRoverMessage");
+            return null;
+        }
+
         if (message == null) {
             return null;
         }
@@ -739,7 +888,8 @@ public class Rover implements EventSubmitTask.Callback {
 
     public static void handleRemoteMessage(RemoteMessage remoteMessage) {
 
-        if (mSharedInstance == null) {
+        if (!isInitialized()) {
+            warnNotInitialized("handleRemoteMessage");
             return;
         }
 
@@ -819,7 +969,7 @@ public class Rover implements EventSubmitTask.Callback {
                 .appendPath(message.getId()).build();
     }
 
-    /**
+    /*
      * Services
      */
 

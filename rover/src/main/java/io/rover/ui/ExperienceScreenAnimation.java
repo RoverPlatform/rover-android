@@ -2,8 +2,6 @@ package io.rover.ui;
 
 import android.support.annotation.AnimRes;
 
-import io.rover.model.Experience;
-
 /**
  * Created by Rover Labs Inc. on 2017-04-21.
  */

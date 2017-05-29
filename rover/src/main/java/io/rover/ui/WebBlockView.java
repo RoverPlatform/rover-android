@@ -1,13 +1,12 @@
 package io.rover.ui;
 
 import android.content.Context;
-import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
 /**
- * Created by ata_n on 2016-09-09.
+ * Created by Rover Labs Inc on 2016-09-09.
  */
 public class WebBlockView extends BlockView {
 

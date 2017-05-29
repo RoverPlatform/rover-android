@@ -1,17 +1,15 @@
 package io.rover;
 
-import android.net.NetworkRequest;
 import android.util.Log;
 
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import io.rover.model.Device;
 import io.rover.network.NetworkTask;
 
 /**
- * Created by ata_n on 2016-04-19.
+ * Created by Rover Labs Inc on 2016-04-19.
  */
 class Router implements NetworkTask.NetworkTaskConnectionManager {
 

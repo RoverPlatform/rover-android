@@ -1,13 +1,10 @@
 package io.rover.model;
 
-import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.util.Map;
-
 /**
- * Created by ata_n on 2016-07-08.
+ * Created by Rover Labs Inc on 2016-07-08.
  */
 public class ButtonBlock extends Block {
 
@@ -55,9 +52,8 @@ public class ButtonBlock extends Block {
         }
     }
 
-    // TODO: root level appearance getters should return default neutral values
-
-    /** Parcelable
+    /*
+        Parcelable
      */
 
     protected ButtonBlock(Parcel in) {

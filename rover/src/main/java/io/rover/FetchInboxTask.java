@@ -1,8 +1,6 @@
 package io.rover;
 
 import android.os.AsyncTask;
-
-import java.io.IOException;
 import java.util.List;
 
 import io.rover.model.Message;

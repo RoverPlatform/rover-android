@@ -70,12 +70,18 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
         } catch (JSONException e) {
             Log.e("ObjectSerializer", "Error creating attributes JSON");
             e.printStackTrace();
+        } catch (IllegalStateException e) {
+            Log.w("ObjectSerializer", e.getMessage());
         }
 
         return jsonObject;
     }
 
-    private void putAttributes(JSONObject jsonObject) throws JSONException {
+    private void putAttributes(JSONObject jsonObject) throws JSONException, IllegalStateException {
+
+        if (mApplicationContext == null) {
+            throw new IllegalStateException("Context is null");
+        }
 
         if (mObject instanceof Event) {
             Event event = (Event)mObject;

@@ -2,23 +2,11 @@ package io.rover.ui;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.GradientDrawable;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-
-import org.w3c.dom.Text;
-
 import java.util.List;
-
-import io.rover.model.Action;
 import io.rover.model.Appearance;
 import io.rover.model.Block;
 import io.rover.model.ButtonBlock;
@@ -29,7 +17,7 @@ import io.rover.model.TextBlock;
 import io.rover.model.WebBlock;
 
 /**
- * Created by ata_n on 2016-06-28.
+ * Created by Rover Labs Inc on 2016-06-28.
  */
 public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements BlockLayoutManager.BlockProvider {
 
@@ -101,8 +89,6 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
                 break;
             }
         }
-
-        final RowsAdapter adapter = this;
 
         return viewHolder;
     }
@@ -189,24 +175,26 @@ public class RowsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
         if (!(blockView instanceof WebBlockView)) {
             if (block.getBackgroundImage() != null) {
                 String imageUrl = ImageUrlHelper.getOptimizedImageUrl(blockWidth, blockHeight, block.getBackgroundImage(), block.getBackgroundContentMode(), block.getBackgroundScale());
-                AssetManager.getSharedAssetManager(blockView.getContext())
-                        .fetchAsset(imageUrl, new AssetManager.AssetManagerListener() {
-                            @Override
-                            public void onAssetSuccess(Bitmap bitmap) {
-                                BackgroundImageHelper.setBackgroundImage(
-                                        blockView.getBackgroundView(),
-                                        bitmap,
-                                        blockView.getResources().getDisplayMetrics().density,
-                                        (float) block.getBackgroundScale(),
-                                        block.getBackgroundContentMode(),
-                                        blockView.getResources());
-                            }
+                AssetManager manager = AssetManager.getSharedAssetManager(blockView.getContext());
+                if (manager != null) {
+                    manager.fetchAsset(imageUrl, new AssetManager.AssetManagerListener() {
+                        @Override
+                        public void onAssetSuccess(Bitmap bitmap) {
+                            BackgroundImageHelper.setBackgroundImage(
+                                    blockView.getBackgroundView(),
+                                    bitmap,
+                                    blockView.getResources().getDisplayMetrics().density,
+                                    (float) block.getBackgroundScale(),
+                                    block.getBackgroundContentMode(),
+                                    blockView.getResources());
+                        }
 
-                            @Override
-                            public void onAssetFailure() {
+                        @Override
+                        public void onAssetFailure() {
 
-                            }
-                        });
+                        }
+                    });
+                }
             } else {
                 blockView.getBackgroundView().setImageDrawable(null);
             }

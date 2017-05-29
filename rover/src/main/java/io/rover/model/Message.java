@@ -3,17 +3,15 @@ package io.rover.model;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.renderscript.ScriptC;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by ata_n on 2016-04-05.
+ * Created by Rover Labs Inc on 2016-04-05.
  */
 public class Message implements Parcelable {
 

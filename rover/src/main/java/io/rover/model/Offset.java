@@ -4,7 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Created by ata_n on 2016-06-16.
+ * Created by Rover Labs Inc on 2016-06-16.
  */
 public class Offset implements Parcelable {
 
@@ -33,7 +33,8 @@ public class Offset implements Parcelable {
     public Unit getCenter() { return mCenter; }
     public Unit getMiddle() { return mMiddle; }
 
-    /** Parcelable
+    /*
+        Parcelable
      */
 
     protected Offset(Parcel in) {

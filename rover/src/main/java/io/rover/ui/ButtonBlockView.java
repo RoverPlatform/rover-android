@@ -1,23 +1,20 @@
 package io.rover.ui;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.support.annotation.NonNull;
 import android.text.SpannableString;
 import android.text.Spanned;
-import android.util.Log;
 import android.view.MotionEvent;
-
 import java.util.HashMap;
 import java.util.Map;
-
 import io.rover.model.Alignment;
 import io.rover.model.Font;
 import io.rover.model.Offset;
 
 /**
- * Created by ata_n on 2016-07-11.
+ * Created by Rover Labs Inc on 2016-07-11.
  */
 public class ButtonBlockView extends TextBlockView {
 
@@ -37,7 +34,7 @@ public class ButtonBlockView extends TextBlockView {
     private Map<State, Float> mCornerRadii;
     private Map<State, Float> mTitleTextSizes;
 
-    public ButtonBlockView(Context context) {
+    public ButtonBlockView(@NonNull Context context) {
         super(context);
         mTitles = new HashMap<>();
         mTitles.put(State.Normal, "");

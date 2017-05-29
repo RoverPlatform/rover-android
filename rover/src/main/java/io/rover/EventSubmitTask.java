@@ -20,7 +20,7 @@ import io.rover.network.JsonApiResponseHandler.JsonApiObjectMapper;
 import io.rover.network.NetworkTask;
 
 /**
- * Created by ata_n on 2016-04-04.
+ * Created by Rover Labs Inc on 2016-04-04.
  */
 public class EventSubmitTask implements Runnable, JsonApiResponseHandler.JsonApiCompletionHandler {
 
@@ -32,6 +32,7 @@ public class EventSubmitTask implements Runnable, JsonApiResponseHandler.JsonApi
     private Event mEvent;
     private Context mContext;
     private Callback mCallback;
+    private static final String TAG = "Rover:EventSubmitTask";
 
     public void setCallback(Callback callback) {
         mCallback = callback;
@@ -45,7 +46,12 @@ public class EventSubmitTask implements Runnable, JsonApiResponseHandler.JsonApi
     @Override
     public void run() {
 
-        Log.d("EventSubmitTask", "Submitting: " + mEvent.getClass());
+        if (mContext == null) {
+            Log.w(TAG, "Cannot submit event context is null");
+            return;
+        }
+
+        Log.d(TAG, "Submitting: " + mEvent.getClass());
 
         NetworkTask networkTask = Router.getEventsNetworkTask();
 

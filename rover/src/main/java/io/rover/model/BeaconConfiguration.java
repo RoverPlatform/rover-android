@@ -1,11 +1,10 @@
 package io.rover.model;
 
 /**
- * Created by ata_n on 2016-04-20.
+ * Created by Rover Labs Inc on 2016-04-20.
  */
 public class BeaconConfiguration {
 
-    //private UID
     private String mName;
     private String[] mTags;
 

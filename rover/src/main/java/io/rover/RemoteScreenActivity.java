@@ -5,8 +5,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
-import android.util.JsonReader;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
@@ -14,19 +12,16 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.Date;
-import java.util.List;
+
 
 import io.rover.model.Screen;
-import io.rover.model.ScreenViewEvent;
 import io.rover.network.HttpResponse;
-import io.rover.network.JsonApiResponseHandler;
 import io.rover.network.JsonResponseHandler;
 import io.rover.network.NetworkTask;
 import io.rover.ui.ScreenFragment;
 
 /**
- * Created by ata_n on 2016-07-11.
+ * Created by Rover Labs Inc on 2016-07-11.
  */
 public class RemoteScreenActivity extends AppCompatActivity {
 

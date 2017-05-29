@@ -13,7 +13,7 @@ import com.google.android.gms.nearby.messages.MessagesOptions;
 import com.google.android.gms.nearby.messages.NearbyPermissions;
 
 /**
- * Created by ata_n on 2016-04-04.
+ * Created by Rover Labs Inc on 2016-04-04.
  */
 public class GoogleApiConnection implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
@@ -24,7 +24,6 @@ public class GoogleApiConnection implements GoogleApiClient.ConnectionCallbacks,
         int onConnected(GoogleApiClient client);
     }
 
-    private Context mContext;
     private GoogleApiClient mGoogleApiClient;
     private Callbacks mCallbacks;
 
@@ -33,23 +32,30 @@ public class GoogleApiConnection implements GoogleApiClient.ConnectionCallbacks,
     }
 
     public GoogleApiConnection(Context context) {
-        mContext = context;
 
-        mGoogleApiClient = new GoogleApiClient.Builder(context)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .addApi(Nearby.MESSAGES_API, new MessagesOptions.Builder()
-                    .setPermissions(NearbyPermissions.BLE)
-                    .build())
-                .build();
+        if (context != null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(context)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .addApi(Nearby.MESSAGES_API, new MessagesOptions.Builder()
+                            .setPermissions(NearbyPermissions.BLE)
+                            .build())
+                    .build();
+        }
     }
 
     public void connect() {
-        mGoogleApiClient.connect();
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.connect();
+        }
     }
 
     public static boolean checkPlayServices(Context context) {
+        if (context == null) {
+            return false;
+        }
+
         GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
         int resultCode = apiAvailability.isGooglePlayServicesAvailable(context);
         if (resultCode != ConnectionResult.SUCCESS) {

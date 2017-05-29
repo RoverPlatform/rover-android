@@ -2,8 +2,6 @@ package io.rover.ui;
 
 import android.net.Uri;
 import android.support.annotation.NonNull;
-import android.util.Log;
-
 import io.rover.model.Image;
 import io.rover.util.DataUri;
 

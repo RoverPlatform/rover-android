@@ -3,6 +3,7 @@ package com.example.rover;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -134,14 +135,39 @@ public class MessageFragment extends Fragment implements SwipeRefreshLayout.OnRe
             });
         }
 
-        PendingIntent pendingIntent = Rover.getPendingIntentFromRoverMessage(message);
+        Intent intent = null;
 
-        if (pendingIntent != null) {
-            try {
-                pendingIntent.send();
-            } catch (PendingIntent.CanceledException e) {
-                e.printStackTrace();
+        switch (message.getAction()) {
+            case Website: {
+                intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
+                break;
             }
+            case LandingPage: {
+                intent = new Intent(getContext(), RemoteScreenActivity.class);
+                if (message.getLandingPage() != null) {
+                    intent.putExtra(RemoteScreenActivity.INTENT_EXTRA_SCREEN, message.getLandingPage());
+                } else {
+                    Uri uri = new Uri.Builder().scheme("rover")
+                            .authority("message")
+                            .appendPath(message.getId()).build();
+                    intent.setData(uri);
+                }
+                break;
+            }
+            case DeepLink: {
+                intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
+                break;
+            }
+            case Experience: {
+                intent = new Intent(getContext(), ExperienceActivity.class);
+                intent.setData(message.getExperienceUri());
+                break;
+            }
+        }
+
+        if (intent != null) {
+            Rover.didOpenMessage(message);
+            startActivity(intent);
         }
     }
 

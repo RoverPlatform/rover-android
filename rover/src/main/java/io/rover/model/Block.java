@@ -4,11 +4,12 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Created by ata_n on 2016-06-16.
+ * Created by Rover Labs Inc on 2016-06-16.
  */
 public class Block implements Parcelable {
 
-    /** Appearance
+    /*
+        Appearance
      */
 
     private String mId;
@@ -22,7 +23,8 @@ public class Block implements Parcelable {
     private double mBackgroundScale;
     private CustomKeys mCustomKeys = new CustomKeys(0);
 
-    /** Layout
+    /*
+        Layout
      */
 
     public enum Position {
@@ -110,9 +112,8 @@ public class Block implements Parcelable {
 
     public void setCustomKeys(CustomKeys keys) { mCustomKeys = keys; }
 
-    // TODO: Appearance
-
-    /** Parcelable
+    /*
+        Parcelable
      */
 
     protected Block(Parcel in) {

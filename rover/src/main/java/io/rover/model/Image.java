@@ -2,13 +2,9 @@ package io.rover.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
-
-import java.net.URI;
-import java.net.URISyntaxException;
 
 /**
- * Created by ata_n on 2016-06-29.
+ * Created by Rover Labs Inc on 2016-06-29.
  */
 public class Image implements Parcelable {
 
@@ -39,7 +35,8 @@ public class Image implements Parcelable {
         return 1;
     }
 
-    /** Parcelable
+    /*
+        Parcelable
      */
 
     protected Image(Parcel in) {

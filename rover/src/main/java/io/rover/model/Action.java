@@ -4,7 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Created by ata_n on 2016-07-08.
+ * Created by Rover Labs Inc on 2016-07-08.
  */
 public class Action implements Parcelable {
 
@@ -25,7 +25,8 @@ public class Action implements Parcelable {
 
     public String getUrl() { return mUrl; }
 
-    /** Parcelable
+    /*
+        Parcelable
      */
 
     protected Action(Parcel in) {

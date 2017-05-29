@@ -6,6 +6,8 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.graphics.BitmapFactory;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Base64;
 import android.util.Log;
 import android.util.LruCache;
@@ -38,9 +40,16 @@ public class AssetManager {
     private Handler mMainHandler = new Handler(Looper.getMainLooper());
     private LruCache<String, Bitmap> mBitmapLruCache;
 
-    public synchronized static AssetManager getSharedAssetManager(Context context) {
+    public synchronized static AssetManager getSharedAssetManager(@NonNull Context context) {
         if (sAssetManager == null) {
-            sAssetManager = new AssetManager(context, Rover.getConfig().getImageCacheSize());
+            // Default cache size if Rover wasn't initialized
+            int cacheSize = 50 * 1024 * 1024; // 50 MiB
+
+            if (Rover.isInitialized()) {
+                cacheSize = Rover.getConfig().getImageCacheSize();
+            }
+
+            sAssetManager = new AssetManager(context, cacheSize);
         }
         return sAssetManager;
     }
@@ -65,7 +74,9 @@ public class AssetManager {
     }
 
     public void flushMemoryCache() {
-        mBitmapLruCache.evictAll();
+        if (mBitmapLruCache != null) {
+            mBitmapLruCache.evictAll();
+        }
     }
 
     public void cancelAsset(AssetManagerListener listener) {

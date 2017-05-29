@@ -9,11 +9,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
 
 /**
- * Created by ata_n on 2016-07-13.
+ * Created by Rover Labs Inc on 2016-07-13.
  */
 public class JsonResponseHandler {
 

@@ -4,7 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Created by ata_n on 2016-06-16.
+ * Created by Rover Labs Inc on 2016-06-16.
  */
 public class PointsUnit extends Unit {
     public PointsUnit(Double value) {
@@ -13,7 +13,8 @@ public class PointsUnit extends Unit {
 
     public static PointsUnit ZeroUnit = new PointsUnit(0.0);
 
-    /** Parcelable
+    /*
+        Parcelable
      */
 
     protected PointsUnit(Parcel in) {

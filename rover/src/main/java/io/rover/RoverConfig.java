@@ -1,7 +1,6 @@
 package io.rover;
 
 import android.app.Activity;
-import android.os.Build;
 
 /**
  * Created by Rover Labs Inc on 2016-04-19.
@@ -29,7 +28,7 @@ public class RoverConfig {
             return this;
         }
 
-        public Builder setExperienceActivity(Class<? extends Activity> klass) {
+        public Builder setExperienceActivity(Class<? extends ExperienceActivity> klass) {
             mExperienceActivity = klass;
             return this;
         }
@@ -50,7 +49,7 @@ public class RoverConfig {
     Class mExperienceActivity;
     int mImageCacheSize;
 
-    private RoverConfig(String appToken, NotificationProvider notificationProvider, Class<? extends Activity> klass, int imageCacheSize) {
+    private RoverConfig(String appToken, NotificationProvider notificationProvider, Class<? extends ExperienceActivity> klass, int imageCacheSize) {
         mAppToken = appToken;
         mNotificationProvider = notificationProvider;
         mExperienceActivity = klass;

@@ -3,7 +3,7 @@ package io.rover.model;
 import java.util.Date;
 
 /**
- * Created by ata_n on 2016-06-21.
+ * Created by Rover Labs INc on 2016-06-21.
  */
 public class MessageOpenEvent extends Event {
 

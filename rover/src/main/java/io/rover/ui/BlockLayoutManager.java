@@ -3,6 +3,7 @@ package io.rover.ui;
 import android.content.Context;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.Html;
@@ -37,7 +38,7 @@ import io.rover.model.TextBlock;
 import io.rover.model.Unit;
 
 /**
- * Created by ata_n on 2016-06-28.
+ * Created by Rover Labs Inc on 2016-06-28.
  */
 public class BlockLayoutManager extends RecyclerView.LayoutManager{
 
@@ -54,7 +55,7 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
     private Map<Integer,Rect> mClipBounds;
     private Map<Integer,Rect> mLayouts;
 
-    public BlockLayoutManager(Context context) {
+    public BlockLayoutManager(@NonNull Context context) {
         density = context.getResources().getDisplayMetrics().density;
         mClipBounds = new HashMap<>();
         mLayouts = new HashMap<>();

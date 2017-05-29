@@ -6,7 +6,7 @@ import android.os.Parcelable;
 import android.renderscript.Type;
 
 /**
- * Created by ata_n on 2016-07-07.
+ * Created by Rover Labs Inc on 2016-07-07.
  */
 public class Font implements Parcelable {
     private float mSize;
@@ -35,7 +35,8 @@ public class Font implements Parcelable {
     }
 
 
-    /** Parcelabel
+    /*
+        Parcelable
      */
 
     protected Font(Parcel in) {

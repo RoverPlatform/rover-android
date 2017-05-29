@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Created by ata_n on 2016-06-16.
+ * Created by Rover Labs Inc on 2016-06-16.
  */
 public class Screen implements Parcelable {
 
@@ -109,7 +109,8 @@ public class Screen implements Parcelable {
         mCustomKeys = keys;
     }
 
-    /** Parcelable
+    /*
+        Parcelable
      */
 
     protected Screen(Parcel in) {

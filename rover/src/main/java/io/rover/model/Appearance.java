@@ -4,7 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Created by ata_n on 2016-07-08.
+ * Created by Rover Labs Inc on 2016-07-08.
  */
 public class Appearance implements Parcelable {
 
@@ -23,7 +23,8 @@ public class Appearance implements Parcelable {
 
     }
 
-    /** Parcelable
+    /*
+        Parcelable
      */
 
     protected Appearance(Parcel in) {

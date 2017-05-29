@@ -2,16 +2,12 @@ package io.rover;
 
 import android.app.IntentService;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Intent;
-import android.os.IBinder;
-import android.support.annotation.Nullable;
-import android.util.Log;
 
 import io.rover.model.Message;
 
 /**
- * Created by Roverlabs Inc. on 2017-01-30.
+ * Created by Rover Labs Inc on 2017-01-30.
  */
 
 public class MessageInteractionService extends IntentService {

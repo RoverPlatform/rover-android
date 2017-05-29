@@ -4,7 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Created by ata_n on 2016-06-29.
+ * Created by Rover Labs Inc on 2016-06-29.
  */
 public class ImageBlock extends Block {
 
@@ -18,7 +18,8 @@ public class ImageBlock extends Block {
 
     public void setImage(Image image) { mImage = image; }
 
-    /** Parcelable
+    /*
+        Parcelable
      */
 
     protected ImageBlock(Parcel in) {

@@ -7,7 +7,7 @@ import android.os.Parcelable;
 import java.util.Date;
 
 /**
- * Created by ata_n on 2016-03-23.
+ * Created by Rover Labs Inc on 2016-03-23.
  */
 public class LocationUpdateEvent extends Event {
 
@@ -20,16 +20,16 @@ public class LocationUpdateEvent extends Event {
 
     public Location getLocation() { return mLocation; }
 
-    //================================================================================
-    // Parcelable
-    //================================================================================
 
-    //@Override
+    /*
+        Parcelable
+     */
+
+
     public int describeContents() {
         return 0;
     }
 
-    //@Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeParcelable(mLocation, flags);
         dest.writeSerializable(mDate);

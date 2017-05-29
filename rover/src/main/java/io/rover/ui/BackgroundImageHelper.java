@@ -10,7 +10,7 @@ import android.widget.ImageView;
 import io.rover.model.Image;
 
 /**
- * Created by ata_n on 2016-09-02.
+ * Created by Rover Labs Inc on 2016-09-02.
  */
 public class BackgroundImageHelper {
     static void setBackgroundImage(ImageView imageView, Bitmap bitmap, float screenDensity, float backgroundScale, Image.ContentMode mode, Resources resources) {

@@ -1,13 +1,8 @@
 package com.example.rover;
 
-import android.app.Activity;
-import android.app.Application;
-import android.app.PendingIntent;
-import android.graphics.Bitmap;
-import android.net.Uri;
-import android.util.Log;
 
-import io.rover.NotificationProvider;
+import android.app.Application;
+
 import io.rover.Rover;
 import io.rover.RoverConfig;
 import io.rover.RoverObserver;
@@ -25,11 +20,12 @@ public class MyApplication extends Application {
 
 
         RoverConfig config = new RoverConfig.Builder()
-                .setApplicationToken("API_TOKEN_HERE")
+                .setApplicationToken("029631d85c585c3df152f914685b4d32")
                 .setExperienceActivity(MyCustomExperience.class)
                 .build();
 
         Rover.setup(this, config);
+
 
         Rover.addObserver(new RoverObserver.NotificationInteractionObserver() {
             @Override

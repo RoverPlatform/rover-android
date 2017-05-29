@@ -4,17 +4,13 @@ import android.graphics.Color;
 import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
-import com.google.android.gms.nearby.messages.Strategy;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -49,8 +45,9 @@ import io.rover.model.WebBlock;
 import io.rover.network.JsonApiResponseHandler;
 
 /**
- * Created by ata_n on 2016-04-01.
+ * Created by Rover Labs Inc on 2016-04-01.
  */
+
 public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper {
     @Override
     public Object getObject(String type, String identifier, JSONObject attributes) {

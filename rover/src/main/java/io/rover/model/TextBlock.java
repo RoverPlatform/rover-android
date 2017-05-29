@@ -1,31 +1,18 @@
 package io.rover.model;
 
-import android.graphics.Paint;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.Html;
-import android.text.Layout;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
-import android.text.StaticLayout;
-import android.text.TextPaint;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Created by ata_n on 2016-06-16.
+ * Created by Rover Labs Inc on 2016-06-16.
  */
 public class TextBlock extends Block {
-
-    /*
-        var text: String?
-    var textAlignment = Alignment(horizontal: .Left, vertical: .Top)
-    var textColor = UIColor.blackColor()
-    var textOffset = Offset.ZeroOffset
-    var font = UIFont.systemFontOfSize(12)
-
-     */
 
     private String mText;
     private Alignment mTextAlignment;
@@ -110,7 +97,8 @@ public class TextBlock extends Block {
         return mSpannedText;
     }
 
-    /** Parcelable
+    /*
+        Parcelable
      */
 
     protected TextBlock(Parcel in) {

@@ -3,19 +3,17 @@ package io.rover.ui;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.view.Gravity;
+import android.support.annotation.NonNull;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 
 /**
- * Created by ata_n on 2016-07-07.
+ * Created by Rover Labs Inc on 2016-07-07.
  */
 public class ImageBlockView extends BlockView {
 
     private RemoteImageView mImageView;
 
-    public ImageBlockView(Context context) {
+    public ImageBlockView(@NonNull Context context) {
         super(context);
         mImageView = new RemoteImageView(context);
         mImageView.setScaleType(ImageView.ScaleType.FIT_XY);

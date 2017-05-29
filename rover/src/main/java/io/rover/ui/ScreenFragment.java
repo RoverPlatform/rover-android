@@ -1,31 +1,23 @@
 package io.rover.ui;
 
-import android.content.Context;
+
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Rect;
-import android.graphics.Shader;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Parcelable;
+
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -36,13 +28,8 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-
 import java.util.ArrayList;
-
-import io.rover.R;
-import io.rover.model.Action;
 import io.rover.model.Block;
 import io.rover.model.Image;
 import io.rover.model.Row;
@@ -224,17 +211,21 @@ public class ScreenFragment extends Fragment implements RowsAdapter.BlockListene
 
             Image backgroundImage = screen.getBackgroundImage();
             if (backgroundImage != null) {
-                AssetManager.getSharedAssetManager(getContext()).fetchAsset(backgroundImage.getImageUrl(), new AssetManager.AssetManagerListener() {
-                    @Override
-                    public void onAssetSuccess(Bitmap bitmap) {
-                        setBackground(bitmap);
-                    }
+                AssetManager manager = AssetManager.getSharedAssetManager(getContext());
 
-                    @Override
-                    public void onAssetFailure() {
+                if (manager != null) {
+                    manager.fetchAsset(backgroundImage.getImageUrl(), new AssetManager.AssetManagerListener() {
+                        @Override
+                        public void onAssetSuccess(Bitmap bitmap) {
+                            setBackground(bitmap);
+                        }
 
-                    }
-                });
+                        @Override
+                        public void onAssetFailure() {
+
+                        }
+                    });
+                }
             }
 
             ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();

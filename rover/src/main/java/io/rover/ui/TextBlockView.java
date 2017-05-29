@@ -5,9 +5,8 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.os.Build;
-import android.text.Html;
+import android.support.annotation.NonNull;
 import android.text.Layout;
-import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
 import android.text.StaticLayout;
@@ -19,7 +18,7 @@ import io.rover.model.Offset;
 import io.rover.model.Unit;
 
 /**
- * Created by ata_n on 2016-07-06.
+ * Created by Rover Labs Inc on 2016-07-06.
  */
 public class TextBlockView extends BlockView {
 
@@ -31,7 +30,7 @@ public class TextBlockView extends BlockView {
     private TextPaint mPaint;
     private StaticLayout mLayout;
 
-    public TextBlockView(Context context) {
+    public TextBlockView(@NonNull Context context) {
         super(context);
 
         mPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);

@@ -4,11 +4,10 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
- * Created by ata_n on 2016-08-16.
+ * Created by Rover Labs Inc on 2016-08-16.
  */
 public class Experience implements Parcelable {
     private List<Screen> mScreens;

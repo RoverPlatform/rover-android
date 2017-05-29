@@ -4,7 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Created by ata_n on 2016-09-09.
+ * Created by Rover Labs Inc on 2016-09-09.
  */
 public class WebBlock extends Block {
     private String mURL;
@@ -24,7 +24,8 @@ public class WebBlock extends Block {
 
     public void setURL(String url) { mURL = url; }
 
-    /** Parcelable
+    /*
+        Parcelable
      */
 
     protected WebBlock(Parcel in) {

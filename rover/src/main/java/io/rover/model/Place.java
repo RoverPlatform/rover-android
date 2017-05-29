@@ -3,7 +3,7 @@ package io.rover.model;
 import java.util.List;
 
 /**
- * Created by ata_n on 2016-04-20.
+ * Created by Rover Labs Inc on 2016-04-20.
  */
 public class Place {
 

@@ -3,10 +3,8 @@ package io.rover.model;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,10 +12,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import io.rover.util.Optional;
-
 /**
- * Created by ata_n on 2016-03-24.
+ * Created by Rover Labs Inc on 2016-03-24.
  */
 public class Customer {
     private static final String TAG = "RoverCustomer";

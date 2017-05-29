@@ -1,11 +1,9 @@
 package io.rover.model;
 
-import com.google.android.gms.location.Geofence;
-
 import java.util.Date;
 
 /**
- * Created by ata_n on 2016-04-04.
+ * Created by Rover Labs Inc on 2016-04-04.
  */
 public class GeofenceTransitionEvent extends Event {
 

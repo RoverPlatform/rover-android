@@ -159,7 +159,7 @@ public class MessageFragment extends Fragment implements SwipeRefreshLayout.OnRe
                 break;
             }
             case Experience: {
-                intent = new Intent(getContext(), ExperienceActivity.class);
+                intent = new Intent(getContext(), MyCustomExperience.class);
                 intent.setData(message.getExperienceUri());
                 break;
             }

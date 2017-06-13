@@ -236,8 +236,10 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
                 break;
             }
             default: {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(action.getUrl()));
-                startActivity(intent);
+                if (action.getUrl() != null && !action.getUrl().isEmpty()) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(action.getUrl()));
+                    startActivity(intent);
+                }
                 break;
             }
         }

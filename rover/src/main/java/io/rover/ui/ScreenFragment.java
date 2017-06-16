@@ -30,6 +30,8 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import java.util.ArrayList;
+
+import io.rover.ExperienceActivity;
 import io.rover.model.Block;
 import io.rover.model.Image;
 import io.rover.model.Row;
@@ -41,10 +43,13 @@ public class ScreenFragment extends Fragment implements RowsAdapter.BlockListene
         void onBlockClick(Fragment screenFragment, Screen screen, Block block);
     }
 
+    private static final String BUNDLE_SCREEN_ID = "BUNDLE_SCREEN_ID";
+    private static final String BUNDLE_SCREEN = "BUNDLE_SCREEN";
+
     public static String TAG = "SCREEN_FRAGMENT";
-    public static String ARG_SCREEN = "SCREEN_KEY";
     private static String RECYCLER_STATE_KEY = "RECYCLER_STATE_KEY";
 
+    private String mScreenId;
     private Screen mScreen;
     private RowsAdapter mAdapter;
     private ImageView mBackgroundView;
@@ -55,10 +60,20 @@ public class ScreenFragment extends Fragment implements RowsAdapter.BlockListene
     public static ScreenFragment newInstance(Screen screen) {
         ScreenFragment fragment = new ScreenFragment();
         Bundle args = new Bundle();
-        args.putParcelable(ARG_SCREEN, screen);
+        args.putParcelable(BUNDLE_SCREEN, screen);
         fragment.setArguments(args);
         return fragment;
     }
+
+    public static ScreenFragment newInstance(String screenId) {
+        ScreenFragment fragment = new ScreenFragment();
+        Bundle args = new Bundle();
+        args.putString(BUNDLE_SCREEN_ID, screenId);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -66,7 +81,10 @@ public class ScreenFragment extends Fragment implements RowsAdapter.BlockListene
         setHasOptionsMenu(true);
 
         if (getArguments() != null) {
-            mScreen = getArguments().getParcelable(ARG_SCREEN);
+            // Support for Landing Pages
+            mScreen = getArguments().getParcelable(BUNDLE_SCREEN);
+
+            mScreenId = getArguments().getString(BUNDLE_SCREEN_ID);
         }
     }
 
@@ -121,6 +139,10 @@ public class ScreenFragment extends Fragment implements RowsAdapter.BlockListene
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        if (getActivity() instanceof ExperienceActivity) {
+            mScreen = ((ExperienceActivity) getActivity()).getScreen(mScreenId);
+        }
 
         if (mScreen != null) {
             setScreen(mScreen);

@@ -11,6 +11,7 @@ import android.util.Log;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import java.util.Locale;
+import java.util.MissingResourceException;
 import java.util.TimeZone;
 import java.util.UUID;
 
@@ -158,7 +159,11 @@ public class Device {
     }
 
     public String getLocaleRegion() {
-        return Locale.getDefault().getISO3Country();
+        try {
+            return Locale.getDefault().getISO3Country();
+        } catch (MissingResourceException e) {
+            return Locale.getDefault().getCountry();
+        }
     }
 
     public String getLocaleLanguage() {

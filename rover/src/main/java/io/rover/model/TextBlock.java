@@ -58,9 +58,11 @@ public class TextBlock extends Block {
             String plainString = spannableStringBuilder.toString();
 
             int lastCharPosition = plainString.length() - 1;
-            char lastChar = plainString.charAt(lastCharPosition);
-            if (lastChar == '\n') {
-                spannableStringBuilder.replace(lastCharPosition -1, lastCharPosition + 1, "");
+            if (lastCharPosition >= 0) {
+                char lastChar = plainString.charAt(lastCharPosition);
+                if (lastChar == '\n') {
+                    spannableStringBuilder.replace(lastCharPosition - 1, lastCharPosition + 1, "");
+                }
             }
 
             plainString = spannableStringBuilder.toString();

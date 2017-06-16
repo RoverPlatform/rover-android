@@ -137,12 +137,20 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
         presentNextScreen(homeScreen);
     }
 
+    @Nullable
+    public Screen getScreen(String screenId) {
+        if (mExperience == null) {
+            return null;
+        }
+        return mExperience.getScreen(screenId);
+    }
+
     public void presentNextScreen(Screen screen) {
         if (screen == null) {
             return;
         }
 
-        Fragment screenFragment = ScreenFragment.newInstance(screen);
+        Fragment screenFragment = ScreenFragment.newInstance(screen.getId());
 
         presentNextScreen(screenFragment, screen, new ExperienceScreenAnimation());
     }

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.MainThread;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -110,7 +111,14 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
         }
     }
 
+    @MainThread
     public void setExperience(Experience experience) {
+
+        if (isDestroyed()) {
+            Log.d(TAG, "Activity is destroyed skipping setExperience");
+            return;
+        }
+
         mExperience = experience;
 
         Rover.submitEvent(new ExperienceLaunchEvent(mExperience, mSessionId, new Date()));

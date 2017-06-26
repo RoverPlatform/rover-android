@@ -8,14 +8,20 @@ import java.util.Date;
 public class ExperienceDismissEvent extends Event {
     private Experience mExperience;
     private String mSessionId;
+    private String mCampaignId;
 
-    public ExperienceDismissEvent(Experience experience, String sessionId, Date date) {
+    public ExperienceDismissEvent(Experience experience, String sessionId, String campaignId, Date date) {
         mDate = date;
         mExperience = experience;
         mSessionId = sessionId;
+        mCampaignId = campaignId;
     }
 
     public Experience getExperience() { return mExperience; }
 
     public String getSessionId() { return mSessionId; }
+
+    public String getCampaignId() {
+        return mCampaignId;
+    }
 }

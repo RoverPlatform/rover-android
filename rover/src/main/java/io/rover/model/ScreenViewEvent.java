@@ -11,14 +11,16 @@ public class ScreenViewEvent extends Event {
     private Screen mFromScreen;
     private Block mFromBlock;
     private String mSessionId;
+    private String mCampaignId;
 
-    public ScreenViewEvent(Screen screen, Experience experience, Screen fromScreen, Block fromBlock, String session, Date date) {
+    public ScreenViewEvent(Screen screen, Experience experience, Screen fromScreen, Block fromBlock, String session, String campaignId, Date date) {
         mScreen = screen;
         mExperience = experience;
         mFromScreen = fromScreen;
         mFromBlock = fromBlock;
         mDate = date;
         mSessionId = session;
+        mCampaignId = campaignId;
     }
 
     public Screen getScreen() {
@@ -38,4 +40,8 @@ public class ScreenViewEvent extends Event {
     }
 
     public String getSessionId() { return mSessionId; }
+
+    public String getCampaignId() {
+        return mCampaignId;
+    }
 }

@@ -10,13 +10,15 @@ public class BlockPressEvent extends Event {
     private Screen mScreen;
     private Experience mExperience;
     private String mSessionId;
+    private String mCampaignId;
 
-    public BlockPressEvent(Block block, Screen screen, Experience experience, String session, Date date) {
+    public BlockPressEvent(Block block, Screen screen, Experience experience, String session, String campaignId, Date date) {
         mBlock = block;
         mScreen = screen;
         mExperience = experience;
         mDate = date;
         mSessionId = session;
+        mCampaignId = campaignId;
     }
 
     public Block getBlock() {
@@ -32,4 +34,8 @@ public class BlockPressEvent extends Event {
     }
 
     public String getSessionId() { return mSessionId; }
+
+    public String getCampaignId() {
+        return mCampaignId;
+    }
 }

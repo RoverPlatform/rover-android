@@ -138,6 +138,8 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
                 jsonObject.put("experience-id", expEvent.getExperience().getId());
                 jsonObject.put("version-id", expEvent.getExperience().getVersion());
                 jsonObject.put("experience-session-id", expEvent.getSessionId());
+                jsonObject.put("campaign-id", expEvent.getCampaignId());
+
             } else if (event instanceof ExperienceDismissEvent) {
                 ExperienceDismissEvent expEvent = (ExperienceDismissEvent)event;
 
@@ -146,6 +148,8 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
                 jsonObject.put("experience-id", expEvent.getExperience().getId());
                 jsonObject.put("version-id", expEvent.getExperience().getVersion());
                 jsonObject.put("experience-session-id", expEvent.getSessionId());
+                jsonObject.put("campaign-id", expEvent.getCampaignId());
+
             } else if (event instanceof ScreenViewEvent) {
                 ScreenViewEvent expEvent = (ScreenViewEvent)event;
 
@@ -154,6 +158,8 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
                 jsonObject.put("experience-id", expEvent.getExperience().getId());
                 jsonObject.put("version-id", expEvent.getExperience().getVersion());
                 jsonObject.put("experience-session-id", expEvent.getSessionId());
+                jsonObject.put("campaign-id", expEvent.getCampaignId());
+
                 if (expEvent.getScreen() != null) {
                     jsonObject.put("screen-id", expEvent.getScreen().getId());
                 }
@@ -170,6 +176,8 @@ public class ObjectSerializer implements JsonApiPayloadProvider.JsonApiObjectSer
                 jsonObject.put("action", "block-clicked");
                 jsonObject.put("version-id", expEvent.getExperience().getVersion());
                 jsonObject.put("experience-session-id", expEvent.getSessionId());
+                jsonObject.put("campaign-id", expEvent.getCampaignId());
+
                 if (expEvent.getBlock() != null) {
                     jsonObject.put("block-id", expEvent.getBlock().getId());
                 }

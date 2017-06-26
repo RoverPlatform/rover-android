@@ -8,11 +8,13 @@ import java.util.Date;
 public class ExperienceLaunchEvent extends Event {
     private Experience mExperience;
     private String mSessionId;
+    private String mCampaignId;
 
-    public ExperienceLaunchEvent(Experience experience, String session, Date date) {
+    public ExperienceLaunchEvent(Experience experience, String session, String campaignId, Date date) {
         mDate = date;
         mExperience = experience;
         mSessionId = session;
+        mCampaignId = campaignId;
     }
 
     public Experience getExperience() {
@@ -21,5 +23,9 @@ public class ExperienceLaunchEvent extends Event {
 
     public String getSessionId() {
         return mSessionId;
+    }
+
+    public String getCampaignId() {
+        return mCampaignId;
     }
 }

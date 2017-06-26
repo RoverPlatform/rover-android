@@ -21,6 +21,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.UUID;
 
@@ -43,14 +44,16 @@ import io.rover.ui.ScreenFragment;
  * Created by Rover Labs Inc on 2016-08-15.
  */
 public class ExperienceActivity extends AppCompatActivity implements ScreenFragment.OnBlockListener {
-    
-    private static String TAG = "ExperienceActivity";
 
+    public static final String CAMPAIGN_ID_QUERY_PARAMETER = "campaign-id";
+
+    private static String TAG = "ExperienceActivity";
 
     private RelativeLayout mLayout;
     private FetchExperienceTask mFetchTask;
     private Experience mExperience;
     private String mSessionId;
+    private String mCampaignId;
     private boolean mHasPresentedFirstScreen = false;
 
 
@@ -77,6 +80,12 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
                 mFetchTask = new FetchExperienceTask();
                 mFetchTask.execute(experienceId);
             }
+
+            try {
+                mCampaignId = data.getQueryParameter(CAMPAIGN_ID_QUERY_PARAMETER);
+            } catch (NullPointerException|UnsupportedOperationException ignored) {
+                mCampaignId = null;
+            }
         }
 
         mSessionId = UUID.randomUUID().toString();
@@ -98,7 +107,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
         }
 
         if (isFinishing() && mExperience != null) {
-            Rover.submitEvent(new ExperienceDismissEvent(mExperience, mSessionId, new Date()));
+            Rover.submitEvent(new ExperienceDismissEvent(mExperience, mSessionId, mCampaignId, new Date()));
 
             for (RoverObserver observer : Rover.mSharedInstance.mObservers) {
                 if (observer instanceof RoverObserver.ExperienceObserver) {
@@ -121,7 +130,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
 
         mExperience = experience;
 
-        Rover.submitEvent(new ExperienceLaunchEvent(mExperience, mSessionId, new Date()));
+        Rover.submitEvent(new ExperienceLaunchEvent(mExperience, mSessionId, mCampaignId, new Date()));
 
         for (RoverObserver observer : Rover.mSharedInstance.mObservers) {
             if (observer instanceof RoverObserver.ExperienceObserver) {
@@ -221,7 +230,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
             return;
         }
 
-        Rover.submitEvent(new BlockPressEvent(block, screen, mExperience, mSessionId, new Date()));
+        Rover.submitEvent(new BlockPressEvent(block, screen, mExperience, mSessionId, mCampaignId, new Date()));
 
         for (RoverObserver observer : Rover.mSharedInstance.mObservers) {
             if (observer instanceof RoverObserver.ExperienceObserver) {
@@ -286,7 +295,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
     }
 
     private void trackScreenView(Fragment screenFragment, Screen screen, Screen fromScreen, Block fromBlock) {
-        Rover.submitEvent(new ScreenViewEvent(screen, mExperience, fromScreen, fromBlock, mSessionId, new Date()));
+        Rover.submitEvent(new ScreenViewEvent(screen, mExperience, fromScreen, fromBlock, mSessionId, mCampaignId, new Date()));
 
         for (RoverObserver observer : Rover.mSharedInstance.mObservers) {
             if (observer instanceof RoverObserver.ExperienceObserver) {

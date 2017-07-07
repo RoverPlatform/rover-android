@@ -63,6 +63,7 @@ import io.rover.model.Customer;
 import io.rover.model.Device;
 import io.rover.model.DeviceUpdateEvent;
 import io.rover.model.Event;
+import io.rover.model.GeofenceRegion;
 import io.rover.model.GeofenceTransitionEvent;
 import io.rover.model.LocationUpdateEvent;
 import io.rover.model.MessageOpenEvent;
@@ -665,7 +666,7 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     @Override
-    public void onReceivedGeofences(final List geofences) {
+    public void onReceivedGeofences(final List<GeofenceRegion> geofenceRegions) {
         if (!isInitialized()) {
             warnNotInitialized("onReceivedGeofences");
             return;
@@ -691,6 +692,25 @@ public class Rover implements EventSubmitTask.Callback {
             }
 
             public void addGeofences(final GoogleApiClient client) {
+
+                // Convert Rover geofence-regions to google monitoring geofences
+
+                final ArrayList<Geofence> geofences = new ArrayList<>();
+
+                for (GeofenceRegion geofenceRegion : geofenceRegions) {
+                    geofences.add(new Geofence.Builder()
+                            .setRequestId(geofenceRegion.getId())
+                            .setCircularRegion(
+                                    geofenceRegion.getlatitude(),
+                                    geofenceRegion.getLongitude(),
+                                    (float)geofenceRegion.getRadius()
+                            )
+                            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT )
+                            .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                            .build()
+                    );
+                }
+
                 GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
                 builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
                 builder.addGeofences(geofences);

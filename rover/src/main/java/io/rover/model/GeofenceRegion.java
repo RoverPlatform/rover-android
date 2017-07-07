@@ -41,7 +41,7 @@ public class GeofenceRegion {
     }
 
     public void setLatitude(double latitude) {
-        this.mLatitude = latitude;
+        mLatitude = latitude;
     }
 
     public void setLongitude(double longitude) {

@@ -4,7 +4,6 @@ import android.content.Context;
 import android.util.Log;
 
 import com.google.android.gms.ads.identifier.AdvertisingIdClient;
-import com.google.android.gms.location.internal.ParcelableGeofence;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,6 +11,7 @@ import java.util.List;
 
 import io.rover.model.Device;
 import io.rover.model.Event;
+import io.rover.model.GeofenceRegion;
 import io.rover.network.HttpResponse;
 import io.rover.network.JsonApiPayloadProvider;
 import io.rover.network.JsonApiResponseHandler;
@@ -25,7 +25,7 @@ import io.rover.network.NetworkTask;
 public class EventSubmitTask implements Runnable, JsonApiResponseHandler.JsonApiCompletionHandler {
 
     public interface Callback {
-        void onReceivedGeofences(List geofences);
+        void onReceivedGeofences(List<GeofenceRegion> geofences);
         void onEventRegistered(Event event);
     }
 
@@ -124,16 +124,16 @@ public class EventSubmitTask implements Runnable, JsonApiResponseHandler.JsonApi
             mCallback.onEventRegistered((Event)response);
         }
 
-        ArrayList<ParcelableGeofence> geofences = new ArrayList<ParcelableGeofence>();
+        ArrayList<GeofenceRegion> geofenceRegions = new ArrayList<>();
 
         for (Object object : includedObject) {
-            if (object instanceof ParcelableGeofence) {
-                geofences.add((ParcelableGeofence)object);
+            if (object instanceof GeofenceRegion) {
+                geofenceRegions.add((GeofenceRegion) object);
             }
         }
 
-        if (geofences.size() > 0) {
-            mCallback.onReceivedGeofences(geofences);
+        if (geofenceRegions.size() > 0) {
+            mCallback.onReceivedGeofences(geofenceRegions);
         }
 
 

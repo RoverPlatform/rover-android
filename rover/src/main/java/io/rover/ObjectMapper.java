@@ -28,6 +28,7 @@ import io.rover.model.ButtonBlock;
 import io.rover.model.CustomKeys;
 import io.rover.model.Experience;
 import io.rover.model.Font;
+import io.rover.model.GeofenceRegion;
 import io.rover.model.GeofenceTransitionEvent;
 import io.rover.model.Image;
 import io.rover.model.ImageBlock;
@@ -92,11 +93,13 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 break;
             }
             case "geofence-regions": {
-                double lat = attributes.getDouble("latitude");
-                double lng = attributes.getDouble("longitude");
-                double radius = attributes.getDouble("radius");
+                double latitude = attributes.getDouble("latitude");
+                double longitude = attributes.getDouble("longitude");
+                int radius = attributes.getInt("radius");
 
-                return getGeofence(id, lat, lng, (float) radius);
+                GeofenceRegion geofenceRegion = new GeofenceRegion(id, latitude, longitude, radius);
+
+                return geofenceRegion;
             }
             case "messages": {
                 String title = attributes.getString("android-title");
@@ -595,19 +598,6 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
         }
 
         return null;
-    }
-
-    private Geofence getGeofence(String id, double lattitude, double longitude, float radius) {
-        if (id == null) {
-            return null;
-        }
-
-        return new Geofence.Builder()
-                .setRequestId(id)
-                .setCircularRegion(lattitude, longitude, radius)
-                .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
-                .build();
     }
 
     private Place getPlace(JSONObject attributes) throws JSONException{

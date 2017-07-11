@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.HttpResponseCache;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -68,7 +69,6 @@ import io.rover.model.GeofenceTransitionEvent;
 import io.rover.model.LocationUpdateEvent;
 import io.rover.model.MessageOpenEvent;
 import io.rover.model.Place;
-import io.rover.ui.AssetManager;
 import io.rover.util.Util;
 
 /**
@@ -796,9 +796,31 @@ public class Rover implements EventSubmitTask.Callback {
         submitEvent(openEvent);
     }
 
+    public static boolean isRoverMessage(Bundle remoteMessageData) {
+        return (remoteMessageData != null && remoteMessageData.containsKey("_rover"));
+    }
+
     public static boolean isRoverMessage(RemoteMessage remoteMessage) {
         Map<String,String> data = remoteMessage.getData();
         return (data != null && data.containsKey("_rover"));
+    }
+
+    public static io.rover.model.Message getRoverMessageFromRemoteMessage(Bundle remoteMessageData) {
+        if (isRoverMessage(remoteMessageData)) {
+
+            if (remoteMessageData == null) {
+                return null;
+            }
+
+            String jsonString = remoteMessageData.getString("message");
+            if (jsonString == null) {
+                return null;
+            }
+
+            return getRoverMessageFromRemoteMessagePayload(jsonString);
+        }
+
+        return null;
     }
 
     public static io.rover.model.Message getRoverMessageFromRemoteMessage(RemoteMessage remoteMessage) {
@@ -814,24 +836,31 @@ public class Rover implements EventSubmitTask.Callback {
                 return null;
             }
 
-            try {
-                JSONObject messageJson = new JSONObject(jsonString);
-                if (!messageJson.isNull("id") && !messageJson.isNull("attributes")) {
-                    String id = messageJson.getString("id");
-                    JSONObject attributes = messageJson.getJSONObject("attributes");
-
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    io.rover.model.Message message = (io.rover.model.Message) objectMapper.getObject("messages", id, attributes);
-                    return message;
-                }
-
-            } catch (JSONException e) {
-                Log.e(TAG, "Unable to parse json from remote message");
-                return null;
-            }
+            return getRoverMessageFromRemoteMessagePayload(jsonString);
         }
 
         return  null;
+    }
+
+    private static io.rover.model.Message getRoverMessageFromRemoteMessagePayload(String payload) {
+        try {
+            JSONObject messageJson = new JSONObject(payload);
+
+            if (!messageJson.isNull("id") && !messageJson.isNull("attributes")) {
+                String id = messageJson.getString("id");
+                JSONObject attributes = messageJson.getJSONObject("attributes");
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                io.rover.model.Message message = (io.rover.model.Message) objectMapper.getObject("messages", id, attributes);
+                return message;
+            } else {
+                return null;
+            }
+
+        } catch (JSONException e) {
+            Log.e(TAG, "Unable to parse json from remote message");
+            return null;
+        }
     }
 
 
@@ -857,11 +886,13 @@ public class Rover implements EventSubmitTask.Callback {
 
         android.app.TaskStackBuilder taskStackBuilder = android.app.TaskStackBuilder.create(mSharedInstance.mApplicationContext);
 
+        int requestCode = (message.getId() + source.name() + MessageInteractionService.Type.OPEN.name()).hashCode();
+
         switch (message.getAction()) {
             case Website: {
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
                 taskStackBuilder.addNextIntent(intent);
-                pendingIntent =  taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
+                pendingIntent =  taskStackBuilder.getPendingIntent(requestCode, PendingIntent.FLAG_ONE_SHOT);
                 break;
             }
             case LandingPage: {
@@ -873,13 +904,13 @@ public class Rover implements EventSubmitTask.Callback {
                 }
                 taskStackBuilder.addParentStack(RemoteScreenActivity.class);
                 taskStackBuilder.addNextIntent(intent);
-                pendingIntent = taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
+                pendingIntent = taskStackBuilder.getPendingIntent(requestCode, PendingIntent.FLAG_ONE_SHOT);
                 break;
             }
             case DeepLink: {
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(message.getURI().toString()));
                 taskStackBuilder.addNextIntent(intent);
-                pendingIntent = taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
+                pendingIntent = taskStackBuilder.getPendingIntent(requestCode, PendingIntent.FLAG_ONE_SHOT);
                 break;
             }
             case Experience: {
@@ -887,7 +918,7 @@ public class Rover implements EventSubmitTask.Callback {
                 intent.setData(message.getExperienceUri());
                 taskStackBuilder.addParentStack(mSharedInstance.mExperienceActivity);
                 taskStackBuilder.addNextIntent(intent);
-                pendingIntent = taskStackBuilder.getPendingIntent(0, PendingIntent.FLAG_ONE_SHOT);
+                pendingIntent = taskStackBuilder.getPendingIntent(requestCode, PendingIntent.FLAG_ONE_SHOT);
                 break;
             }
         }
@@ -897,7 +928,7 @@ public class Rover implements EventSubmitTask.Callback {
         messageInteractionServiceOpenIntent.putExtra("launch-intent", pendingIntent);
         messageInteractionServiceOpenIntent.putExtra("source", source);
         messageInteractionServiceOpenIntent.putExtra("type", MessageInteractionService.Type.OPEN);
-        int requestCode = (message.getId() + source.name() + MessageInteractionService.Type.OPEN.name()).hashCode();
+
         return PendingIntent.getService(context, requestCode, messageInteractionServiceOpenIntent, PendingIntent.FLAG_ONE_SHOT);
     }
 
@@ -905,6 +936,36 @@ public class Rover implements EventSubmitTask.Callback {
         return getPendingIntentFromRoverMessage(message, MessageInteractionService.Source.INBOX);
     }
 
+    public static void handleRemoteMessage(Bundle remoteMessage) {
+        if (!isInitialized()) {
+            warnNotInitialized("handleRemoteMessage");
+            return;
+        }
+
+        if (mSharedInstance.mNotificationsEnabled == false) {
+            return;
+        }
+
+        if (!isRoverMessage(remoteMessage)) {
+            return;
+        }
+
+        io.rover.model.Message message = getRoverMessageFromRemoteMessage(remoteMessage);
+
+        if (message == null) {
+            Log.w(TAG, "Unable to handle remote message. Message was null");
+            return;
+        }
+
+        Context context = mSharedInstance.mApplicationContext;
+
+        if (context == null) {
+            Log.w(TAG, "Unable to handle remote message. ApplicationContext was null");
+            return;
+        }
+
+        createNotification(context, message);
+    }
 
     public static void handleRemoteMessage(RemoteMessage remoteMessage) {
 
@@ -936,6 +997,10 @@ public class Rover implements EventSubmitTask.Callback {
             return;
         }
 
+        createNotification(context, message);
+    }
+
+    private static void createNotification(Context context, io.rover.model.Message message) {
         PendingIntent userIntent = null;
         int smallIcon = R.drawable.rover_notification_icon;
         Bitmap largeIcon = null;

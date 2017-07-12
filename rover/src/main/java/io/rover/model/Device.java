@@ -114,14 +114,14 @@ public class Device {
             return mGcmToken;
         }
 
-        Rover.OnRequestDeviceToken deviceTokenRequest = Rover.getOnRequestDeviceToken();
+        Rover.OnRequestDeviceTokenListener deviceTokenRequestListener = Rover.getOnRequestDeviceTokenListener();
 
         // Check if the user has provided a callback to provide us a token
-        if (deviceTokenRequest != null) {
+        if (deviceTokenRequestListener != null) {
             try {
-                mGcmToken = deviceTokenRequest.getToken();
+                mGcmToken = deviceTokenRequestListener.onRequestDeviceToken();
             } catch (Exception e) {
-                Log.w(TAG, "Exception was thrown while trying to retrieve device token in OnRequestDeviceToken");
+                Log.w(TAG, "Exception was thrown while trying to retrieve device token in OnRequestDeviceTokenListener");
             }
         } else {
             // The default is to grab the token from Firebase

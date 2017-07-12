@@ -282,6 +282,21 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
         }
     }
 
+    public Experience getExperience() {
+        return mExperience;
+    }
+
+    public String getSessionId() {
+        return mSessionId;
+    }
+
+    public String getCampaignId() {
+        return mCampaignId;
+    }
+
+    public boolean hasPresentedFirstScreen() {
+        return mHasPresentedFirstScreen;
+    }
 
     public static Intent createIntent(Context context, String id) {
         Uri uri = new Uri.Builder().scheme("rover")

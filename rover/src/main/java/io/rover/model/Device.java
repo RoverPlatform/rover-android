@@ -15,6 +15,8 @@ import java.util.MissingResourceException;
 import java.util.TimeZone;
 import java.util.UUID;
 
+import io.rover.Rover;
+
 /**
  * Created by Roverlabs Inc. on 2016-03-31.
  */
@@ -112,10 +114,22 @@ public class Device {
             return mGcmToken;
         }
 
-        try {
-            mGcmToken = FirebaseInstanceId.getInstance().getToken();
-        } catch (Exception e) {
-            Log.w(TAG, "Unable to get device's push token");
+        Rover.OnRequestDeviceTokenListener deviceTokenRequestListener = Rover.getOnRequestDeviceTokenListener();
+
+        // Check if the user has provided a callback to provide us a token
+        if (deviceTokenRequestListener != null) {
+            try {
+                mGcmToken = deviceTokenRequestListener.onRequestDeviceToken();
+            } catch (Exception e) {
+                Log.w(TAG, "Exception was thrown while trying to retrieve device token in OnRequestDeviceTokenListener");
+            }
+        } else {
+            // The default is to grab the token from Firebase
+            try {
+                mGcmToken = FirebaseInstanceId.getInstance().getToken();
+            } catch (Exception e) {
+                Log.w(TAG, "Unable to get device's push token");
+            }
         }
 
         return mGcmToken;

@@ -93,6 +93,7 @@ public class Rover implements EventSubmitTask.Callback {
     private PendingIntent mAppLaunchPendingIntent;
     private ExecutorService mEventExecutorService = Executors.newSingleThreadExecutor();
     protected ArrayList<RoverObserver> mObservers = new ArrayList<>();
+    protected OnRequestDeviceToken mDeviceTokenRequest;
     private NotificationProvider mNotificationProvider;
 
     private boolean mGimbalMode;
@@ -116,6 +117,10 @@ public class Rover implements EventSubmitTask.Callback {
     public interface OnInboxReloadListener {
         void onSuccess(List<io.rover.model.Message> messages);
         void onFailure();
+    }
+
+    public interface OnRequestDeviceToken {
+        String getToken() throws Exception;
     }
 
 
@@ -414,6 +419,13 @@ public class Rover implements EventSubmitTask.Callback {
         mSharedInstance.mObservers.remove(observer);
     }
 
+    public static void setOnRequestDeviceToken(OnRequestDeviceToken deviceTokenRequest) {
+        mSharedInstance.mDeviceTokenRequest = deviceTokenRequest;
+    }
+
+    public static OnRequestDeviceToken getOnRequestDeviceToken() {
+        return mSharedInstance.mDeviceTokenRequest;
+    }
 
     public static void reloadInbox(final OnInboxReloadListener listener) {
         if (!isInitialized()) {

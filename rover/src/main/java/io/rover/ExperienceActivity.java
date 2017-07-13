@@ -3,6 +3,7 @@ package io.rover;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -263,7 +264,11 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
             default: {
                 if (action.getUrl() != null && !action.getUrl().isEmpty()) {
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(action.getUrl()));
-                    startActivity(intent);
+                    PackageManager pm = getPackageManager();
+                    if (intent.resolveActivity(pm) != null) {
+                        startActivity(intent);
+                    }
+
                 }
                 break;
             }

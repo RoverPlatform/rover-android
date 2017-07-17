@@ -23,6 +23,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.ref.WeakReference;
 import java.util.Date;
 import java.util.UUID;
 
@@ -78,7 +79,7 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
         if (data != null) {
             String experienceId = data.getPath();
             if (experienceId != null) {
-                mFetchTask = new FetchExperienceTask();
+                mFetchTask = new FetchExperienceTask(this);
                 mFetchTask.execute(experienceId);
             }
 
@@ -328,10 +329,16 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
     }
 
 
-    private class FetchExperienceTask extends AsyncTask<String, Void, Experience> implements JsonResponseHandler.JsonCompletionHandler {
+    private static class FetchExperienceTask extends AsyncTask<String, Void, Experience> implements JsonResponseHandler.JsonCompletionHandler {
 
         private ObjectMapper mObjectMapper;
         private Experience experience = null;
+
+        private WeakReference<ExperienceActivity> mActivity;
+
+        public FetchExperienceTask(ExperienceActivity activity) {
+            mActivity = new WeakReference<>(activity);
+        }
 
         @Override
         protected Experience doInBackground(String... params) {
@@ -378,9 +385,10 @@ public class ExperienceActivity extends AppCompatActivity implements ScreenFragm
 
         @Override
         protected void onPostExecute(Experience experience) {
-            if (experience == null) { return; }
+            ExperienceActivity activity = mActivity.get();
+            if (experience == null || activity == null) { return; }
 
-            setExperience(experience);
+            activity.setExperience(experience);
         }
     }
 }

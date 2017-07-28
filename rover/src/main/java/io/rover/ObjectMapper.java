@@ -109,8 +109,7 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 boolean read = attributes.getBoolean("read");
                 String contentType = attributes.getString("content-type");
 
-                // TODO: get this from Rover or somewhere else also need correction to adjust for timezone ZZZZ
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX", Locale.US);
                 try {
                     timestamp = sdf.parse(timestampString);
                 } catch (ParseException e) {

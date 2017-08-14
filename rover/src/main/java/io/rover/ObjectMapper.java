@@ -58,6 +58,9 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
         } catch (JSONException e) {
             Log.w("ObjectMapper", "Error parsing json into object");
             e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("ObjectMapper", "Error parsing json into object");
+            e.printStackTrace();
         }
 
         return null;
@@ -104,12 +107,12 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
             case "messages": {
                 String title = attributes.getString("android-title");
                 String text = attributes.getString("notification-text");
-                String timestampString = attributes.getString("timestamp");
+                String timestampString = attributes.getString("timestamp").replaceAll("Z$", "+0000");
                 Date timestamp = null;
                 boolean read = attributes.getBoolean("read");
                 String contentType = attributes.getString("content-type");
 
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX", Locale.US);
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.getDefault());
                 try {
                     timestamp = sdf.parse(timestampString);
                 } catch (ParseException e) {

@@ -61,7 +61,8 @@ class GraphQLNetworkService(
         return httpClient.post(
             endpoint,
             hashMapOf(),
-            request.graphQLQuery
+            request.graphQLQuery,
+            backgroundScheduler
         ).map(backgroundScheduler) { networkResponse ->
             when(networkResponse) {
             // TODO: maybe buffer and read the entire thing and yield that?

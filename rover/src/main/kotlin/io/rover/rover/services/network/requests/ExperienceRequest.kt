@@ -28,8 +28,8 @@ class ExperienceRequest: NetworkRequest<ExperienceParameters, ExperiencePayload>
     }
 
     override val graphQLQuery: String = """
-        query FetchExperience($id: ID!) {
-            experience(id: $id) {
+        query FetchExperience(${"\$id"}: ID!) {
+            experience(id: ${"\$id"}) {
                 name
             }
         }

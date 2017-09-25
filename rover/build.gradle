@@ -1,38 +1,18 @@
 apply plugin: 'com.android.library'
-
-ext {
-    bintrayRepo = 'maven'
-    bintrayName = 'rover'
-
-    publishedGroupId = 'io.rover.library'
-    libraryName = 'Rover'
-    artifact = 'rover'
-
-    libraryDescription = 'The Rover Proximity and Messaging Library'
-
-    siteUrl = 'https://github.com/RoverPlatform/rover-android'
-    gitUrl = 'https://github.com/RoverPlatform/rover-android.git'
-
-    libraryVersion = '1.15.4'
-
-    developerId = 'ata-n'
-    developerName = 'Ata N'
-    developerEmail = 'ata@rover.io'
-
-    licenseName = 'MIT License'
-    licenseUrl = 'https://opensource.org/licenses/MIT'
-    allLicenses = ["MIT"]
-}
+apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+    compileSdkVersion 26
+    buildToolsVersion "26.0.1"
 
     defaultConfig {
-        minSdkVersion 18
-        targetSdkVersion 23
+        minSdkVersion 19
+        targetSdkVersion 26
         versionCode 1
         versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
     }
     buildTypes {
         release {
@@ -40,20 +20,21 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:26.+'
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:23.4.0'
-
-    compile 'com.google.android.gms:play-services-location:[9.2.1,)'
-    compile 'com.google.android.gms:play-services-nearby:[9.2.1,)'
-
-    compile 'com.google.firebase:firebase-messaging:[9.2.1,)'
-
-    compile 'com.android.support:recyclerview-v7:23.4.0'
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
 }
-
-apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
-apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'
+repositories {
+    mavenCentral()
+}

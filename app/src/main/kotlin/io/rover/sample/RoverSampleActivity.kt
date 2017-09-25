@@ -42,10 +42,8 @@ class RoverSampleActivity : AppCompatActivity() {
                     log.e("Experience fetched successfully!")
                 },
                 error = { error ->
-                    // TODO: start here, it's not thunking to main thread properly.
-                    // TODO then, after that, make errors render properly with traceback somewhere if still needed.
-                    // TODO: Then, sort out the apparent read-too-early FileNotFoundException issue once I know the actual guilty line? https://stackoverflow.com/questions/5379247/filenotfoundexception-while-getting-the-inputstream-object-from-httpurlconnectio
                     log.e("thread is ${Thread.currentThread().id}, error: $error")
+                    throw(error)
                 },
                 scheduler =  mainThreadScheduler
             )

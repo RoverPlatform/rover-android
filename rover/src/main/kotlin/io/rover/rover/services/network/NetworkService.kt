@@ -72,7 +72,7 @@ class GraphQLNetworkService(
                     throw RuntimeException("Rover doesn't have a great error handling story yet: connection failure.")
                 }
                 is HttpClientResponse.ApplicationError -> {
-                    throw RuntimeException("Rover doesn't have a great error handling story yet: application error.")
+                    throw RuntimeException("Rover doesn't have a great error handling story yet: application error: code ${networkResponse.responseCode} - ${networkResponse.reportedReason}/")
                 }
             }
         }.map(backgroundScheduler) {

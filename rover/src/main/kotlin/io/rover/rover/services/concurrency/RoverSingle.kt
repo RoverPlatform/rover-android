@@ -19,6 +19,11 @@ interface Scheduler {
      * to in order to begin the operation).
      */
     fun <T> scheduleOperation(operation: () -> T): Single<T>
+
+    /**
+     * Run a closure that delivers its result as a side-effect.  Meant for use by subscribers.
+     */
+    fun scheduleSideEffectOperation(operation: () -> Unit)
 }
 
 interface Subscriber<T>: Subscription<T> {
@@ -55,10 +60,6 @@ interface Single<T> {
             override fun error(error: Throwable) {
                 error(error)
             }
-
-            protected fun finalize() {
-                log.d("finalized")
-            }
         }, scheduler)
     }
 
@@ -83,28 +84,24 @@ interface Single<T> {
             override fun subscribe(subscriber: Subscriber<M>, scheduler: Scheduler): Subscription<M> {
                 val subscription = super.subscribe(subscriber, scheduler)
 
-                log.e("Map subject subscribed")
+                val subject = this
                 // now subscribe to the prior on behalf of our subscriber
                 prior.subscribe(
                     { value ->
-                        log.v("Received item in map() ahead of transformation")
                         try {
                             // and emit the prior's emission, after transforming it.
-                            subscriber.completed(
+                            subject.completed(
                                 // apply the transform
                                 predicate(value)
                             )
                         } catch (e: Throwable) {
-                            log.e("error emitted by transform in map")
-                            subscriber.error(e)
+                            subject.error(e)
                         }
                     }, { error ->
-                        log.e("saw error go by in map")
-                        subscriber.error(error)
+                        subject.error(error)
                     },
                     scheduler
                 )
-                log.d("prior ($prior) subscribed")
                 return subscription
             }
         }
@@ -113,19 +110,19 @@ interface Single<T> {
 
 
 open class Subject<T>: Single<T>, Subscriber<T> {
-    private val subscriptions = Collections.synchronizedSet(mutableSetOf<Subscriber<T>>())
+    private val subscriptions = Collections.synchronizedSet(mutableSetOf<Pair<Subscriber<T>, Scheduler>>())
 
     override fun completed(value: T) {
-        subscriptions.forEach { it.completed(value) }
+        subscriptions.forEach { it.second.scheduleSideEffectOperation { it.first.completed(value) }  }
     }
 
     override fun error(error: Throwable) {
-        subscriptions.forEach { it.error(error) }
+        subscriptions.forEach { it.second.scheduleSideEffectOperation { it.first.error(error) } }
     }
 
     override fun subscribe(subscriber: Subscriber<T>, scheduler: Scheduler): Subscription<T> {
         subscriptions.add(
-            subscriber
+            Pair(subscriber, scheduler)
         )
 
         // the subscriber itself is the subscription, for now.

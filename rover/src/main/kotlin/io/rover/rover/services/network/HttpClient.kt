@@ -91,9 +91,7 @@ class PlatformSimpleHttpClient(
 
             val responseCode = connection.responseCode
 
-            val inputStream = BufferedInputStream(
-                connection.inputStream
-            )
+            log.d("POST $url : $responseCode")
 
             // TODO: better composition needed here once the concurrency package improves.
             when (responseCode) {
@@ -112,7 +110,9 @@ class PlatformSimpleHttpClient(
                     // we don't support handling redirects as anything other than an error for now.
                     HttpClientResponse.ApplicationError(
                         responseCode,
-                        inputStream.reader(Charsets.UTF_8).readText()
+                        BufferedInputStream(
+                            connection.errorStream
+                        ).reader(Charsets.UTF_8).readText()
                     )
                 }
             }

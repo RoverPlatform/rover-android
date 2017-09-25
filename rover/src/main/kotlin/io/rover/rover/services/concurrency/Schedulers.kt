@@ -43,6 +43,12 @@ class MainThreadScheduler: Scheduler {
     }
 
     override fun <T> scheduleOperation(operation: () -> T): Single<T> = schedule(operation)
+
+    override fun scheduleSideEffectOperation(operation: () -> Unit) {
+        handler.post {
+            operation()
+        }
+    }
 }
 
 /**
@@ -67,7 +73,6 @@ class BackgroundExecutorServiceScheduler: Scheduler {
                         // and notify that we're done by emitting the result from the Subject.
                         completed(result)
                     } catch (e: Throwable) {
-                        log.e("Client error: $e")
                         error(e)
                     }
                 }
@@ -78,4 +83,8 @@ class BackgroundExecutorServiceScheduler: Scheduler {
     }
 
     override fun <T> scheduleOperation(operation: () -> T): Single<T> = schedule(operation)
+
+    override fun scheduleSideEffectOperation(operation: () -> Unit) {
+        executor.execute(operation)
+    }
 }

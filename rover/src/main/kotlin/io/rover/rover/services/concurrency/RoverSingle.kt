@@ -1,12 +1,12 @@
 package io.rover.rover.services.concurrency
 
-import io.rover.rover.core.logging.log
+import android.app.Activity
+import android.app.Application
+import android.content.ComponentCallbacks
+import android.content.ComponentCallbacks2
+import android.support.annotation.MainThread
 import java.util.*
-
-// I think I can come up with a very basic "Rx-lite" here.
-
-// Single.observeOn(subscriber, someSortOfRoverScheduler).
-
+import java.util.concurrent.Callable
 
 interface Subscription<T> {
     // TODO: technically needs unsubscription support.  but it's not a priority.
@@ -15,7 +15,7 @@ interface Subscription<T> {
 interface Scheduler {
     /**
      * Schedule some sort of synchronous operation (computation or blocking I/O) to happen
-     * on this scheduler.  Returns a hot Single (that is, it will not wait until it is subscribed
+     * on this scheduler.  Returns a hot [Single] (that is, it will not wait until it is subscribed
      * to in order to begin the operation).
      */
     fun <T> scheduleOperation(operation: () -> T): Single<T>
@@ -27,12 +27,33 @@ interface Scheduler {
 }
 
 interface Subscriber<T>: Subscription<T> {
-    fun completed(value: T)
+    fun onCompleted(value: T)
 
-    fun error(error: Throwable)
+    fun onError(error: Throwable)
 }
 
+/**
+ * An observable event source that can only emit one event (or, in lieu, an error).
+ *
+ * Can be subscribed to by a [Subscriber] (or just with two closures for convenience).
+ */
 interface Single<T> {
+    /**
+     * Listen to this asynchronous event source in the context of an Android activity with a
+     * simple callback that will be called on the main thread when the result is ready.
+     */
+    fun call(
+        callback: (T) -> Unit
+    ) {
+        // TODO: mainthreadscheduler should be injected.  Thankfully it's a light object to
+        // construct.  These methods should be moved out of the
+        // interface.
+        // TODO: should probably have a story for lifecycle composition
+
+        val mainThreadScheduler = MainThreadScheduler()
+        subscribe(callback, { error -> throw error }, mainThreadScheduler)
+    }
+
     /**
      * Start observing this single.  The returned subscriber will be executed on the given
      * scheduler.
@@ -42,33 +63,34 @@ interface Single<T> {
     /**
      * Start observing this single.
      *
-     * TODO: this façade method should be factored out; having it overridable here has already caused 1 nasty bug.
+     * THIS MUST NOT BE OVERRIDDEN AND REPLACED TO ADD BEHAVIOUR
      *
-     * THIS MUST NOT BE OVERRIDDEN TO ADD BEHAVIOUR
+     * TODO: this façade method should be factored out; having it overridable here has already caused 1 nasty bug.
      */
-
     fun subscribe(
         completed: (T) -> Unit,
         error: (Throwable) -> Unit,
         scheduler: Scheduler
     ): Subscription<T> {
         return subscribe(object : Subscriber<T> {
-            override fun completed(value: T) {
+            override fun onCompleted(value: T) {
                 completed(value)
             }
 
-            override fun error(error: Throwable) {
+            override fun onError(error: Throwable) {
                 error(error)
             }
         }, scheduler)
     }
 
+
+
     companion object {
         fun <T> just(value: T): Single<T> {
-            return object : Subject<T>() {
+            return object : Subscribable<T>() {
                 override fun subscribe(subscriber: Subscriber<T>, scheduler: Scheduler): Subscription<T> {
                     val subscription = super.subscribe(subscriber, scheduler)
-                    subscriber.completed(value)
+                    subscriber.onCompleted(value)
                     return subscription
                 }
             }
@@ -80,7 +102,7 @@ interface Single<T> {
      */
     fun <M> map(processingScheduler: Scheduler, predicate: (T) -> M): Single<M> {
         val prior: Single<T> = this
-        return object : Subject<M>() {
+        return object : Subscribable<M>() {
             override fun subscribe(subscriber: Subscriber<M>, scheduler: Scheduler): Subscription<M> {
                 val subscription = super.subscribe(subscriber, scheduler)
 
@@ -90,15 +112,15 @@ interface Single<T> {
                     { value ->
                         try {
                             // and emit the prior's emission, after transforming it.
-                            subject.completed(
+                            subject.onCompleted(
                                 // apply the transform
                                 predicate(value)
                             )
                         } catch (e: Throwable) {
-                            subject.error(e)
+                            subject.onError(e)
                         }
                     }, { error ->
-                        subject.error(error)
+                        subject.onError(error)
                     },
                     scheduler
                 )
@@ -108,16 +130,18 @@ interface Single<T> {
     }
 }
 
-
-open class Subject<T>: Single<T>, Subscriber<T> {
+/**
+ * An implementation of [Subscriber] that implements maintaining a list of Subscribers.
+ */
+open class Subscribable<T>: Single<T>, Subscriber<T> {
     private val subscriptions = Collections.synchronizedSet(mutableSetOf<Pair<Subscriber<T>, Scheduler>>())
 
-    override fun completed(value: T) {
-        subscriptions.forEach { it.second.scheduleSideEffectOperation { it.first.completed(value) }  }
+    override fun onCompleted(value: T) {
+        subscriptions.forEach { it.second.scheduleSideEffectOperation { it.first.onCompleted(value) }  }
     }
 
-    override fun error(error: Throwable) {
-        subscriptions.forEach { it.second.scheduleSideEffectOperation { it.first.error(error) } }
+    override fun onError(error: Throwable) {
+        subscriptions.forEach { it.second.scheduleSideEffectOperation { it.first.onError(error) } }
     }
 
     override fun subscribe(subscriber: Subscriber<T>, scheduler: Scheduler): Subscription<T> {

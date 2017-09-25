@@ -22,7 +22,7 @@ class MainThreadScheduler: Scheduler {
     private val handler = Handler(looper)
 
     private fun <T> schedule(runnable: () -> T): Single<T> {
-        return object : Subject<T>() {
+        return object : Subscribable<T>() {
             override fun subscribe(subscriber: Subscriber<T>, scheduler: Scheduler): Subscription<T> {
                 val subscription = super.subscribe(subscriber, scheduler)
 
@@ -30,10 +30,10 @@ class MainThreadScheduler: Scheduler {
                     try {
                         // synchronously run the workload, now that we're in the main thread!
                         val result = runnable()
-                        // and notify that we're done by emitting the result from the Subject.
-                        completed(result)
+                        // and notify that we're done by emitting the result from the Subscribable.
+                        onCompleted(result)
                     } catch (e: Throwable) {
-                        error(e)
+                        onError(e)
                     }
                 }
 
@@ -62,7 +62,7 @@ class BackgroundExecutorServiceScheduler: Scheduler {
     private val executor = ThreadPoolExecutor(10, 20, 2, TimeUnit.SECONDS, LinkedBlockingQueue<Runnable>())
 
     private fun <T> schedule(runnable: () -> T): Single<T> {
-        return object : Subject<T>() {
+        return object : Subscribable<T>() {
             override fun subscribe(subscriber: Subscriber<T>, scheduler: Scheduler): Subscription<T> {
                 val subscription = super.subscribe(subscriber, scheduler)
                 log.d("Subscribed!  Scheduling block into executor scheduler.")
@@ -70,10 +70,10 @@ class BackgroundExecutorServiceScheduler: Scheduler {
                     try {
                         // synchronously run the workload, now that we're in the executor!
                         val result = runnable()
-                        // and notify that we're done by emitting the result from the Subject.
-                        completed(result)
+                        // and notify that we're done by emitting the result from the Subscribable.
+                        onCompleted(result)
                     } catch (e: Throwable) {
-                        error(e)
+                        onError(e)
                     }
                 }
                 executor.execute(output)

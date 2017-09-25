@@ -2,18 +2,12 @@ package io.rover.sample
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import io.rover.rover.core.logging.log
 import io.rover.rover.services.concurrency.BackgroundExecutorServiceScheduler
 import io.rover.rover.services.concurrency.MainThreadScheduler
-import io.rover.rover.services.concurrency.Single
-import io.rover.rover.services.network.GraphQLNetworkService
-import io.rover.rover.services.network.HttpClient
-import io.rover.rover.services.network.HttpClientResponse
-import io.rover.rover.services.network.NetworkServiceContract
+import io.rover.rover.services.network.NetworkService
 import io.rover.rover.services.network.PlatformSimpleHttpClient
-import java.net.URL
 
 class RoverSampleActivity : AppCompatActivity() {
 
@@ -30,23 +24,17 @@ class RoverSampleActivity : AppCompatActivity() {
             scheduler
         )
 
-        val networkService = GraphQLNetworkService(
+        val networkService = NetworkService(
             "https://api.staging.rover.io",
             httpClient,
             scheduler
         )
 
         testButton.setOnClickListener {
-            networkService.fetchExperience("donut").subscribe(
-                completed = {
-                    log.e("Experience fetched successfully!")
-                },
-                error = { error ->
-                    log.e("thread is ${Thread.currentThread().id}, error: $error")
-                    throw(error)
-                },
-                scheduler =  mainThreadScheduler
-            )
+            networkService.fetchExperience("donut").call {
+                // we need a story about handling Android lifecycle
+                log.e("Experience fetched successfully!")
+            }
         }
     }
 }

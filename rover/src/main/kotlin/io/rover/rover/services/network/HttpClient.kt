@@ -3,11 +3,8 @@ package io.rover.rover.services.network
 import io.rover.rover.core.logging.log
 import io.rover.rover.services.concurrency.Scheduler
 import io.rover.rover.services.concurrency.Single
-import io.rover.rover.services.concurrency.Subject
 import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
 import java.io.DataOutputStream
-import java.net.HttpURLConnection
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 
@@ -20,13 +17,13 @@ sealed class HttpClientResponse {
     ): HttpClientResponse()
 
     /**
-     * A a session layer or below error (HTTP protocol error, network error, and so on) occurred.
+     * A a session layer or below onError (HTTP protocol onError, network onError, and so on) occurred.
      * Likely culprit is local connectivity issues or possibly even a Rover API outage.
      */
     class ConnectionFailure(): HttpClientResponse()
 
     /**
-     * An application layer (HTTP) error occurred (ie., a non-2xx status code).
+     * An application layer (HTTP) onError occurred (ie., a non-2xx status code).
      */
     class ApplicationError(
         val responseCode: Int,
@@ -58,11 +55,7 @@ class PlatformSimpleHttpClient(
         body: String
     ): Single<HttpClientResponse> {
 
-        // we'll use a Subject<T>.
-        // although I really just need Single.just and Single.defer.
-
-        // val subject = Subject<HttpClientResponse>()
-
+        // TODO: Create Single.defer()/just() and use those instead of using the scheduler like this.
         return scheduler.scheduleOperation {
             log.d("POST $url")
             val connection = url
@@ -107,7 +100,7 @@ class PlatformSimpleHttpClient(
                     )
                 }
                 else -> {
-                    // we don't support handling redirects as anything other than an error for now.
+                    // we don't support handling redirects as anything other than an onError for now.
                     HttpClientResponse.ApplicationError(
                         responseCode,
                         BufferedInputStream(

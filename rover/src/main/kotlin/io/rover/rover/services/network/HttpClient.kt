@@ -1,12 +1,15 @@
 package io.rover.rover.services.network
 
+import io.rover.rover.core.logging.log
 import io.rover.rover.services.concurrency.Scheduler
 import io.rover.rover.services.concurrency.Single
 import io.rover.rover.services.concurrency.Subject
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
+import java.io.DataOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import javax.net.ssl.HttpsURLConnection
 
 sealed class HttpClientResponse {
     class Success(
@@ -38,8 +41,7 @@ interface HttpClient {
     fun post(
         url: URL,
         headers: HashMap<String,String>,
-        body: String,
-        scheduler: Scheduler
+        body: String
     ): Single<HttpClientResponse>
 }
 
@@ -47,12 +49,13 @@ interface HttpClient {
  * A façade around HttpUrlConnection, the basic HTTP client provided in the Android/Java platform,
  * intended to be readily mockable.  Simple, stock, but sadly synchronous.
  */
-class PlatformSimpleHttpClient: HttpClient {
+class PlatformSimpleHttpClient(
+    private val scheduler: Scheduler
+): HttpClient {
     override fun post(
         url: URL,
         headers: HashMap<String, String>,
-        body: String,
-        scheduler: Scheduler
+        body: String
     ): Single<HttpClientResponse> {
 
         // we'll use a Subject<T>.
@@ -61,8 +64,9 @@ class PlatformSimpleHttpClient: HttpClient {
         // val subject = Subject<HttpClientResponse>()
 
         return scheduler.scheduleOperation {
+            log.d("POST $url")
             val connection = url
-                .openConnection() as HttpURLConnection
+                .openConnection() as HttpsURLConnection
 
             val requestBody = body.toByteArray(Charsets.UTF_8)
 
@@ -83,7 +87,7 @@ class PlatformSimpleHttpClient: HttpClient {
 
 
             // synchronously write the body to the connection.
-            BufferedOutputStream(connection.outputStream).write(requestBody)
+            DataOutputStream(connection.outputStream).write(requestBody)
 
             val responseCode = connection.responseCode
 

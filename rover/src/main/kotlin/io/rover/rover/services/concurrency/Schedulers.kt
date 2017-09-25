@@ -2,7 +2,11 @@ package io.rover.rover.services.concurrency
 
 import android.os.Handler
 import android.os.Looper
-import java.util.concurrent.*
+import io.rover.rover.core.logging.log
+import java.util.concurrent.FutureTask
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 
 /**
@@ -19,8 +23,8 @@ class MainThreadScheduler: Scheduler {
 
     private fun <T> schedule(runnable: () -> T): Single<T> {
         return object : Subject<T>() {
-            override fun subscribe(completed: (T) -> Unit, error: (Throwable) -> Unit, scheduler: Scheduler) {
-                super.subscribe(completed, error, scheduler)
+            override fun subscribe(subscriber: Subscriber<T>, scheduler: Scheduler): Subscription<T> {
+                val subscription = super.subscribe(subscriber, scheduler)
 
                 handler.post {
                     try {
@@ -32,6 +36,8 @@ class MainThreadScheduler: Scheduler {
                         error(e)
                     }
                 }
+
+                return subscription
             }
         }
     }
@@ -47,13 +53,13 @@ class MainThreadScheduler: Scheduler {
  */
 class BackgroundExecutorServiceScheduler: Scheduler {
     // TODO: set parameters appropriately.
-    private val executor = ThreadPoolExecutor(1, 2, 2000, TimeUnit.SECONDS, LinkedBlockingQueue<Runnable>())
+    private val executor = ThreadPoolExecutor(10, 20, 2, TimeUnit.SECONDS, LinkedBlockingQueue<Runnable>())
 
     private fun <T> schedule(runnable: () -> T): Single<T> {
-
         return object : Subject<T>() {
-            override fun subscribe(completed: (T) -> Unit, error: (Throwable) -> Unit, scheduler: Scheduler) {
-                super.subscribe(completed, error, scheduler)
+            override fun subscribe(subscriber: Subscriber<T>, scheduler: Scheduler): Subscription<T> {
+                val subscription = super.subscribe(subscriber, scheduler)
+                log.d("Subscribed!  Scheduling block into executor scheduler.")
                 val output = FutureTask<Unit> {
                     try {
                         // synchronously run the workload, now that we're in the executor!
@@ -61,10 +67,12 @@ class BackgroundExecutorServiceScheduler: Scheduler {
                         // and notify that we're done by emitting the result from the Subject.
                         completed(result)
                     } catch (e: Throwable) {
+                        log.e("Client error: $e")
                         error(e)
                     }
                 }
                 executor.execute(output)
+                return subscription
             }
         }
     }

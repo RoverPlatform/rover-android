@@ -7,4 +7,14 @@
     android:layout_height="match_parent"
     tools:context="io.rover.sample.RoverSampleActivity">
 
+    <Button
+        android:id="@+id/test_button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="32dp"
+        android:layout_marginRight="32dp"
+        android:text="BLART"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        tools:layout_editor_absoluteY="16dp"/>
 </android.support.constraint.ConstraintLayout>

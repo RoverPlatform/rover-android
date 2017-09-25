@@ -1,6 +1,7 @@
 package io.rover.rover.services.network
 
 import io.rover.rover.core.domain.Experience
+import io.rover.rover.core.logging.log
 import io.rover.rover.services.concurrency.Scheduler
 import io.rover.rover.services.concurrency.Single
 import io.rover.rover.services.network.requests.ExperienceParameters
@@ -46,8 +47,9 @@ class GraphQLNetworkService(
     // to another service.
 
     override fun fetchExperience(id: String): Single<Experience> {
-        return doRequest<ExperienceParameters, ExperiencePayload>(ExperienceRequest()).map(backgroundScheduler) {
-            // shitty transform time
+        log.d("Fetching experience with id $id")
+        return doRequest(ExperienceRequest()).map(backgroundScheduler) {
+            log.d("Received experience from the Rover API, with ID $id")
             Experience(
                 it.id
             )
@@ -61,8 +63,7 @@ class GraphQLNetworkService(
         return httpClient.post(
             endpoint,
             hashMapOf(),
-            request.graphQLQuery,
-            backgroundScheduler
+            request.graphQLQuery
         ).map(backgroundScheduler) { networkResponse ->
             when(networkResponse) {
             // TODO: maybe buffer and read the entire thing and yield that?

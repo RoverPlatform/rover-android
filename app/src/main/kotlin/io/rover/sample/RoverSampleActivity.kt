@@ -3,11 +3,12 @@ package io.rover.sample
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
+import io.rover.rover.core.domain.ID
 import io.rover.rover.core.logging.log
-import io.rover.rover.services.concurrency.BackgroundExecutorServiceScheduler
-import io.rover.rover.services.concurrency.MainThreadScheduler
+import io.rover.rover.services.network.AsyncTaskAndHttpUrlConnectionNetworkClient
+import io.rover.rover.services.network.NetworkResult
 import io.rover.rover.services.network.NetworkService
-import io.rover.rover.services.network.PlatformSimpleHttpClient
+import java.net.URL
 
 class RoverSampleActivity : AppCompatActivity() {
 
@@ -18,23 +19,27 @@ class RoverSampleActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_rover_sample)
-        val scheduler = BackgroundExecutorServiceScheduler()
-        val mainThreadScheduler = MainThreadScheduler()
-        val httpClient = PlatformSimpleHttpClient(
-            scheduler
-        )
+        val networkClient = AsyncTaskAndHttpUrlConnectionNetworkClient()
 
         val networkService = NetworkService(
-            "https://api.staging.rover.io",
-            httpClient,
-            scheduler
+            "lol auth token",
+            URL("https://api.staging.rover.io/graphql"),
+            networkClient,
+            null
         )
 
         testButton.setOnClickListener {
-            networkService.fetchExperience("donut").call {
+            networkService.fetchExperienceTask(ID("donut")) { result ->
                 // we need a story about handling Android lifecycle
-                log.e("Experience fetched successfully!")
-            }
+                when(result) {
+                    is NetworkResult.Success -> {
+                        log.e("Experience fetched successfully!")
+                    }
+                    is NetworkResult.Error -> {
+                        log.e("Request failed: ${result.throwable.message}")
+                    }
+                }
+            }.resume()
         }
     }
 }

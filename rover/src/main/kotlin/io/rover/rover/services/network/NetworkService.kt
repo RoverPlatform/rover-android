@@ -2,10 +2,13 @@ package io.rover.rover.services.network
 
 import android.os.Handler
 import android.os.Looper
+import io.rover.rover.core.domain.Context
+import io.rover.rover.core.domain.Event
 import io.rover.rover.core.domain.Experience
 import io.rover.rover.core.domain.ID
 import io.rover.rover.platform.DeviceIdentificationInterface
 import io.rover.rover.services.network.requests.FetchExperienceRequest
+import io.rover.rover.services.network.requests.SendEventsRequest
 import java.io.IOException
 import java.net.URL
 
@@ -14,6 +17,7 @@ class NetworkService(
     private val endpoint: URL,
     private val client: NetworkClient,
     private val deviceIdentification: DeviceIdentificationInterface,
+    private val wireEncoder: WireEncoderInterface,
     override var profileIdentifier: String?
 ): NetworkServiceInterface {
 
@@ -44,7 +48,7 @@ class NetworkService(
         }
     )
 
-    private fun <T> httpResult(httpResponse: HttpClientResponse): NetworkResult<T> =
+    private fun <TEntity> httpResult(httpRequest: NetworkRequest<TEntity>, httpResponse: HttpClientResponse): NetworkResult<TEntity> =
         when (httpResponse) {
             is HttpClientResponse.ConnectionFailure -> NetworkResult.Error(httpResponse.reason, true)
             is HttpClientResponse.ApplicationError -> {
@@ -65,45 +69,49 @@ class NetworkService(
                 )
             }
             is HttpClientResponse.Success -> {
-                val body = try {
-                    httpResponse.bufferedInputStream.reader(Charsets.UTF_8).readText()
-                } catch (exception: IOException) {
-                    NetworkResult.Error<T>(exception, true)
-                }
-
-
-                when (body) {
-                    null, "" -> NetworkResult.Error(NetworkError.EmptyResponseData(), false)
-                    else -> {
-                        // TODO we have our payload.  Now we have to do JSON decoding.
-
-                        // NetworkResult.Success(...)
-                        throw NotImplementedError()
+                try {
+                    val body = httpResponse.bufferedInputStream.reader(Charsets.UTF_8).readText()
+                    when(body) {
+                        "" -> NetworkResult.Error<TEntity>(NetworkError.EmptyResponseData(), false)
+                        else -> {
+                            try {
+                                NetworkResult.Success(
+                                    httpRequest.decode(body, wireEncoder)
+                                )
+                            } catch (e: APIException) {
+                                NetworkResult.Error<TEntity>(
+                                    NetworkError.InvalidResponseData(e.message ?: "API returned unknown error."),
+                                    // retry is not appropriate when we're getting a domain-level
+                                    // error from the GraphQL API.
+                                    false
+                                )
+                            }
+                        }
                     }
+                } catch (exception: IOException) {
+                    NetworkResult.Error<TEntity>(exception, true)
                 }
             }
         }
-
-
-    /**
-     * Encodes a payload into a JSON body.
-     */
-    private fun <T> bodyData(payload: T): String? = "{\"poop\": true}"
 
 //    struct ResponseWrapper<T>: Decodable where T: Decodable {
 //        let data: T
 //    }
 
-    fun <TRequest : NetworkRequest, T> uploadTask(request: TRequest, completionHandler: ((NetworkResult<T>) -> Unit)?): NetworkTask =
+    fun <TEntity> uploadTask(request: NetworkRequest<TEntity>, completionHandler: ((NetworkResult<TEntity>) -> Unit)?): NetworkTask =
         uploadTask(request, profileIdentifier, completionHandler)
 
-    fun <TRequest : NetworkRequest, T> uploadTask(request: TRequest, profileIdentifier: String?, completionHandler: ((NetworkResult<T>) -> Unit)?): NetworkTask {
+    /**
+     * Make a request of the Rover cloud API.  Results are delivered into the provided
+     * [completionHandler] callback, on the main thread.
+     */
+    fun <TEntity> uploadTask(request: NetworkRequest<TEntity>, profileIdentifier: String?, completionHandler: ((NetworkResult<TEntity>) -> Unit)?): NetworkTask {
         val authHeaders = authHeaders(profileIdentifier)
         val urlRequest = urlRequest(authHeaders)
-        val bodyData = bodyData(request)
+        val bodyData = request.encode()
 
         return client.networkTask(urlRequest, bodyData) { httpClientResponse ->
-            val result = httpResult<T>(httpClientResponse)
+            val result = httpResult(request, httpClientResponse)
 
             when (result) {
                 is NetworkResult.Error -> {
@@ -116,10 +124,28 @@ class NetworkService(
     }
 
     override fun fetchExperienceTask(experienceID: ID, completionHandler: ((NetworkResult<Experience>) -> Unit)?): NetworkTask {
-        val request = FetchExperienceRequest()
-        return uploadTask<FetchExperienceRequest, Experience>(request) { experienceResult ->
+        val request = FetchExperienceRequest(experienceID)
+        return uploadTask(request) { experienceResult ->
             mainThreadHandler.run {
                 completionHandler?.invoke(experienceResult)
+            }
+        }
+    }
+
+    override fun sendEventsTask(
+        events: List<Event>,
+        context: Context,
+        profileIdentifier: String?,
+        completionHandler: ((NetworkResult<String>) -> Unit)?
+    ): NetworkTask {
+        val request = SendEventsRequest(
+            events,
+            context,
+            wireEncoder
+        )
+        return uploadTask(request) { uploadResult ->
+            mainThreadHandler.run {
+                completionHandler?.invoke(uploadResult)
             }
         }
     }

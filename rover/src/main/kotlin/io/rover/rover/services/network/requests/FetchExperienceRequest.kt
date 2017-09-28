@@ -1,52 +1,33 @@
 package io.rover.rover.services.network.requests
 
+import io.rover.rover.core.domain.Experience
+import io.rover.rover.core.domain.ID
+import io.rover.rover.platform.whenNotNull
 import io.rover.rover.services.network.NetworkRequest
+import io.rover.rover.services.network.WireEncoderInterface
+import io.rover.rover.services.network.requests.data.getObjectIterable
+import io.rover.rover.services.network.requests.data.getStringIterable
+import org.json.JSONObject
 
-
-// DTO marshalling WIP:
-//
-//data class ExperienceParameters(
-//    val id: String
-//)
-//
-//data class ExperiencePayload(
-//    val id: String
-//    // val homescreen: HomeScreen
-//)
-//
-//class FetchExperienceRequest: HttpRequest<ExperienceParameters, ExperiencePayload> {
-//    override fun mapParametersPayload(parameters: ExperienceParameters): String {
-//        return JSONObject().apply {
-//            put("id", parameters.id)
-//        }.toString(4)
-//    }
-//
-//    override fun mapOutputPayload(output: String): ExperiencePayload {
-//        val json = JSONObject(output)
-//        return ExperiencePayload(
-//            json.getString("id")
-//        )
-//    }
-//
-//    override val graphQLQuery: String = """
-//        query FetchExperience(${"\$id"}: ID!) {
-//            experience(id: ${"\$id"}) {
-//                name
-//            }
-//        }
-//    """
-//}
-
-class FetchExperienceRequest : NetworkRequest {
+class FetchExperienceRequest(
+    val id: ID
+) : NetworkRequest<Experience> {
     override val operationName: String = "FetchExperience"
 
     override val query: String = """
         query FetchExperience(${"\$id"}: ID!) {
-                experience(id: ${"\$id"}) {
-                    name
-                }
+            experience(id: ${"\$id"}) {
+                name
             }
+        }
     """
-    override val variables: HashMap<String, String>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+    override val variables: JSONObject = JSONObject().apply {
+        put("id", id.rawValue)
+    }
+
+    override fun decodePayload(responseObject: JSONObject, wireEncoder: WireEncoderInterface): Experience {
+        return wireEncoder.decodeExperience(
+            responseObject.getJSONObject("data")
+        )
+    }
 }

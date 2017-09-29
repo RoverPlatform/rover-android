@@ -4,7 +4,7 @@ import android.os.Handler
 import android.os.Looper
 import io.rover.rover.core.domain.Experience
 import io.rover.rover.core.domain.ID
-import io.rover.rover.core.logging.log
+import io.rover.rover.platform.DeviceIdentificationInterface
 import io.rover.rover.services.network.requests.FetchExperienceRequest
 import java.io.IOException
 import java.net.URL
@@ -13,6 +13,7 @@ class NetworkService(
     private val accountToken: String,
     private val endpoint: URL,
     private val client: NetworkClient,
+    private val deviceIdentification: DeviceIdentificationInterface,
     override var profileIdentifier: String?
 ): NetworkServiceInterface {
 
@@ -22,19 +23,11 @@ class NetworkService(
         val authHeaders = hashMapOf<String, String>()
         authHeaders["x-rover-account-token"] = accountToken
 
-        // TODO: inject some sort of Android device identifier thingy
+        authHeaders["x-rover-device-identifier"] = deviceIdentification.installationIdentifier
 
-        val identifierForVendor = "none"
-        when (identifierForVendor) {
-            is String -> authHeaders["x-rover-device-identifier"] = identifierForVendor
-            null -> log.e("Failed to obtain device identifier")
-        }
-
-        val deviceProfileIdentifier = "none again"
-        val faultedProfileIdentifier = deviceProfileIdentifier ?: this.profileIdentifier
-
-        when (faultedProfileIdentifier) {
-            is String -> authHeaders["x-rover-profile-identifier"] = faultedProfileIdentifier
+        val possibleProfileIdentifier = profileIdentifier ?: this.profileIdentifier
+        if(possibleProfileIdentifier != null) {
+            authHeaders["x-rover-profile-identifier"] = possibleProfileIdentifier
         }
 
         return authHeaders
@@ -77,6 +70,7 @@ class NetworkService(
                 } catch (exception: IOException) {
                     NetworkResult.Error<T>(exception, true)
                 }
+
 
                 when (body) {
                     null, "" -> NetworkResult.Error(NetworkError.EmptyResponseData(), false)

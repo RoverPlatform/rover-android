@@ -5,6 +5,9 @@ import android.os.Bundle
 import android.widget.Button
 import io.rover.rover.core.domain.ID
 import io.rover.rover.core.logging.log
+import io.rover.rover.platform.DeviceIdentification
+import io.rover.rover.platform.LocalStorage
+import io.rover.rover.platform.SharedPreferencesLocalStorage
 import io.rover.rover.services.network.AsyncTaskAndHttpUrlConnectionNetworkClient
 import io.rover.rover.services.network.NetworkResult
 import io.rover.rover.services.network.NetworkService
@@ -25,6 +28,9 @@ class RoverSampleActivity : AppCompatActivity() {
             "lol auth token",
             URL("https://api.staging.rover.io/graphql"),
             networkClient,
+            DeviceIdentification(
+                SharedPreferencesLocalStorage(applicationContext)
+            ),
             null
         )
 

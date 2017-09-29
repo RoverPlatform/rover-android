@@ -26,13 +26,14 @@ class SharedPreferencesLocalStorage(
 ): LocalStorage {
     private val baseContextName = "io.rover.rover.platform.localstorage"
 
+    val prefs = context.getSharedPreferences(baseContextName, MODE_PRIVATE)
+
     override fun getKeyValueStorageFor(namedContext: String): KeyValueStorage {
-        val prefs = context.getSharedPreferences("$baseContextName.$namedContext", MODE_PRIVATE)
         return object : KeyValueStorage {
-            override fun get(key: String): String? = prefs.getString(key, null)
+            override fun get(key: String): String? = prefs.getString("$namedContext.$key", null)
 
             override fun set(key: String, value: String) {
-                prefs.edit().putString(key, value).apply()
+                prefs.edit().putString("$namedContext.$key", value).apply()
             }
         }
     }

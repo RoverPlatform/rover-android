@@ -1,11 +1,10 @@
 package io.rover.rover.services.network
 
+import io.rover.rover.core.domain.ApplicationState
 import io.rover.rover.core.domain.Context
 import io.rover.rover.core.domain.Event
 import io.rover.rover.core.domain.Experience
 import io.rover.rover.core.domain.ID
-import io.rover.rover.platform.whenNotNull
-import io.rover.rover.services.network.requests.data.getStringIterable
 import org.json.JSONObject
 
 sealed class NetworkResult<T> {
@@ -76,23 +75,14 @@ interface NetworkRequest<out TInput> {
             }
         }.toString(4)
     }
-
-    // TODO: all concerns that must be handled
-    // Parameters
-    // graphql request type (query/mutation)
-    // GraphQL query DSL (multiline string constant).
-    // its parameters/data type thereof (DTO)
-    // its output/data type thereof (DTO)
-    // mapping to domain types (this may be appropriately put elsewhere; decide later)
-    // the boilerplate of JSON field mapping (since we don't get to use gson or have any
-    // other equivalent to Swift's Encodable/Decodable.
 }
 
 interface NetworkServiceInterface {
     var profileIdentifier: String?
 
     fun fetchExperienceTask(experienceID: ID, completionHandler: ((NetworkResult<Experience>) -> Unit)?): NetworkTask
-//    fun fetchStateTask(completionHandler: ((NetworkResult<State>) -> Unit)?): NetworkTask
+
+    fun fetchStateTask(completionHandler: ((NetworkResult<ApplicationState>) -> Unit)?): NetworkTask
 
     fun sendEventsTask(events: List<Event>, context: Context, profileIdentifier: String?, completionHandler: ((NetworkResult<String>) -> Unit)?): NetworkTask
 }

@@ -2,11 +2,8 @@ package io.rover.rover.services.network.requests
 
 import io.rover.rover.core.domain.Experience
 import io.rover.rover.core.domain.ID
-import io.rover.rover.platform.whenNotNull
 import io.rover.rover.services.network.NetworkRequest
 import io.rover.rover.services.network.WireEncoderInterface
-import io.rover.rover.services.network.requests.data.getObjectIterable
-import io.rover.rover.services.network.requests.data.getStringIterable
 import org.json.JSONObject
 
 class FetchExperienceRequest(

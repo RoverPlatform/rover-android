@@ -141,7 +141,7 @@ fun ButtonState.Companion.decodeJson(json: JSONObject): ButtonState {
         backgroundColor = Color.decodeJson(json.getJSONObject("backgroundColor")),
         backgroundContentMode = BackgroundContentMode.decodeJSON(json.getString("backgroundContentMode")),
         backgroundImage = Image.optDecodeJSON(json.optJSONObject("backgroundImage")),
-        backgroundScale = BackgroundScale.decodeJSON(json.getString("backgroundScale")),
+        backgroundScale = BackgroundScale.decodeJson(json.getString("backgroundScale")),
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         borderRadius = json.getInt("borderRadius"),
         borderWidth = json.getInt("borderWidth"),
@@ -159,7 +159,7 @@ fun BarcodeBlock.Companion.decodeJson(json: JSONObject): BarcodeBlock {
         backgroundColor = Color.decodeJson(json.getJSONObject("backgroundColor")),
         backgroundContentMode = BackgroundContentMode.decodeJSON(json.getString("backgroundContentMode")),
         backgroundImage = Image.optDecodeJSON(json.optJSONObject("backgroundImage")),
-        backgroundScale = BackgroundScale.decodeJSON(json.getString("backgroundScale")),
+        backgroundScale = BackgroundScale.decodeJson(json.getString("backgroundScale")),
         barcodeScale = json.getInt("barcodeScale"),
         barcodeText = json.getString("barcodeText"),
         barcodeFormat = BarcodeFormat.decodeJson(json.getString("barcodeFormat")),
@@ -211,7 +211,7 @@ fun RectangleBlock.Companion.decodeJson(json: JSONObject): RectangleBlock {
         backgroundColor = Color.decodeJson(json.getJSONObject("backgroundColor")),
         backgroundContentMode = BackgroundContentMode.decodeJSON(json.getString("backgroundContentMode")),
         backgroundImage = Image.optDecodeJSON(json.optJSONObject("backgroundImage")),
-        backgroundScale = BackgroundScale.decodeJSON(json.getString("backgroundScale")),
+        backgroundScale = BackgroundScale.decodeJson(json.getString("backgroundScale")),
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         borderRadius = json.getInt("borderRadius"),
         borderWidth = json.getInt("borderWidth"),
@@ -237,7 +237,7 @@ fun WebViewBlock.Companion.decodeJson(json: JSONObject): WebViewBlock {
         backgroundColor = Color.decodeJson(json.getJSONObject("backgroundColor")),
         backgroundContentMode = BackgroundContentMode.decodeJSON(json.getString("backgroundContentMode")),
         backgroundImage = Image.optDecodeJSON(json.optJSONObject("backgroundImage")),
-        backgroundScale = BackgroundScale.decodeJSON(json.getString("backgroundScale")),
+        backgroundScale = BackgroundScale.decodeJson(json.getString("backgroundScale")),
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         borderRadius = json.getInt("borderRadius"),
         borderWidth = json.getInt("borderWidth"),
@@ -265,7 +265,7 @@ fun TextBlock.Companion.decodeJson(json: JSONObject): TextBlock {
         backgroundColor = Color.decodeJson(json.getJSONObject("backgroundColor")),
         backgroundContentMode = BackgroundContentMode.decodeJSON(json.getString("backgroundContentMode")),
         backgroundImage = Image.optDecodeJSON(json.optJSONObject("backgroundImage")),
-        backgroundScale = BackgroundScale.decodeJSON(json.getString("backgroundScale")),
+        backgroundScale = BackgroundScale.decodeJson(json.getString("backgroundScale")),
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         borderRadius = json.getInt("borderRadius"),
         borderWidth = json.getInt("borderWidth"),
@@ -295,7 +295,7 @@ fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
         backgroundColor = Color.decodeJson(json.getJSONObject("backgroundColor")),
         backgroundContentMode = BackgroundContentMode.decodeJSON(json.getString("backgroundContentMode")),
         backgroundImage = Image.optDecodeJSON(json.optJSONObject("backgroundImage")),
-        backgroundScale = BackgroundScale.decodeJSON(json.getString("backgroundScale")),
+        backgroundScale = BackgroundScale.decodeJson(json.getString("backgroundScale")),
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         borderRadius = json.getInt("borderRadius"),
         borderWidth = json.getInt("borderWidth"),
@@ -350,16 +350,13 @@ fun Block.Companion.decodeJson(json: JSONObject): Block {
     }
 }
 
-fun BackgroundScale.Companion.decodeJSON(value: String): BackgroundScale =
-    BackgroundScale.values().firstOrNull { it.wireFormat == value } ?: throw Exception("Unknown BackgroundScale type $value")
-
 fun Row.Companion.decodeJSON(json: JSONObject, namedField: String? = null): Row {
     return Row(
         autoHeight = json.getBoolean("autoHeight"),
         backgroundColor = Color.decodeJson(json.getJSONObject("backgroundColor")),
         backgroundContentMode = BackgroundContentMode.decodeJSON(json.getString("backgroundContentMode")),
         backgroundImage = Image.optDecodeJSON(json.optJSONObject("backgroundImage")),
-        backgroundScale = BackgroundScale.decodeJSON(json.getString("backgroundScale")),
+        backgroundScale = BackgroundScale.decodeJson(json.getString("backgroundScale")),
         blocks = json.getJSONArray("blocks").getObjectIterable().map { Block.decodeJson(it) },
         experienceID = ID(json.getString("experienceID")),
         height = Length.decodeJson(json.getJSONObject("height")),

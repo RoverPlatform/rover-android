@@ -23,6 +23,7 @@ android {
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
     }
 }
 
@@ -35,6 +36,13 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.+'
 
     testCompile 'junit:junit:4.12'
+    testCompile 'org.jetbrains.spek:spek-api:1.1.5'
+    testCompile 'org.jetbrains.spek:spek-junit-platform-engine:1.1.5'
+    testCompile 'org.junit.platform:junit-platform-runner:1.0.0'
+    testCompile 'com.natpryce:hamkrest:1.4.2.0'
+    testCompile 'org.amshove.kluent:kluent:1.30'
+    testCompile 'org.amshove.kluent:kluent-android:1.30'
+
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
 }
 repositories {

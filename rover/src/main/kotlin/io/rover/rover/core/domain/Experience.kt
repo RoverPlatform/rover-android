@@ -8,7 +8,7 @@ import kotlin.reflect.KClass
  */
 data class Experience(
     val id: ID,
-    val homeScreen: Screen,
+    val homeScreenId: ID,
     val screens: List<Screen>
 ) {
     companion object
@@ -24,11 +24,11 @@ interface Background {
 enum class BackgroundContentMode(
     val wireFormat: String
 ) {
-    Original("original"),
-    Stretch("stretch"),
-    Tile("tile"),
-    Fill("fill"),
-    Fit("fit");
+    Original("ORIGINAL"),
+    Stretch("STRETCH"),
+    Tile("TILE"),
+    Fill("FILL"),
+    Fit("FIT");
 
     companion object
 }
@@ -36,9 +36,9 @@ enum class BackgroundContentMode(
 enum class BackgroundScale(
     val wireFormat: String
 ) {
-    X1("x1"),
-    X2("x2"),
-    X3("x3");
+    X1("X1"),
+    X2("X2"),
+    X3("X3");
 
     companion object
 }
@@ -46,7 +46,6 @@ enum class BackgroundScale(
 interface Block {
     val action: BlockAction?
     val autoHeight: Boolean
-    val experienceID: ID
     val height: Length
     val id: ID
     val insets: Insets
@@ -54,8 +53,6 @@ interface Block {
     val offsets: Offsets
     val opacity: Double
     val position: Position
-    val rowID: ID
-    val screenID: ID
     val verticalAlignment: VerticalAlignment
     val width: Length
 
@@ -75,7 +72,6 @@ data class BarcodeBlock (
     override val borderColor: Color,
     override val borderRadius: Int,
     override val borderWidth: Int,
-    override val experienceID: ID,
     override val height: Length,
     override val id: ID,
     override val insets: Insets,
@@ -83,8 +79,6 @@ data class BarcodeBlock (
     override val offsets: Offsets,
     override val opacity: Double,
     override val position: Position,
-    override val rowID: ID,
-    override val screenID: ID,
     override val verticalAlignment: VerticalAlignment,
     override val width: Length
 ): Block, Background, Border {
@@ -95,7 +89,6 @@ data class ButtonBlock(
     override val action: BlockAction?,
     override val autoHeight: Boolean,
     val disabled: ButtonState,
-    override val experienceID: ID,
     override val height: Length,
     val highlighted: ButtonState,
     override val horizontalAlignment: HorizontalAlignment,
@@ -105,8 +98,6 @@ data class ButtonBlock(
     override val offsets: Offsets,
     override val opacity: Double,
     override val position: Position,
-    override val rowID: ID,
-    override val screenID: ID,
     val selected: ButtonState,
     override val verticalAlignment: VerticalAlignment,
     override val width: Length
@@ -124,7 +115,6 @@ data class ImageBlock(
     override val borderColor: Color,
     override val borderRadius: Int,
     override val borderWidth: Int,
-    override val experienceID: ID,
     override val height: Length,
     override val id: ID,
     val image: Image?,
@@ -133,8 +123,6 @@ data class ImageBlock(
     override val offsets: Offsets,
     override val opacity: Double,
     override val position: Position,
-    override val rowID: ID,
-    override val screenID: ID,
     override val verticalAlignment: VerticalAlignment,
     override val width: Length
 ): Block, Background, Border {
@@ -151,7 +139,6 @@ data class RectangleBlock(
     override val borderColor: Color,
     override val borderRadius: Int,
     override val borderWidth: Int,
-    override val experienceID: ID,
     override val height: Length,
     override val id: ID,
     override val insets: Insets,
@@ -159,8 +146,6 @@ data class RectangleBlock(
     override val offsets: Offsets,
     override val opacity: Double,
     override val position: Position,
-    override val rowID: ID,
-    override val screenID: ID,
     override val verticalAlignment: VerticalAlignment,
     override val width: Length
 ): Block, Background, Border {
@@ -177,7 +162,6 @@ data class TextBlock(
     override val borderColor: Color,
     override val borderRadius: Int,
     override val borderWidth: Int,
-    override val experienceID: ID,
     override val height: Length,
     override val id: ID,
     override val insets: Insets,
@@ -185,12 +169,10 @@ data class TextBlock(
     override val offsets: Offsets,
     override val opacity: Double,
     override val position: Position,
-    override val rowID: ID,
-    override val screenID: ID,
     override val textAlignment: TextAlignment,
     override val textColor: Color,
     override val textFont: Font,
-    override val textValue: String,
+    override val text: String,
     override val verticalAlignment: VerticalAlignment,
     override val width: Length
 ): Block, Background, Border, Text {
@@ -207,7 +189,6 @@ data class WebViewBlock(
     override val borderColor: Color,
     override val borderRadius: Int,
     override val borderWidth: Int,
-    override val experienceID: ID,
     override val height: Length,
     override val id: ID,
     override val insets: Insets,
@@ -216,8 +197,6 @@ data class WebViewBlock(
     override val offsets: Offsets,
     override val opacity: Double,
     override val position: Position,
-    override val rowID: ID,
-    override val screenID: ID,
     val url: URL,
     override val verticalAlignment: VerticalAlignment,
     override val width: Length
@@ -228,10 +207,10 @@ data class WebViewBlock(
 enum class BarcodeFormat(
     val wireFormat: String
 ) {
-    QrCode("qrCode"),
-    AztecCode("aztecCode"),
-    Pdf417("pdf417"),
-    Code128("code128");
+    QrCode("QRCODE"),
+    AztecCode("AZTECCODE"),
+    Pdf417("PDF417"),
+    Code128("CODE128");
 
     companion object
 }
@@ -240,13 +219,13 @@ enum class BarcodeFormat(
 
 sealed class BlockAction {
     class OpenUrlAction(
-        val experienceID: ID,
-        val screenID: ID
+        url: URL
     ): BlockAction() {
         companion object
     }
     class GoToScreenAction(
-        url: URL
+        val experienceId: ID,
+        val screenId: ID
     ): BlockAction() {
         companion object
     }
@@ -260,8 +239,6 @@ interface Border {
     val borderWidth: Int
 }
 
-
-
 data class ButtonState (
     override val backgroundColor: Color,
     override val backgroundContentMode: BackgroundContentMode,
@@ -273,7 +250,7 @@ data class ButtonState (
     override val textAlignment: TextAlignment,
     override val textColor: Color,
     override val textFont: Font,
-    override val textValue: String
+    override val text: String
 ): Background, Border, Text {
     companion object
 }
@@ -297,15 +274,15 @@ data class Font(
 enum class FontWeight(
     val wireFormat: String
 ) {
-    UltraLight("UltraLight"),
-    Thin("thin"),
-    Light("light"),
-    Regular("regular"),
-    Medium("medium"),
-    SemiBold("semiBold"),
-    Bold("bold"),
-    Heavy("heavy"),
-    Black("black");
+    UltraLight("ULTRALIGHT"),
+    Thin("THIN"),
+    Light("LIGHT"),
+    Regular("REGULAR"),
+    Medium("MEDIUM"),
+    SemiBold("SEMIBOLD"),
+    Bold("BOLD"),
+    Heavy("HEAVY"),
+    Black("BLACK");
 
     companion object
 }
@@ -313,10 +290,10 @@ enum class FontWeight(
 enum class HorizontalAlignment(
     val wireFormat: String
 ) {
-    Center("center"),
-    Left("left"),
-    Right("right"),
-    Fill("fill");
+    Center("CENTER"),
+    Left("LEFT"),
+    Right("RIGHT"),
+    Fill("FILL");
 
     companion object
 }
@@ -364,14 +341,11 @@ data class Offsets(
 enum class Position(
     val wireFormat: String
 ) {
-    Stacked("stacked"),
-    Floating("floating");
+    Stacked("STACKED"),
+    Floating("FLOATING");
 
     companion object
 }
-
-
-
 
 data class Row(
     val autoHeight: Boolean,
@@ -380,10 +354,8 @@ data class Row(
     override val backgroundImage: Image?,
     override val backgroundScale: BackgroundScale,
     val blocks: List<Block>,
-    val experienceID: ID,
     val height: Length,
-    val id: ID,
-    val screenID: ID
+    val id: ID
 ): Background {
     companion object
 }
@@ -394,7 +366,6 @@ data class Screen(
     override val backgroundContentMode: BackgroundContentMode,
     override val backgroundImage: Image?,
     override val backgroundScale: BackgroundScale,
-    val experienceID: ID,
     val id: ID,
     val isStretchyHeaderEnabled: Boolean,
     val rows: List<Row>,
@@ -413,14 +384,14 @@ data class Screen(
 enum class StatusBarStyle(
     val wireFormat: String
 ) {
-    Dark("dark"),
-    Light("light");
+    Dark("DARK"),
+    Light("LIGHT");
 
     companion object
 }
 
 interface Text {
-    val textValue: String
+    val text: String
     val textAlignment: TextAlignment
     val textColor: Color
     val textFont: Font
@@ -429,22 +400,19 @@ interface Text {
 enum class TextAlignment(
     val wireFormat: String
 ) {
-    Center("center"),
-    Left("left"),
-    Right("right");
+    Center("CENTER"),
+    Left("LEFT"),
+    Right("RIGHT");
 
     companion object
 }
 
-
-
-
 enum class TitleBarButtons(
     val wireFormat: String
 ) {
-    Close("close"),
-    Back("back"),
-    Both("both");
+    Close("CLOSE"),
+    Back("BACK"),
+    Both("BOTH");
 
     companion object
 }
@@ -452,8 +420,8 @@ enum class TitleBarButtons(
 enum class UnitOfMeasure(
     val wireFormat: String
 ) {
-    Points("points"),
-    Percentage("percentage");
+    Points("POINTS"),
+    Percentage("PERCENTAGE");
 
     companion object
 }
@@ -461,10 +429,10 @@ enum class UnitOfMeasure(
 enum class VerticalAlignment(
     val wireFormat: String
 ) {
-    Bottom("bottom"),
-    Middle("middle"),
-    Fill("fill"),
-    Top("top");
+    Bottom("BOTTOM"),
+    Middle("MIDDLE"),
+    Fill("FILL"),
+    Top("TOP");
 
     companion object
 }

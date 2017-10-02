@@ -1,6 +1,5 @@
 package io.rover.rover.services.network.requests.data
 
-import android.graphics.Rect
 import io.rover.rover.core.domain.BackgroundContentMode
 import io.rover.rover.core.domain.BackgroundScale
 import io.rover.rover.core.domain.BarcodeBlock
@@ -38,7 +37,7 @@ import java.net.URL
 fun Experience.Companion.decodeJson(json: JSONObject): Experience {
     return Experience(
         id = ID(json.getString("id")),
-        homeScreen = Screen.decodeJson(json.getJSONObject("homeScreen")),
+        homeScreenId = ID(json.getString("homeScreenId")),
         screens = json.getJSONArray("screens").getObjectIterable().map {
             Screen.decodeJson(it)
         }
@@ -148,7 +147,7 @@ fun ButtonState.Companion.decodeJson(json: JSONObject): ButtonState {
         textAlignment = TextAlignment.decodeJson(json.getString("textAlignment")),
         textColor = Color.decodeJson(json.getJSONObject("textColor")),
         textFont = Font.decodeJson(json.getJSONObject("textFont")),
-        textValue = json.getString("textValue")
+        text = json.getString("text")
     )
 }
 
@@ -166,7 +165,6 @@ fun BarcodeBlock.Companion.decodeJson(json: JSONObject): BarcodeBlock {
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         borderRadius = json.getInt("borderRadius"),
         borderWidth = json.getInt("borderWidth"),
-        experienceID = ID(json.getString("experienceID")),
         height = Length.decodeJson(json.getJSONObject("height")),
         id = ID(json.getString("id")),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
@@ -174,8 +172,6 @@ fun BarcodeBlock.Companion.decodeJson(json: JSONObject): BarcodeBlock {
         offsets = Offsets.decodeJson(json.getJSONObject("offsets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getString("position")),
-        rowID = ID(json.getString("rowID")),
-        screenID = ID(json.getString("screenID")),
         verticalAlignment = VerticalAlignment.decodeJson(json.getString("verticalAlignment")),
         width = Length.decodeJson(json.getJSONObject("width"))
     )
@@ -185,7 +181,6 @@ fun ButtonBlock.Companion.decodeJson(json: JSONObject): ButtonBlock {
     return ButtonBlock(
         action = BlockAction.optDecodeJson(json.optJSONObject("action")),
         autoHeight = json.getBoolean("autoHeight"),
-        experienceID = ID(json.getString("experienceID")),
         height = Length.decodeJson(json.getJSONObject("height")),
         id = ID(json.getString("id")),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
@@ -193,8 +188,6 @@ fun ButtonBlock.Companion.decodeJson(json: JSONObject): ButtonBlock {
         offsets = Offsets.decodeJson(json.getJSONObject("offsets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getString("position")),
-        rowID = ID(json.getString("rowID")),
-        screenID = ID(json.getString("screenID")),
         verticalAlignment = VerticalAlignment.decodeJson(json.getString("verticalAlignment")),
         width = Length.decodeJson(json.getJSONObject("width")),
         disabled = ButtonState.decodeJson(json.getJSONObject("disabled")),
@@ -215,7 +208,6 @@ fun RectangleBlock.Companion.decodeJson(json: JSONObject): RectangleBlock {
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         borderRadius = json.getInt("borderRadius"),
         borderWidth = json.getInt("borderWidth"),
-        experienceID = ID(json.getString("experienceID")),
         height = Length.decodeJson(json.getJSONObject("height")),
         id = ID(json.getString("id")),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
@@ -223,8 +215,6 @@ fun RectangleBlock.Companion.decodeJson(json: JSONObject): RectangleBlock {
         offsets = Offsets.decodeJson(json.getJSONObject("offsets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getString("position")),
-        rowID = ID(json.getString("rowID")),
-        screenID = ID(json.getString("screenID")),
         verticalAlignment = VerticalAlignment.decodeJson(json.getString("verticalAlignment")),
         width = Length.decodeJson(json.getJSONObject("width"))
     )
@@ -241,7 +231,6 @@ fun WebViewBlock.Companion.decodeJson(json: JSONObject): WebViewBlock {
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         borderRadius = json.getInt("borderRadius"),
         borderWidth = json.getInt("borderWidth"),
-        experienceID = ID(json.getString("experienceID")),
         height = Length.decodeJson(json.getJSONObject("height")),
         id = ID(json.getString("id")),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
@@ -249,8 +238,6 @@ fun WebViewBlock.Companion.decodeJson(json: JSONObject): WebViewBlock {
         offsets = Offsets.decodeJson(json.getJSONObject("offsets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getString("position")),
-        rowID = ID(json.getString("rowID")),
-        screenID = ID(json.getString("screenID")),
         verticalAlignment = VerticalAlignment.decodeJson(json.getString("verticalAlignment")),
         width = Length.decodeJson(json.getJSONObject("width")),
         isScrollingEnabled = json.getBoolean("isScrollingEnabled"),
@@ -269,7 +256,6 @@ fun TextBlock.Companion.decodeJson(json: JSONObject): TextBlock {
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         borderRadius = json.getInt("borderRadius"),
         borderWidth = json.getInt("borderWidth"),
-        experienceID = ID(json.getString("experienceID")),
         height = Length.decodeJson(json.getJSONObject("height")),
         id = ID(json.getString("id")),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
@@ -277,14 +263,12 @@ fun TextBlock.Companion.decodeJson(json: JSONObject): TextBlock {
         offsets = Offsets.decodeJson(json.getJSONObject("offsets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getString("position")),
-        rowID = ID(json.getString("rowID")),
-        screenID = ID(json.getString("screenID")),
         verticalAlignment = VerticalAlignment.decodeJson(json.getString("verticalAlignment")),
         width = Length.decodeJson(json.getJSONObject("width")),
         textAlignment = TextAlignment.decodeJson(json.getString("textAlignment")),
         textColor = Color.decodeJson(json.getJSONObject("textColor")),
         textFont = Font.decodeJson(json.getJSONObject("textFont")),
-        textValue = json.getString("textValue")
+        text = json.getString("text")
     )
 }
 
@@ -299,7 +283,6 @@ fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         borderRadius = json.getInt("borderRadius"),
         borderWidth = json.getInt("borderWidth"),
-        experienceID = ID(json.getString("experienceID")),
         height = Length.decodeJson(json.getJSONObject("height")),
         id = ID(json.getString("id")),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
@@ -307,8 +290,6 @@ fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
         offsets = Offsets.decodeJson(json.getJSONObject("offsets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getString("position")),
-        rowID = ID(json.getString("rowID")),
-        screenID = ID(json.getString("screenID")),
         verticalAlignment = VerticalAlignment.decodeJson(json.getString("verticalAlignment")),
         width = Length.decodeJson(json.getJSONObject("width")),
         image = Image.optDecodeJSON(json.optJSONObject("image"))
@@ -327,11 +308,11 @@ fun BlockAction.Companion.optDecodeJson(json: JSONObject?): BlockAction? {
 
     return when(typeName) {
         BlockAction.OpenUrlAction.resourceName -> BlockAction.OpenUrlAction(
-            experienceID = ID(json.getString("experienceID")),
-            screenID = ID(json.getString("screenID"))
+            url = URL(json.getString("url"))
         )
         BlockAction.GoToScreenAction.resourceName -> BlockAction.GoToScreenAction(
-            url = URL(json.getString("url"))
+            experienceId = ID(json.getString("experienceId")),
+            screenId = ID(json.getString("screenId"))
         )
         else -> throw RuntimeException("Unsupported Block Action type '$typeName'.")
     }
@@ -368,10 +349,8 @@ fun Row.Companion.decodeJSON(json: JSONObject, namedField: String? = null): Row 
         backgroundImage = Image.optDecodeJSON(json.optJSONObject("backgroundImage")),
         backgroundScale = BackgroundScale.decodeJson(json.getString("backgroundScale")),
         blocks = json.getJSONArray("blocks").getObjectIterable().map { Block.decodeJson(it) },
-        experienceID = ID(json.getString("experienceID")),
         height = Length.decodeJson(json.getJSONObject("height")),
-        id = ID(json.getString("id")),
-        screenID = ID(json.getString("screenID"))
+        id = ID(json.getString("id"))
     )
 }
 
@@ -382,7 +361,6 @@ fun Screen.Companion.decodeJson(json: JSONObject): Screen {
         backgroundContentMode = BackgroundContentMode.decodeJson(json.getString("backgroundContentMode")),
         backgroundImage = Image.optDecodeJSON(json.optJSONObject("backgroundImage")),
         backgroundScale = BackgroundScale.decodeJson(json.getString("backgroundScale")),
-        experienceID = ID(json.getString("experienceID")),
         id = ID(json.getString("id")),
         isStretchyHeaderEnabled = json.getBoolean("isStretchyHeaderEnabled"),
         rows = json.getJSONArray("rows").getObjectIterable().map {

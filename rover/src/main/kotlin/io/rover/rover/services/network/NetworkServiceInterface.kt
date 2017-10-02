@@ -7,8 +7,21 @@ import io.rover.rover.core.domain.Experience
 import io.rover.rover.core.domain.ID
 import org.json.JSONObject
 
+/**
+ *
+ */
 sealed class NetworkResult<T> {
-    class Error<T>(val throwable: Throwable, val shouldRetry: Boolean): NetworkResult<T>()
+    class Error<T>(
+        val throwable: Throwable,
+
+        /**
+         * Does the Rover API recommend that the consumer should attempt to retry.  If true,
+         * the error should be considered a "soft failure" for external reasons (network trouble,
+         * temporary outages on the cloud-side Rover API gateway, etc.) and the consumer code
+         * should attempt a retry after a momentary wait.
+         */
+        val shouldRetry: Boolean
+    ): NetworkResult<T>()
     class Success<T>(val response: T): NetworkResult<T>()
 }
 

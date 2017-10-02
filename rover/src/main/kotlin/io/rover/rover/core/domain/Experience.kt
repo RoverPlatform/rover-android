@@ -242,10 +242,14 @@ sealed class BlockAction {
     class OpenUrlAction(
         val experienceID: ID,
         val screenID: ID
-    ): BlockAction()
+    ): BlockAction() {
+        companion object
+    }
     class GoToScreenAction(
         url: URL
-    ): BlockAction()
+    ): BlockAction() {
+        companion object
+    }
 
     companion object
 }

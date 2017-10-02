@@ -96,10 +96,6 @@ class NetworkService(
             }
         }
 
-//    struct ResponseWrapper<T>: Decodable where T: Decodable {
-//        let data: T
-//    }
-
     fun <TEntity> uploadTask(request: NetworkRequest<TEntity>, completionHandler: ((NetworkResult<TEntity>) -> Unit)?): NetworkTask =
         uploadTask(request, profileIdentifier, completionHandler)
 

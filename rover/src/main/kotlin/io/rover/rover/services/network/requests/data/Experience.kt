@@ -315,6 +315,9 @@ fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
     )
 }
 
+val BlockAction.OpenUrlAction.Companion.resourceName get() = "OpenUrlAction"
+val BlockAction.GoToScreenAction.Companion.resourceName get() = "GoToScreenAction"
+
 fun BlockAction.Companion.optDecodeJson(json: JSONObject?): BlockAction? {
     if(json == null) return null
     // BlockAction has subclasses, so we need to delegate to the appropriate deserializer for each
@@ -323,16 +326,23 @@ fun BlockAction.Companion.optDecodeJson(json: JSONObject?): BlockAction? {
     val typeName = json.getString("__typename")
 
     return when(typeName) {
-        BlockAction.OpenUrlAction::class.java.simpleName -> BlockAction.OpenUrlAction(
+        BlockAction.OpenUrlAction.resourceName -> BlockAction.OpenUrlAction(
             experienceID = ID(json.getString("experienceID")),
             screenID = ID(json.getString("screenID"))
         )
-        BlockAction.GoToScreenAction::class.java.simpleName -> BlockAction.GoToScreenAction(
+        BlockAction.GoToScreenAction.resourceName -> BlockAction.GoToScreenAction(
             url = URL(json.getString("url"))
         )
         else -> throw RuntimeException("Unsupported Block Action type '$typeName'.")
     }
 }
+
+val BarcodeBlock.Companion.resourceName get() = "BarcodeBlock"
+val ButtonBlock.Companion.resourceName get() = "ButtonBlock"
+val RectangleBlock.Companion.resourceName get() = "RectangleBlock"
+val WebViewBlock.Companion.resourceName get() = "WebViewBlock"
+val TextBlock.Companion.resourceName get() = "TextBlock"
+val ImageBlock.Companion.resourceName get() = "ImageBlock"
 
 fun Block.Companion.decodeJson(json: JSONObject): Block {
     // Block has subclasses, so we need to delegate to the appropriate deserializer for each
@@ -340,12 +350,12 @@ fun Block.Companion.decodeJson(json: JSONObject): Block {
     val typeName = json.getString("__typename")
 
     return when(typeName) {
-        BarcodeBlock::class.java.simpleName -> BarcodeBlock.decodeJson(json)
-        ButtonBlock::class.java.simpleName -> ButtonBlock.decodeJson(json)
-        RectangleBlock::class.java.simpleName -> RectangleBlock.decodeJson(json)
-        WebViewBlock::class.java.simpleName -> WebViewBlock.decodeJson(json)
-        TextBlock::class.java.simpleName -> TextBlock.decodeJson(json)
-        ImageBlock::class.java.simpleName -> ImageBlock.decodeJson(json)
+        BarcodeBlock.resourceName -> BarcodeBlock.decodeJson(json)
+        ButtonBlock.resourceName -> ButtonBlock.decodeJson(json)
+        RectangleBlock.resourceName -> RectangleBlock.decodeJson(json)
+        WebViewBlock.resourceName -> WebViewBlock.decodeJson(json)
+        TextBlock.resourceName -> TextBlock.decodeJson(json)
+        ImageBlock.resourceName -> ImageBlock.decodeJson(json)
         else -> throw RuntimeException("Unsupported Block type '$typeName'.")
     }
 }

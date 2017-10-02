@@ -7,13 +7,17 @@ sealed class Region {
         val uuid: UUID,
         val major: Int,
         val minor: Int
-    ): Region()
+    ): Region() {
+        companion object
+    }
 
     data class GeofenceRegion(
         val latitude: Double,
         val longitude: Double,
         val radius: Double
-    ): Region()
+    ): Region() {
+        companion object
+    }
 
     companion object
 }

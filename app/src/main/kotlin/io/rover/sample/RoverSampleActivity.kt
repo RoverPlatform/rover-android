@@ -5,12 +5,14 @@ import android.os.Bundle
 import android.widget.Button
 import io.rover.rover.core.domain.ID
 import io.rover.rover.core.logging.log
+
+import io.rover.rover.platform.DateFormatting
 import io.rover.rover.platform.DeviceIdentification
-import io.rover.rover.platform.LocalStorage
 import io.rover.rover.platform.SharedPreferencesLocalStorage
 import io.rover.rover.services.network.AsyncTaskAndHttpUrlConnectionNetworkClient
 import io.rover.rover.services.network.NetworkResult
 import io.rover.rover.services.network.NetworkService
+import io.rover.rover.services.network.WireEncoder
 import java.net.URL
 
 class RoverSampleActivity : AppCompatActivity() {
@@ -31,6 +33,7 @@ class RoverSampleActivity : AppCompatActivity() {
             DeviceIdentification(
                 SharedPreferencesLocalStorage(applicationContext)
             ),
+            WireEncoder(DateFormatting()),
             null
         )
 

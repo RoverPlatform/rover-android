@@ -32,7 +32,7 @@ import io.rover.rover.core.domain.VerticalAlignment
 import io.rover.rover.core.domain.WebViewBlock
 import org.json.JSONArray
 import org.json.JSONObject
-import java.net.URL
+import java.net.URI
 
 fun Experience.Companion.decodeJson(json: JSONObject): Experience {
     return Experience(
@@ -67,7 +67,7 @@ fun Image.Companion.optDecodeJSON(json: JSONObject?): Image? = when(json) {
         json.getString("name"),
         json.getInt("size"),
         json.getInt("width"),
-        URL(json.getString("url"))
+        URI.create(json.getString("url"))
     )
 }
 
@@ -241,7 +241,7 @@ fun WebViewBlock.Companion.decodeJson(json: JSONObject): WebViewBlock {
         verticalAlignment = VerticalAlignment.decodeJson(json.getString("verticalAlignment")),
         width = Length.decodeJson(json.getJSONObject("width")),
         isScrollingEnabled = json.getBoolean("isScrollingEnabled"),
-        url = URL(json.getString("url"))
+        url = URI.create(json.getString("url"))
     )
 }
 
@@ -308,7 +308,7 @@ fun BlockAction.Companion.optDecodeJson(json: JSONObject?): BlockAction? {
 
     return when(typeName) {
         BlockAction.OpenUrlAction.resourceName -> BlockAction.OpenUrlAction(
-            url = URL(json.getString("url"))
+            url = URI.create(json.getString("url"))
         )
         BlockAction.GoToScreenAction.resourceName -> BlockAction.GoToScreenAction(
             experienceId = ID(json.getString("experienceId")),

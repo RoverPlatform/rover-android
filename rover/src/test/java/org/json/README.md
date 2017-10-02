@@ -9,7 +9,7 @@ will find itself running on the Oracle VM on the developer's workstation
 with a stubbed version of `android.jar`, including the org.json library.
 
 This means all attempts to do any sort of integration testing of
-the SDK code responsible for serializing JSON will fail with stub
+the Rover SDK code responsible for serializing JSON will fail with stub
 exceptions.
 
 The workaround here is to include the real Android org.json code here

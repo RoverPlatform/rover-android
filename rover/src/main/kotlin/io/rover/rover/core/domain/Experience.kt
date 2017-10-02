@@ -1,7 +1,6 @@
 package io.rover.rover.core.domain
 
-import java.net.URL
-import kotlin.reflect.KClass
+import java.net.URI
 
 /**
  * A Rover experience.
@@ -197,7 +196,7 @@ data class WebViewBlock(
     override val offsets: Offsets,
     override val opacity: Double,
     override val position: Position,
-    val url: URL,
+    val url: URI,
     override val verticalAlignment: VerticalAlignment,
     override val width: Length
 ): Block, Background, Border {
@@ -219,7 +218,7 @@ enum class BarcodeFormat(
 
 sealed class BlockAction {
     class OpenUrlAction(
-        url: URL
+        url: URI
     ): BlockAction() {
         companion object
     }
@@ -304,7 +303,7 @@ data class Image(
     val name: String,
     val size: Int,
     val width: Int,
-    val url: URL
+    val url: URI
 ) {
     companion object
 }

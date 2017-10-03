@@ -18,6 +18,8 @@ interface Background {
     val backgroundContentMode: BackgroundContentMode
     val backgroundImage: Image?
     val backgroundScale: BackgroundScale
+
+    companion object
 }
 
 enum class BackgroundContentMode(
@@ -214,11 +216,9 @@ enum class BarcodeFormat(
     companion object
 }
 
-
-
 sealed class BlockAction {
     class OpenUrlAction(
-        url: URI
+        val url: URI
     ): BlockAction() {
         companion object
     }
@@ -236,6 +236,8 @@ interface Border {
     val borderColor: Color
     val borderRadius: Int
     val borderWidth: Int
+
+    companion object
 }
 
 data class ButtonState (

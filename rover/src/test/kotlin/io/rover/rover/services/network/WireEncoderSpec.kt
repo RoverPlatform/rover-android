@@ -21,6 +21,7 @@ import io.rover.rover.core.domain.UnitOfMeasure
 import io.rover.rover.core.domain.VerticalAlignment
 import io.rover.rover.junit4ReportingWorkaround
 import io.rover.rover.platform.DateFormattingInterface
+import io.rover.rover.services.network.requests.data.encodeJson
 import org.amshove.kluent.When
 import org.amshove.kluent.any
 import org.amshove.kluent.calling
@@ -34,10 +35,10 @@ import org.json.JSONObject
 import org.junit.Assert.fail
 import org.junit.platform.runner.JUnitPlatform
 import org.junit.runner.RunWith
+import org.skyscreamer.jsonassert.JSONAssert
 import java.lang.AssertionError
 import java.net.URI
 
-@RunWith(JUnitPlatform::class)
 class WireEncoderSpec: Spek({
     given("a wire encoder") {
 
@@ -49,7 +50,7 @@ class WireEncoderSpec: Spek({
             val json = this.javaClass.classLoader.getResourceAsStream("comprehensive_experience.json").bufferedReader(Charsets.UTF_8).readText()
             val decoded = wireEncoder.decodeExperience(JSONObject(json).getJSONObject("data").getJSONObject("experience"))
 
-            it("should be amazing") {
+            it("should match some hard coded assertions") {
                 junit4ReportingWorkaround {
                     decoded.id.shouldEqual(ID("5873dee6d5bf3e002de4d70e"))
 
@@ -86,7 +87,6 @@ class WireEncoderSpec: Spek({
                             backgroundScale shouldEqual BackgroundScale.X1
                             id shouldEqual ID("SyAO1vbUe")
 
-                            System.out.println(blocks.map { it.javaClass.simpleName })
                             blocks.first().apply {
                                 javaClass shouldEqual ImageBlock::class.java
                                 this as ImageBlock
@@ -128,6 +128,23 @@ class WireEncoderSpec: Spek({
                             }
                         }
                     }
+                }
+            }
+
+            it("should be re-encodable back into equivalent JSON") {
+                // if we can roundtrip the comprehensive JSON Experience structure to the Rover
+                // SDK model representation and back accurately, then we have a pretty strong
+                // guarantee that the deserialization logic is accurate and complete.
+
+                val reWrapped = JSONObject().apply {
+                    put("data", JSONObject().apply {
+                        put("experience", decoded.encodeJson())
+                    })
+                }
+
+                val rejsonned = reWrapped.toString(4)
+                junit4ReportingWorkaround {
+                    JSONAssert.assertEquals(json, rejsonned, true)
                 }
             }
         }

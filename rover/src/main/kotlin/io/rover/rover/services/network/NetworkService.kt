@@ -55,7 +55,7 @@ class NetworkService(
             is HttpClientResponse.ConnectionFailure -> NetworkResult.Error(httpResponse.reason, true)
             is HttpClientResponse.ApplicationError -> {
                 NetworkResult.Error(
-                    NetworkError.InvalidStatusCode(httpResponse.responseCode),
+                    NetworkError.InvalidStatusCode(httpResponse.responseCode, httpResponse.reportedReason),
                     when {
                         // actually won't see any 200 codes here; already filtered about in the
                         // HttpClient response mapping.
@@ -110,13 +110,6 @@ class NetworkService(
 
         return client.networkTask(urlRequest, bodyData) { httpClientResponse ->
             val result = httpResult(request, httpClientResponse)
-
-            when (result) {
-                is NetworkResult.Error -> {
-                }
-                is NetworkResult.Success -> completionHandler?.invoke(result)
-            }
-
             completionHandler?.invoke(result)
         }
     }

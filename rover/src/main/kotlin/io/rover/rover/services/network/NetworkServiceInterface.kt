@@ -32,7 +32,7 @@ sealed class NetworkError(
     class FailedToDecodeResponseData : NetworkError("Failed to deserialize response data")
     class InvalidResponse : NetworkError("Invalid response")
     class InvalidResponseData(val serverMessage: String): NetworkError("Invalid response data: $serverMessage")
-    class InvalidStatusCode(val statusCode: Int): NetworkError("Invalid status code: $statusCode")
+    class InvalidStatusCode(val statusCode: Int, val serverMessage: String): NetworkError("Invalid status code: $statusCode.  Given reason: '$serverMessage'")
     class InvalidURL : NetworkError("Invalid URL")
 }
 

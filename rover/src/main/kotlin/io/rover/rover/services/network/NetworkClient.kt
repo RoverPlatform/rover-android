@@ -4,15 +4,25 @@ import android.os.AsyncTask
 import io.rover.rover.core.logging.log
 import java.io.BufferedInputStream
 import java.io.DataOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.net.HttpURLConnection
 import javax.net.ssl.HttpsURLConnection
 
 /**
  * An implementation of [NetworkClient] powered by Android's stock [HttpsURLConnection] and [AsyncTask].
  */
 class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
+
+    private var interceptor: AsyncTaskAndHttpUrlConnectionInterceptor? = null
+
+    fun registerInterceptor(newInterceptor: AsyncTaskAndHttpUrlConnectionInterceptor?) {
+        interceptor = newInterceptor
+    }
+
     override fun networkTask(request: HttpRequest, bodyData: String?, completionHandler: (HttpClientResponse) -> Unit): NetworkTask {
-        val asyncTask = object : AsyncTask<Void, Void, HttpClientResponse>() {
-            override fun doInBackground(vararg params: Void?): HttpClientResponse {
+        val asyncTask = object : AsyncTask<Void, Void, Unit>() {
+            override fun doInBackground(vararg params: Void?) {
                 log.d("POST $request")
                 val connection = request.url
                     .openConnection() as HttpsURLConnection
@@ -33,39 +43,86 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
                         requestMethod = "POST"
                     }
 
+                val intercepted = interceptor?.onOpened(connection, request.url.path, requestBody ?: kotlin.ByteArray(0))
+
                 // synchronously write the body to the connection.
-                DataOutputStream(connection.outputStream).write(requestBody)
+                try {
+                    DataOutputStream(connection.outputStream).write(requestBody)
+                } catch (e: IOException) {
+                    intercepted?.onError(e)
+                    completionHandler(HttpClientResponse.ConnectionFailure(
+                        e
+                    ))
+                    return
+                }
+
+                // ensure the connection is up!
+                try {
+                    connection.connect()
+                } catch (e: IOException) {
+                    intercepted?.onError(e)
+                    completionHandler(HttpClientResponse.ConnectionFailure(
+                        e
+                    ))
+                    return
+                }
+                intercepted?.onConnected()
 
                 val responseCode = connection.responseCode
 
                 log.d("POST $request : $responseCode")
 
-                return when (responseCode) {
+                val result = when (responseCode) {
                     in 200..299 -> {
-                        HttpClientResponse.Success(
-                            BufferedInputStream(
-                                connection.inputStream
+                        try {
+                            HttpClientResponse.Success(
+                                BufferedInputStream(
+                                    intercepted?.sniffStream(connection.inputStream) ?: connection.inputStream
+                                )
                             )
-                        )
+                        } catch (e: IOException) {
+                            HttpClientResponse.ConnectionFailure(
+                                e
+                            )
+                        }
                     }
                     else -> {
                         // we don't support handling redirects as anything other than an onError for now.
-                        HttpClientResponse.ApplicationError(
-                            responseCode,
-                            BufferedInputStream(
-                                connection.errorStream
-                            ).reader(Charsets.UTF_8).readText()
-                        )
+                        try {
+                            HttpClientResponse.ApplicationError(
+                                responseCode,
+                                BufferedInputStream(
+                                    intercepted?.sniffStream(connection.errorStream) ?: connection.errorStream
+                                ).reader(Charsets.UTF_8).readText()
+                            )
+                        } catch (e: IOException) {
+                            HttpClientResponse.ConnectionFailure(
+                                e
+                            )
+                        }
                     }
                 }
-            }
-
-            override fun onPostExecute(result: HttpClientResponse) {
-                super.onPostExecute(result)
                 completionHandler(result)
             }
         }
 
         return AsyncTaskNetworkTask(asyncTask)
     }
+}
+
+interface AsyncTaskAndHttpUrlConnectionInterception {
+    fun onConnected() { }
+
+    fun onError(exception: IOException) { }
+
+    fun sniffStream(source: InputStream): InputStream = source
+}
+
+/**
+ * Rover uses [HttpsURLConnection] internally to avoid dependencies on any third party HTTP client
+ * libraries.  If client code would like to sniff/intercept the connections (perhaps to power
+ * a Stetho HTTP interceptor, for instance), they may provide a single interceptor.
+ */
+interface AsyncTaskAndHttpUrlConnectionInterceptor {
+    fun onOpened(httpUrlConnection: HttpURLConnection, requestPath: String, body: ByteArray): AsyncTaskAndHttpUrlConnectionInterception
 }

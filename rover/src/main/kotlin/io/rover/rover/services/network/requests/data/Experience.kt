@@ -1,12 +1,13 @@
 package io.rover.rover.services.network.requests.data
 
-import android.graphics.Rect
+import io.rover.rover.core.domain.Background
 import io.rover.rover.core.domain.BackgroundContentMode
 import io.rover.rover.core.domain.BackgroundScale
 import io.rover.rover.core.domain.BarcodeBlock
 import io.rover.rover.core.domain.BarcodeFormat
 import io.rover.rover.core.domain.Block
 import io.rover.rover.core.domain.BlockAction
+import io.rover.rover.core.domain.Border
 import io.rover.rover.core.domain.ButtonBlock
 import io.rover.rover.core.domain.ButtonState
 import io.rover.rover.core.domain.Color
@@ -25,24 +26,34 @@ import io.rover.rover.core.domain.RectangleBlock
 import io.rover.rover.core.domain.Row
 import io.rover.rover.core.domain.Screen
 import io.rover.rover.core.domain.StatusBarStyle
+import io.rover.rover.core.domain.Text
 import io.rover.rover.core.domain.TextAlignment
 import io.rover.rover.core.domain.TextBlock
 import io.rover.rover.core.domain.TitleBarButtons
 import io.rover.rover.core.domain.UnitOfMeasure
 import io.rover.rover.core.domain.VerticalAlignment
 import io.rover.rover.core.domain.WebViewBlock
+import io.rover.rover.services.network.putProp
 import org.json.JSONArray
 import org.json.JSONObject
-import java.net.URL
+import java.net.URI
 
 fun Experience.Companion.decodeJson(json: JSONObject): Experience {
     return Experience(
         id = ID(json.getString("id")),
-        homeScreen = Screen.decodeJson(json.getJSONObject("homeScreen")),
+        homeScreenId = ID(json.getString("homeScreenId")),
         screens = json.getJSONArray("screens").getObjectIterable().map {
             Screen.decodeJson(it)
         }
     )
+}
+
+fun Experience.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, Experience::id) { it.rawValue }
+        putProp(this@encodeJson, Experience::homeScreenId) { it.rawValue }
+        putProp(this@encodeJson, Experience::screens) { JSONArray(it.map { it.encodeJson(this@encodeJson.id.rawValue) }) }
+    }
 }
 
 fun Color.Companion.decodeJson(json: JSONObject): Color {
@@ -52,6 +63,14 @@ fun Color.Companion.decodeJson(json: JSONObject): Color {
         json.getInt("blue"),
         json.getDouble("alpha")
     )
+}
+
+fun Color.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        listOf(
+            Color::red, Color::green, Color::blue, Color::alpha
+        ).forEach { putProp(this@encodeJson, it) }
+    }
 }
 
 fun BackgroundContentMode.Companion.decodeJSON(value: String): BackgroundContentMode =
@@ -68,8 +87,24 @@ fun Image.Companion.optDecodeJSON(json: JSONObject?): Image? = when(json) {
         json.getString("name"),
         json.getInt("size"),
         json.getInt("width"),
-        URL(json.getString("url"))
+        URI.create(json.getString("url"))
     )
+}
+
+fun Image?.optEncodeJson(): JSONObject? {
+    return this?.let {
+        JSONObject().apply {
+            listOf(
+                Image::height,
+                Image::isURLOptimizationEnabled,
+                Image::name,
+                Image::size,
+                Image::width
+            ).forEach { putProp(this@optEncodeJson, it) }
+
+            putProp(this@optEncodeJson, Image::url) { it.toString() }
+        }
+    }
 }
 
 fun Length.Companion.decodeJson(json: JSONObject): Length {
@@ -77,6 +112,14 @@ fun Length.Companion.decodeJson(json: JSONObject): Length {
         UnitOfMeasure.decodeJson(json.getString("unit")),
         json.getDouble("value")
     )
+}
+
+
+fun Length.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, Length::unit) { it.wireFormat }
+        putProp(this@encodeJson, Length::value)
+    }
 }
 
 fun UnitOfMeasure.Companion.decodeJson(value: String): UnitOfMeasure =
@@ -91,6 +134,15 @@ fun Insets.Companion.decodeJson(json: JSONObject): Insets {
     )
 }
 
+fun Insets.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, Insets::bottom)
+        putProp(this@encodeJson, Insets::left)
+        putProp(this@encodeJson, Insets::right)
+        putProp(this@encodeJson, Insets::top)
+    }
+}
+
 fun Offsets.Companion.decodeJson(json: JSONObject): Offsets {
     return Offsets(
         Length.decodeJson(json.getJSONObject("bottom")),
@@ -102,11 +154,29 @@ fun Offsets.Companion.decodeJson(json: JSONObject): Offsets {
     )
 }
 
+fun Offsets.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, Offsets::bottom) { it.encodeJson() }
+        putProp(this@encodeJson, Offsets::center) { it.encodeJson() }
+        putProp(this@encodeJson, Offsets::left) { it.encodeJson() }
+        putProp(this@encodeJson, Offsets::middle) { it.encodeJson() }
+        putProp(this@encodeJson, Offsets::right) { it.encodeJson() }
+        putProp(this@encodeJson, Offsets::top) { it.encodeJson() }
+    }
+}
+
 fun Font.Companion.decodeJson(json: JSONObject): Font {
     return Font(
         size = json.getInt("size"),
         weight = FontWeight.decodeJson(json.getString("weight"))
     )
+}
+
+fun Font.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, Font::size)
+        putProp(this@encodeJson, Font::weight) { it.wireFormat }
+    }
 }
 
 fun Position.Companion.decodeJson(value: String): Position =
@@ -148,8 +218,16 @@ fun ButtonState.Companion.decodeJson(json: JSONObject): ButtonState {
         textAlignment = TextAlignment.decodeJson(json.getString("textAlignment")),
         textColor = Color.decodeJson(json.getJSONObject("textColor")),
         textFont = Font.decodeJson(json.getJSONObject("textFont")),
-        textValue = json.getString("textValue")
+        text = json.getString("text")
     )
+}
+
+fun ButtonState.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        this@encodeJson.encodeBackgroundToJson(this)
+        this@encodeJson.encodeBorderToJson(this)
+        this@encodeJson.encodeTextToJson(this)
+    }
 }
 
 fun BarcodeBlock.Companion.decodeJson(json: JSONObject): BarcodeBlock {
@@ -166,7 +244,6 @@ fun BarcodeBlock.Companion.decodeJson(json: JSONObject): BarcodeBlock {
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         borderRadius = json.getInt("borderRadius"),
         borderWidth = json.getInt("borderWidth"),
-        experienceID = ID(json.getString("experienceID")),
         height = Length.decodeJson(json.getJSONObject("height")),
         id = ID(json.getString("id")),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
@@ -174,18 +251,97 @@ fun BarcodeBlock.Companion.decodeJson(json: JSONObject): BarcodeBlock {
         offsets = Offsets.decodeJson(json.getJSONObject("offsets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getString("position")),
-        rowID = ID(json.getString("rowID")),
-        screenID = ID(json.getString("screenID")),
         verticalAlignment = VerticalAlignment.decodeJson(json.getString("verticalAlignment")),
         width = Length.decodeJson(json.getJSONObject("width"))
     )
+}
+
+fun Background.encodeBackgroundToJson(json: JSONObject) {
+    json.putProp(this, Background::backgroundColor) { it.encodeJson() }
+    json.putProp(this, Background::backgroundContentMode) { it.wireFormat }
+    json.putProp(this, Background::backgroundImage) { it.optEncodeJson() ?: JSONObject.NULL }
+    json.putProp(this, Background::backgroundScale) { it.wireFormat }
+}
+
+fun Border.encodeBorderToJson(json: JSONObject) {
+    json.putProp(this, Border::borderColor) { it.encodeJson() }
+    json.putProp(this, Border::borderRadius)
+    json.putProp(this, Border::borderWidth)
+}
+
+fun Text.encodeTextToJson(json: JSONObject) {
+    json.putProp(this, Text::text)
+    json.putProp(this, Text::textAlignment) { it.wireFormat }
+    json.putProp(this, Text::textColor) { it.encodeJson() }
+    json.putProp(this, Text::textFont) { it.encodeJson() }
+}
+
+fun Block.encodeJson(experienceId: String, screenId: String, rowId: String): JSONObject {
+    return JSONObject().apply {
+        // do common fields
+        put("experienceId", experienceId)
+        put("screenId", screenId)
+        put("rowId", rowId)
+        putProp(this@encodeJson, Block::action) { it.optEncodeJson() ?: JSONObject.NULL }
+        putProp(this@encodeJson, Block::autoHeight)
+        putProp(this@encodeJson, Block::height) { it.encodeJson() }
+        putProp(this@encodeJson, Block::id) { it.rawValue }
+        putProp(this@encodeJson, Block::insets) { it.encodeJson() }
+        putProp(this@encodeJson, Block::horizontalAlignment) { it.wireFormat }
+        putProp(this@encodeJson, Block::offsets) { it.encodeJson() }
+        putProp(this@encodeJson, Block::opacity)
+        putProp(this@encodeJson, Block::position) { it.wireFormat }
+        putProp(this@encodeJson, Block::verticalAlignment) { it.wireFormat }
+        putProp(this@encodeJson, Block::width) { it.encodeJson() }
+        put("__typename", when(this@encodeJson) {
+            is BarcodeBlock -> {
+                putProp(this@encodeJson, BarcodeBlock::barcodeScale)
+                putProp(this@encodeJson, BarcodeBlock::barcodeText)
+                putProp(this@encodeJson, BarcodeBlock::barcodeFormat) { it.wireFormat }
+                this@encodeJson.encodeBackgroundToJson(this)
+                this@encodeJson.encodeBorderToJson(this)
+                BarcodeBlock.resourceName
+            }
+            is ButtonBlock -> {
+                putProp(this@encodeJson, ButtonBlock::disabled) { it.encodeJson() }
+                putProp(this@encodeJson, ButtonBlock::highlighted) { it.encodeJson() }
+                putProp(this@encodeJson, ButtonBlock::normal) { it.encodeJson() }
+                putProp(this@encodeJson, ButtonBlock::selected) { it.encodeJson() }
+                ButtonBlock.resourceName
+            }
+            is ImageBlock -> {
+                putProp(this@encodeJson, ImageBlock::image) { it.optEncodeJson() ?: JSONObject.NULL }
+                this@encodeJson.encodeBackgroundToJson(this)
+                this@encodeJson.encodeBorderToJson(this)
+                ImageBlock.resourceName
+            }
+            is WebViewBlock -> {
+                putProp(this@encodeJson, WebViewBlock::isScrollingEnabled)
+                putProp(this@encodeJson, WebViewBlock::url) { it.toString() }
+                this@encodeJson.encodeBackgroundToJson(this)
+                this@encodeJson.encodeBorderToJson(this)
+                WebViewBlock.resourceName
+            }
+            is RectangleBlock -> {
+                this@encodeJson.encodeBackgroundToJson(this)
+                this@encodeJson.encodeBorderToJson(this)
+                RectangleBlock.resourceName
+            }
+            is TextBlock -> {
+                this@encodeJson.encodeBackgroundToJson(this)
+                this@encodeJson.encodeBorderToJson(this)
+                this@encodeJson.encodeTextToJson(this)
+                TextBlock.resourceName
+            }
+            else -> throw RuntimeException("Unsupported Block type for serialization")
+        })
+    }
 }
 
 fun ButtonBlock.Companion.decodeJson(json: JSONObject): ButtonBlock {
     return ButtonBlock(
         action = BlockAction.optDecodeJson(json.optJSONObject("action")),
         autoHeight = json.getBoolean("autoHeight"),
-        experienceID = ID(json.getString("experienceID")),
         height = Length.decodeJson(json.getJSONObject("height")),
         id = ID(json.getString("id")),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
@@ -193,8 +349,6 @@ fun ButtonBlock.Companion.decodeJson(json: JSONObject): ButtonBlock {
         offsets = Offsets.decodeJson(json.getJSONObject("offsets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getString("position")),
-        rowID = ID(json.getString("rowID")),
-        screenID = ID(json.getString("screenID")),
         verticalAlignment = VerticalAlignment.decodeJson(json.getString("verticalAlignment")),
         width = Length.decodeJson(json.getJSONObject("width")),
         disabled = ButtonState.decodeJson(json.getJSONObject("disabled")),
@@ -215,7 +369,6 @@ fun RectangleBlock.Companion.decodeJson(json: JSONObject): RectangleBlock {
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         borderRadius = json.getInt("borderRadius"),
         borderWidth = json.getInt("borderWidth"),
-        experienceID = ID(json.getString("experienceID")),
         height = Length.decodeJson(json.getJSONObject("height")),
         id = ID(json.getString("id")),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
@@ -223,8 +376,6 @@ fun RectangleBlock.Companion.decodeJson(json: JSONObject): RectangleBlock {
         offsets = Offsets.decodeJson(json.getJSONObject("offsets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getString("position")),
-        rowID = ID(json.getString("rowID")),
-        screenID = ID(json.getString("screenID")),
         verticalAlignment = VerticalAlignment.decodeJson(json.getString("verticalAlignment")),
         width = Length.decodeJson(json.getJSONObject("width"))
     )
@@ -241,7 +392,6 @@ fun WebViewBlock.Companion.decodeJson(json: JSONObject): WebViewBlock {
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         borderRadius = json.getInt("borderRadius"),
         borderWidth = json.getInt("borderWidth"),
-        experienceID = ID(json.getString("experienceID")),
         height = Length.decodeJson(json.getJSONObject("height")),
         id = ID(json.getString("id")),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
@@ -249,12 +399,10 @@ fun WebViewBlock.Companion.decodeJson(json: JSONObject): WebViewBlock {
         offsets = Offsets.decodeJson(json.getJSONObject("offsets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getString("position")),
-        rowID = ID(json.getString("rowID")),
-        screenID = ID(json.getString("screenID")),
         verticalAlignment = VerticalAlignment.decodeJson(json.getString("verticalAlignment")),
         width = Length.decodeJson(json.getJSONObject("width")),
         isScrollingEnabled = json.getBoolean("isScrollingEnabled"),
-        url = URL(json.getString("url"))
+        url = URI.create(json.getString("url"))
     )
 }
 
@@ -269,7 +417,6 @@ fun TextBlock.Companion.decodeJson(json: JSONObject): TextBlock {
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         borderRadius = json.getInt("borderRadius"),
         borderWidth = json.getInt("borderWidth"),
-        experienceID = ID(json.getString("experienceID")),
         height = Length.decodeJson(json.getJSONObject("height")),
         id = ID(json.getString("id")),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
@@ -277,14 +424,12 @@ fun TextBlock.Companion.decodeJson(json: JSONObject): TextBlock {
         offsets = Offsets.decodeJson(json.getJSONObject("offsets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getString("position")),
-        rowID = ID(json.getString("rowID")),
-        screenID = ID(json.getString("screenID")),
         verticalAlignment = VerticalAlignment.decodeJson(json.getString("verticalAlignment")),
         width = Length.decodeJson(json.getJSONObject("width")),
         textAlignment = TextAlignment.decodeJson(json.getString("textAlignment")),
         textColor = Color.decodeJson(json.getJSONObject("textColor")),
         textFont = Font.decodeJson(json.getJSONObject("textFont")),
-        textValue = json.getString("textValue")
+        text = json.getString("text")
     )
 }
 
@@ -299,7 +444,6 @@ fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         borderRadius = json.getInt("borderRadius"),
         borderWidth = json.getInt("borderWidth"),
-        experienceID = ID(json.getString("experienceID")),
         height = Length.decodeJson(json.getJSONObject("height")),
         id = ID(json.getString("id")),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
@@ -307,8 +451,6 @@ fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
         offsets = Offsets.decodeJson(json.getJSONObject("offsets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getString("position")),
-        rowID = ID(json.getString("rowID")),
-        screenID = ID(json.getString("screenID")),
         verticalAlignment = VerticalAlignment.decodeJson(json.getString("verticalAlignment")),
         width = Length.decodeJson(json.getJSONObject("width")),
         image = Image.optDecodeJSON(json.optJSONObject("image"))
@@ -327,13 +469,31 @@ fun BlockAction.Companion.optDecodeJson(json: JSONObject?): BlockAction? {
 
     return when(typeName) {
         BlockAction.OpenUrlAction.resourceName -> BlockAction.OpenUrlAction(
-            experienceID = ID(json.getString("experienceID")),
-            screenID = ID(json.getString("screenID"))
+            url = URI.create(json.getString("url"))
         )
         BlockAction.GoToScreenAction.resourceName -> BlockAction.GoToScreenAction(
-            url = URL(json.getString("url"))
+            experienceId = ID(json.getString("experienceId")),
+            screenId = ID(json.getString("screenId"))
         )
         else -> throw RuntimeException("Unsupported Block Action type '$typeName'.")
+    }
+}
+
+fun BlockAction?.optEncodeJson(): JSONObject? {
+    return this?.let {
+        JSONObject().apply {
+            put("__typename", when(this@optEncodeJson) {
+                is BlockAction.OpenUrlAction -> {
+                    putProp(this@optEncodeJson, BlockAction.OpenUrlAction::url) { it.toString() }
+                    BlockAction.OpenUrlAction.resourceName
+                }
+                is BlockAction.GoToScreenAction -> {
+                    putProp(this@optEncodeJson, BlockAction.GoToScreenAction::experienceId) { it.rawValue }
+                    putProp(this@optEncodeJson, BlockAction.GoToScreenAction::screenId) { it.rawValue }
+                    BlockAction.GoToScreenAction.resourceName
+                }
+            })
+        }
     }
 }
 
@@ -368,11 +528,24 @@ fun Row.Companion.decodeJSON(json: JSONObject, namedField: String? = null): Row 
         backgroundImage = Image.optDecodeJSON(json.optJSONObject("backgroundImage")),
         backgroundScale = BackgroundScale.decodeJson(json.getString("backgroundScale")),
         blocks = json.getJSONArray("blocks").getObjectIterable().map { Block.decodeJson(it) },
-        experienceID = ID(json.getString("experienceID")),
         height = Length.decodeJson(json.getJSONObject("height")),
-        id = ID(json.getString("id")),
-        screenID = ID(json.getString("screenID"))
+        id = ID(json.getString("id"))
     )
+}
+
+fun Row.encodeJson(experienceId: String, screenId: String): JSONObject {
+    return JSONObject().apply {
+        put("experienceId", experienceId)
+        put("screenId", screenId)
+        putProp(this@encodeJson, Row::autoHeight)
+        putProp(this@encodeJson, Row::backgroundColor) { it.encodeJson() }
+        putProp(this@encodeJson, Row::backgroundContentMode) { it.wireFormat }
+        putProp(this@encodeJson, Row::backgroundImage) { it.optEncodeJson() ?: JSONObject.NULL }
+        putProp(this@encodeJson, Row::backgroundScale) { it.wireFormat }
+        putProp(this@encodeJson, Row::blocks) { JSONArray(it.map { it.encodeJson(experienceId, screenId, this@encodeJson.id.rawValue) }) }
+        putProp(this@encodeJson, Row::height) { it.encodeJson() }
+        putProp(this@encodeJson, Row::id) { it.rawValue }
+    }
 }
 
 fun Screen.Companion.decodeJson(json: JSONObject): Screen {
@@ -382,7 +555,6 @@ fun Screen.Companion.decodeJson(json: JSONObject): Screen {
         backgroundContentMode = BackgroundContentMode.decodeJson(json.getString("backgroundContentMode")),
         backgroundImage = Image.optDecodeJSON(json.optJSONObject("backgroundImage")),
         backgroundScale = BackgroundScale.decodeJson(json.getString("backgroundScale")),
-        experienceID = ID(json.getString("experienceID")),
         id = ID(json.getString("id")),
         isStretchyHeaderEnabled = json.getBoolean("isStretchyHeaderEnabled"),
         rows = json.getJSONArray("rows").getObjectIterable().map {
@@ -397,6 +569,35 @@ fun Screen.Companion.decodeJson(json: JSONObject): Screen {
         titleBarTextColor = Color.decodeJson(json.getJSONObject("titleBarTextColor")),
         useDefaultTitleBarStyle = json.getBoolean("useDefaultTitleBarStyle")
     )
+}
+
+fun Screen.encodeJson(experienceId: String): JSONObject {
+    return JSONObject().apply {
+        val primitiveProps = listOf(
+            Screen::autoColorStatusBar,
+            Screen::isStretchyHeaderEnabled,
+            Screen::titleBarText,
+            Screen::useDefaultTitleBarStyle
+        )
+
+        primitiveProps.forEach { putProp(this@encodeJson, it) }
+        put("experienceId", experienceId)
+
+        putProp(this@encodeJson, Screen::backgroundColor) { it.encodeJson() }
+        putProp(this@encodeJson, Screen::backgroundContentMode) { it.wireFormat }
+        putProp(this@encodeJson, Screen::backgroundImage) { it.optEncodeJson() ?: JSONObject.NULL }
+        putProp(this@encodeJson, Screen::backgroundScale) { it.wireFormat }
+        putProp(this@encodeJson, Screen::id) { it.rawValue }
+        putProp(this@encodeJson, Screen::rows) { JSONArray(it.map { it.encodeJson(experienceId, this@encodeJson.id.rawValue) }) }
+        putProp(this@encodeJson, Screen::statusBarStyle) { it.wireFormat }
+        putProp(this@encodeJson, Screen::statusBarColor) { it.encodeJson() }
+        putProp(this@encodeJson, Screen::titleBarBackgroundColor) { it.encodeJson() }
+        putProp(this@encodeJson, Screen::titleBarButtons) { it.wireFormat }
+        putProp(this@encodeJson, Screen::titleBarButtonColor) { it.encodeJson() }
+        putProp(this@encodeJson, Screen::titleBarTextColor) { it.encodeJson() }
+        putProp(this@encodeJson, Screen::titleBarBackgroundColor) { it.encodeJson() }
+        putProp(this@encodeJson, Screen::useDefaultTitleBarStyle)
+    }
 }
 
 fun JSONArray.getObjectIterable(): Iterable<JSONObject> {

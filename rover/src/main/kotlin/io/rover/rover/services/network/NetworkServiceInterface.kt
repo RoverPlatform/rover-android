@@ -1,6 +1,6 @@
 package io.rover.rover.services.network
 
-import io.rover.rover.core.domain.ApplicationState
+import io.rover.rover.core.domain.Device
 import io.rover.rover.core.domain.Context
 import io.rover.rover.core.domain.Event
 import io.rover.rover.core.domain.Experience
@@ -95,7 +95,7 @@ interface NetworkServiceInterface {
 
     fun fetchExperienceTask(experienceID: ID, completionHandler: ((NetworkResult<Experience>) -> Unit)?): NetworkTask
 
-    fun fetchStateTask(completionHandler: ((NetworkResult<ApplicationState>) -> Unit)?): NetworkTask
+    fun fetchDeviceTask(completionHandler: ((NetworkResult<Device>) -> Unit)?): NetworkTask
 
     fun sendEventsTask(events: List<Event>, context: Context, profileIdentifier: String?, completionHandler: ((NetworkResult<String>) -> Unit)?): NetworkTask
 }

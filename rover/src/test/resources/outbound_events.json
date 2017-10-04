@@ -4,7 +4,7 @@
     "name": "I am event",
     "id": "55c5ae35-a8e2-4049-a883-fedc55d22ba9",
     "attributes": {
-      "lol": "yum"
+      "a key": "a value"
     }
   }
 ]

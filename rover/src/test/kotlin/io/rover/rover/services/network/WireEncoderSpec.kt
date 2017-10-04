@@ -48,7 +48,7 @@ class WireEncoderSpec: Spek({
             val events = listOf(
                 Event(
                     hashMapOf(
-                        Pair("lol", "yum")
+                        Pair("a key", "a value")
                     ), "I am event", SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'", Locale.US).parse("2017-10-04T16:56Z"), UUID.fromString("55c5ae35-a8e2-4049-a883-fedc55d22ba9")
                 )
             )

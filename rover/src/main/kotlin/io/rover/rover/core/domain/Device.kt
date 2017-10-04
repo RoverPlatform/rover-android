@@ -1,6 +1,6 @@
 package io.rover.rover.core.domain
 
-data class ApplicationState(
+data class Device(
     val profile: Profile,
     val regions: Set<Region>
 ) {

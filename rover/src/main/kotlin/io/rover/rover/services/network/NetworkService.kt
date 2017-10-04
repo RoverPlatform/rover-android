@@ -2,7 +2,7 @@ package io.rover.rover.services.network
 
 import android.os.Handler
 import android.os.Looper
-import io.rover.rover.core.domain.ApplicationState
+import io.rover.rover.core.domain.Device
 import io.rover.rover.core.domain.Context
 import io.rover.rover.core.domain.Event
 import io.rover.rover.core.domain.Experience
@@ -10,7 +10,7 @@ import io.rover.rover.core.domain.ID
 import io.rover.rover.platform.DeviceIdentificationInterface
 import io.rover.rover.services.network.requests.FetchExperienceRequest
 import io.rover.rover.services.network.requests.SendEventsRequest
-import io.rover.rover.services.network.requests.data.FetchStateRequest
+import io.rover.rover.services.network.requests.data.FetchDeviceRequest
 import java.io.IOException
 import java.net.URL
 
@@ -141,8 +141,8 @@ class NetworkService(
         }
     }
 
-    override fun fetchStateTask(completionHandler: ((NetworkResult<ApplicationState>) -> Unit)?): NetworkTask {
-        val request = FetchStateRequest()
+    override fun fetchDeviceTask(completionHandler: ((NetworkResult<Device>) -> Unit)?): NetworkTask {
+        val request = FetchDeviceRequest()
         return uploadTask(request) { uploadResult ->
             mainThreadHandler.run {
                 completionHandler?.invoke(uploadResult)

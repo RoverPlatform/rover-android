@@ -8,7 +8,7 @@ data class Event(
     val attributes: HashMap<String, String>,
     val name: String,
     val timestamp: Date,
-    val uuid: UUID
+    val id: UUID
 ) {
     companion object
 }

@@ -1,10 +1,9 @@
 package io.rover.rover.services.network
 
-import io.rover.rover.core.domain.Background
 import io.rover.rover.core.domain.BackgroundContentMode
 import io.rover.rover.core.domain.BackgroundScale
-import io.rover.rover.core.domain.ButtonBlock
 import io.rover.rover.core.domain.Color
+import io.rover.rover.core.domain.Event
 import io.rover.rover.core.domain.HorizontalAlignment
 import io.rover.rover.core.domain.ID
 import io.rover.rover.core.domain.Image
@@ -13,9 +12,7 @@ import io.rover.rover.core.domain.Insets
 import io.rover.rover.core.domain.Length
 import io.rover.rover.core.domain.Offsets
 import io.rover.rover.core.domain.Position
-import io.rover.rover.core.domain.Screen
 import io.rover.rover.core.domain.StatusBarStyle
-import io.rover.rover.core.domain.TextAlignment
 import io.rover.rover.core.domain.TitleBarButtons
 import io.rover.rover.core.domain.UnitOfMeasure
 import io.rover.rover.core.domain.VerticalAlignment
@@ -32,23 +29,42 @@ import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
 import org.jetbrains.spek.api.dsl.on
 import org.json.JSONObject
-import org.junit.Assert.fail
 import org.junit.platform.runner.JUnitPlatform
 import org.junit.runner.RunWith
 import org.skyscreamer.jsonassert.JSONAssert
-import java.lang.AssertionError
 import java.net.URI
+import java.text.SimpleDateFormat
+import java.util.*
 
+@RunWith(JUnitPlatform::class)
 class WireEncoderSpec: Spek({
     given("a wire encoder") {
 
         val dateFormatting = mock<DateFormattingInterface>()
-        When.calling(dateFormatting.dateAsIso8601(any())).thenReturn("Jan 01 1970")
+        When.calling(dateFormatting.dateAsIso8601(any())).thenReturn("2017-10-04T16:56Z")
         val wireEncoder = WireEncoder(dateFormatting)
 
+        on("encoding some events") {
+            val events = listOf(
+                Event(
+                    hashMapOf(
+                        Pair("lol", "yum")
+                    ), "I am event", SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'", Locale.US).parse("2017-10-04T16:56Z"), UUID.fromString("55c5ae35-a8e2-4049-a883-fedc55d22ba9")
+                )
+            )
+
+            it("should match some pre-rendered JSON") {
+                val expectedJson = this.javaClass.classLoader.getResourceAsStream("outbound_events.json").bufferedReader(Charsets.UTF_8).readText()
+                val json = wireEncoder.encodeEventsForSending(events).toString(4)
+                junit4ReportingWorkaround {
+                    JSONAssert.assertEquals(expectedJson, json, true)
+                }
+            }
+        }
+
         on("decoding an experience") {
-            val json = this.javaClass.classLoader.getResourceAsStream("comprehensive_experience.json").bufferedReader(Charsets.UTF_8).readText()
-            val decoded = wireEncoder.decodeExperience(JSONObject(json).getJSONObject("data").getJSONObject("experience"))
+            val expectedJson = this.javaClass.classLoader.getResourceAsStream("comprehensive_experience.json").bufferedReader(Charsets.UTF_8).readText()
+            val decoded = wireEncoder.decodeExperience(JSONObject(expectedJson).getJSONObject("data").getJSONObject("experience"))
 
             it("should match some hard coded assertions") {
                 junit4ReportingWorkaround {
@@ -60,7 +76,6 @@ class WireEncoderSpec: Spek({
                     decoded.screens.count().shouldEqual(4)
 
                     // order is important!
-
                     decoded.screens.first().apply {
                         id shouldEqual ID("BkKeyw-Ux")
                         autoColorStatusBar shouldEqual true
@@ -144,7 +159,7 @@ class WireEncoderSpec: Spek({
 
                 val rejsonned = reWrapped.toString(4)
                 junit4ReportingWorkaround {
-                    JSONAssert.assertEquals(json, rejsonned, true)
+                    JSONAssert.assertEquals(expectedJson, rejsonned, true)
                 }
             }
         }

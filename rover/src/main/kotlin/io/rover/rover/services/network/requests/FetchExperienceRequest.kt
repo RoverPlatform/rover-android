@@ -226,7 +226,7 @@ class FetchExperienceRequest(
 
     override fun decodePayload(responseObject: JSONObject, wireEncoder: WireEncoderInterface): Experience {
         return wireEncoder.decodeExperience(
-            responseObject.getJSONObject("data")
+            responseObject.getJSONObject("data").getJSONObject("experience")
         )
     }
 }

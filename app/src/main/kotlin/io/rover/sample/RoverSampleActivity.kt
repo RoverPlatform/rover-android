@@ -3,16 +3,24 @@ package io.rover.sample
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
+import com.facebook.stetho.urlconnection.ByteArrayRequestEntity
+import com.facebook.stetho.urlconnection.SimpleRequestEntity
+import com.facebook.stetho.urlconnection.StethoURLConnectionManager
 import io.rover.rover.core.domain.ID
 import io.rover.rover.core.logging.log
 
 import io.rover.rover.platform.DateFormatting
 import io.rover.rover.platform.DeviceIdentification
 import io.rover.rover.platform.SharedPreferencesLocalStorage
+import io.rover.rover.services.network.AsyncTaskAndHttpUrlConnectionInterception
+import io.rover.rover.services.network.AsyncTaskAndHttpUrlConnectionInterceptor
 import io.rover.rover.services.network.AsyncTaskAndHttpUrlConnectionNetworkClient
 import io.rover.rover.services.network.NetworkResult
 import io.rover.rover.services.network.NetworkService
 import io.rover.rover.services.network.WireEncoder
+import java.io.IOException
+import java.io.InputStream
+import java.net.HttpURLConnection
 import java.net.URL
 
 class RoverSampleActivity : AppCompatActivity() {
@@ -26,9 +34,13 @@ class RoverSampleActivity : AppCompatActivity() {
         setContentView(R.layout.activity_rover_sample)
         val networkClient = AsyncTaskAndHttpUrlConnectionNetworkClient()
 
+        networkClient.registerInterceptor(
+            StethoRoverInterceptor()
+        )
+
         val networkService = NetworkService(
-            "lol auth token",
-            URL("https://api.staging.rover.io/graphql"),
+            "API key goes here",
+            URL("https://api.rover.io/graphql"),
             networkClient,
             DeviceIdentification(
                 SharedPreferencesLocalStorage(applicationContext)
@@ -38,7 +50,7 @@ class RoverSampleActivity : AppCompatActivity() {
         )
 
         testButton.setOnClickListener {
-            networkService.fetchExperienceTask(ID("donut")) { result ->
+            networkService.fetchExperienceTask(ID("59c1893c46495d0011899445")) { result ->
                 // we need a story about handling Android lifecycle
                 when(result) {
                     is NetworkResult.Success -> {
@@ -49,6 +61,33 @@ class RoverSampleActivity : AppCompatActivity() {
                     }
                 }
             }.resume()
+        }
+    }
+}
+
+/**
+ * If you want to be able to see the requests made by the Rover SDK to our API in
+ * [Stetho's](http://facebook.github.io/stetho/) network inspector, copy this class into your
+ * application and set an instance of it on the [AsyncTaskAndHttpUrlConnectionNetworkClient] with
+ * [AsyncTaskAndHttpUrlConnectionNetworkClient.registerInterceptor] (DI instructions for
+ * users to follow).
+ */
+class StethoRoverInterceptor : AsyncTaskAndHttpUrlConnectionInterceptor {
+    override fun onOpened(httpUrlConnection: HttpURLConnection, requestPath: String, body: ByteArray): AsyncTaskAndHttpUrlConnectionInterception {
+        val connManager = StethoURLConnectionManager(requestPath)
+        connManager.preConnect(httpUrlConnection, ByteArrayRequestEntity(body))
+
+        return object : AsyncTaskAndHttpUrlConnectionInterception {
+            override fun onConnected() {
+                connManager.postConnect()
+            }
+
+            override fun onError(exception: IOException) {
+                connManager.httpExchangeFailed(exception)
+            }
+
+            override fun sniffStream(source: InputStream): InputStream =
+                connManager.interpretResponseStream(source)
         }
     }
 }

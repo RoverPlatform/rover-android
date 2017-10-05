@@ -1,11 +1,11 @@
 package io.rover.rover.services.network.requests.data
 
-import io.rover.rover.core.domain.Device
+import io.rover.rover.core.domain.DeviceState
 import io.rover.rover.services.network.NetworkRequest
 import io.rover.rover.services.network.WireEncoderInterface
 import org.json.JSONObject
 
-class FetchDeviceRequest(): NetworkRequest<Device> {
+class FetchStateRequest(): NetworkRequest<DeviceState> {
     override val query: String
         get() = """
             query {
@@ -34,6 +34,6 @@ class FetchDeviceRequest(): NetworkRequest<Device> {
     override val variables: JSONObject
         get() = JSONObject()
 
-    override fun decodePayload(responseObject: JSONObject, wireEncoder: WireEncoderInterface): Device =
-        Device.decodeJson(responseObject.getJSONObject("data").getJSONObject("device"))
+    override fun decodePayload(responseObject: JSONObject, wireEncoder: WireEncoderInterface): DeviceState =
+        DeviceState.decodeJson(responseObject.getJSONObject("data").getJSONObject("device"))
 }

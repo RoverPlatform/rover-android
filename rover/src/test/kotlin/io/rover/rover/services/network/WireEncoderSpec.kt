@@ -65,7 +65,7 @@ class WireEncoderSpec: Spek({
 
         on("decoding a device") {
             val expectedJson = this.javaClass.classLoader.getResourceAsStream("comprehensive_device.json").bufferedReader(Charsets.UTF_8).readText()
-            val decoded = wireEncoder.decodeDevice(JSONObject(expectedJson).getJSONObject("data").getJSONObject("device"))
+            val decoded = wireEncoder.decodeDeviceState(JSONObject(expectedJson).getJSONObject("data").getJSONObject("device"))
             System.out.println(decoded.toString())
 
             it("should be re-encodable back into equivalent JSON") {
@@ -80,7 +80,6 @@ class WireEncoderSpec: Spek({
                 }
 
                 val rejsonned = reWrapped.toString(4)
-                System.out.println(rejsonned)
                 junit4ReportingWorkaround {
                     JSONAssert.assertEquals(expectedJson, rejsonned, true)
                 }

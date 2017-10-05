@@ -22,6 +22,6 @@ fun Event.asJson(
 
         props.forEach { putProp(this@asJson, it) }
 
-        putProp(this@asJson, Event::attributes) { JSONObject(it) }
+        putProp(this@asJson, Event::attributes) { it.encodeJson() }
     }
 }

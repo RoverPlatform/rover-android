@@ -66,34 +66,34 @@ class RoverSampleActivity : AppCompatActivity() {
 //                }
 //            }.resume()
 
-            networkService.sendEventsTask(
-                listOf(
-                    Event(
-                        hashMapOf(
-                            Pair("a key", "hi.")
-                        ),
-                        "I am event",
-                        Date(),
-                        UUID.randomUUID()
-                    )
-                ),
-                Context(
-                    null, null, null, null, null, null, null, null, null, null, null, null, null,
-                    null, null, null, null, null, null, null, null, null, null, null
-                ), null
-            ) { result ->
-                when(result) {
-                    is NetworkResult.Success -> log.e("Sent successfully!")
-                    is NetworkResult.Error -> log.e("Failed: ${result.throwable.message}")
-                }
-            }.resume()
-
-//            networkService.fetchDeviceTask { result ->
+//            networkService.sendEventsTask(
+//                listOf(
+//                    Event(
+//                        hashMapOf(
+//                            Pair("a key", "hi.")
+//                        ),
+//                        "I am event",
+//                        Date(),
+//                        UUID.randomUUID()
+//                    )
+//                ),
+//                Context(
+//                    null, null, null, null, null, null, null, null, null, null, null, null, null,
+//                    null, null, null, null, null, null, null, null, null, null, null
+//                ), null
+//            ) { result ->
 //                when(result) {
-//                    is NetworkResult.Success -> log.e("Device fetched successfully: ${result.response}")
-//                    is NetworkResult.Error -> log.e("Failed to fetch device: ${result.throwable.message}")
+//                    is NetworkResult.Success -> log.e("Sent successfully!")
+//                    is NetworkResult.Error -> log.e("Failed: ${result.throwable.message}")
 //                }
 //            }.resume()
+
+            networkService.fetchDeviceTask { result ->
+                when(result) {
+                    is NetworkResult.Success -> log.e("Device fetched successfully: ${result.response}")
+                    is NetworkResult.Error -> log.e("Failed to fetch device: ${result.throwable.message}")
+                }
+            }.resume()
         }
     }
 }

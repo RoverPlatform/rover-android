@@ -1,5 +1,6 @@
 package io.rover.rover.services.network
 
+import io.rover.rover.core.domain.AttributeValue
 import io.rover.rover.core.domain.BackgroundContentMode
 import io.rover.rover.core.domain.BackgroundScale
 import io.rover.rover.core.domain.Color
@@ -48,7 +49,7 @@ class WireEncoderSpec: Spek({
             val events = listOf(
                 Event(
                     hashMapOf(
-                        Pair("a key", "a value")
+                        Pair("a key", AttributeValue.String("a value"))
                     ), "I am event", SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'", Locale.US).parse("2017-10-04T16:56Z"), UUID.fromString("55c5ae35-a8e2-4049-a883-fedc55d22ba9")
                 )
             )
@@ -62,11 +63,35 @@ class WireEncoderSpec: Spek({
             }
         }
 
+        on("decoding a device") {
+            val expectedJson = this.javaClass.classLoader.getResourceAsStream("comprehensive_device.json").bufferedReader(Charsets.UTF_8).readText()
+            val decoded = wireEncoder.decodeDevice(JSONObject(expectedJson).getJSONObject("data").getJSONObject("device"))
+            System.out.println(decoded.toString())
+
+            it("should be re-encodable back into equivalent JSON") {
+                // if we can roundtrip the comprehensive JSON Experience structure to the Rover
+                // SDK model representation and back accurately, then we have a pretty strong
+                // guarantee that the deserialization logic is accurate and complete.
+
+                val reWrapped = JSONObject().apply {
+                    put("data", JSONObject().apply {
+                        put("device", decoded.encodeJson())
+                    })
+                }
+
+                val rejsonned = reWrapped.toString(4)
+                System.out.println(rejsonned)
+                junit4ReportingWorkaround {
+                    JSONAssert.assertEquals(expectedJson, rejsonned, true)
+                }
+            }
+        }
+
         on("decoding an experience") {
             val expectedJson = this.javaClass.classLoader.getResourceAsStream("comprehensive_experience.json").bufferedReader(Charsets.UTF_8).readText()
             val decoded = wireEncoder.decodeExperience(JSONObject(expectedJson).getJSONObject("data").getJSONObject("experience"))
 
-            it("should match some hard coded assertions") {
+            it("should match some provided assertions") {
                 junit4ReportingWorkaround {
                     decoded.id.shouldEqual(ID("5873dee6d5bf3e002de4d70e"))
 

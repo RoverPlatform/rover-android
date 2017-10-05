@@ -1,7 +1,10 @@
 package io.rover.rover.services.network.requests.data
 
 import io.rover.rover.core.domain.Profile
+import io.rover.rover.services.network.putProp
 import org.json.JSONObject
+import java.net.URI
+import java.net.URL
 
 fun Profile.Companion.decodeJson(jsonObject: JSONObject): Profile {
     return Profile(
@@ -10,8 +13,9 @@ fun Profile.Companion.decodeJson(jsonObject: JSONObject): Profile {
     )
 }
 
-fun JSONObject.toFlatAttributesHash(): Map<String, String> {
-    return this.keys().asSequence().map { key ->
-        Pair(key, this.getString(key))
-    }.associate { it }
+fun Profile.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, Profile::attributes) { it.encodeJson() }
+        putProp(this@encodeJson, Profile::identifier)
+    }
 }

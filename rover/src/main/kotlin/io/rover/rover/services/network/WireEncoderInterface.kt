@@ -1,6 +1,7 @@
 package io.rover.rover.services.network
 
 import io.rover.rover.core.domain.Context
+import io.rover.rover.core.domain.Device
 import io.rover.rover.core.domain.Event
 import io.rover.rover.core.domain.Experience
 import org.json.JSONArray
@@ -12,6 +13,8 @@ import org.json.JSONObject
  */
 interface WireEncoderInterface {
     fun decodeExperience(data: JSONObject): Experience
+
+    fun decodeDevice(data: JSONObject): Device
 
     fun encodeEventsForSending(events: List<Event>): JSONArray
 

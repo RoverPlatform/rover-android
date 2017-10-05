@@ -6,6 +6,8 @@ import android.widget.Button
 import com.facebook.stetho.urlconnection.ByteArrayRequestEntity
 import com.facebook.stetho.urlconnection.SimpleRequestEntity
 import com.facebook.stetho.urlconnection.StethoURLConnectionManager
+import io.rover.rover.core.domain.Context
+import io.rover.rover.core.domain.Event
 import io.rover.rover.core.domain.ID
 import io.rover.rover.core.logging.log
 
@@ -17,11 +19,13 @@ import io.rover.rover.services.network.AsyncTaskAndHttpUrlConnectionInterceptor
 import io.rover.rover.services.network.AsyncTaskAndHttpUrlConnectionNetworkClient
 import io.rover.rover.services.network.NetworkResult
 import io.rover.rover.services.network.NetworkService
+import io.rover.rover.services.network.NetworkServiceInterface
 import io.rover.rover.services.network.WireEncoder
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.*
 
 class RoverSampleActivity : AppCompatActivity() {
 
@@ -47,20 +51,49 @@ class RoverSampleActivity : AppCompatActivity() {
             ),
             WireEncoder(DateFormatting()),
             null
-        )
+        ) as NetworkServiceInterface
 
         testButton.setOnClickListener {
-            networkService.fetchExperienceTask(ID("59c1893c46495d0011899445")) { result ->
-                // we need a story about handling Android lifecycle
+//            networkService.fetchExperienceTask(ID("59c1893c46495d0011899445")) { result ->
+//                // we need a story about handling Android lifecycle
+//                when(result) {
+//                    is NetworkResult.Success -> {
+//                        log.e("Experience fetched successfully!")
+//                    }
+//                    is NetworkResult.Error -> {
+//                        log.e("Request failed: ${result.throwable.message}")
+//                    }
+//                }
+//            }.resume()
+
+            networkService.sendEventsTask(
+                listOf(
+                    Event(
+                        hashMapOf(
+                            Pair("a key", "hi.")
+                        ),
+                        "I am event",
+                        Date(),
+                        UUID.randomUUID()
+                    )
+                ),
+                Context(
+                    null, null, null, null, null, null, null, null, null, null, null, null, null,
+                    null, null, null, null, null, null, null, null, null, null, null
+                ), null
+            ) { result ->
                 when(result) {
-                    is NetworkResult.Success -> {
-                        log.e("Experience fetched successfully!")
-                    }
-                    is NetworkResult.Error -> {
-                        log.e("Request failed: ${result.throwable.message}")
-                    }
+                    is NetworkResult.Success -> log.e("Sent successfully!")
+                    is NetworkResult.Error -> log.e("Failed: ${result.throwable.message}")
                 }
             }.resume()
+
+//            networkService.fetchDeviceTask { result ->
+//                when(result) {
+//                    is NetworkResult.Success -> log.e("Device fetched successfully: ${result.response}")
+//                    is NetworkResult.Error -> log.e("Failed to fetch device: ${result.throwable.message}")
+//                }
+//            }.resume()
         }
     }
 }

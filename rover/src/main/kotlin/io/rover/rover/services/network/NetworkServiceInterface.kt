@@ -1,6 +1,6 @@
 package io.rover.rover.services.network
 
-import io.rover.rover.core.domain.ApplicationState
+import io.rover.rover.core.domain.DeviceState
 import io.rover.rover.core.domain.Context
 import io.rover.rover.core.domain.Event
 import io.rover.rover.core.domain.Experience
@@ -93,11 +93,11 @@ interface NetworkRequest<out TInput> {
 interface NetworkServiceInterface {
     var profileIdentifier: String?
 
-    fun fetchExperienceTask(experienceID: ID, completionHandler: ((NetworkResult<Experience>) -> Unit)?): NetworkTask
+    fun fetchExperienceTask(experienceID: ID, completionHandler: ((NetworkResult<Experience>) -> Unit)): NetworkTask
 
-    fun fetchStateTask(completionHandler: ((NetworkResult<ApplicationState>) -> Unit)?): NetworkTask
+    fun fetchStateTask(completionHandler: ((NetworkResult<DeviceState>) -> Unit)): NetworkTask
 
-    fun sendEventsTask(events: List<Event>, context: Context, profileIdentifier: String?, completionHandler: ((NetworkResult<String>) -> Unit)?): NetworkTask
+    fun sendEventsTask(events: List<Event>, context: Context, profileIdentifier: String?, completionHandler: ((NetworkResult<String>) -> Unit)): NetworkTask
 }
 
 class APIException(

@@ -1,6 +1,7 @@
 package io.rover.rover.services.network
 
 import io.rover.rover.core.domain.Context
+import io.rover.rover.core.domain.DeviceState
 import io.rover.rover.core.domain.Event
 import io.rover.rover.core.domain.Experience
 import io.rover.rover.platform.DateFormattingInterface
@@ -39,6 +40,8 @@ class WireEncoder(
         )
 
     override fun decodeExperience(data: JSONObject): Experience = Experience.decodeJson(data)
+
+    override fun decodeDeviceState(data: JSONObject): DeviceState = DeviceState.decodeJson(data)
 
     override fun decodeErrors(errors: JSONArray): List<Exception> {
         return errors.getStringIterable().map {

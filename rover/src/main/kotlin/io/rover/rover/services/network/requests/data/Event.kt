@@ -14,13 +14,14 @@ fun Event.asJson(
 ): JSONObject {
     return JSONObject().apply {
         val props = listOf(
-            Event::attributes,
             Event::name,
-            Event::uuid
+            Event::id
         )
 
         putProp(this@asJson, Event::timestamp, { dateFormatting.dateAsIso8601(it) })
 
         props.forEach { putProp(this@asJson, it) }
+
+        putProp(this@asJson, Event::attributes) { it.encodeJson() }
     }
 }

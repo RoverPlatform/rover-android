@@ -5,10 +5,10 @@ import org.json.JSONObject
 import java.util.*
 
 data class Event(
-    val attributes: HashMap<String, String>,
+    val attributes: Attributes,
     val name: String,
     val timestamp: Date,
-    val uuid: UUID
+    val id: UUID
 ) {
     companion object
 }

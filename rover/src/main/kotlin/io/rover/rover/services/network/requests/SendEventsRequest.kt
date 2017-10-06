@@ -12,11 +12,11 @@ class SendEventsRequest(
     context: Context,
     wireEncoder: WireEncoderInterface
 ) : NetworkRequest<String> {
-    override val operationName: String = "SendEvents"
+    override val operationName: String = "TrackEvents"
 
     override val query: String = """
-        SendEvents(${"\$"}events: [Event]!, ${"\$"}context: Context) {
-            sendEvents(events: ${"\$"}events, context: ${"\$"}context)
+        mutation TrackEvents(${"\$"}events: [Event]!, ${"\$"}context: Context!) {
+            trackEvents(events:${"\$"}events, context:${"\$"}context)
         }
     """
 

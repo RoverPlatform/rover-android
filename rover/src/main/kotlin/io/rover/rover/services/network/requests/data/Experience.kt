@@ -600,46 +600,27 @@ fun Screen.encodeJson(experienceId: String): JSONObject {
     }
 }
 
-fun JSONArray.getObjectIterable(): Iterable<JSONObject> {
-    return object : Iterable<JSONObject> {
+@Suppress("UNCHECKED_CAST")
+fun <T> JSONArray.getIterable(): Iterable<T> {
+    return object : Iterable<T> {
         private var counter = 0
-        override fun iterator(): Iterator<JSONObject> {
-            return object : Iterator<JSONObject> {
-                override fun hasNext(): Boolean = counter < this@getObjectIterable.length()
+        override fun iterator(): Iterator<T> {
+            return object : Iterator<T> {
+                override fun hasNext(): Boolean = counter < this@getIterable.length()
 
-                override fun next(): JSONObject {
-                    if(counter >= this@getObjectIterable.length()) {
+                override fun next(): T {
+                    if(counter >= this@getIterable.length()) {
                         throw Exception("Iterator ran past the end!")
                     }
-                    val jsonObject = this@getObjectIterable.getJSONObject(counter)
+                    val jsonObject = this@getIterable.get(counter)
                     counter++
-                    return jsonObject
+                    return jsonObject as T
                 }
-
             }
         }
-
     }
 }
 
-fun JSONArray.getStringIterable(): Iterable<String> {
-    return object : Iterable<String> {
-        private var counter = 0
-        override fun iterator(): Iterator<String> {
-            return object : Iterator<String> {
-                override fun hasNext(): Boolean = counter < this@getStringIterable.length()
+fun JSONArray.getObjectIterable(): Iterable<JSONObject> = getIterable()
 
-                override fun next(): String {
-                    if(counter >= this@getStringIterable.length()) {
-                        throw Exception("Iterator ran past the end!")
-                    }
-                    val string = this@getStringIterable.getString(counter)
-                    counter++
-                    return string
-                }
-
-            }
-        }
-
-    }
-}
+fun JSONArray.getStringIterable(): Iterable<String> = getIterable()

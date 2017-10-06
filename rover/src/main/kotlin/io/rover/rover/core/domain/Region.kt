@@ -5,8 +5,8 @@ import java.util.*
 sealed class Region {
     data class BeaconRegion(
         val uuid: UUID,
-        val major: Int,
-        val minor: Int
+        val major: Int?,
+        val minor: Int?
     ): Region() {
         companion object
     }

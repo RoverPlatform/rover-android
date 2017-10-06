@@ -83,7 +83,7 @@ class RoverSampleActivity : AppCompatActivity() {
 //                }
 //            }.resume()
 
-            networkService.fetchDeviceStateTask { result ->
+            networkService.fetchStateTask { result ->
                 when(result) {
                     is NetworkResult.Success -> log.e("DeviceState fetched successfully: ${result.response}")
                     is NetworkResult.Error -> log.e("Failed to fetch device: ${result.throwable.message}")

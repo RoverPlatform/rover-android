@@ -421,7 +421,14 @@ enum class TitleBarButtons(
 enum class UnitOfMeasure(
     val wireFormat: String
 ) {
+    /**
+     * The value is an absolute one.
+     */
     Points("POINTS"),
+
+    /**
+     * The value is a proportional one.
+     */
     Percentage("PERCENTAGE");
 
     companion object

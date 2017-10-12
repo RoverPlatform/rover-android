@@ -66,7 +66,6 @@ class WireEncoderSpec: Spek({
         on("decoding a device") {
             val expectedJson = this.javaClass.classLoader.getResourceAsStream("comprehensive_device.json").bufferedReader(Charsets.UTF_8).readText()
             val decoded = wireEncoder.decodeDeviceState(JSONObject(expectedJson).getJSONObject("data").getJSONObject("device"))
-            System.out.println(decoded.toString())
 
             it("should be re-encodable back into equivalent JSON") {
                 // if we can roundtrip the comprehensive JSON Experience structure to the Rover

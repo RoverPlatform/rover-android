@@ -2,6 +2,8 @@ package io.rover.rover.core.domain
 
 import java.net.URI
 
+import android.util.DisplayMetrics
+
 /**
  * A Rover experience.
  */
@@ -34,11 +36,34 @@ enum class BackgroundContentMode(
     companion object
 }
 
+/**
+ * Scale values define the relation between the image's pixels and logical pixels (DP on
+ * Android, points on iOS), in terms of an historic iOS-centric value, 160 dpi.  This is an
+ * iOS naming convention.  So, if your image asset is a HiDPI/Retina/xxhdpi one, use [X3].
+ * See the documentation for the three values for specifics.
+ */
 enum class BackgroundScale(
     val wireFormat: String
 ) {
+    /**
+     * Lowest density image at 160 dpi.
+     *
+     * Equivalent to Android's [DisplayMetrics.DENSITY_MEDIUM].
+     */
     X1("X1"),
+
+    /**
+     * Medium density image at 320 dpi.
+     *
+     * Equivalent to Android's [DisplayMetrics.DENSITY_XHIGH].
+     */
     X2("X2"),
+
+    /**
+     * Highest density image at 480 dpi.
+     *
+     * Equivalent to Android's [DisplayMetrics.DENSITY_XXHIGH].
+     */
     X3("X3");
 
     companion object

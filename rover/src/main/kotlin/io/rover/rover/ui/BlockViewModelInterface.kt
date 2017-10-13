@@ -30,7 +30,5 @@ interface BlockViewModelInterface : LayoutableViewModel {
 
     val verticalAlignment: Alignment
 
-    fun frame(bounds: Rect): Rect
-
     fun width(bounds: Rect): Float
 }

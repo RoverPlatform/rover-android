@@ -9,6 +9,4 @@ import android.graphics.Rect
  */
 interface RowViewModelInterface : LayoutableViewModel {
     fun blockViewModels(): List<BlockViewModelInterface>
-
-    fun frame(bounds: Rect): Rect
 }

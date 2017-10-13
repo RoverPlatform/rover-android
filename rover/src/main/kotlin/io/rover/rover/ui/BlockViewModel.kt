@@ -59,7 +59,7 @@ open class BlockViewModel(
             x.toInt(),
             y.toInt(),
             (width + x).toInt(),
-            (height - y).toInt()
+            (y - height).toInt()
         )
     }
 

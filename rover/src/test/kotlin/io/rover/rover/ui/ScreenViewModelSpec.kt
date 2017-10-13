@@ -27,42 +27,71 @@ class ScreenViewModelSpec: Spek({
                 )
             )
         )
+        val screenViewModel = ScreenViewModel(screen)
 
-        given("a screen view model") {
-            val screenViewModel = ScreenViewModel(screen)
+        on("rendering") {
+            val rendered = screenViewModel.render(
+                40
+            )
 
-            on("rendering") {
-                val rendered = screenViewModel.render(
-                    40
+            it("should put the directly on top of the row") {
+                // we have two
+                rendered[0].shouldMatch(
+                    Rect(0, 0, 40, -10),
+                    RowViewModel::class.java
                 )
 
-                it("should have laid out the row and block") {
-                    System.out.println(rendered.toString())
+                rendered[1].shouldMatch(
+                    Rect(0, 0, 40, -10),
+                    // TODO: change to RectangleBlockViewModel
+                    BlockViewModel::class.java
+                )
+            }
+        }
+    }
 
-                    rendered[0].shouldMatch(
-                        Rect(0, 0, 40, -10),
-                        RowViewModel::class.java
+    given("a screen with two rows") {
+        val screen = ModelFactories.emptyScreen().copy(
+            rows = listOf(
+                ModelFactories.emptyRow().copy(
+                    height = Length(UnitOfMeasure.Points, 10.0),
+                    blocks = listOf(
+                        ModelFactories.emptyRectangleBlock().copy(
+                            height = Length(UnitOfMeasure.Points, 10.0)
+                        )
                     )
+                ),
+                ModelFactories.emptyRow().copy(
+                    height = Length(UnitOfMeasure.Points, 42.0)
+                )
+            )
+        )
+        val screenViewModel = ScreenViewModel(screen)
 
-                    rendered[1].shouldMatch(
-                        Rect(0, 0, 40, -10),
-                        BlockViewModel::class.java
-                    )
-//                    rendered.shouldEqual(
-//                        listOf(
-//                            Pair(
-//                                Rect(0, 0, 40, -10),
-//                                any()
-//                            ),
-//                            Pair(
-//                                Rect(0, 0, 40, 10),
-//                                any()
-//                            )
-//                        )
-//                    )
+        on("rendering") {
+            val rendered = screenViewModel.render(
+                40
+            )
 
-                    System.out.println("lay out passed")
-                }
+            it("should put the directly on top of the row") {
+                // we have two
+                rendered[0].shouldMatch(
+                    Rect(0, 0, 40, -10),
+                    RowViewModel::class.java
+                )
+
+                rendered[1].shouldMatch(
+                    Rect(0, 0, 40, -10),
+                    // TODO: change to RectangleBlockViewModel
+                    BlockViewModel::class.java
+                )
+
+                rendered[2].shouldMatch(
+                    // check that the rows are stacked properly: 0 - 10 - 42 = -52
+                    Rect(0, -10, 40, -52),
+                    // TODO: change to RectangleBlockViewModel
+                    RowViewModel::class.java
+                )
             }
         }
     }

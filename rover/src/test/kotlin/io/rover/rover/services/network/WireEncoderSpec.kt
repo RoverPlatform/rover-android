@@ -30,14 +30,13 @@ import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
 import org.jetbrains.spek.api.dsl.on
 import org.json.JSONObject
-import org.junit.platform.runner.JUnitPlatform
 import org.junit.runner.RunWith
 import org.skyscreamer.jsonassert.JSONAssert
 import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
 
-@RunWith(JUnitPlatform::class)
+// @RunWith(JUnitPlatform::class)
 class WireEncoderSpec: Spek({
     given("a wire encoder") {
 

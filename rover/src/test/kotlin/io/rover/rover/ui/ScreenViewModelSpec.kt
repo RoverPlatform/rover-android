@@ -11,10 +11,8 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
 import org.jetbrains.spek.api.dsl.on
-import org.junit.platform.runner.JUnitPlatform
 import org.junit.runner.RunWith
 
-@RunWith(JUnitPlatform::class)
 class ScreenViewModelSpec: Spek({
     given("a basic screen with one row with a rectangle block") {
         val screen = ModelFactories.emptyScreen().copy(

@@ -1054,6 +1054,7 @@ public class Rover implements EventSubmitTask.Callback {
                 .setContentTitle(message.getTitle())
                 .setContentText(message.getText())
                 .setContentIntent(contentIntent)
+                .setStyle(new NotificationCompat.BigTextStyle())
                 .setDeleteIntent(deleteIntent);
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);

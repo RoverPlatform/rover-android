@@ -17,7 +17,7 @@ enum class Alignment {
 }
 
 /**
- *
+ * A view model for Blocks (particularly, the dynamic layout thereof).
  */
 interface BlockViewModelInterface : LayoutableViewModel {
     fun stackedHeight(bounds: Rect): Float

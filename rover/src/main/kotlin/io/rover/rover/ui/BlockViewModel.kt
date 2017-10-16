@@ -6,9 +6,6 @@ import io.rover.rover.core.domain.HorizontalAlignment
 import io.rover.rover.core.domain.Position
 import io.rover.rover.core.domain.VerticalAlignment
 
-/**
- * A view model for Blocks (particularly, the dynamic layout thereof);
- */
 open class BlockViewModel(
     private val block: Block
 ): BlockViewModelInterface {

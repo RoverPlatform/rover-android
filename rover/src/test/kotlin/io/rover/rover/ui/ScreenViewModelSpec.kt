@@ -89,7 +89,6 @@ class ScreenViewModelSpec: Spek({
                 rendered[2].shouldMatch(
                     // check that the rows are stacked properly: 0 - 10 - 42 = -52
                     Rect(0, -10, 40, -52),
-                    // TODO: change to RectangleBlockViewModel
                     RowViewModel::class.java
                 )
             }

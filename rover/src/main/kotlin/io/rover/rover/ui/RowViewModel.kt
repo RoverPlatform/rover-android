@@ -4,9 +4,6 @@ import android.graphics.Rect
 import io.rover.rover.core.domain.Row
 
 
-/**
- *
- */
 class RowViewModel(
     private val row: Row
 ) : RowViewModelInterface {

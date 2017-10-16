@@ -8,10 +8,10 @@ import io.rover.rover.core.domain.Screen
 
 /**
  * A [RecyclerView.LayoutManager] that can position Rover UI elements (namely, all the [Row]s in
- * a [Screen] and the various varieties of [Block]s they can contain within a [RecyclerView].  It
- * does
+ * a [Screen] and the various varieties of [Block]s they can contain within a [RecyclerView].
  *
- * Most of the heavy lifting is done in an implementation of [RoverLayout].
+ * Most of the heavy lifting is done in the implementations of the view models.  See
+ * [ScreenViewModelInterface] for details.
  */
 class BlockAndRowLayoutManager : RecyclerView.LayoutManager() {
     override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams = RecyclerView.LayoutParams(

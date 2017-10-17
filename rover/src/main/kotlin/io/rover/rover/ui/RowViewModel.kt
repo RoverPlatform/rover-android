@@ -1,17 +1,20 @@
 package io.rover.rover.ui
 
 import android.graphics.Rect
+import io.rover.rover.core.domain.RectangleBlock
 import io.rover.rover.core.domain.Row
 
 
 class RowViewModel(
     private val row: Row
 ) : RowViewModelInterface {
+    override val viewType: ViewType = ViewType.Row
+
     override fun blockViewModels(): List<BlockViewModelInterface> {
         return row.blocks.map {
             // TODO: type mapping goes here
-            BlockViewModel(
-                it
+            RectangleBlockViewModel(
+                it as RectangleBlock // TODO only supporting RectangleBlock for now
             )
         }
     }
@@ -22,12 +25,11 @@ class RowViewModel(
         val width = bounds.width()
         val height = height(bounds)
 
-
         return Rect(
             x,
             y,
             x + width,
-            y - height.toInt() // TODO: the right rounding/place for this type coercion?
+            y + height.toInt() // TODO: the right rounding/place for this type coercion?
         )
     }
 

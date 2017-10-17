@@ -1,5 +1,6 @@
 package io.rover.rover.services.network
 
+import android.annotation.SuppressLint
 import android.os.AsyncTask
 import io.rover.rover.core.logging.log
 import java.io.BufferedInputStream
@@ -21,7 +22,10 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
     }
 
     override fun networkTask(request: HttpRequest, bodyData: String?, completionHandler: (HttpClientResponse) -> Unit): NetworkTask {
-        val asyncTask = object : AsyncTask<Void, Void, Unit>() {
+        // @SuppressLint turned on because this does not have any Android contexts, activities, or
+        // anything else in scope.
+        val asyncTask = @SuppressLint("StaticFieldLeak")
+        object : AsyncTask<Void, Void, Unit>() {
             override fun doInBackground(vararg params: Void?) {
                 log.d("POST $request")
                 val connection = request.url

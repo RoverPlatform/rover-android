@@ -6,7 +6,7 @@ import io.rover.rover.core.domain.HorizontalAlignment
 import io.rover.rover.core.domain.Position
 import io.rover.rover.core.domain.VerticalAlignment
 
-open class BlockViewModel(
+abstract class BlockViewModel(
     private val block: Block
 ): BlockViewModelInterface {
     override fun stackedHeight(bounds: Rect): Float = when(block.position) {
@@ -21,8 +21,8 @@ open class BlockViewModel(
         get() = Insets(
             block.insets.top,
             block.insets.left,
-            0 - block.insets.bottom,
-            0 - block.insets.right
+            block.insets.bottom,
+            block.insets.right
         )
 
     override val isStacked: Boolean
@@ -56,7 +56,7 @@ open class BlockViewModel(
             x.toInt(),
             y.toInt(),
             (width + x).toInt(),
-            (y - height).toInt()
+            (y + height).toInt()
         )
     }
 

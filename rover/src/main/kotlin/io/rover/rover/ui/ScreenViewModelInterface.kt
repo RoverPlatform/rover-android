@@ -20,7 +20,20 @@ import io.rover.rover.core.domain.Screen
  * Primarily used by [BlockAndRowLayoutManager].
  */
 interface ScreenViewModelInterface {
-    fun render(widthDp: Int): List<Pair<Rect, LayoutableViewModel>>
+    /**
+     * Do the computationally expensive operation of laying out the entire graph of UI view models.
+     */
+    fun render(widthDp: Int): Layout
 
     fun rowViewModels(): List<RowViewModelInterface>
 }
+
+/**
+ * A sequence of [LayoutableViewModel]s in two-dimensional space.
+ */
+typealias CoordinatesAndViewModels = List<Pair<Rect, LayoutableViewModel>>
+
+data class Layout(
+    val coordinatesAndViewModels: CoordinatesAndViewModels,
+    val height: Int
+)

@@ -71,28 +71,35 @@ class BlockAndRowLayoutManager(
         // it seems like we're not responsible for preventing scroll past the beginning, just the
         // end.
 
+        log.v("current scrollPosition $scrollPosition")
+
         // deflect the state variable by the appropriate amount (taking into account the edges)
         val deflection = if (dy > 0) {
+            // going down
+            log.v("going down")
+            if((scrollPosition + height + dy) > layout.height) {
+                // would scroll past end of the content.
+                log.v("now at bottom. scroll position: $scrollPosition")
+                return (scrollPosition + height + dy) - layout.height
+            } else {
+                // a safe amount of scroll.
+                dy
+            }
+        } else {
             // going up
+            log.v("going up")
             if((scrollPosition + dy) <= 0) {
                 // would scroll back past the beginning.
                 0
             } else {
                 dy
             }
-        } else {
-            // going down
-            if((scrollPosition + dy) > layout.height) {
-                // would scroll past end of the content.
-                layout.height
-            } else {
-                // a safe amount of scroll.
-                dy
-            }
         }
 
         // apply the vertical translation to all the currently live views
-        offsetChildrenVertical(deflection)
+        // offsetChildrenVertical(deflection)
+
+        log.v("Deflecting by: $deflection")
 
         // Side-effect: update position state with the deflection.
         scrollPosition += deflection
@@ -110,8 +117,8 @@ class BlockAndRowLayoutManager(
         // put all the views in scrap (for now; performance optimizations may be possible here, too?)
         detachAndScrapAttachedViews(recycler)
 
-        val verticalHighBound = scrollPosition
-        val verticalLowBound = scrollPosition + height
+        val verticalTopBound = scrollPosition
+        val verticalBottomBound = scrollPosition + height
 
         // now we iterate through the entire display list.
         //
@@ -120,31 +127,21 @@ class BlockAndRowLayoutManager(
 
         // note: we infer a naturally increasing z-order.
         layout.coordinatesAndViewModels.forEachIndexed { index, (viewPosition, viewModel) ->
-            val visible = viewPosition.bottom > verticalHighBound && viewPosition.top < verticalLowBound
+            val visible = viewPosition.bottom > verticalTopBound && viewPosition.top < verticalBottomBound
 
             if(visible) {
                 val view = recycler.getViewForPosition(index)
 
-                log.v("Adding view ${view.javaClass.simpleName}")
                 addView(view)
 
                 view.measure(viewPosition.width(), viewPosition.height())
 
-                log.v("... and measured width/height for it was ${view.width}x${view.height}")
-
-                log.v("... gonna lay it out to: " + listOf(
-                    viewPosition.left,
-                    scrollPosition + viewPosition.top,
-                    viewPosition.right,
-                    scrollPosition + viewPosition.bottom
-                ).toString())
-
                 layoutDecorated(
                     view,
                     viewPosition.left,
-                    scrollPosition + viewPosition.top,
+                    viewPosition.top - scrollPosition,
                     viewPosition.right,
-                    scrollPosition + viewPosition.bottom
+                    viewPosition.bottom - scrollPosition
                 )
             }
         }

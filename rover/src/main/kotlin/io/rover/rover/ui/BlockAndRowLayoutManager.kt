@@ -5,6 +5,8 @@ import io.rover.rover.core.domain.Block
 import io.rover.rover.core.domain.Row
 import io.rover.rover.core.domain.Screen
 import io.rover.rover.core.logging.log
+import io.rover.rover.ui.viewmodels.Layout
+import io.rover.rover.ui.viewmodels.ScreenViewModelInterface
 import kotlin.properties.Delegates
 
 /**
@@ -67,7 +69,6 @@ class BlockAndRowLayoutManager(
         // deflect the state variable by the appropriate amount (taking into account the edges)
         val deflection = if (dy > 0) {
             // going down
-            log.v("going down")
             if((scrollPosition + height + dy) > layout.height) {
                 // would scroll past end of the content.
                 // determine amount needed to scroll to absolute end, but no further.
@@ -91,8 +92,6 @@ class BlockAndRowLayoutManager(
         // apply the vertical translation to all the currently live views
         // This will only be necessary when fill() is optimized to not scrap views unnecessarily.
         // offsetChildrenVertical(deflection)
-
-        log.v("Deflecting by: $deflection")
 
         // Side-effect: update position state with the deflection.
         scrollPosition += deflection

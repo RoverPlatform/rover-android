@@ -2,7 +2,7 @@ package io.rover.rover.ui.views
 
 import android.content.Context
 import android.util.AttributeSet
-import io.rover.rover.ui.RowViewModelInterface
+import io.rover.rover.ui.viewmodels.RowViewModelInterface
 
 class RowView: LayoutableView<RowViewModelInterface> {
     constructor(context: Context?) : super(context)

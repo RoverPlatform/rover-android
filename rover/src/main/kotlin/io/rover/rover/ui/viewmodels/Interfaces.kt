@@ -1,8 +1,44 @@
-package io.rover.rover.ui
+package io.rover.rover.ui.viewmodels
 
 import android.graphics.Rect
+import io.rover.rover.core.domain.Background
 import io.rover.rover.core.domain.Experience
 import io.rover.rover.core.domain.Screen
+import io.rover.rover.ui.types.Alignment
+import io.rover.rover.ui.types.Insets
+import io.rover.rover.ui.types.Layout
+
+/**
+ * This interface is exposed by View Models that have support for a background.  Equivalent to
+ * the [Background] domain model interface.
+ */
+interface BackgroundViewModelInterface {
+    val backgroundColor: Int
+}
+
+/**
+ * A view model for Blocks (particularly, the dynamic layout thereof).
+ */
+interface BlockViewModelInterface : LayoutableViewModel {
+    fun stackedHeight(bounds: Rect): Float
+
+    val insets: Insets
+
+    val isStacked: Boolean
+
+    val opacity: Float
+
+    val verticalAlignment: Alignment
+
+    fun width(bounds: Rect): Float
+}
+
+/**
+ * View model for Rover UI blocks.
+ */
+interface RowViewModelInterface : LayoutableViewModel, BackgroundViewModelInterface {
+    fun blockViewModels(): List<BlockViewModelInterface>
+}
 
 /**
  * View Model for a Screen.  Used in [Experience]s.
@@ -28,12 +64,7 @@ interface ScreenViewModelInterface {
     fun rowViewModels(): List<RowViewModelInterface>
 }
 
-/**
- * A sequence of [LayoutableViewModel]s in two-dimensional space.
- */
-typealias CoordinatesAndViewModels = List<Pair<Rect, LayoutableViewModel>>
+interface RectangleBlockViewModelInterface: BlockViewModelInterface, BackgroundViewModelInterface
 
-data class Layout(
-    val coordinatesAndViewModels: CoordinatesAndViewModels,
-    val height: Int
-)
+
+

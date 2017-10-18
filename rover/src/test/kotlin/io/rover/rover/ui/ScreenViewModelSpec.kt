@@ -3,15 +3,16 @@ package io.rover.rover.ui
 import android.graphics.Rect
 import io.rover.rover.ModelFactories
 import io.rover.rover.core.domain.Length
-import io.rover.rover.core.domain.Screen
 import io.rover.rover.core.domain.UnitOfMeasure
-import org.amshove.kluent.any
+import io.rover.rover.ui.viewmodels.LayoutableViewModel
+import io.rover.rover.ui.viewmodels.RectangleBlockViewModel
+import io.rover.rover.ui.viewmodels.RowViewModel
+import io.rover.rover.ui.viewmodels.ScreenViewModel
 import org.amshove.kluent.shouldEqual
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
 import org.jetbrains.spek.api.dsl.on
-import org.junit.runner.RunWith
 
 class ScreenViewModelSpec: Spek({
     given("a basic screen with one row with a rectangle block") {

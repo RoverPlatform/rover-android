@@ -1,8 +1,9 @@
-package io.rover.rover.ui
+package io.rover.rover.ui.viewmodels
 
 import android.graphics.Rect
 import io.rover.rover.core.domain.RectangleBlock
 import io.rover.rover.core.domain.Row
+import io.rover.rover.ui.measuredAgainst
 
 
 class RowViewModel(

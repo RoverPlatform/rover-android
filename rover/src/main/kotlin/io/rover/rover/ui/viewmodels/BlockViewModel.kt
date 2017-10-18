@@ -1,12 +1,11 @@
-package io.rover.rover.ui
+package io.rover.rover.ui.viewmodels
 
 import android.graphics.Rect
-import io.rover.rover.core.domain.Background
 import io.rover.rover.core.domain.Block
 import io.rover.rover.core.domain.HorizontalAlignment
 import io.rover.rover.core.domain.Position
 import io.rover.rover.core.domain.VerticalAlignment
-import io.rover.rover.ui.views.asAndroidColor
+import io.rover.rover.ui.measuredAgainst
 
 abstract class BlockViewModel(
     private val block: Block

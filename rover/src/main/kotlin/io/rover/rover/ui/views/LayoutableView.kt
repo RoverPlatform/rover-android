@@ -3,7 +3,7 @@ package io.rover.rover.ui.views
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
-import io.rover.rover.ui.LayoutableViewModel
+import io.rover.rover.ui.viewmodels.LayoutableViewModel
 
 
 abstract class LayoutableView<VM: LayoutableViewModel> : View {

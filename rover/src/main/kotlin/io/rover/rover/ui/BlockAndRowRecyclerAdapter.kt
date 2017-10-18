@@ -1,8 +1,10 @@
 package io.rover.rover.ui
 
 import android.support.v7.widget.RecyclerView
-import android.view.View
 import android.view.ViewGroup
+import io.rover.rover.ui.viewmodels.Layout
+import io.rover.rover.ui.viewmodels.LayoutableViewModel
+import io.rover.rover.ui.viewmodels.ViewType
 import io.rover.rover.ui.views.LayoutableView
 import io.rover.rover.ui.views.RectangleBlockView
 import io.rover.rover.ui.views.RowView

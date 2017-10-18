@@ -1,4 +1,4 @@
-package io.rover.rover.ui
+package io.rover.rover.ui.viewmodels
 
 import android.graphics.Rect
 
@@ -24,17 +24,4 @@ interface LayoutableViewModel {
      * instance of [LayoutableViewModel] in its render list.
      */
     val viewType: ViewType
-}
-
-/**
- * The set of possible types of view that can be laid out in the [BlockAndRowRecyclerAdapter].
- */
-enum class ViewType {
-    Row,
-    Rectangle,
-//    Text,
-//    Image,
-//    WebView,
-//    Barcode,
-//    Button
 }

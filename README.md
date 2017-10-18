@@ -5,10 +5,9 @@
   - Min Android SDK 18
   - Firebase account that is [configured for cloud messaging](https://github.com/RoverPlatform/rover-android/wiki/FCM-Setup)
   - Firebase [integrated into your app](https://firebase.google.com/docs/android/setup).
-  - Three Google Play Services libraries [integrated into your app](https://developers.google.com/android/guides/setup), namely:
+  - Two Google Play Services libraries [integrated into your app](https://developers.google.com/android/guides/setup), namely:
     - play-services-location
     - play-services-nearby
-    - firebase-messaging
   
 ## Installing the Library
 

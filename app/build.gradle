@@ -23,29 +23,31 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
 
-    // The Rover SDK requires two components of the Android support library.  There are a few
-    // extra steps if your app is building against an older Android build SDK.  This example app
-    // builds against Android SDK 23 instead of SDK 26 used by the Rover SDK to help illustrate
-    // how to deal with this.
-    // The Rover SDK is able to work with the concomitant versions of Google's
-    // Support libraries intended for versions of the Android SDK
-    // older than 26, but because it is not possible to express that effectively to Gradle's
+    // The Rover SDK requires two components of the Android support library.  Because of this,
+    // there are a few extra steps if your app is building against an older Android build SDK.
+    // This example app builds against Android SDK 23 instead of SDK 26 used by the Rover SDK to
+    // help demonstrate how to deal with this.
+    // Android Support Library major versions must match the build SDK being used for your app.
+    // The Rover SDK is indeed able to work with any of the support libraries matching the build
+    // SDK used by your app, but because it is not possible to express that effectively to Gradle's
     // dependency resolver, it is necessary to override the transitive requests for these
-    // dependencies from the Rover SDK with the ones appropriate to your Build SDK.  If this is not
-    // done, the request for the newer Support libraries will propagate transitively from the Rover
-    // SDK into your app and fail your build by mismatching with your Android build SDK.
+    // dependencies coming from the Rover SDK with the ones appropriate to your Build SDK.  If this
+    // is not done, the request for the newer Support libraries will propagate transitively from
+    // the Rover SDK into your app and fail your build by mismatching with your Android build SDK.
+    //
     // Note that this method is not necessary in the case where the reverse is true: if your app is
     // specifying newer versions of the Build SDK/Support Libraries, then Gradle's default
     // prefer-latest conflict resolution behaviour will be appropriate.
     compile(project(':rover')) {
+        // and here is the exclusion itself as explained above:
         exclude group: 'com.android.support'
     }
     // and then import the versions of support-v4, appcompat-v7, and recyclerview-v7 appropriate
-    // to your choice of Build SDK.
+    // to your choice of your Android build SDK (ie., their major versions match your build SDK, given
+    // here as 23).
     compile 'com.android.support:support-v4:23.4.0'
     compile 'com.android.support:appcompat-v7:23.4.0'
     compile 'com.android.support:recyclerview-v7:23.4.0'
-
 
     // Your app must import the desired Google Play Services itself.
     compile 'com.google.android.gms:play-services-location:11.0.4'
@@ -53,12 +55,5 @@ dependencies {
     compile 'com.google.firebase:firebase-messaging:11.0.4'
     compile 'com.android.support:design:23.4.0'
 }
-
-//configurations.all {
-//    resolutionStrategy {
-//        failOnVersionConflict()
-//    }
-//}
-
 
 apply plugin: 'com.google.gms.google-services'

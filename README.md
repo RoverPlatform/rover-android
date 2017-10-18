@@ -22,6 +22,20 @@ compile 'io.rover.library:rover:1.15.5'
 
 // COMING SOON
 
+### Dealing with Support Library Conflicts
+
+The Rover SDK depends on a few of the Android support libraries.  Because of
+this, if your app is building against an older Android build SDK than 26, you
+may need to add an exclusion for `com.android.support` when importing the Rover SDK:
+
+```
+compile 'io.rover.library:rover:1.15.5' {
+    exclude group: 'com.android.support'
+}
+```
+
+See the example app's [app/build.gradle](app/build.gradle) for more details.
+
 ## Intializing the SDK
 
 The Rover SDK **MUST** be initialized inside the Application base class `onCreate` method. If your Android application doesn't already have an Application base class, follow [these](https://developer.android.com/reference/android/app/Application.html) instructions to create one.

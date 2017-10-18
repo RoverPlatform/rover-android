@@ -43,6 +43,13 @@ class BlockAndRowLayoutManager(
     )
 
     override fun onLayoutChildren(recycler: RecyclerView.Recycler, state: RecyclerView.State) {
+        log.d("Expensive onLayoutChildren() called.")
+
+        // call the expensive operation of having the screen view model (and nested view models)
+        // lay out all of their view models into an abstract representation of their positions on the
+        // display.  This also flattens out all the rows and blocks into a single dimensional
+        // sequence.
+        // We then persist this as in-memory state
         layout = screenViewModel.render(
             this.width
         )
@@ -56,22 +63,6 @@ class BlockAndRowLayoutManager(
             // can't scroll at all; content shorter than the recycler view!
             return 0
         }
-
-        // the LinearLayoutManager assumes that layouts basically trust & assume the layouts
-        // set their own dimensions, like may be reasonably expected of standard Android views.
-        // However, we have our rendered layout graph specify the dimensions in addition to the
-        // positions........  this doesn't seem out of scope for a LayoutManager, though!
-        // perhaps we should be calling measure for children (I think API probably requires it
-        // anyway), but with our precomputed sizes just as bounds?
-
-        // a few thoughts about Google's layout managers: they use LayoutState for both passing parameters and holding state! BLEH
-
-        // it seems like the layout manager is responsible for keeping track of the position state?
-
-        // it seems like we're not responsible for preventing scroll past the beginning, just the
-        // end.
-
-        log.v("current scrollPosition $scrollPosition")
 
         // deflect the state variable by the appropriate amount (taking into account the edges)
         val deflection = if (dy > 0) {
@@ -127,7 +118,8 @@ class BlockAndRowLayoutManager(
         // TODO: (future optimization possible here; build a range data structure to enable us to only iterate over views likely to be relevant to
         // current display position)
 
-        // note: we infer a naturally increasing z-order.
+        // note: we infer a naturally increasing z-order; Android treats order of addition as
+        // z-order, and we process through our blocks-and-rows seequentially.
         layout.coordinatesAndViewModels.forEachIndexed { index, (viewPosition, viewModel) ->
             val visible = viewPosition.bottom > verticalTopBound && viewPosition.top < verticalBottomBound
 

@@ -2,7 +2,6 @@ package io.rover.rover.ui.views
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.View
 import io.rover.rover.ui.RowViewModelInterface
 
 class RowView: LayoutableView<RowViewModelInterface> {
@@ -11,5 +10,10 @@ class RowView: LayoutableView<RowViewModelInterface> {
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
+    private val viewBackground = ViewBackground(this)
+
     override var viewModel: RowViewModelInterface? = null
+        set(viewModel) {
+            viewBackground.backgroundViewModel = viewModel
+        }
 }

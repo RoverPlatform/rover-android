@@ -7,7 +7,7 @@ import io.rover.rover.core.domain.Row
 
 class RowViewModel(
     private val row: Row
-) : RowViewModelInterface {
+) : RowViewModelInterface, BackgroundViewModelInterface by BackgroundViewModel(row) {
     override val viewType: ViewType = ViewType.Row
 
     override fun blockViewModels(): List<BlockViewModelInterface> {
@@ -40,7 +40,4 @@ class RowViewModel(
             row.height.measuredAgainst(bounds.height().toFloat())
         }
     }
-
-    // TODO: BackgroundViewModel implementation.
-
 }

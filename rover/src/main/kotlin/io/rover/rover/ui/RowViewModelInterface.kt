@@ -4,9 +4,7 @@ import android.graphics.Rect
 
 /**
  * View model for Rover UI blocks.
- *
- * Blocks
  */
-interface RowViewModelInterface : LayoutableViewModel {
+interface RowViewModelInterface : LayoutableViewModel, BackgroundViewModelInterface {
     fun blockViewModels(): List<BlockViewModelInterface>
 }

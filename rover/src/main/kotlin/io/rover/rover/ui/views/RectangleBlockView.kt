@@ -1,12 +1,25 @@
 package io.rover.rover.ui.views
 
 import android.content.Context
-import android.graphics.Color
 import android.util.AttributeSet
 import android.view.View
-import io.rover.rover.ui.BlockViewModelInterface
+import io.rover.rover.ui.BackgroundViewModelInterface
 import io.rover.rover.ui.RectangleBlockViewModel
 
+interface ViewBackgroundInterface {
+    var backgroundViewModel: BackgroundViewModelInterface?
+}
+
+class ViewBackground(
+    private val view: View
+): ViewBackgroundInterface {
+    override var backgroundViewModel: BackgroundViewModelInterface? = null
+        set(viewModel) {
+            if(viewModel != null) {
+                view.setBackgroundColor(viewModel.backgroundColor)
+            }
+        }
+}
 
 class RectangleBlockView: LayoutableView<RectangleBlockViewModel> {
     constructor(context: Context?) : super(context)
@@ -14,11 +27,10 @@ class RectangleBlockView: LayoutableView<RectangleBlockViewModel> {
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
+    private val viewBackground = ViewBackground(this)
+
     override var viewModel: RectangleBlockViewModel? = null
-        set(value) {
-            if(value != null) {
-                setBackgroundColor(value.backgroundColor.asAndroidColor())
-            }
-            field = value
+        set(viewModel) {
+            viewBackground.backgroundViewModel = viewModel
         }
 }

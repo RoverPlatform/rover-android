@@ -79,24 +79,26 @@ class BlockAndRowLayoutManager(
             log.v("going down")
             if((scrollPosition + height + dy) > layout.height) {
                 // would scroll past end of the content.
-                log.v("now at bottom. scroll position: $scrollPosition")
-                return (scrollPosition + height + dy) - layout.height
+                // determine amount needed to scroll to absolute end, but no further.
+                layout.height - height - scrollPosition
             } else {
                 // a safe amount of scroll.
                 dy
             }
         } else {
             // going up
-            log.v("going up")
             if((scrollPosition + dy) <= 0) {
                 // would scroll back past the beginning.
-                0
+                // instead determine the amount needed to go back to the absolute beginning, but no
+                // further.
+                0 - scrollPosition
             } else {
                 dy
             }
         }
 
         // apply the vertical translation to all the currently live views
+        // This will only be necessary when fill() is optimized to not scrap views unnecessarily.
         // offsetChildrenVertical(deflection)
 
         log.v("Deflecting by: $deflection")

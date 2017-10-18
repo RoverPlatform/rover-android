@@ -42,7 +42,6 @@ android {
     }
 }
 
-
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
@@ -61,15 +60,7 @@ dependencies {
     provided 'com.google.android.gms:play-services-location:11.0.4'
     provided 'com.google.android.gms:play-services-nearby:11.0.4'
     provided 'com.google.firebase:firebase-messaging:11.0.4'
-
-
 }
-
-//configurations.all {
-//    resolutionStrategy {
-//        failOnVersionConflict()
-//    }
-//}
 
 apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
 apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'

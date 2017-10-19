@@ -51,7 +51,7 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
     private BlockProvider mBlockProvider;
     private float density;
     private int verticalScrollOffset = 0;
-    private int bottomLimit = 0;
+    private Double totalLayoutHeight = 0.0;
     private Map<Integer,Rect> mClipBounds;
     private Map<Integer,Rect> mLayouts;
 
@@ -106,23 +106,40 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
     @Override
     public int scrollVerticallyBy(int dy, RecyclerView.Recycler recycler, RecyclerView.State state) {
         // TODO: CHECK FOR STATE
-        int travel = 0;
         int verticalSpace = getVerticalSpace();
 
-        if(dy + verticalScrollOffset < 0 /* topLimit */){
-            travel = verticalScrollOffset;
-            verticalScrollOffset = 0;
+        if (totalLayoutHeight <= verticalSpace) {
+            // can't scroll at all; content shorter than the recycler view!
+            return 0;
         }
-        else if(dy + verticalScrollOffset + verticalSpace > bottomLimit){
-            //travel = bottomLimit - verticalScrollOffset - verticalSpace;
-            //verticalScrollOffset = bottomLimit - verticalSpace;
+
+        // deflect the state variable by the appropriate amount (taking into account the edges)
+        int deflection;
+        if (dy > 0) {
+            // going down
+            if((verticalScrollOffset + verticalSpace + dy) > totalLayoutHeight) {
+                // would scroll past end of the content.
+                // determine amount needed to scroll to absolute end, but no further.
+                deflection = totalLayoutHeight.intValue() - verticalSpace - verticalScrollOffset;
+            } else {
+                // a safe amount of scroll.
+                deflection = dy;
+            }
+        } else {
+            // going up
+            if((verticalScrollOffset + dy) <= 0) {
+                // would scroll back past the beginning.
+                // instead determine the amount needed to go back to the absolute beginning, but no
+                // further.
+                deflection = 0 - verticalScrollOffset;
+            } else {
+                deflection = dy;
+            }
         }
-        else{
-            travel = dy;
-            verticalScrollOffset += dy;
-        }
+
+        verticalScrollOffset += deflection;
         fillVisibleChildren(recycler);
-        return travel;
+        return deflection;
     }
 
     private void prepareLayout() {
@@ -169,8 +186,9 @@ public class BlockLayoutManager extends RecyclerView.LayoutManager{
             }
 
             height += rowHeight;
-            bottomLimit = Math.max(bottomLimit, (int)height);
         }
+
+        totalLayoutHeight = height;
     }
 
     private void fillVisibleChildren(RecyclerView.Recycler recycler) {

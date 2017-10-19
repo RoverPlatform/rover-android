@@ -37,14 +37,20 @@ class ScreenViewModel(
         width: Float,
         results: Layout = Layout(listOf(), 0f)
     ): Layout {
-        // height is given as 0 here.  Might be OK, but...
-        // ... TODO: if autoheight is not set, and row height is set as proportional (percentage) it will collapse to a height of 0.  However, not clear what behaviour would be expected in that case anyway.
         if(remainingRowViewModels.isEmpty()) {
             return results
         }
-        val rowBounds = RectF(0f, results.height, width, 0f)
 
         val row = remainingRowViewModels.first()
+
+        val rowBounds = RectF(
+            0f,
+            results.height,
+            width,
+            // the bottom value of the bounds is not used; the rows expand themselves as defined
+            // or needed by autoheight content.
+            0.0f
+        )
 
         val rowFrame = row.frame(rowBounds)
 
@@ -52,7 +58,7 @@ class ScreenViewModel(
 
         val rowHead = listOf(Pair(rowFrame, row))
 
-        val blocks = mapBlocksToRectDisplayList(row.blockViewModels(), rowBounds, 0.0f)
+        val blocks = mapBlocksToRectDisplayList(row.blockViewModels(), rowFrame, 0.0f)
 
         return mapRowsToRectDisplayList(tail, width, Layout(results.coordinatesAndViewModels + rowHead + blocks, results.height + row.frame(rowBounds).height()))
     }

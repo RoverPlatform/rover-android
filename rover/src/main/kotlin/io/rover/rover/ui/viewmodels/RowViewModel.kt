@@ -1,5 +1,6 @@
 package io.rover.rover.ui.viewmodels
 
+import android.graphics.Rect
 import android.graphics.RectF
 import io.rover.rover.core.domain.RectangleBlock
 import io.rover.rover.core.domain.Row
@@ -21,6 +22,15 @@ class RowViewModel(
         }
     }
 
+    /**
+     * Returns the position (with origin being the bounds) that this view model should
+     * be laid out.  Note that the returned rect is relative to the same space as the given [bounds]
+     * rect, but not relative to the [bounds] rect itself.
+     *
+     * Also note that the [RectF.bottom] value of the [bounds] will be ignored; rows are entirely
+     * responsible for defining their own heights, and are not height-constrained by the containing
+     * [ScreenViewModel].
+     */
     override fun frame(bounds: RectF): RectF {
         val x = bounds.left
         val y = bounds.top

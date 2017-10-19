@@ -447,7 +447,7 @@ enum class UnitOfMeasure(
     val wireFormat: String
 ) {
     /**
-     * The value is an absolute one.
+     * The value is an absolute one, in display independent pixels (dp on Android, points on iOS).
      */
     Points("POINTS"),
 

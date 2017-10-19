@@ -5,6 +5,7 @@ import android.graphics.RectF
 import io.rover.rover.ModelFactories
 import io.rover.rover.core.domain.Length
 import io.rover.rover.core.domain.UnitOfMeasure
+import io.rover.rover.core.domain.VerticalAlignment
 import io.rover.rover.ui.viewmodels.LayoutableViewModel
 import io.rover.rover.ui.viewmodels.RectangleBlockViewModel
 import io.rover.rover.ui.viewmodels.RowViewModel
@@ -74,7 +75,7 @@ class ScreenViewModelSpec: Spek({
                 40f
             )
 
-            it("should put the directly on top of the row") {
+            it("should put the block directly on top of the row") {
                 // we have two
                 rendered.coordinatesAndViewModels[0].shouldMatch(
                     RectF(0f, 0f, 40f, 10f),
@@ -111,6 +112,37 @@ class ScreenViewModelSpec: Spek({
                 )
             )
         )
+    }
+
+    given("a screen with a row with a vertically centered block within") {
+        val screen = ModelFactories.emptyScreen().copy(
+            rows = listOf(
+                ModelFactories.emptyRow().copy(
+                    height = Length(UnitOfMeasure.Points, 100.0),
+                    blocks = listOf(
+                        ModelFactories.emptyRectangleBlock().copy(
+                            width = Length(UnitOfMeasure.Points, 10.0),
+                            height = Length(UnitOfMeasure.Points, 20.0),
+                            verticalAlignment = VerticalAlignment.Middle
+                        )
+                    )
+                )
+            )
+        )
+        val screenViewModel = ScreenViewModel(screen)
+
+        on("rendering") {
+            val rendered = screenViewModel.render(
+                300f
+            )
+
+            it("should center the block inside the row") {
+                rendered.coordinatesAndViewModels.first().shouldMatch(
+                    RectF(0f, 40f, 300f, 60f),
+                    RectangleBlockViewModel::class.java
+                )
+            }
+        }
     }
 })
 

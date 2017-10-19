@@ -14,9 +14,12 @@ interface LayoutableViewModel {
     // wrap the [Background] and [Border] model interfaces.
 
     /**
-     * Returns the position (within the bounds, particularly the width) that this view model should
+     * Returns the position (with origin being the bounds) that this view model should
      * be laid out.  Note that the returned rect is relative to the same space as the given [bounds]
      * rect, but not relative to the [bounds] rect itself.
+     *
+     * Note that some types will not honour all the given constraints, particularly on the
+     * [Rect.bottom] element of the bounds.
      */
     fun frame(bounds: RectF): RectF
 

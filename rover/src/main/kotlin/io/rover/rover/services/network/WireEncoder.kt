@@ -7,12 +7,11 @@ import io.rover.rover.core.domain.Experience
 import io.rover.rover.platform.DateFormattingInterface
 import io.rover.rover.services.network.requests.data.asJson
 import io.rover.rover.services.network.requests.data.decodeJson
+import io.rover.rover.services.network.requests.data.getObjectIterable
 import io.rover.rover.services.network.requests.data.getStringIterable
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.reflect.KProperty1
-
-
 
 /**
  * Responsible for marshalling Data Transfer objects to and from
@@ -44,8 +43,9 @@ class WireEncoder(
     override fun decodeDeviceState(data: JSONObject): DeviceState = DeviceState.decodeJson(data)
 
     override fun decodeErrors(errors: JSONArray): List<Exception> {
-        return errors.getStringIterable().map {
-            Exception(it)
+        return errors.getObjectIterable().map {
+            // TODO: change to a better type than just Exception.  perhaps one with best-effort decoding of the GraphQL errors object.
+            Exception(it.toString())
         }
     }
 }

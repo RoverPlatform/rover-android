@@ -2,8 +2,8 @@ package io.rover.rover.services.network
 
 import android.os.Handler
 import android.os.Looper
-import io.rover.rover.core.domain.DeviceState
 import io.rover.rover.core.domain.Context
+import io.rover.rover.core.domain.DeviceState
 import io.rover.rover.core.domain.Event
 import io.rover.rover.core.domain.Experience
 import io.rover.rover.core.domain.ID
@@ -117,7 +117,7 @@ class NetworkService(
     override fun fetchExperienceTask(experienceID: ID, completionHandler: ((NetworkResult<Experience>) -> Unit)): NetworkTask {
         val request = FetchExperienceRequest(experienceID)
         return uploadTask(request) { experienceResult ->
-            mainThreadHandler.run {
+            mainThreadHandler.post {
                 completionHandler.invoke(experienceResult)
             }
         }
@@ -135,7 +135,7 @@ class NetworkService(
             wireEncoder
         )
         return uploadTask(request) { uploadResult ->
-            mainThreadHandler.run {
+            mainThreadHandler.post {
                 completionHandler.invoke(uploadResult)
             }
         }
@@ -144,7 +144,7 @@ class NetworkService(
     override fun fetchStateTask(completionHandler: ((NetworkResult<DeviceState>) -> Unit)): NetworkTask {
         val request = FetchStateRequest()
         return uploadTask(request) { uploadResult ->
-            mainThreadHandler.run {
+            mainThreadHandler.post {
                 completionHandler.invoke(uploadResult)
             }
         }

@@ -1,6 +1,8 @@
 package io.rover.rover.ui
 
+import android.graphics.Rect
 import android.support.v7.widget.RecyclerView
+import android.util.DisplayMetrics
 import io.rover.rover.core.domain.Block
 import io.rover.rover.core.domain.Row
 import io.rover.rover.core.domain.Screen
@@ -19,7 +21,8 @@ import kotlin.properties.Delegates
  * This layout manager is a bit unusual compared to the stock ones: it's driven by data.
  */
 class BlockAndRowLayoutManager(
-    private val screenViewModel: ScreenViewModelInterface
+    private val screenViewModel: ScreenViewModelInterface,
+    private val displayMetrics: DisplayMetrics
 ) : RecyclerView.LayoutManager() {
     private var layout : Layout by Delegates.notNull()
 
@@ -28,6 +31,8 @@ class BlockAndRowLayoutManager(
      * The current scroll position of the recycler view (specifically, the top of the RecyclerView's
      * 'viewport' into the list contents).  This is kept as state because it is
      * ultimately the LayoutManager's responsibility to know the position.
+     *
+     * This value is in display-dependent pixels, not display-independent logical pixels.
      *
      * Note that this value is always 0 or more.
      *
@@ -61,7 +66,10 @@ class BlockAndRowLayoutManager(
     override fun scrollVerticallyBy(dy: Int, recycler: RecyclerView.Recycler, state: RecyclerView.State): Int {
         // now we need to figure out how much we can scroll by, and if indeed dy would bring
         // us out-of-bounds and cap it.
-        if (layout.height <= height) {
+
+        val layoutDisplayHeight = dpAsPx(layout.height)
+
+        if (layoutDisplayHeight <= height) {
             // can't scroll at all; content shorter than the recycler view!
             return 0
         }
@@ -69,10 +77,10 @@ class BlockAndRowLayoutManager(
         // deflect the state variable by the appropriate amount (taking into account the edges)
         val deflection = if (dy > 0) {
             // going down
-            if((scrollPosition + height + dy) > layout.height) {
+            if((scrollPosition + height + dy) > layoutDisplayHeight) {
                 // would scroll past end of the content.
                 // determine amount needed to scroll to absolute end, but no further.
-                layout.height - height - scrollPosition
+                layoutDisplayHeight - height - scrollPosition
             } else {
                 // a safe amount of scroll.
                 dy
@@ -120,23 +128,48 @@ class BlockAndRowLayoutManager(
         // note: we infer a naturally increasing z-order; Android treats order of addition as
         // z-order, and we process through our blocks-and-rows seequentially.
         layout.coordinatesAndViewModels.forEachIndexed { index, (viewPosition, viewModel) ->
-            val visible = viewPosition.bottom > verticalTopBound && viewPosition.top < verticalBottomBound
+            val displayPosition = viewPosition.dpAsPx()
 
+            val visible = displayPosition.bottom > verticalTopBound && displayPosition.top < verticalBottomBound
             if(visible) {
                 val view = recycler.getViewForPosition(index)
-
                 addView(view)
-
-                view.measure(viewPosition.width(), viewPosition.height())
+                view.measure(displayPosition.width(), displayPosition.height())
 
                 layoutDecorated(
                     view,
-                    viewPosition.left,
-                    viewPosition.top - scrollPosition,
-                    viewPosition.right,
-                    viewPosition.bottom - scrollPosition
+                    displayPosition.left,
+                    displayPosition.top - scrollPosition,
+                    displayPosition.right,
+                    displayPosition.bottom - scrollPosition
                 )
             }
         }
+    }
+
+    /**
+     * Convert display-independent DP metrics to an appropriate value for this display.
+     *
+     * See "Converting DP Units to Pixel Units" on
+     * https://developer.android.com/guide/practices/screens_support.html
+     */
+    private fun dpAsPx(dp: Int): Int {
+        val scale = displayMetrics.density
+        return (dp * scale + 0.5f).toInt()
+    }
+
+    /**
+     * Convert a [Rect] of display-independent DP metrics to an appropriate value for this display.
+     *
+     * See "Converting DP Units to Pixel Units" on
+     * https://developer.android.com/guide/practices/screens_support.html
+     */
+    private fun Rect.dpAsPx(): Rect {
+        return Rect(
+            dpAsPx(left),
+            dpAsPx(top),
+            dpAsPx(right),
+            dpAsPx(bottom)
+        )
     }
 }

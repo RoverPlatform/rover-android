@@ -6,6 +6,8 @@ import io.rover.rover.core.domain.HorizontalAlignment
 import io.rover.rover.core.domain.Position
 import io.rover.rover.core.domain.VerticalAlignment
 import io.rover.rover.ui.measuredAgainst
+import io.rover.rover.ui.types.Alignment
+import io.rover.rover.ui.types.Insets
 
 abstract class BlockViewModel(
     private val block: Block

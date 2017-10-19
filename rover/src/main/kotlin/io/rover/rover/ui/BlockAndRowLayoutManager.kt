@@ -5,7 +5,7 @@ import io.rover.rover.core.domain.Block
 import io.rover.rover.core.domain.Row
 import io.rover.rover.core.domain.Screen
 import io.rover.rover.core.logging.log
-import io.rover.rover.ui.viewmodels.Layout
+import io.rover.rover.ui.types.Layout
 import io.rover.rover.ui.viewmodels.ScreenViewModelInterface
 import kotlin.properties.Delegates
 

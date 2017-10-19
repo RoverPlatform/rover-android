@@ -2,6 +2,7 @@ package io.rover.rover.ui.viewmodels
 
 import android.graphics.Rect
 import io.rover.rover.core.domain.Screen
+import io.rover.rover.ui.types.Layout
 
 class ScreenViewModel(
     private val screen: Screen

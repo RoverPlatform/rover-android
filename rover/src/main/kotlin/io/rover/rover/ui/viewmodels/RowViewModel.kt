@@ -4,6 +4,7 @@ import android.graphics.Rect
 import io.rover.rover.core.domain.RectangleBlock
 import io.rover.rover.core.domain.Row
 import io.rover.rover.ui.measuredAgainst
+import io.rover.rover.ui.types.ViewType
 
 
 class RowViewModel(

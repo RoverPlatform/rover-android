@@ -1,6 +1,7 @@
 package io.rover.rover.ui.viewmodels
 
 import android.graphics.Rect
+import io.rover.rover.ui.types.ViewType
 
 /**
  * Any View Model that implements this interface can be laid out in in the vertically

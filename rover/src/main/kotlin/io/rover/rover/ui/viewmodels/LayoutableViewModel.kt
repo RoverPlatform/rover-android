@@ -1,6 +1,7 @@
 package io.rover.rover.ui.viewmodels
 
 import android.graphics.Rect
+import android.graphics.RectF
 import io.rover.rover.ui.types.ViewType
 
 /**
@@ -17,7 +18,7 @@ interface LayoutableViewModel {
      * be laid out.  Note that the returned rect is relative to the same space as the given [bounds]
      * rect, but not relative to the [bounds] rect itself.
      */
-    fun frame(bounds: Rect): Rect
+    fun frame(bounds: RectF): RectF
 
     /**
      * There is a constrained set of classes that will implement [LayoutableViewModel].

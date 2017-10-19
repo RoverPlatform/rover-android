@@ -1,6 +1,7 @@
 package io.rover.rover.ui.viewmodels
 
 import android.graphics.Rect
+import android.graphics.RectF
 import io.rover.rover.core.domain.Block
 import io.rover.rover.core.domain.HorizontalAlignment
 import io.rover.rover.core.domain.Position
@@ -12,7 +13,7 @@ import io.rover.rover.ui.types.Insets
 abstract class BlockViewModel(
     private val block: Block
 ): BlockViewModelInterface {
-    override fun stackedHeight(bounds: Rect): Float = when(block.position) {
+    override fun stackedHeight(bounds: RectF): Float = when(block.position) {
         Position.Floating -> 0.0f
         Position.Stacked -> {
             // TODO: what about if the block top and bottom values are proportional (percentage?)
@@ -44,7 +45,7 @@ abstract class BlockViewModel(
             VerticalAlignment.Top -> Alignment.Top
         }
 
-    override fun frame(bounds: Rect): Rect {
+    override fun frame(bounds: RectF): RectF {
         val x = x(bounds)
         val y = y(bounds)
         val width = width(bounds)
@@ -55,11 +56,11 @@ abstract class BlockViewModel(
         // points on iOS) rendering.  (interestingly, iOS' CGPoint and CGRect
         // do, suggesting that one can address a proportion smaller than a logical pixel on that
         // platform)
-        return Rect(
-            x.toInt(),
-            y.toInt(),
-            (width + x).toInt(),
-            (y + height).toInt()
+        return RectF(
+            x,
+            y,
+            (width + x),
+            (y + height)
         )
     }
 
@@ -71,12 +72,12 @@ abstract class BlockViewModel(
      * In the base class implementation [BlockViewModel.intrinsicHeight] returns 0; the base
      * block type has no content.
      */
-    open fun intrinsicHeight(bounds: Rect): Float = 0.0f
+    open fun intrinsicHeight(bounds: RectF): Float = 0.0f
 
     /**
      * Computes the Block's width.
      */
-    fun height(bounds: Rect): Float = when(block.verticalAlignment) {
+    fun height(bounds: RectF): Float = when(block.verticalAlignment) {
         VerticalAlignment.Fill -> {
             val top = block.offsets.top.measuredAgainst(bounds.height().toFloat())
             val bottom = block.offsets.bottom.measuredAgainst(bounds.height().toFloat())
@@ -94,7 +95,7 @@ abstract class BlockViewModel(
     /**
      * Computes the Block's width.
      */
-    override fun width(bounds: Rect): Float {
+    override fun width(bounds: RectF): Float {
         val width = when(block.horizontalAlignment) {
             HorizontalAlignment.Fill -> {
                 val left = block.offsets.left.measuredAgainst(bounds.width().toFloat())
@@ -111,7 +112,7 @@ abstract class BlockViewModel(
     /**
      * Computes the Block's absolute horizontal coordinate in the containing [RowViewModel]s relative space.
      */
-    private fun x(bounds: Rect): Float {
+    private fun x(bounds: RectF): Float {
         val width = width(bounds)
 
         return when(block.horizontalAlignment) {
@@ -124,7 +125,7 @@ abstract class BlockViewModel(
     /**
      * Computes the Block's absolute vertical coordinate in the containing [RowViewModel]s relative space.
      */
-    private fun y(bounds: Rect): Float {
+    private fun y(bounds: RectF): Float {
         val height = height(bounds)
 
         return when(block.verticalAlignment) {

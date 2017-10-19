@@ -1,9 +1,11 @@
 package io.rover.rover.ui.viewmodels
 
 import android.graphics.Rect
+import android.graphics.RectF
 import io.rover.rover.core.domain.Background
 import io.rover.rover.core.domain.Experience
 import io.rover.rover.core.domain.Screen
+import io.rover.rover.ui.BlockAndRowLayoutManager
 import io.rover.rover.ui.types.Alignment
 import io.rover.rover.ui.types.Insets
 import io.rover.rover.ui.types.Layout
@@ -20,7 +22,7 @@ interface BackgroundViewModelInterface {
  * A view model for Blocks (particularly, the dynamic layout thereof).
  */
 interface BlockViewModelInterface : LayoutableViewModel {
-    fun stackedHeight(bounds: Rect): Float
+    fun stackedHeight(bounds: RectF): Float
 
     val insets: Insets
 
@@ -30,7 +32,7 @@ interface BlockViewModelInterface : LayoutableViewModel {
 
     val verticalAlignment: Alignment
 
-    fun width(bounds: Rect): Float
+    fun width(bounds: RectF): Float
 }
 
 /**
@@ -59,7 +61,13 @@ interface ScreenViewModelInterface {
     /**
      * Do the computationally expensive operation of laying out the entire graph of UI view models.
      */
-    fun render(widthDp: Int): Layout
+    fun render(widthDp: Float): Layout
+
+    /**
+     * Retrieve a list of the view models in the order they'd be laid out (guaranteed to be in
+     * the same order as returned by [render]), but without the layout itself being performed.
+     */
+    fun gather(): List<LayoutableViewModel>
 
     fun rowViewModels(): List<RowViewModelInterface>
 }

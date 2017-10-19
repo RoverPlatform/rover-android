@@ -1,6 +1,6 @@
 package io.rover.rover.ui.viewmodels
 
-import android.graphics.Rect
+import android.graphics.RectF
 import io.rover.rover.core.domain.RectangleBlock
 import io.rover.rover.core.domain.Row
 import io.rover.rover.ui.measuredAgainst
@@ -21,25 +21,25 @@ class RowViewModel(
         }
     }
 
-    override fun frame(bounds: Rect): Rect {
+    override fun frame(bounds: RectF): RectF {
         val x = bounds.left
         val y = bounds.top
         val width = bounds.width()
         val height = height(bounds)
 
-        return Rect(
+        return RectF(
             x,
             y,
             x + width,
-            y + height.toInt() // TODO: the right rounding/place for this type coercion?
+            y + height
         )
     }
 
-    private fun height(bounds: Rect): Float {
+    private fun height(bounds: RectF): Float {
         return if(row.autoHeight) {
             blockViewModels().map { it.stackedHeight(bounds) }.sum()
         } else {
-            row.height.measuredAgainst(bounds.height().toFloat())
+            row.height.measuredAgainst(bounds.height())
         }
     }
 }

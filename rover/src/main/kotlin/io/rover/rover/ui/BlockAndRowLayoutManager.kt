@@ -1,6 +1,7 @@
 package io.rover.rover.ui
 
 import android.graphics.Rect
+import android.graphics.RectF
 import android.support.v7.widget.RecyclerView
 import android.util.DisplayMetrics
 import io.rover.rover.core.domain.Block
@@ -58,7 +59,7 @@ class BlockAndRowLayoutManager(
         // sequence.
         // We then persist this as in-memory state
         layout = screenViewModel.render(
-            this.width
+            pxAsDp(this.width)
         )
         fill(recycler)
     }
@@ -153,9 +154,24 @@ class BlockAndRowLayoutManager(
      * See "Converting DP Units to Pixel Units" on
      * https://developer.android.com/guide/practices/screens_support.html
      */
+    private fun dpAsPx(dp: Float): Int {
+        val scale = displayMetrics.density
+        return (dp * scale + 0.5f).toInt()
+    }
+
+    /**
+     * Convert display-independent DP metrics to an appropriate value for this display.
+     *
+     * See [Converting DP Units to Pixel Units](https://developer.android.com/guide/practices/screens_support.html)
+     */
     private fun dpAsPx(dp: Int): Int {
         val scale = displayMetrics.density
         return (dp * scale + 0.5f).toInt()
+    }
+
+    private fun pxAsDp(pixels: Int): Float {
+        val scale = displayMetrics.density
+        return pixels / scale
     }
 
     /**
@@ -164,7 +180,7 @@ class BlockAndRowLayoutManager(
      * See "Converting DP Units to Pixel Units" on
      * https://developer.android.com/guide/practices/screens_support.html
      */
-    private fun Rect.dpAsPx(): Rect {
+    private fun RectF.dpAsPx(): Rect {
         return Rect(
             dpAsPx(left),
             dpAsPx(top),

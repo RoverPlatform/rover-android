@@ -1,6 +1,7 @@
 package io.rover.rover.ui
 
 import android.graphics.Rect
+import android.graphics.RectF
 import io.rover.rover.ModelFactories
 import io.rover.rover.core.domain.Length
 import io.rover.rover.core.domain.UnitOfMeasure
@@ -32,18 +33,18 @@ class ScreenViewModelSpec: Spek({
 
         on("rendering") {
             val rendered = screenViewModel.render(
-                40
+                40f
             )
 
             it("should put the directly on top of the row") {
                 // we have two
                 rendered.coordinatesAndViewModels[0].shouldMatch(
-                    Rect(0, 0, 40, 10),
+                    RectF(0f, 0f, 40f, 10f),
                     RowViewModel::class.java
                 )
 
                 rendered.coordinatesAndViewModels[1].shouldMatch(
-                    Rect(0, 0, 40, 10),
+                    RectF(0f, 0f, 40f, 10f),
                     RectangleBlockViewModel::class.java
                 )
             }
@@ -70,24 +71,24 @@ class ScreenViewModelSpec: Spek({
 
         on("rendering") {
             val rendered = screenViewModel.render(
-                40
+                40f
             )
 
             it("should put the directly on top of the row") {
                 // we have two
                 rendered.coordinatesAndViewModels[0].shouldMatch(
-                    Rect(0, 0, 40, 10),
+                    RectF(0f, 0f, 40f, 10f),
                     RowViewModel::class.java
                 )
 
                 rendered.coordinatesAndViewModels[1].shouldMatch(
-                    Rect(0, 0, 40, 10),
+                    RectF(0f, 0f, 40f, 10f),
                     RectangleBlockViewModel::class.java
                 )
 
                 rendered.coordinatesAndViewModels[2].shouldMatch(
                     // check that the rows are stacked properly: 0 + 10 + 42 = 52
-                    Rect(0, 10, 40, 52),
+                    RectF(0f, 10f, 40f, 52f),
                     RowViewModel::class.java
                 )
             }
@@ -113,8 +114,8 @@ class ScreenViewModelSpec: Spek({
     }
 })
 
-fun Pair<Rect, LayoutableViewModel>.shouldMatch(
-    position: Rect,
+fun Pair<RectF, LayoutableViewModel>.shouldMatch(
+    position: RectF,
     type: Class<out LayoutableViewModel>
 ) {
     this.first.shouldEqual(position)

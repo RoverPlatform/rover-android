@@ -5,5 +5,9 @@ package io.rover.rover.ui.types
  */
 data class Layout(
     val coordinatesAndViewModels: CoordinatesAndViewModels,
-    val height: Int
+
+    /**
+     * The total height (in dp) of the entire layout from start to finish.
+     */
+    val height: Float
 )

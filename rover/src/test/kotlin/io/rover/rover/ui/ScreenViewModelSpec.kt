@@ -3,7 +3,9 @@ package io.rover.rover.ui
 import android.graphics.Rect
 import android.graphics.RectF
 import io.rover.rover.ModelFactories
+import io.rover.rover.core.domain.HorizontalAlignment
 import io.rover.rover.core.domain.Length
+import io.rover.rover.core.domain.Offsets
 import io.rover.rover.core.domain.UnitOfMeasure
 import io.rover.rover.core.domain.VerticalAlignment
 import io.rover.rover.ui.viewmodels.LayoutableViewModel
@@ -96,14 +98,25 @@ class ScreenViewModelSpec: Spek({
         }
     }
 
-    given("a screen with a row and some offsets") {
+    given("a screen with a row and a block with a vertical fill offset and a horizontal left offset") {
         val screen = ModelFactories.emptyScreen().copy(
             rows = listOf(
                 ModelFactories.emptyRow().copy(
-                    height = Length(UnitOfMeasure.Points, 10.0),
+                    height = Length(UnitOfMeasure.Points, 100.0),
                     blocks = listOf(
                         ModelFactories.emptyRectangleBlock().copy(
-                            height = Length(UnitOfMeasure.Points, 10.0)
+                            height = Length(UnitOfMeasure.Points, 10.0),
+                            width = Length(UnitOfMeasure.Points, 20.0),
+                            horizontalAlignment = HorizontalAlignment.Left,
+                            verticalAlignment = VerticalAlignment.Fill,
+                            offsets = Offsets(
+                                bottom = Length(UnitOfMeasure.Points, 10.0),
+                                center = Length(UnitOfMeasure.Points, 30.0),
+                                left = Length(UnitOfMeasure.Points, 5.0),
+                                middle = Length(UnitOfMeasure.Points, 8.0),
+                                right = Length(UnitOfMeasure.Points, 10.0),
+                                top = Length(UnitOfMeasure.Points, 10.0)
+                            )
                         )
                     )
                 ),
@@ -112,6 +125,20 @@ class ScreenViewModelSpec: Spek({
                 )
             )
         )
+        val screenViewModel = ScreenViewModel(screen)
+
+        on("rendering") {
+            val rendered = screenViewModel.render(
+                40f
+            )
+
+            it("should render the block with the offsets") {
+                rendered.coordinatesAndViewModels[1].shouldMatch(
+                    RectF(5f, 10f, 25f, 90f),
+                    RectangleBlockViewModel::class.java
+                )
+            }
+        }
     }
 
     given("a screen with a row with a vertically centered block within") {

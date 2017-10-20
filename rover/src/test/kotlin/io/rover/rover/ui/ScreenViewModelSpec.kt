@@ -137,7 +137,7 @@ class ScreenViewModelSpec: Spek({
             )
 
             it("should center the block inside the row") {
-                rendered.coordinatesAndViewModels.first().shouldMatch(
+                rendered.coordinatesAndViewModels[1].shouldMatch(
                     RectF(0f, 40f, 300f, 60f),
                     RectangleBlockViewModel::class.java
                 )

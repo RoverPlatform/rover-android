@@ -22,6 +22,12 @@ interface BackgroundViewModelInterface {
  * A view model for Blocks (particularly, the dynamic layout thereof).
  */
 interface BlockViewModelInterface : LayoutableViewModel {
+    /**
+     * The full amount contributed by this block (including its own height and offsets) to the
+     * height of all the stacked blocks within the row.  So, the subsequent stacked block must be
+     * laid out at a y position that is the sum of all the [stackedHeight]s of all the prior stacked
+     * blocks.
+     */
     fun stackedHeight(bounds: RectF): Float
 
     val insets: Insets

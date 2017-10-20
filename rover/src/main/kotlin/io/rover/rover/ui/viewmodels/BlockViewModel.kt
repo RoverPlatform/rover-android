@@ -126,11 +126,16 @@ abstract class BlockViewModel(
     private fun y(bounds: RectF): Float {
         val height = height(bounds)
 
-        // log.v("About to lay out block with ${block.verticalAlignment} vertical alignment, a bounds.top of ${bounds.top}, a bounds.bottom of ${bounds.bottom}, and a computed height of $height")
+        // TODO: decide if I do need this (talk to sean), and if so, can it be refactored
+        val alignment = if(isStacked) {
+            VerticalAlignment.Top
+        } else {
+            block.verticalAlignment
+        }
 
-        // TODO: when stacked, must not start from
-
-        return when(block.verticalAlignment) {
+//        log.v("... laying out block (stacked: $isStacked) block with ${block.verticalAlignment} vertical alignment, a bounds.top of ${bounds.top}, a bounds.bottom of ${bounds.bottom}, and a computed height of $height (and computed stack height of ${stackedHeight(bounds)})")
+//        log.v("... my offsets were: ${block.offsets}")
+        return when(alignment) {
             VerticalAlignment.Bottom -> bounds.bottom - height - block.offsets.bottom.measuredAgainst(bounds.height())
             VerticalAlignment.Fill, VerticalAlignment.Top -> bounds.top + block.offsets.top.measuredAgainst(bounds.height())
             VerticalAlignment.Middle -> bounds.top + ((bounds.height() - height) / 2) + block.offsets.middle.measuredAgainst(bounds.height())

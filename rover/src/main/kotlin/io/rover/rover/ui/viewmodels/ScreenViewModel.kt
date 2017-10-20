@@ -3,6 +3,7 @@ package io.rover.rover.ui.viewmodels
 import android.graphics.Rect
 import android.graphics.RectF
 import io.rover.rover.core.domain.Screen
+import io.rover.rover.core.logging.log
 import io.rover.rover.ui.types.Layout
 
 class ScreenViewModel(
@@ -79,11 +80,11 @@ class ScreenViewModel(
 
         val blockBounds = RectF(
             rowBounds.left,
-            rowBounds.top + stackDeflection.toInt(),
+            rowBounds.top + stackDeflection,
             rowBounds.right,
-            rowBounds.bottom + stackDeflection.toInt()
+            rowBounds.bottom + stackDeflection
         )
-        val blockFrame = block.frame(rowBounds)
+        val blockFrame = block.frame(blockBounds)
 
         val tail = remainingBlockViewModels.subList(1, remainingBlockViewModels.size)
 

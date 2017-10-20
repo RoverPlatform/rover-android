@@ -108,6 +108,7 @@ class BlockAndRowLayoutManager(
         // and re-run the fill:
         fill(recycler)
 
+        // let RecyclerView know how much we moved.
         return deflection
     }
 
@@ -127,7 +128,7 @@ class BlockAndRowLayoutManager(
         // current display position)
 
         // note: we infer a naturally increasing z-order; Android treats order of addition as
-        // z-order, and we process through our blocks-and-rows seequentially.
+        // z-order, and we process through our blocks-and-rows sequentially.
         layout.coordinatesAndViewModels.forEachIndexed { index, (viewPosition, viewModel) ->
             val displayPosition = viewPosition.dpAsPx()
 

@@ -355,8 +355,17 @@ data class Length(
 
 data class Offsets(
     val bottom: Length,
+
+    /**
+     * Offset from horizontal centre.
+     */
     val center: Length,
+
     val left: Length,
+
+    /**
+     * Offset from Vertical centre.
+     */
     val middle: Length,
     val right: Length,
     val top: Length

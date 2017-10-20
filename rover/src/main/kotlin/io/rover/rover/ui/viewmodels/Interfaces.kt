@@ -45,7 +45,11 @@ interface BlockViewModelInterface : LayoutableViewModel {
  * View model for Rover UI blocks.
  */
 interface RowViewModelInterface : LayoutableViewModel, BackgroundViewModelInterface {
-    fun blockViewModels(): List<BlockViewModelInterface>
+    val blockViewModels: List<BlockViewModelInterface>
+
+    fun mapBlocksToRectDisplayList(
+        rowBounds: RectF
+    ): List<Pair<RectF, LayoutableViewModel>>
 }
 
 /**

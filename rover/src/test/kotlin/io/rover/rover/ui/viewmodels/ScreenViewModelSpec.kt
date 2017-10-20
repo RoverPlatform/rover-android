@@ -1,6 +1,5 @@
-package io.rover.rover.ui
+package io.rover.rover.ui.viewmodels
 
-import android.graphics.Rect
 import android.graphics.RectF
 import io.rover.rover.ModelFactories
 import io.rover.rover.core.domain.HorizontalAlignment
@@ -8,10 +7,10 @@ import io.rover.rover.core.domain.Length
 import io.rover.rover.core.domain.Offsets
 import io.rover.rover.core.domain.UnitOfMeasure
 import io.rover.rover.core.domain.VerticalAlignment
-import io.rover.rover.ui.viewmodels.LayoutableViewModel
-import io.rover.rover.ui.viewmodels.RectangleBlockViewModel
-import io.rover.rover.ui.viewmodels.RowViewModel
-import io.rover.rover.ui.viewmodels.ScreenViewModel
+import io.rover.rover.ui.BlockViewModelFactory
+import org.amshove.kluent.`should be true`
+import org.amshove.kluent.shouldBeInstanceOf
+import org.amshove.kluent.shouldBeTrue
 import org.amshove.kluent.shouldEqual
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
@@ -32,7 +31,7 @@ class ScreenViewModelSpec: Spek({
                 )
             )
         )
-        val screenViewModel = ScreenViewModel(screen)
+        val screenViewModel = ScreenViewModel(screen, BlockViewModelFactory())
 
         on("rendering") {
             val rendered = screenViewModel.render(
@@ -70,7 +69,7 @@ class ScreenViewModelSpec: Spek({
                 )
             )
         )
-        val screenViewModel = ScreenViewModel(screen)
+        val screenViewModel = ScreenViewModel(screen, BlockViewModelFactory())
 
         on("rendering") {
             val rendered = screenViewModel.render(
@@ -125,7 +124,7 @@ class ScreenViewModelSpec: Spek({
                 )
             )
         )
-        val screenViewModel = ScreenViewModel(screen)
+        val screenViewModel = ScreenViewModel(screen, BlockViewModelFactory())
 
         on("rendering") {
             val rendered = screenViewModel.render(
@@ -156,7 +155,7 @@ class ScreenViewModelSpec: Spek({
                 )
             )
         )
-        val screenViewModel = ScreenViewModel(screen)
+        val screenViewModel = ScreenViewModel(screen, BlockViewModelFactory())
 
         on("rendering") {
             val rendered = screenViewModel.render(
@@ -178,5 +177,5 @@ fun Pair<RectF, LayoutableViewModel>.shouldMatch(
     type: Class<out LayoutableViewModel>
 ) {
     this.first.shouldEqual(position)
-    this.second.javaClass.shouldEqual(type)
+    this.second.shouldBeInstanceOf(type)
 }

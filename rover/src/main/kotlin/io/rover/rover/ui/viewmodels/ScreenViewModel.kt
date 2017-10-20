@@ -4,34 +4,36 @@ import android.graphics.Rect
 import android.graphics.RectF
 import io.rover.rover.core.domain.Screen
 import io.rover.rover.core.logging.log
+import io.rover.rover.ui.BlockViewModelFactory
+import io.rover.rover.ui.BlockViewModelFactoryInterface
 import io.rover.rover.ui.types.Layout
 
 class ScreenViewModel(
-    private val screen: Screen
+    private val screen: Screen,
+    private val blockViewModelFactory: BlockViewModelFactoryInterface
 ): ScreenViewModelInterface {
 
     override fun rowViewModels(): List<RowViewModelInterface> {
         return screen.rows.map {
             RowViewModel(
-                it
+                it,
+                blockViewModelFactory
             )
         }
     }
 
     override fun gather(): List<LayoutableViewModel> {
-        return screen.rows.flatMap {
-            val rowViewModel = RowViewModel(it)
-
+        return rowViewModels().flatMap {
             listOf(
-                rowViewModel
-            ) + rowViewModel.blockViewModels()
+                it
+            ) + it.blockViewModels
         }
     }
 
     override fun render(
         widthDp: Float
     ): Layout =
-        mapRowsToRectDisplayList(screen.rows.map { RowViewModel(it) }, widthDp)
+        mapRowsToRectDisplayList(rowViewModels(), widthDp)
 
     private tailrec fun mapRowsToRectDisplayList(
         remainingRowViewModels: List<RowViewModelInterface>,
@@ -59,42 +61,8 @@ class ScreenViewModel(
 
         val rowHead = listOf(Pair(rowFrame, row))
 
-        val blocks = mapBlocksToRectDisplayList(row.blockViewModels(), rowFrame, 0.0f)
+        val blocks = row.mapBlocksToRectDisplayList(rowFrame)
 
         return mapRowsToRectDisplayList(tail, width, Layout(results.coordinatesAndViewModels + rowHead + blocks, results.height + row.frame(rowBounds).height()))
-    }
-
-    private tailrec fun mapBlocksToRectDisplayList(
-        remainingBlockViewModels: List<BlockViewModelInterface>,
-        rowBounds: RectF,
-        accumulatedStackHeight: Float,
-        results: List<Pair<RectF, LayoutableViewModel>> = listOf()
-    ): List<Pair<RectF, LayoutableViewModel>> {
-        if (remainingBlockViewModels.isEmpty()) {
-            return results
-        }
-        val block = remainingBlockViewModels.first()
-
-        // if we're stacked, we need to stack on top of any prior stacked elements.
-        val stackDeflection = if (block.isStacked) accumulatedStackHeight else 0.0f
-
-        val blockBounds = RectF(
-            rowBounds.left,
-            rowBounds.top + stackDeflection,
-            rowBounds.right,
-            rowBounds.bottom + stackDeflection
-        )
-        val blockFrame = block.frame(blockBounds)
-
-        val tail = remainingBlockViewModels.subList(1, remainingBlockViewModels.size)
-
-        return mapBlocksToRectDisplayList(
-            tail,
-            rowBounds,
-            accumulatedStackHeight + block.stackedHeight(blockBounds),
-            results + listOf(
-                Pair(blockFrame, block)
-            )
-        )
     }
 }

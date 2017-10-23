@@ -1,7 +1,8 @@
-package io.rover.rover.ui
+package io.rover.rover.ui.viewmodels
 
 import android.graphics.Rect
 import io.rover.rover.core.domain.Screen
+import io.rover.rover.ui.types.Layout
 
 class ScreenViewModel(
     private val screen: Screen
@@ -17,21 +18,20 @@ class ScreenViewModel(
 
     override fun render(
         widthDp: Int
-    ): List<Pair<Rect, LayoutableViewModel>> =
+    ): Layout =
         mapRowsToRectDisplayList(screen.rows.map { RowViewModel(it) }, widthDp)
 
     private tailrec fun mapRowsToRectDisplayList(
         remainingRowViewModels: List<RowViewModelInterface>,
         width: Int,
-        heightOffset: Int = 0,
-        results: List<Pair<Rect, LayoutableViewModel>> = listOf()
-    ): List<Pair<Rect, LayoutableViewModel>> {
+        results: Layout = Layout(listOf(), 0)
+    ): Layout {
         // height is given as 0 here.  Might be OK, but...
         // ... TODO: if autoheight is not set, and row height is set as proportional (percentage) it will collapse to a height of 0.  However, not clear what behaviour would be expected in that case anyway.
         if(remainingRowViewModels.isEmpty()) {
             return results
         }
-        val rowBounds = Rect(0, heightOffset, width, 0)
+        val rowBounds = Rect(0, results.height, width, 0)
 
         val row = remainingRowViewModels.first()
 
@@ -43,7 +43,7 @@ class ScreenViewModel(
 
         val blocks = mapBlocksToRectDisplayList(row.blockViewModels(), rowBounds, 0.0f)
 
-        return mapRowsToRectDisplayList(tail, width, heightOffset + row.frame(rowBounds).height(), results + rowHead + blocks)
+        return mapRowsToRectDisplayList(tail, width, Layout(results.coordinatesAndViewModels + rowHead + blocks, results.height + row.frame(rowBounds).height()))
     }
 
     private tailrec fun mapBlocksToRectDisplayList(

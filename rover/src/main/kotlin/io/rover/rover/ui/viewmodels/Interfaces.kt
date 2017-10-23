@@ -1,12 +1,12 @@
 package io.rover.rover.ui.viewmodels
 
-import android.graphics.Rect
 import android.graphics.RectF
 import io.rover.rover.core.domain.Background
 import io.rover.rover.core.domain.Experience
 import io.rover.rover.core.domain.Screen
 import io.rover.rover.ui.BlockAndRowLayoutManager
 import io.rover.rover.ui.types.Alignment
+import io.rover.rover.ui.types.DisplayItem
 import io.rover.rover.ui.types.Insets
 import io.rover.rover.ui.types.Layout
 
@@ -48,8 +48,8 @@ interface RowViewModelInterface : LayoutableViewModel, BackgroundViewModelInterf
     val blockViewModels: List<BlockViewModelInterface>
 
     fun mapBlocksToRectDisplayList(
-        rowBounds: RectF
-    ): List<Pair<RectF, LayoutableViewModel>>
+        rowFrame: RectF
+    ): List<DisplayItem>
 }
 
 /**

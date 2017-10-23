@@ -371,7 +371,7 @@ data class Offsets(
     /**
      * Offset from left.
      *
-     * Used when horizontal alignment is [HorizontalAlignment.Left] or [VerticalAlignment.Fill].
+     * Used when horizontal alignment is [HorizontalAlignment.Left] or [HorizontalAlignment.Fill].
      */
     val left: Length,
 
@@ -385,7 +385,7 @@ data class Offsets(
     /**
      * Offset from right.
      *
-     * Used when horizontal alignment is [HorizontalAlignment.Right] or [VerticalAlignment.Fill].
+     * Used when horizontal alignment is [HorizontalAlignment.Right] or [HorizontalAlignment.Fill].
      */
     val right: Length,
 

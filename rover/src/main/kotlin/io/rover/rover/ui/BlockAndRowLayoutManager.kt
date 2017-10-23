@@ -19,7 +19,7 @@ import kotlin.properties.Delegates
  * Most of the heavy lifting is done in the implementations of the view models.  See
  * [ScreenViewModelInterface] for details.
  *
- * This layout manager is a bit unusual compared to the stock ones: it's driven by data.
+ * This layout manager is perhaps a bit unusual compared to the stock ones: it's driven by data.
  */
 class BlockAndRowLayoutManager(
     private val screenViewModel: ScreenViewModelInterface,
@@ -129,12 +129,20 @@ class BlockAndRowLayoutManager(
 
         // note: we infer a naturally increasing z-order; Android treats order of addition as
         // z-order, and we process through our blocks-and-rows sequentially.
-        layout.coordinatesAndViewModels.forEachIndexed { index, (viewPosition, viewModel) ->
+        layout.coordinatesAndViewModels.forEachIndexed { index, (viewPosition, clipBounds, viewModel) ->
             val displayPosition = viewPosition.dpAsPx()
 
             val visible = displayPosition.bottom > verticalTopBound && displayPosition.top < verticalBottomBound
             if(visible) {
                 val view = recycler.getViewForPosition(index)
+
+                // TODO: to avoid expensive re-clipping we may want to tag Views that are clipped differently so as to recycle the ones with the same clip.
+                // TODO: indeed, re-clipping is being unnecessarily done for every frame while the view is onscreen because we are scrapping and re-adding everything (the range optimization spoken about above will help here)
+                view.clipBounds = null
+                if(clipBounds != null) {
+                    view.clipBounds = clipBounds.dpAsPx()
+                }
+
                 addView(view)
                 view.measure(displayPosition.width(), displayPosition.height())
 

@@ -6,6 +6,7 @@ import io.rover.rover.core.domain.Screen
 import io.rover.rover.core.logging.log
 import io.rover.rover.ui.BlockViewModelFactory
 import io.rover.rover.ui.BlockViewModelFactoryInterface
+import io.rover.rover.ui.types.DisplayItem
 import io.rover.rover.ui.types.Layout
 
 class ScreenViewModel(
@@ -59,7 +60,7 @@ class ScreenViewModel(
 
         val tail = remainingRowViewModels.subList(1, remainingRowViewModels.size)
 
-        val rowHead = listOf(Pair(rowFrame, row))
+        val rowHead = listOf(DisplayItem(rowFrame, null, row))
 
         val blocks = row.mapBlocksToRectDisplayList(rowFrame)
 

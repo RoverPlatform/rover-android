@@ -8,7 +8,7 @@ import io.rover.rover.core.domain.Offsets
 import io.rover.rover.core.domain.UnitOfMeasure
 import io.rover.rover.core.domain.VerticalAlignment
 import io.rover.rover.ui.BlockViewModelFactory
-import org.amshove.kluent.`should be true`
+import io.rover.rover.ui.types.DisplayItem
 import org.amshove.kluent.shouldBeInstanceOf
 import org.amshove.kluent.shouldBeTrue
 import org.amshove.kluent.shouldEqual
@@ -172,10 +172,12 @@ class ScreenViewModelSpec: Spek({
     }
 })
 
-fun Pair<RectF, LayoutableViewModel>.shouldMatch(
+fun DisplayItem.shouldMatch(
     position: RectF,
-    type: Class<out LayoutableViewModel>
+    type: Class<out LayoutableViewModel>,
+    clip: RectF? = null
 ) {
-    this.first.shouldEqual(position)
-    this.second.shouldBeInstanceOf(type)
+    this.position.shouldEqual(position)
+    this.viewModel.shouldBeInstanceOf(type)
+    this.clip.shouldEqual(clip)
 }

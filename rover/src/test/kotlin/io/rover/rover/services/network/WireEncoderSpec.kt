@@ -30,13 +30,11 @@ import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
 import org.jetbrains.spek.api.dsl.on
 import org.json.JSONObject
-import org.junit.runner.RunWith
 import org.skyscreamer.jsonassert.JSONAssert
 import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
 
-// @RunWith(JUnitPlatform::class)
 class WireEncoderSpec: Spek({
     given("a wire encoder") {
 
@@ -66,7 +64,7 @@ class WireEncoderSpec: Spek({
             val expectedJson = this.javaClass.classLoader.getResourceAsStream("comprehensive_device.json").bufferedReader(Charsets.UTF_8).readText()
             val decoded = wireEncoder.decodeDeviceState(JSONObject(expectedJson).getJSONObject("data").getJSONObject("device"))
 
-            it("should be re-encodable back into equivalent JSON") {
+            it("produces valid JSON that can be encoded back into equivalent JSON") {
                 // if we can roundtrip the comprehensive JSON Experience structure to the Rover
                 // SDK model representation and back accurately, then we have a pretty strong
                 // guarantee that the deserialization logic is accurate and complete.
@@ -88,7 +86,7 @@ class WireEncoderSpec: Spek({
             val expectedJson = this.javaClass.classLoader.getResourceAsStream("comprehensive_experience.json").bufferedReader(Charsets.UTF_8).readText()
             val decoded = wireEncoder.decodeExperience(JSONObject(expectedJson).getJSONObject("data").getJSONObject("experience"))
 
-            it("should match some provided assertions") {
+            it("reads correct values from the payload") {
                 junit4ReportingWorkaround {
                     decoded.id.shouldEqual(ID("5873dee6d5bf3e002de4d70e"))
 
@@ -168,7 +166,7 @@ class WireEncoderSpec: Spek({
                 }
             }
 
-            it("should be re-encodable back into equivalent JSON") {
+            it("produces valid JSON that can be encoded back into equivalent JSON") {
                 // if we can roundtrip the comprehensive JSON Experience structure to the Rover
                 // SDK model representation and back accurately, then we have a pretty strong
                 // guarantee that the deserialization logic is accurate and complete.

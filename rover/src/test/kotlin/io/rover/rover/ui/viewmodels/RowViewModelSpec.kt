@@ -3,10 +3,12 @@ package io.rover.rover.ui.viewmodels
 import android.graphics.Point
 import android.graphics.RectF
 import io.rover.rover.ModelFactories
+import io.rover.rover.core.domain.HorizontalAlignment
 import io.rover.rover.core.domain.Length
 import io.rover.rover.core.domain.Offsets
 import io.rover.rover.core.domain.Position
 import io.rover.rover.core.domain.UnitOfMeasure
+import io.rover.rover.core.domain.VerticalAlignment
 import io.rover.rover.ui.BlockViewModelFactory
 import org.amshove.kluent.shouldEqual
 import org.jetbrains.spek.api.Spek
@@ -70,7 +72,7 @@ class RowViewModelSpec: Spek({
         }
     }
 
-    given("a fixed row with a floating block that extends outside the top of the row") {
+    given("a non-autoheight row with a floating block that extends outside the top of the row") {
         val rowViewModel = RowViewModel(
             ModelFactories
                 .emptyRow()
@@ -116,7 +118,7 @@ class RowViewModelSpec: Spek({
         }
     }
 
-    given("a fixed row with a floating block that extends outside the bottom of the row") {
+    given("a non-autoheight row with a floating block that extends outside the bottom of the row") {
         val rowViewModel = RowViewModel(
             ModelFactories
                 .emptyRow()
@@ -156,11 +158,123 @@ class RowViewModelSpec: Spek({
                 layout.first().shouldMatch(
                     RectF(0f, 15f, 40f, 25f),
                     RectangleBlockViewModelInterface::class.java,
-                    RectF(0f, 0f, 40f, 5f )
+                    RectF(0f, 0f, 40f, 5f)
                 )
             }
         }
     }
 
-    // given("a fixed row with floating blocks entirely contained within the row")
+    given("a non-auto-height row with a floating block") {
+        val blockHeight = 10.0
+        val blockWidth = 30.0
+        val rowHeight = 20.0
+
+        fun nonAutoHeightRowWithFloatingBlock(
+            verticalAlignment: VerticalAlignment,
+            horizontalAlignment: HorizontalAlignment
+        ): RowViewModel {
+            return RowViewModel(
+                ModelFactories
+                    .emptyRow()
+                    .copy(
+                        autoHeight = false,
+                        height = Length(UnitOfMeasure.Points, rowHeight),
+                        blocks = listOf(
+                            ModelFactories.emptyRectangleBlock().copy(
+                                position = Position.Floating,
+                                height = Length(UnitOfMeasure.Points, blockHeight),
+                                width = Length(UnitOfMeasure.Points, blockWidth),
+                                verticalAlignment = verticalAlignment,
+                                horizontalAlignment = horizontalAlignment
+                            )
+                        )
+                    ),
+                BlockViewModelFactory()
+            )
+        }
+
+        given("a non-autoheight row with a floating block is aligned to the bottom") {
+            val rowViewModel = nonAutoHeightRowWithFloatingBlock(
+                VerticalAlignment.Bottom,
+                HorizontalAlignment.Left
+            )
+
+            on("render()") {
+                val layout = rowViewModel.mapBlocksToRectDisplayList(
+                    rowViewModel.frame(RectF(0f, 0f, 40f, 0f))
+                )
+
+                it("lays out the block on the bottom") {
+                    layout.first().shouldMatch(
+                        RectF(0f, 20f - 10f , 30f, 20f),
+                        RectangleBlockViewModelInterface::class.java,
+                        null
+                    )
+                }
+            }
+        }
+
+        given("a non-autoheight row with a floating block is aligned to the middle (vertical)") {
+            val rowViewModel = nonAutoHeightRowWithFloatingBlock(
+                VerticalAlignment.Middle,
+                HorizontalAlignment.Left
+            )
+
+            on("render()") {
+                val layout = rowViewModel.mapBlocksToRectDisplayList(
+                    rowViewModel.frame(RectF(0f, 0f, 40f, 0f))
+                )
+
+                it("lays out the block on the bottom") {
+                    layout.first().shouldMatch(
+                        RectF(0f, 5f, 30f, 15f),
+                        RectangleBlockViewModelInterface::class.java,
+                        null
+                    )
+                }
+            }
+        }
+
+        given("a non-autoheight row with a floating block is aligned to the center (horizontal)") {
+            val rowViewModel = nonAutoHeightRowWithFloatingBlock(
+                VerticalAlignment.Top,
+                HorizontalAlignment.Center
+            )
+
+            on("render()") {
+                val layout = rowViewModel.mapBlocksToRectDisplayList(
+                    rowViewModel.frame(RectF(0f, 0f, 40f, 0f))
+                )
+
+                it("lays out the block on the bottom") {
+                    layout.first().shouldMatch(
+                        RectF(5f, 0f, 35f, 10f),
+                        RectangleBlockViewModelInterface::class.java,
+                        null
+                    )
+                }
+            }
+        }
+
+        given("a non-autoheight row with a floating block that is aligned to the right") {
+            val rowViewModel = nonAutoHeightRowWithFloatingBlock(
+                VerticalAlignment.Top,
+                HorizontalAlignment.Right
+            )
+
+            on("render()") {
+                val layout = rowViewModel.mapBlocksToRectDisplayList(
+                    rowViewModel.frame(RectF(0f, 0f, 40f, 0f))
+                )
+
+                it("lays out the block on the bottom") {
+                    layout.first().shouldMatch(
+                        RectF(10f, 0f, 40f, 10f),
+                        RectangleBlockViewModelInterface::class.java,
+                        null
+                    )
+                }
+            }
+        }
+    }
 })

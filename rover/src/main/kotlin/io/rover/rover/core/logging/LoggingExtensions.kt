@@ -15,7 +15,7 @@ interface SimpleLogger {
 
 val Any.log: SimpleLogger
     get() {
-        val logTag = this.javaClass.simpleName
+        val logTag = "Rover::${this.javaClass.simpleName}"
 
         return object : SimpleLogger {
 

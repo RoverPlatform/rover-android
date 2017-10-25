@@ -27,7 +27,7 @@ class ScreenViewModel(
         return rowViewModels().flatMap {
             listOf(
                 it
-            ) + it.blockViewModels
+            ) + it.blockViewModels.asReversed()
         }
     }
 
@@ -62,7 +62,9 @@ class ScreenViewModel(
 
         val rowHead = listOf(DisplayItem(rowFrame, null, row))
 
-        val blocks = row.mapBlocksToRectDisplayList(rowFrame)
+        // Lay out the blocks, and then reverse the list to suit the requirement that *later* items
+        // in the list must occlude prior ones.
+        val blocks = row.mapBlocksToRectDisplayList(rowFrame).asReversed()
 
         return mapRowsToRectDisplayList(tail, width, Layout(results.coordinatesAndViewModels + rowHead + blocks, results.height + row.frame(rowBounds).height()))
     }

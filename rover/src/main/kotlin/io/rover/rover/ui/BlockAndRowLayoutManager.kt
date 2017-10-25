@@ -2,6 +2,7 @@ package io.rover.rover.ui
 
 import android.graphics.Rect
 import android.graphics.RectF
+import android.os.Build
 import android.support.v7.widget.RecyclerView
 import android.util.DisplayMetrics
 import io.rover.rover.core.domain.Block
@@ -121,19 +122,22 @@ class BlockAndRowLayoutManager(
 
         val verticalTopBound = scrollPosition
         val verticalBottomBound = scrollPosition + height
-
         // now we iterate through the entire display list.
-        //
-        // TODO: (future optimization possible here; build a range data structure to enable us to only iterate over views likely to be relevant to
-        // current display position)
+
+        // TODO: future optimization possible here: build a range data structure to enable us to only iterate over views likely to be relevant to current display position)
+
+        // TODO: additional future optimization possible here: only add and remove changed rows
+        // rather than relying on the scrap, and then use offsetChildrenVertical().
 
         // note: we infer a naturally increasing z-order; Android treats order of addition as
         // z-order, and we process through our blocks-and-rows sequentially.
-        layout.coordinatesAndViewModels.forEachIndexed { index, (viewPosition, clipBounds, viewModel) ->
+        layout.coordinatesAndViewModels.forEachIndexed { index, (viewPosition, clipBounds, _) ->
             val displayPosition = viewPosition.dpAsPx()
 
             val visible = displayPosition.bottom > verticalTopBound && displayPosition.top < verticalBottomBound
             if(visible) {
+                // retrieve either a newly recycled view, or perhaps, get the exact same view back
+
                 val view = recycler.getViewForPosition(index)
 
                 // TODO: to avoid expensive re-clipping we may want to tag Views that are clipped differently so as to recycle the ones with the same clip.
@@ -143,7 +147,20 @@ class BlockAndRowLayoutManager(
                     view.clipBounds = clipBounds.dpAsPx()
                 }
 
+                // TODO: when implementing the aforementioned additional future optimization, the natural
+                // viewmodel order will no longer carry through to the order of the addView() calls
+                // below (for example, scrolling upwards and adding views at the top).  This means
+                // it will be necessary to build & maintain stateful data
+                // structure that allows for fast lookup of view iteration number (ie., i in
+                // 0..n hits where i is an index into live on-screen rows
+                // that are added by addView() below in a given pass of fill()) to view that should
+                // be drawn. This would then be quickly queried by setChildDrawingOrderCallback().
+                // More concretely: an array of views ordered by draw order that RecyclerView would
+                // be able to check at draw-time to allow us to control the view *draw* order
+                // independently of view add order.
+
                 addView(view)
+
                 view.measure(displayPosition.width(), displayPosition.height())
 
                 layoutDecorated(

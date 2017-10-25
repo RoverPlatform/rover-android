@@ -29,8 +29,7 @@ class LayoutableBlockHolder(
 }
 
 class BlockAndRowRecyclerAdapter(
-    // TODO: instead of just passing Layout, remove the rects.
-    val viewModelSequence: List<LayoutableViewModel>
+    private val viewModelSequence: List<LayoutableViewModel>
 ) : RecyclerView.Adapter<LayoutableBlockHolder>() {
     override fun getItemCount(): Int {
         return viewModelSequence.size

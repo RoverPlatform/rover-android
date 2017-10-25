@@ -50,6 +50,8 @@ class RowViewModel(
     }
 
     override fun mapBlocksToRectDisplayList(rowFrame: RectF): List<DisplayItem> {
+        // kick off the iteration to statefully map (for stacking, as needed) the blocks into
+        // a flat layout of coordinates.
         return mapBlocksToRectDisplayList(
             this.blockViewModels,
             rowFrame,

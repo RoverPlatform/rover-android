@@ -47,6 +47,10 @@ interface BlockViewModelInterface : LayoutableViewModel {
 interface RowViewModelInterface : LayoutableViewModel, BackgroundViewModelInterface {
     val blockViewModels: List<BlockViewModelInterface>
 
+    /**
+     * Render all the blocks to a list of coordinates (and the [BlockViewModelInterface]s
+     * themselves).
+     */
     fun mapBlocksToRectDisplayList(
         rowFrame: RectF
     ): List<DisplayItem>

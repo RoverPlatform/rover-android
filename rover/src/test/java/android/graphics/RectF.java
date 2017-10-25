@@ -16,50 +16,29 @@
 
 package android.graphics;
 
+import java.io.PrintWriter;
+
 import android.os.Parcel;
 import android.os.Parcelable;
-
-import java.io.PrintWriter;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.android.internal.util.FastMath;
 
 /**
- * Rect holds four integer coordinates for a rectangle. The rectangle is
+ * RectF holds four float coordinates for a rectangle. The rectangle is
  * represented by the coordinates of its 4 edges (left, top, right bottom).
  * These fields can be accessed directly. Use width() and height() to retrieve
  * the rectangle's width and height. Note: most methods do not check to see that
  * the coordinates are sorted correctly (i.e. left <= right and top <= bottom).
- * <p>
- * Note that the right and bottom coordinates are exclusive. This means a Rect
- * being drawn untransformed onto a {@link android.graphics.Canvas} will draw
- * into the column and row described by its left and top coordinates, but not
- * those of its bottom and right.
  */
-public final class Rect implements Parcelable {
-    public int left;
-    public int top;
-    public int right;
-    public int bottom;
+public class RectF implements Parcelable {
+    public float left;
+    public float top;
+    public float right;
+    public float bottom;
 
     /**
-     * A helper class for flattened rectange pattern recognition. A separate
-     * class to avoid an initialization dependency on a regular expression
-     * causing Rect to not be initializable with an ahead-of-time compilation
-     * scheme.
+     * Create a new empty RectF. All coordinates are initialized to 0.
      */
-    private static final class UnflattenHelper {
-        private static final Pattern FLATTENED_PATTERN = Pattern.compile(
-                "(-?\\d+) (-?\\d+) (-?\\d+) (-?\\d+)");
-
-        static Matcher getMatcher(String str) {
-            return FLATTENED_PATTERN.matcher(str);
-        }
-    }
-
-    /**
-     * Create a new empty Rect. All coordinates are initialized to 0.
-     */
-    public Rect() {}
+    public RectF() {}
 
     /**
      * Create a new rectangle with the specified coordinates. Note: no range
@@ -71,7 +50,7 @@ public final class Rect implements Parcelable {
      * @param right  The X coordinate of the right side of the rectangle
      * @param bottom The Y coordinate of the bottom of the rectangle
      */
-    public Rect(int left, int top, int right, int bottom) {
+    public RectF(float left, float top, float right, float bottom) {
         this.left = left;
         this.top = top;
         this.right = right;
@@ -85,9 +64,20 @@ public final class Rect implements Parcelable {
      * @param r The rectangle whose coordinates are copied into the new
      *          rectangle.
      */
-    public Rect(Rect r) {
+    public RectF(RectF r) {
         if (r == null) {
-            left = top = right = bottom = 0;
+            left = top = right = bottom = 0.0f;
+        } else {
+            left = r.left;
+            top = r.top;
+            right = r.right;
+            bottom = r.bottom;
+        }
+    }
+
+    public RectF(Rect r) {
+        if (r == null) {
+            left = top = right = bottom = 0.0f;
         } else {
             left = r.left;
             top = r.top;
@@ -101,26 +91,22 @@ public final class Rect implements Parcelable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Rect r = (Rect) o;
+        RectF r = (RectF) o;
         return left == r.left && top == r.top && right == r.right && bottom == r.bottom;
     }
 
     @Override
     public int hashCode() {
-        int result = left;
-        result = 31 * result + top;
-        result = 31 * result + right;
-        result = 31 * result + bottom;
+        int result = (left != +0.0f ? Float.floatToIntBits(left) : 0);
+        result = 31 * result + (top != +0.0f ? Float.floatToIntBits(top) : 0);
+        result = 31 * result + (right != +0.0f ? Float.floatToIntBits(right) : 0);
+        result = 31 * result + (bottom != +0.0f ? Float.floatToIntBits(bottom) : 0);
         return result;
     }
 
-    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder(32);
-        sb.append("Rect("); sb.append(left); sb.append(", ");
-        sb.append(top); sb.append(" - "); sb.append(right);
-        sb.append(", "); sb.append(bottom); sb.append(")");
-        return sb.toString();
+        return "RectF(" + left + ", " + top + ", "
+                + right + ", " + bottom + ")";
     }
 
     /**
@@ -140,43 +126,6 @@ public final class Rect implements Parcelable {
         sb.append(top); sb.append("]["); sb.append(right);
         sb.append(','); sb.append(bottom); sb.append(']');
         return sb.toString();
-    }
-
-    /**
-     * Return a string representation of the rectangle in a well-defined format.
-     *
-     * <p>You can later recover the Rect from this string through
-     * {@link #unflattenFromString(String)}.
-     *
-     * @return Returns a new String of the form "left top right bottom"
-     */
-    public String flattenToString() {
-        StringBuilder sb = new StringBuilder(32);
-        // WARNING: Do not change the format of this string, it must be
-        // preserved because Rects are saved in this flattened format.
-        sb.append(left);
-        sb.append(' ');
-        sb.append(top);
-        sb.append(' ');
-        sb.append(right);
-        sb.append(' ');
-        sb.append(bottom);
-        return sb.toString();
-    }
-
-    /**
-     * Returns a Rect from a string of the form returned by {@link #flattenToString},
-     * or null if the string is not of that form.
-     */
-    public static Rect unflattenFromString(String str) {
-        Matcher matcher = UnflattenHelper.getMatcher(str);
-        if (!matcher.matches()) {
-            return null;
-        }
-        return new Rect(Integer.parseInt(matcher.group(1)),
-                Integer.parseInt(matcher.group(2)),
-                Integer.parseInt(matcher.group(3)),
-                Integer.parseInt(matcher.group(4)));
     }
 
     /**
@@ -200,7 +149,7 @@ public final class Rect implements Parcelable {
      * @return the rectangle's width. This does not check for a valid rectangle
      * (i.e. left <= right) so the result may be negative.
      */
-    public final int width() {
+    public final float width() {
         return right - left;
     }
 
@@ -208,39 +157,23 @@ public final class Rect implements Parcelable {
      * @return the rectangle's height. This does not check for a valid rectangle
      * (i.e. top <= bottom) so the result may be negative.
      */
-    public final int height() {
+    public final float height() {
         return bottom - top;
     }
 
     /**
-     * @return the horizontal center of the rectangle. If the computed value
-     *         is fractional, this method returns the largest integer that is
-     *         less than the computed value.
+     * @return the horizontal center of the rectangle. This does not check for
+     * a valid rectangle (i.e. left <= right)
      */
-    public final int centerX() {
-        return (left + right) >> 1;
-    }
-
-    /**
-     * @return the vertical center of the rectangle. If the computed value
-     *         is fractional, this method returns the largest integer that is
-     *         less than the computed value.
-     */
-    public final int centerY() {
-        return (top + bottom) >> 1;
-    }
-
-    /**
-     * @return the exact horizontal center of the rectangle as a float.
-     */
-    public final float exactCenterX() {
+    public final float centerX() {
         return (left + right) * 0.5f;
     }
 
     /**
-     * @return the exact vertical center of the rectangle as a float.
+     * @return the vertical center of the rectangle. This does not check for
+     * a valid rectangle (i.e. top <= bottom)
      */
-    public final float exactCenterY() {
+    public final float centerY() {
         return (top + bottom) * 0.5f;
     }
 
@@ -261,10 +194,10 @@ public final class Rect implements Parcelable {
      * @param right  The X coordinate of the right side of the rectangle
      * @param bottom The Y coordinate of the bottom of the rectangle
      */
-    public void set(int left, int top, int right, int bottom) {
-        this.left = left;
-        this.top = top;
-        this.right = right;
+    public void set(float left, float top, float right, float bottom) {
+        this.left   = left;
+        this.top    = top;
+        this.right  = right;
         this.bottom = bottom;
     }
 
@@ -274,10 +207,23 @@ public final class Rect implements Parcelable {
      * @param src The rectangle whose coordinates are copied into this
      *           rectangle.
      */
+    public void set(RectF src) {
+        this.left   = src.left;
+        this.top    = src.top;
+        this.right  = src.right;
+        this.bottom = src.bottom;
+    }
+
+    /**
+     * Copy the coordinates from src into this rectangle.
+     *
+     * @param src The rectangle whose coordinates are copied into this
+     *           rectangle.
+     */
     public void set(Rect src) {
-        this.left = src.left;
-        this.top = src.top;
-        this.right = src.right;
+        this.left   = src.left;
+        this.top    = src.top;
+        this.right  = src.right;
         this.bottom = src.bottom;
     }
 
@@ -288,11 +234,11 @@ public final class Rect implements Parcelable {
      * @param dx The amount to add to the rectangle's left and right coordinates
      * @param dy The amount to add to the rectangle's top and bottom coordinates
      */
-    public void offset(int dx, int dy) {
-        left += dx;
-        top += dy;
-        right += dx;
-        bottom += dy;
+    public void offset(float dx, float dy) {
+        left    += dx;
+        top     += dy;
+        right   += dx;
+        bottom  += dy;
     }
 
     /**
@@ -302,7 +248,7 @@ public final class Rect implements Parcelable {
      * @param newLeft   The new "left" coordinate for the rectangle
      * @param newTop    The new "top" coordinate for the rectangle
      */
-    public void offsetTo(int newLeft, int newTop) {
+    public void offsetTo(float newLeft, float newTop) {
         right += newLeft - left;
         bottom += newTop - top;
         left = newLeft;
@@ -318,39 +264,11 @@ public final class Rect implements Parcelable {
      * @param dx The amount to add(subtract) from the rectangle's left(right)
      * @param dy The amount to add(subtract) from the rectangle's top(bottom)
      */
-    public void inset(int dx, int dy) {
-        left += dx;
-        top += dy;
-        right -= dx;
-        bottom -= dy;
-    }
-
-    /**
-     * Insets the rectangle on all sides specified by the dimensions of the {@code insets}
-     * rectangle.
-     * @hide
-     * @param insets The rectangle specifying the insets on all side.
-     */
-    public void inset(Rect insets) {
-        left += insets.left;
-        top += insets.top;
-        right -= insets.right;
-        bottom -= insets.bottom;
-    }
-
-    /**
-     * Insets the rectangle on all sides specified by the insets.
-     * @hide
-     * @param left The amount to add from the rectangle's left
-     * @param top The amount to add from the rectangle's top
-     * @param right The amount to subtract from the rectangle's right
-     * @param bottom The amount to subtract from the rectangle's bottom
-     */
-    public void inset(int left, int top, int right, int bottom) {
-        this.left += left;
-        this.top += top;
-        this.right -= right;
-        this.bottom -= bottom;
+    public void inset(float dx, float dy) {
+        left    += dx;
+        top     += dy;
+        right   -= dx;
+        bottom  -= dy;
     }
 
     /**
@@ -364,7 +282,7 @@ public final class Rect implements Parcelable {
      * @return true iff (x,y) are contained by the rectangle, where containment
      *              means left <= x < right and top <= y < bottom
      */
-    public boolean contains(int x, int y) {
+    public boolean contains(float x, float y) {
         return left < right && top < bottom  // check for empty first
                 && x >= left && x < right && y >= top && y < bottom;
     }
@@ -381,7 +299,7 @@ public final class Rect implements Parcelable {
      * @return true iff the the 4 specified sides of a rectangle are inside or
      *              equal to this rectangle
      */
-    public boolean contains(int left, int top, int right, int bottom) {
+    public boolean contains(float left, float top, float right, float bottom) {
         // check for empty first
         return this.left < this.right && this.top < this.bottom
                 // now check for containment
@@ -397,11 +315,12 @@ public final class Rect implements Parcelable {
      * @return true iff the specified rectangle r is inside or equal to this
      *              rectangle
      */
-    public boolean contains(Rect r) {
+    public boolean contains(RectF r) {
         // check for empty first
         return this.left < this.right && this.top < this.bottom
                 // now check for containment
-                && left <= r.left && top <= r.top && right >= r.right && bottom >= r.bottom;
+                && left <= r.left && top <= r.top
+                && right >= r.right && bottom >= r.bottom;
     }
 
     /**
@@ -409,7 +328,7 @@ public final class Rect implements Parcelable {
      * rectangle, return true and set this rectangle to that intersection,
      * otherwise return false and do not change this rectangle. No check is
      * performed to see if either rectangle is empty. Note: To just test for
-     * intersection, use {@link #intersects(Rect, Rect)}.
+     * intersection, use intersects()
      *
      * @param left The left side of the rectangle being intersected with this
      *             rectangle
@@ -422,12 +341,21 @@ public final class Rect implements Parcelable {
      *              (and this rectangle is then set to that intersection) else
      *              return false and do not change this rectangle.
      */
-    public boolean intersect(int left, int top, int right, int bottom) {
-        if (this.left < right && left < this.right && this.top < bottom && top < this.bottom) {
-            if (this.left < left) this.left = left;
-            if (this.top < top) this.top = top;
-            if (this.right > right) this.right = right;
-            if (this.bottom > bottom) this.bottom = bottom;
+    public boolean intersect(float left, float top, float right, float bottom) {
+        if (this.left < right && left < this.right
+                && this.top < bottom && top < this.bottom) {
+            if (this.left < left) {
+                this.left = left;
+            }
+            if (this.top < top) {
+                this.top = top;
+            }
+            if (this.right > right) {
+                this.right = right;
+            }
+            if (this.bottom > bottom) {
+                this.bottom = bottom;
+            }
             return true;
         }
         return false;
@@ -444,7 +372,7 @@ public final class Rect implements Parcelable {
      *              (and this rectangle is then set to that intersection) else
      *              return false and do not change this rectangle.
      */
-    public boolean intersect(Rect r) {
+    public boolean intersect(RectF r) {
         return intersect(r.left, r.top, r.right, r.bottom);
     }
 
@@ -460,8 +388,9 @@ public final class Rect implements Parcelable {
      *              this rectangle to that intersection. If they do not, return
      *              false and do not change this rectangle.
      */
-    public boolean setIntersect(Rect a, Rect b) {
-        if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom) {
+    public boolean setIntersect(RectF a, RectF b) {
+        if (a.left < b.right && b.left < a.right
+                && a.top < b.bottom && b.top < a.bottom) {
             left = Math.max(a.left, b.left);
             top = Math.max(a.top, b.top);
             right = Math.min(a.right, b.right);
@@ -485,22 +414,43 @@ public final class Rect implements Parcelable {
      * @return true iff the specified rectangle intersects this rectangle. In
      *              no event is this rectangle modified.
      */
-    public boolean intersects(int left, int top, int right, int bottom) {
-        return this.left < right && left < this.right && this.top < bottom && top < this.bottom;
+    public boolean intersects(float left, float top, float right,
+                              float bottom) {
+        return this.left < right && left < this.right
+                && this.top < bottom && top < this.bottom;
     }
 
     /**
      * Returns true iff the two specified rectangles intersect. In no event are
      * either of the rectangles modified. To record the intersection,
-     * use {@link #intersect(Rect)} or {@link #setIntersect(Rect, Rect)}.
+     * use intersect() or setIntersect().
      *
      * @param a The first rectangle being tested for intersection
      * @param b The second rectangle being tested for intersection
      * @return true iff the two specified rectangles intersect. In no event are
      *              either of the rectangles modified.
      */
-    public static boolean intersects(Rect a, Rect b) {
-        return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+    public static boolean intersects(RectF a, RectF b) {
+        return a.left < b.right && b.left < a.right
+                && a.top < b.bottom && b.top < a.bottom;
+    }
+
+    /**
+     * Set the dst integer Rect by rounding this rectangle's coordinates
+     * to their nearest integer values.
+     */
+    public void round(Rect dst) {
+        dst.set(FastMath.round(left), FastMath.round(top),
+                FastMath.round(right), FastMath.round(bottom));
+    }
+
+    /**
+     * Set the dst integer Rect by rounding "out" this rectangle, choosing the
+     * floor of top and left, and the ceiling of right and bottom.
+     */
+    public void roundOut(Rect dst) {
+        dst.set((int) Math.floor(left), (int) Math.floor(top),
+                (int) Math.ceil(right), (int) Math.ceil(bottom));
     }
 
     /**
@@ -513,13 +463,17 @@ public final class Rect implements Parcelable {
      * @param right The right edge being unioned with this rectangle
      * @param bottom The bottom edge being unioned with this rectangle
      */
-    public void union(int left, int top, int right, int bottom) {
+    public void union(float left, float top, float right, float bottom) {
         if ((left < right) && (top < bottom)) {
             if ((this.left < this.right) && (this.top < this.bottom)) {
-                if (this.left > left) this.left = left;
-                if (this.top > top) this.top = top;
-                if (this.right < right) this.right = right;
-                if (this.bottom < bottom) this.bottom = bottom;
+                if (this.left > left)
+                    this.left = left;
+                if (this.top > top)
+                    this.top = top;
+                if (this.right < right)
+                    this.right = right;
+                if (this.bottom < bottom)
+                    this.bottom = bottom;
             } else {
                 this.left = left;
                 this.top = top;
@@ -536,7 +490,7 @@ public final class Rect implements Parcelable {
      *
      * @param r The rectangle being unioned with this rectangle
      */
-    public void union(Rect r) {
+    public void union(RectF r) {
         union(r.left, r.top, r.right, r.bottom);
     }
 
@@ -547,7 +501,7 @@ public final class Rect implements Parcelable {
      * @param x The x coordinate of the point to add to the rectangle
      * @param y The y coordinate of the point to add to the rectangle
      */
-    public void union(int x, int y) {
+    public void union(float x, float y) {
         if (x < left) {
             left = x;
         } else if (x > right) {
@@ -569,12 +523,12 @@ public final class Rect implements Parcelable {
      */
     public void sort() {
         if (left > right) {
-            int temp = left;
+            float temp = left;
             left = right;
             right = temp;
         }
         if (top > bottom) {
-            int temp = top;
+            float temp = top;
             top = bottom;
             bottom = temp;
         }
@@ -593,18 +547,18 @@ public final class Rect implements Parcelable {
      * @param out The parcel to write the rectangle's coordinates into
      */
     public void writeToParcel(Parcel out, int flags) {
-        out.writeInt(left);
-        out.writeInt(top);
-        out.writeInt(right);
-        out.writeInt(bottom);
+        out.writeFloat(left);
+        out.writeFloat(top);
+        out.writeFloat(right);
+        out.writeFloat(bottom);
     }
 
-    public static final Parcelable.Creator<Rect> CREATOR = new Parcelable.Creator<Rect>() {
+    public static final Parcelable.Creator<RectF> CREATOR = new Parcelable.Creator<RectF>() {
         /**
          * Return a new rectangle from the data in the specified parcel.
          */
-        public Rect createFromParcel(Parcel in) {
-            Rect r = new Rect();
+        public RectF createFromParcel(Parcel in) {
+            RectF r = new RectF();
             r.readFromParcel(in);
             return r;
         }
@@ -612,8 +566,8 @@ public final class Rect implements Parcelable {
         /**
          * Return an array of rectangles of the specified size.
          */
-        public Rect[] newArray(int size) {
-            return new Rect[size];
+        public RectF[] newArray(int size) {
+            return new RectF[size];
         }
     };
 
@@ -624,10 +578,10 @@ public final class Rect implements Parcelable {
      * @param in The parcel to read the rectangle's coordinates from
      */
     public void readFromParcel(Parcel in) {
-        left = in.readInt();
-        top = in.readInt();
-        right = in.readInt();
-        bottom = in.readInt();
+        left = in.readFloat();
+        top = in.readFloat();
+        right = in.readFloat();
+        bottom = in.readFloat();
     }
 
     /**
@@ -636,11 +590,10 @@ public final class Rect implements Parcelable {
      */
     public void scale(float scale) {
         if (scale != 1.0f) {
-            left = (int) (left * scale + 0.5f);
-            top = (int) (top * scale + 0.5f);
-            right = (int) (right * scale + 0.5f);
-            bottom = (int) (bottom * scale + 0.5f);
+            left = left * scale;
+            top = top * scale ;
+            right = right * scale;
+            bottom = bottom * scale;
         }
     }
-
 }

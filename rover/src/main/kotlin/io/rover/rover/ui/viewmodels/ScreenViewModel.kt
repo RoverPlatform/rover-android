@@ -1,82 +1,71 @@
 package io.rover.rover.ui.viewmodels
 
 import android.graphics.Rect
+import android.graphics.RectF
 import io.rover.rover.core.domain.Screen
+import io.rover.rover.core.logging.log
+import io.rover.rover.ui.BlockViewModelFactory
+import io.rover.rover.ui.BlockViewModelFactoryInterface
+import io.rover.rover.ui.types.DisplayItem
 import io.rover.rover.ui.types.Layout
 
 class ScreenViewModel(
-    private val screen: Screen
+    private val screen: Screen,
+    private val blockViewModelFactory: BlockViewModelFactoryInterface
 ): ScreenViewModelInterface {
 
     override fun rowViewModels(): List<RowViewModelInterface> {
         return screen.rows.map {
             RowViewModel(
-                it
+                it,
+                blockViewModelFactory
             )
         }
     }
 
+    override fun gather(): List<LayoutableViewModel> {
+        return rowViewModels().flatMap {
+            listOf(
+                it
+            ) + it.blockViewModels.asReversed()
+        }
+    }
+
     override fun render(
-        widthDp: Int
+        widthDp: Float
     ): Layout =
-        mapRowsToRectDisplayList(screen.rows.map { RowViewModel(it) }, widthDp)
+        mapRowsToRectDisplayList(rowViewModels(), widthDp)
 
     private tailrec fun mapRowsToRectDisplayList(
         remainingRowViewModels: List<RowViewModelInterface>,
-        width: Int,
-        results: Layout = Layout(listOf(), 0)
+        width: Float,
+        results: Layout = Layout(listOf(), 0f)
     ): Layout {
-        // height is given as 0 here.  Might be OK, but...
-        // ... TODO: if autoheight is not set, and row height is set as proportional (percentage) it will collapse to a height of 0.  However, not clear what behaviour would be expected in that case anyway.
         if(remainingRowViewModels.isEmpty()) {
             return results
         }
-        val rowBounds = Rect(0, results.height, width, 0)
 
         val row = remainingRowViewModels.first()
+
+        val rowBounds = RectF(
+            0f,
+            results.height,
+            width,
+            // the bottom value of the bounds is not used; the rows expand themselves as defined
+            // or needed by autoheight content.
+            0.0f
+        )
 
         val rowFrame = row.frame(rowBounds)
 
         val tail = remainingRowViewModels.subList(1, remainingRowViewModels.size)
 
-        val rowHead = listOf(Pair(rowFrame, row))
+        val rowHead = listOf(DisplayItem(rowFrame, null, row))
 
-        val blocks = mapBlocksToRectDisplayList(row.blockViewModels(), rowBounds, 0.0f)
+        // Lay out the blocks, and then reverse the list to suit the requirement that *later* items
+        // in the list must occlude prior ones.
+        val blocks = row.mapBlocksToRectDisplayList(rowFrame).asReversed()
 
         return mapRowsToRectDisplayList(tail, width, Layout(results.coordinatesAndViewModels + rowHead + blocks, results.height + row.frame(rowBounds).height()))
-    }
-
-    private tailrec fun mapBlocksToRectDisplayList(
-        remainingBlockViewModels: List<BlockViewModelInterface>,
-        rowBounds: Rect,
-        accumulatedStackHeight: Float,
-        results: List<Pair<Rect, LayoutableViewModel>> = listOf()
-    ): List<Pair<Rect, LayoutableViewModel>> {
-        if (remainingBlockViewModels.isEmpty()) {
-            return results
-        }
-        val block = remainingBlockViewModels.first()
-
-        // if we're stacked, we need to stack on top of any prior stacked elements.
-        val stackDeflection = if (block.isStacked) accumulatedStackHeight else 0.0f
-
-        val blockBounds = Rect(
-            rowBounds.left,
-            rowBounds.top + stackDeflection.toInt(),
-            rowBounds.right,
-            rowBounds.bottom + stackDeflection.toInt()
-        )
-        val blockFrame = block.frame(rowBounds)
-
-        val tail = remainingBlockViewModels.subList(1, remainingBlockViewModels.size)
-
-        return mapBlocksToRectDisplayList(
-            tail,
-            rowBounds,
-            accumulatedStackHeight + block.stackedHeight(blockBounds),
-            results + listOf(
-                Pair(blockFrame, block)
-            )
-        )
     }
 }

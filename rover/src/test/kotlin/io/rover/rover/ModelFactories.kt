@@ -88,6 +88,17 @@ class ModelFactories {
             )
         }
 
+        fun zeroOffsets(): Offsets {
+            return Offsets(
+                Length(UnitOfMeasure.Points, 0.0),
+                Length(UnitOfMeasure.Points, 0.0),
+                Length(UnitOfMeasure.Points, 0.0),
+                Length(UnitOfMeasure.Points, 0.0),
+                Length(UnitOfMeasure.Points, 0.0),
+                Length(UnitOfMeasure.Points, 0.0)
+            )
+        }
+
         val White = Color(0xff, 0xff, 0xff, 1.0)
         val Black = Color(0, 0, 0, 1.0)
         val Transparent = Color(0xff, 0xff, 0xff, 0.0)

@@ -233,8 +233,8 @@ data class WebViewBlock(
 enum class BarcodeFormat(
     val wireFormat: String
 ) {
-    QrCode("QRCODE"),
-    AztecCode("AZTECCODE"),
+    QrCode("QR_CODE"),
+    AztecCode("AZTEC_CODE"),
     Pdf417("PDF417"),
     Code128("CODE128");
 
@@ -300,12 +300,12 @@ data class Font(
 enum class FontWeight(
     val wireFormat: String
 ) {
-    UltraLight("ULTRALIGHT"),
+    UltraLight("ULTRA_LIGHT"),
     Thin("THIN"),
     Light("LIGHT"),
     Regular("REGULAR"),
     Medium("MEDIUM"),
-    SemiBold("SEMIBOLD"),
+    SemiBold("SEMI_BOLD"),
     Bold("BOLD"),
     Heavy("HEAVY"),
     Black("BLACK");
@@ -354,11 +354,46 @@ data class Length(
 }
 
 data class Offsets(
+    /**
+     * Offsets from bottom.
+     *
+     * Used when vertical alignment is [VerticalAlignment.Bottom] or [VerticalAlignment.Fill].
+     */
     val bottom: Length,
+
+    /**
+     * Offset from horizontal centre.
+     *
+     * Used when horizontal alignment is [HorizontalAlignment.Center].
+     */
     val center: Length,
+
+    /**
+     * Offset from left.
+     *
+     * Used when horizontal alignment is [HorizontalAlignment.Left] or [HorizontalAlignment.Fill].
+     */
     val left: Length,
+
+    /**
+     * Offset from Vertical centre.
+     *
+     * Used when vertical alignment is [VerticalAlignment.Middle].
+     */
     val middle: Length,
+
+    /**
+     * Offset from right.
+     *
+     * Used when horizontal alignment is [HorizontalAlignment.Right] or [HorizontalAlignment.Fill].
+     */
     val right: Length,
+
+    /**
+     * Offset from top.
+     *
+     * Used when vertical alignment is [VerticalAlignment.Top] or [VerticalAlignment.Fill].
+     */
     val top: Length
 ) {
     companion object
@@ -447,7 +482,7 @@ enum class UnitOfMeasure(
     val wireFormat: String
 ) {
     /**
-     * The value is an absolute one.
+     * The value is an absolute one, in display independent pixels (dp on Android, points on iOS).
      */
     Points("POINTS"),
 

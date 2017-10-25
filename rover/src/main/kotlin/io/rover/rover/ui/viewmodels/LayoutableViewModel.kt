@@ -1,6 +1,7 @@
 package io.rover.rover.ui.viewmodels
 
 import android.graphics.Rect
+import android.graphics.RectF
 import io.rover.rover.ui.types.ViewType
 
 /**
@@ -13,11 +14,18 @@ interface LayoutableViewModel {
     // wrap the [Background] and [Border] model interfaces.
 
     /**
-     * Returns the position (within the bounds, particularly the width) that this view model should
-     * be laid out.  Note that the returned rect is relative to the same space as the given [bounds]
+     * Measures and returns a [RectF] of the placement the view model (with origin being the
+     * bounds).
+     *
+     * Note that the returned rect is relative to the same space as the given [bounds]
      * rect, but not relative to the [bounds] rect itself.
+     *
+     * Note that some types (particularly, [RowViewModel] will not honour all the given
+     * constraints, particularly on the [Rect.bottom] element of the bounds as they define
+     * their own height or expand to accommodate measured content as per the stacking/auto-height
+     * feature.
      */
-    fun frame(bounds: Rect): Rect
+    fun frame(bounds: RectF): RectF
 
     /**
      * There is a constrained set of classes that will implement [LayoutableViewModel].

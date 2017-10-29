@@ -6,15 +6,9 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
-import android.graphics.Rect
 import android.graphics.RectF
-import android.graphics.drawable.ShapeDrawable
-import android.graphics.drawable.shapes.RectShape
-import android.graphics.drawable.shapes.Shape
-import android.util.DisplayMetrics
 import android.view.View
 import io.rover.rover.ui.types.dpAsPx
-import io.rover.rover.ui.viewmodels.BackgroundViewModelInterface
 import io.rover.rover.ui.viewmodels.BorderViewModelInterface
 
 
@@ -22,8 +16,7 @@ class ViewBorder(
     private val view: LayoutableView<*>
 ): ViewBorderInterface {
     // State:
-
-    private var configuration: RenderingConfiguration? = null
+    private var configuration: MaskConfiguration? = null
     private var size: Pair<Int, Int>? = null
 
     init {
@@ -31,7 +24,7 @@ class ViewBorder(
 
         view.registerOnSizeChangedCallback { width, height, _, _ ->
             size = Pair(width, height)
-            configureIfPossible()
+            renderRoundedCornersMask()
         }
 
         // register callbacks with the View to get into the canvas rendering chain.
@@ -40,6 +33,7 @@ class ViewBorder(
             val configuration = this.configuration
 
             if(viewModel != null && configuration != null) {
+                // draw the solid border:
                 canvas.drawRoundRect(
                     configuration.borderRect,
                     viewModel.borderRadius.dpAsPx(displayMetrics).toFloat(),
@@ -47,10 +41,12 @@ class ViewBorder(
                     configuration.borderPaint
                 )
 
-                // TODO I still think this operation will be slow, because it will have to upload
-                // our mask texture to the GPU every time :(
-
+                // if there's a border radius set, then we draw our rendered alpha mask texture
+                // that was rendered to an appropriate size (at configuration time) on top of the
+                // rendered view.
                 if(configuration.roundedCornersMask != null) {
+                    // The first frame we run this, the mask texture (roundedCornersMask) will
+                    // be uploaded to the GPU.
                     canvas.drawBitmap(
                         configuration.roundedCornersMask,
                         0f,
@@ -64,19 +60,30 @@ class ViewBorder(
                         }
                     )
                 }
-
-                // whoops! drawRoundRect only operates on the actual pixels addressed by its
-                // internal path, the exact opposite from what I want.  I have little choice but
-                // to use an offscreen mask bitmap.
-
-
             }
         }
     }
 
 
-
-    private fun configureIfPossible() {
+    /**
+     * Compute and memoize some state in this view mixin depending on the set view model and
+     * the size of the view.  Idempotent; this method must be run whenever the view
+     * model changes or the size of the view changes.
+     *
+     * This implements a particular method of achieving rounded corners on the content: computing
+     * and caching an alpha mask than can be then quickly drawn from GPU memory onto the rendered
+     * contents of the [View].
+     *
+     * Rationale of this selection of implementation: there were two other candidate methods for
+     * achieving this effect: using [Canvas.clipRect] on the [Canvas] that the view contents
+     * rendered on to clip out the corners, or, to directly renders transparent corners on with
+     * [Canvas.drawRoundRect] and a PorterDuff filter.  The former method was slow and did not
+     * antialias the clip (important if view content such as an image would be flush with the edges
+     * of the corners), and the latter method could not work at all because Canvas.drawRoundRect
+     * would only touch those pixels the mask would directly apply to, thus leaving the PorterDuff
+     * filter useless.
+     */
+    private fun renderRoundedCornersMask() {
         val viewModel = borderViewModel
         val size = this.size
 
@@ -115,12 +122,11 @@ class ViewBorder(
                     }
                 )
                 maskBitmap
-
             } else {
                 null
             }
 
-            RenderingConfiguration(
+            MaskConfiguration(
                 maskBitmap,
                 borderRect,
                 borderPaint
@@ -129,18 +135,23 @@ class ViewBorder(
             null
         }
 
-        // First side effects:
         // we're drawing translucence (specifically for the rounded corners) on the view's canvas
-        // below.  In order to have Android's UI framework composite this view with the views below this one, we have to ask it
-        // to render us into an offscreen framebuffer object.  If set back to software,
+        // below.  In order to have Android's UI framework composite this view with the views
+        // below this one, we have to ask it to render us into an offscreen framebuffer object
+        // (aka have the view use a "hardware layer").
         if(configuration?.roundedCornersMask != null) {
+            // view model is now displaying a view with rounded corners that needs the alpha mask,
+            // so force to a hardware layer is explained above.
             view.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         } else {
+            // if this view model is not (or no longer) displaying a view with rounded corners
+            // that would need the alpha mask, then switch back to default layer mode (probably
+            // software).
             view.setLayerType(View.LAYER_TYPE_NONE, null)
         }
 
-        // Second side effect:
-        // View must redraw after reconfiguration.
+        // View must redraw after reconfiguration (ie the display list cache it may have produced
+        // on prior renders is hereby invalidated).
         view.invalidate()
     }
 
@@ -150,27 +161,11 @@ class ViewBorder(
             if (viewModel != null) {
                 field = viewModel
 
-                configureIfPossible()
-                // enable rounded corners code path and render out the alpha mask if needed
-                // I need to process this in response to two events: view model change, or sizing change.
-
-
-                // TODO: plan as follows:
-                // ViewModels for backgrounds, borders, and images, and a
-                // View mixin to go with it.  This avoids the FrameLayout method that the
-                // stackoverflow snippet uses.  My base View(s) will then have a super thin
-                // layer (perhaps itself a sort of mixin) for injecting things into the rendering
-                // chaim with the mixin would then use. This means that ImageBlockView, powered by
-                // ImageView, would be able to use this directly without being wrapped by anything.
-                // And naturally, for when there’s no radius, that mixin will be able to just skip
-                // drawing in the mask roundRect.
-
-                // viewModel is stored, so just invalidate the view
-                // to force a redraw.
+                renderRoundedCornersMask()
             }
         }
 
-    data class RenderingConfiguration(
+    data class MaskConfiguration(
         var roundedCornersMask: Bitmap? = null,
         var borderRect: RectF,
         var borderPaint: Paint

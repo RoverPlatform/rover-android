@@ -10,6 +10,8 @@ import io.rover.rover.core.domain.Row
 import io.rover.rover.core.domain.Screen
 import io.rover.rover.core.logging.log
 import io.rover.rover.ui.types.Layout
+import io.rover.rover.ui.types.dpAsPx
+import io.rover.rover.ui.types.pxAsDp
 import io.rover.rover.ui.viewmodels.ScreenViewModelInterface
 import kotlin.properties.Delegates
 
@@ -60,7 +62,7 @@ class BlockAndRowLayoutManager(
         // sequence.
         // We then persist this as in-memory state
         layout = screenViewModel.render(
-            pxAsDp(this.width)
+            this.width.pxAsDp(displayMetrics)
         )
         fill(recycler)
     }
@@ -69,7 +71,7 @@ class BlockAndRowLayoutManager(
         // now we need to figure out how much we can scroll by, and if indeed dy would bring
         // us out-of-bounds and cap it.
 
-        val layoutDisplayHeight = dpAsPx(layout.height)
+        val layoutDisplayHeight = layout.height.dpAsPx(displayMetrics)
 
         if (layoutDisplayHeight <= height) {
             // can't scroll at all; content shorter than the recycler view!
@@ -132,7 +134,7 @@ class BlockAndRowLayoutManager(
         // note: we infer a naturally increasing z-order; Android treats order of addition as
         // z-order, and we process through our blocks-and-rows sequentially.
         layout.coordinatesAndViewModels.forEachIndexed { index, (viewPosition, clipBounds, _) ->
-            val displayPosition = viewPosition.dpAsPx()
+            val displayPosition = viewPosition.dpAsPx(displayMetrics)
 
             val visible = displayPosition.bottom > verticalTopBound && displayPosition.top < verticalBottomBound
             if(visible) {
@@ -144,7 +146,7 @@ class BlockAndRowLayoutManager(
                 // TODO: indeed, re-clipping is being unnecessarily done for every frame while the view is onscreen because we are scrapping and re-adding everything (the range optimization spoken about above will help here)
                 view.clipBounds = null
                 if(clipBounds != null) {
-                    view.clipBounds = clipBounds.dpAsPx()
+                    view.clipBounds = clipBounds.dpAsPx(displayMetrics)
                 }
 
                 // TODO: when implementing the aforementioned additional future optimization, the natural
@@ -172,46 +174,5 @@ class BlockAndRowLayoutManager(
                 )
             }
         }
-    }
-
-    /**
-     * Convert display-independent DP metrics to an appropriate value for this display.
-     *
-     * See "Converting DP Units to Pixel Units" on
-     * https://developer.android.com/guide/practices/screens_support.html
-     */
-    private fun dpAsPx(dp: Float): Int {
-        val scale = displayMetrics.density
-        return (dp * scale + 0.5f).toInt()
-    }
-
-    /**
-     * Convert display-independent DP metrics to an appropriate value for this display.
-     *
-     * See [Converting DP Units to Pixel Units](https://developer.android.com/guide/practices/screens_support.html)
-     */
-    private fun dpAsPx(dp: Int): Int {
-        val scale = displayMetrics.density
-        return (dp * scale + 0.5f).toInt()
-    }
-
-    private fun pxAsDp(pixels: Int): Float {
-        val scale = displayMetrics.density
-        return pixels / scale
-    }
-
-    /**
-     * Convert a [Rect] of display-independent DP metrics to an appropriate value for this display.
-     *
-     * See "Converting DP Units to Pixel Units" on
-     * https://developer.android.com/guide/practices/screens_support.html
-     */
-    private fun RectF.dpAsPx(): Rect {
-        return Rect(
-            dpAsPx(left),
-            dpAsPx(top),
-            dpAsPx(right),
-            dpAsPx(bottom)
-        )
     }
 }

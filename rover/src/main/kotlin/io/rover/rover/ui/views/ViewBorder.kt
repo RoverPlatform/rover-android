@@ -24,7 +24,7 @@ class ViewBorder(
 
         view.registerOnSizeChangedCallback { width, height, _, _ ->
             size = Pair(width, height)
-            renderRoundedCornersMask()
+            renderRoundedCornersMaskIfPossible()
         }
 
         // register callbacks with the View to get into the canvas rendering chain.
@@ -83,7 +83,7 @@ class ViewBorder(
      * would only touch those pixels the mask would directly apply to, thus leaving the PorterDuff
      * filter useless.
      */
-    private fun renderRoundedCornersMask() {
+    private fun renderRoundedCornersMaskIfPossible() {
         val viewModel = borderViewModel
         val size = this.size
 
@@ -161,7 +161,7 @@ class ViewBorder(
             if (viewModel != null) {
                 field = viewModel
 
-                renderRoundedCornersMask()
+                renderRoundedCornersMaskIfPossible()
             }
         }
 

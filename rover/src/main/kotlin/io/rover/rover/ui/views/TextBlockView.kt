@@ -2,9 +2,9 @@ package io.rover.rover.ui.views
 
 import android.content.Context
 import android.util.AttributeSet
-import io.rover.rover.ui.viewmodels.RectangleBlockViewModelInterface
+import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
 
-class RectangleBlockView: LayoutableView<RectangleBlockViewModelInterface> {
+class TextBlockView: LayoutableView<TextBlockViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
@@ -13,8 +13,9 @@ class RectangleBlockView: LayoutableView<RectangleBlockViewModelInterface> {
     // mixins
     private val viewBackground = ViewBackground(this)
     private val viewBorder = ViewBorder(this)
+    private val viewText = ViewText(this)
 
-    override var viewModel: RectangleBlockViewModelInterface? = null
+    override var viewModel: TextBlockViewModelInterface? = null
         set(viewModel) {
             viewBackground.backgroundViewModel = viewModel
             viewBorder.borderViewModel = viewModel

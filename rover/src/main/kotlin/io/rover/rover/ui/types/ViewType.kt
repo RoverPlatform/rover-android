@@ -6,7 +6,7 @@ package io.rover.rover.ui.types
 enum class ViewType {
     Row,
     Rectangle,
-//    Text,
+    Text,
 //    Image,
 //    WebView,
 //    Barcode,

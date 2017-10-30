@@ -1,6 +1,8 @@
 package io.rover.rover.ui.viewmodels
 
+import android.graphics.Paint
 import android.graphics.RectF
+import android.graphics.Typeface
 import io.rover.rover.core.domain.Background
 import io.rover.rover.core.domain.Border
 import io.rover.rover.core.domain.Experience
@@ -74,15 +76,16 @@ interface RowViewModelInterface : LayoutableViewModel, BackgroundViewModelInterf
 /**
  * View Model for a Screen.  Used in [Experience]s.
  *
- * Rover View Models are a little atypical compared to what you may have seen elsewhere in
- * industry: unusually, layouts are data, so much layout structure and parameters are data
- * passed through and transformed by the view models.
+ * Rover View Models are a little atypical compared to what you may have seen elsewhere in industry:
+ * unusually, layouts are data, so much layout structure and parameters are data passed through and
+ * transformed by the view models.
  *
- * Implementers can take a comprehensive UI layout contained within
- * a Rover [Screen], such as that within an Experience, and lay all of the contained views out
- * into two-dimensional space.  It does so by mapping a given [Screen] to an internal graph of
- * [RowViewModelInterface]s and [BlockViewModelInterface]s, ultimately yielding the [RowViewModelInterface]s and
- * [BlockViewModelInterface]s as a sequence of [LayoutableViewModel] flat blocks in two-dimensional space.
+ * Implementers can take a comprehensive UI layout contained within a Rover [Screen], such as that
+ * within an Experience, and lay all of the contained views out into two-dimensional space.  It does
+ * so by mapping a given [Screen] to an internal graph of [RowViewModelInterface]s and
+ * [BlockViewModelInterface]s, ultimately yielding the [RowViewModelInterface]s and
+ * [BlockViewModelInterface]s as a sequence of [LayoutableViewModel] flat blocks in two-dimensional
+ * space.
  *
  * Primarily used by [BlockAndRowLayoutManager].
  */
@@ -101,7 +104,49 @@ interface ScreenViewModelInterface {
     fun rowViewModels(): List<RowViewModelInterface>
 }
 
-interface RectangleBlockViewModelInterface: BlockViewModelInterface, BackgroundViewModelInterface
+/**
+ * View Model for a block that contains no content (other than its own border and
+ * background).
+ */
+interface RectangleBlockViewModelInterface: BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface
+
+/**
+ * View Model for a block that contains rich text content (decorated with strong, italic, and
+ * underline HTML tags).
+ */
+interface TextBlockViewModelInterface: BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface {
+    val text: String
+
+    val fontFace: FontFace
+}
+
+// TODO: move to types package
 
 
 
+
+// this is viewmodel->view type.
+data class FontFace(
+    /**
+     * Font size, in Android Scalable Pixels.
+     */
+    val fontSize: Int,
+
+    /**
+     * An Android style value of either [Typeface.NORMAL], [Typeface.BOLD], [Typeface.ITALIC], or
+     * [Typeface.BOLD_ITALIC].
+     */
+    val fontStyle: Int,
+
+    /**
+     * A font family name.
+     */
+    val fontFamily: String,
+
+    /**
+     * An ARGB color value suitable for use with various Android APIs.
+     */
+    val color: Int,
+
+    val align: Paint.Align
+)

@@ -9,7 +9,8 @@ import io.rover.rover.ui.viewmodels.LayoutableViewModel
 /**
  * An Android view, as thin as possible,
  *
- * TODO: factor the "composability" concerns out into a base class.
+ * TODO: factor the "composability" concerns out into a base class.  Actually, MUST move everything
+ * out because *duh* gotta be able to use any arbitrary android view base class.
  */
 abstract class LayoutableView<VM: LayoutableViewModel> : View {
     constructor(context: Context?) : super(context)

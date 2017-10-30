@@ -9,7 +9,7 @@ import io.rover.rover.ui.viewmodels.LayoutableViewModel
 /**
  * An Android view, as thin as possible,
  *
- * TODO: factor the "composability" concerns out into a base class potench.
+ * TODO: factor the "composability" concerns out into a base class.
  */
 abstract class LayoutableView<VM: LayoutableViewModel> : View {
     constructor(context: Context?) : super(context)
@@ -22,8 +22,6 @@ abstract class LayoutableView<VM: LayoutableViewModel> : View {
     private val beforeDraws: MutableList<(Canvas) -> Unit> = mutableListOf()
     private val afterDraws: MutableList<(Canvas) -> Unit> = mutableListOf()
     private val onSizeChangedCallbacks: MutableList<(width: Int, height: Int, oldWidth: Int, oldHeight: Int) -> Unit> = mutableListOf()
-
-    // TODO: port this to the new observer stuff in the Android support lib. if it fits
 
     /**
      * Execute the given callback against the [Canvas] just before the view's main [draw]

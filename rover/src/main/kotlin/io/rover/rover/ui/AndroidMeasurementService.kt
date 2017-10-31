@@ -6,6 +6,7 @@ import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.DisplayMetrics
+import io.rover.rover.core.logging.log
 import io.rover.rover.platform.simpleHtmlAsSpanned
 import io.rover.rover.ui.types.dpAsPx
 import io.rover.rover.ui.types.pxAsDp
@@ -42,10 +43,12 @@ class AndroidMeasurementService(
             paint,
             width.dpAsPx(displayMetrics),
             textLayoutAlign,
-            0f,
+            0.5f,
             0f,
             false
         )
+
+        log.v("Measured ${richText.lines().size} lines of text as needing ${layout.height} px")
 
         return layout.height.pxAsDp(displayMetrics)
     }

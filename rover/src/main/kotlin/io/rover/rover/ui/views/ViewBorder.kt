@@ -8,6 +8,8 @@ import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.RectF
 import android.view.View
+import android.widget.TextView
+import io.rover.rover.core.logging.log
 import io.rover.rover.ui.types.dpAsPx
 import io.rover.rover.ui.viewmodels.BorderViewModelInterface
 
@@ -33,14 +35,17 @@ class ViewBorder(
             val viewModel = borderViewModel
             val configuration = this.configuration
 
+            // have we discovered the view size and also been bound to a viewmodel?
             if(viewModel != null && configuration != null) {
-                // draw the solid border:
-                canvas.drawRoundRect(
-                    configuration.borderRect,
-                    viewModel.borderRadius.dpAsPx(displayMetrics).toFloat(),
-                    viewModel.borderRadius.dpAsPx(displayMetrics).toFloat(),
-                    configuration.borderPaint
-                )
+                // draw the solid border, if needed:
+                if(configuration.borderPaint != null) {
+                    canvas.drawRoundRect(
+                        configuration.borderRect,
+                        viewModel.borderRadius.dpAsPx(displayMetrics).toFloat(),
+                        viewModel.borderRadius.dpAsPx(displayMetrics).toFloat(),
+                        configuration.borderPaint
+                    )
+                }
 
                 // if there's a border radius set, then we draw our rendered alpha mask texture
                 // that was rendered to an appropriate size (at configuration time) on top of the
@@ -77,12 +82,12 @@ class ViewBorder(
      *
      * Rationale of this selection of implementation: there were two other candidate methods for
      * achieving this effect: using [Canvas.clipRect] on the [Canvas] that the view contents
-     * rendered on to clip out the corners, or, to directly renders transparent corners on with
-     * [Canvas.drawRoundRect] and a PorterDuff filter.  The former method was slow and did not
-     * antialias the clip (important if view content such as an image would be flush with the edges
-     * of the corners), and the latter method could not work at all because Canvas.drawRoundRect
-     * would only touch those pixels the mask would directly apply to, thus leaving the PorterDuff
-     * filter useless.
+     * rendered on to clip out the corners, or, to directly render transparent corners onto the
+     * canvas with [Canvas.drawRoundRect] and a PorterDuff filter.  The former method was slow and
+     * did not anti-alias along the clip (important if view content such as an image would be flush
+     * with the edges of the corners), and the latter method could not work at all because
+     * Canvas.drawRoundRect would only touch those pixels the mask would directly apply to, thus
+     * leaving the PorterDuff filter useless.
      */
     private fun renderRoundedCornersMaskIfPossible() {
         val viewModel = borderViewModel
@@ -99,10 +104,14 @@ class ViewBorder(
                 borderInset, borderInset, width.toFloat() - borderInset, height.toFloat() - borderInset
             )
 
-            val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = viewModel.borderColor
-                strokeWidth = borderWidthPx
-                style = Paint.Style.STROKE
+            val borderPaint = if (viewModel.borderWidth != 0) {
+                Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = viewModel.borderColor
+                    strokeWidth = borderWidthPx
+                    style = Paint.Style.STROKE
+                }
+            } else {
+                null
             }
 
             val maskBitmap = if (viewModel.borderRadius != 0) {
@@ -169,6 +178,6 @@ class ViewBorder(
     data class MaskConfiguration(
         var roundedCornersMask: Bitmap? = null,
         var borderRect: RectF,
-        var borderPaint: Paint
+        var borderPaint: Paint?
     )
 }

@@ -10,6 +10,8 @@ import io.rover.rover.core.domain.Position
 import io.rover.rover.core.domain.UnitOfMeasure
 import io.rover.rover.core.domain.VerticalAlignment
 import io.rover.rover.ui.BlockViewModelFactory
+import io.rover.rover.ui.MeasurementService
+import org.amshove.kluent.mock
 import org.amshove.kluent.shouldEqual
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
@@ -37,7 +39,7 @@ class RowViewModelSpec: Spek({
                         )
                     )
                 ),
-            BlockViewModelFactory()
+            BlockViewModelFactory(mock())
         )
 
         on("frame()") {
@@ -90,7 +92,7 @@ class RowViewModelSpec: Spek({
                         )
                     )
                 ),
-            BlockViewModelFactory()
+            BlockViewModelFactory(mock())
         )
 
         on("frame()") {
@@ -136,7 +138,7 @@ class RowViewModelSpec: Spek({
                         )
                     )
                 ),
-            BlockViewModelFactory()
+            BlockViewModelFactory(mock())
         )
 
         on("frame()") {
@@ -189,7 +191,7 @@ class RowViewModelSpec: Spek({
                             )
                         )
                     ),
-                BlockViewModelFactory()
+                BlockViewModelFactory(mock())
             )
         }
 

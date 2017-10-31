@@ -1,8 +1,10 @@
 package io.rover.rover.ui.views
 
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.view.Gravity
+import android.view.View
 import android.widget.TextView
 import io.rover.rover.platform.simpleHtmlAsSpanned
 import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
@@ -10,6 +12,10 @@ import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
 class ViewText(
     private val textView: TextView
 ): ViewTextInterface {
+    init {
+        textView.setLineSpacing(0f, 0.5f)
+    }
+
     override var textViewModel: TextBlockViewModelInterface? = null
         set(viewModel) {
             if(viewModel != null) {

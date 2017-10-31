@@ -61,8 +61,11 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
                 }
 
                 // ensure the connection is up!
-                try {
+                val responseCode = try {
                     connection.connect()
+
+                    intercepted?.onConnected()
+                    connection.responseCode
                 } catch (e: IOException) {
                     intercepted?.onError(e)
                     completionHandler(HttpClientResponse.ConnectionFailure(
@@ -70,9 +73,6 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
                     ))
                     return
                 }
-                intercepted?.onConnected()
-
-                val responseCode = connection.responseCode
 
                 log.d("POST $request : $responseCode")
 

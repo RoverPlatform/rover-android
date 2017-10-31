@@ -40,7 +40,7 @@ class TextBlockViewModel(
                 FontWeight.Regular -> Pair("sans-serif", Typeface.NORMAL)
                 FontWeight.Medium -> Pair("sans-serif-medium", Typeface.NORMAL)
                 FontWeight.SemiBold -> Pair("sans-serif-medium", Typeface.BOLD)
-                FontWeight.Bold -> Pair("sans-serif", Typeface.BOLD)
+                FontWeight.Bold -> Pair("sans-serif", Typeface.BOLD) // TODO: maybe change this one to use -medium?
                 FontWeight.Heavy -> Pair("sans-serif", Typeface.NORMAL)
                 FontWeight.Black -> Pair("sans-serif-black", Typeface.NORMAL)
             }

@@ -13,7 +13,7 @@ class ViewText(
     private val textView: TextView
 ): ViewTextInterface {
     init {
-        textView.setLineSpacing(0f, 0.5f)
+        textView.setLineSpacing(0f, 1.0f)
     }
 
     override var textViewModel: TextBlockViewModelInterface? = null

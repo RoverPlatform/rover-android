@@ -81,7 +81,13 @@ abstract class BlockViewModel(
         }
         else -> {
             if(block.autoHeight) {
-                intrinsicHeight(bounds)
+                val boundsConsideringInsets = RectF(
+                    bounds.left + insets.left,
+                    bounds.top,
+                    bounds.right - insets.right,
+                    bounds.bottom
+                )
+                intrinsicHeight(boundsConsideringInsets) + insets.bottom + insets.top
             } else {
                 block.height.measuredAgainst(bounds.height())
             }

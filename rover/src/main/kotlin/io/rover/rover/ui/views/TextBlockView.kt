@@ -15,13 +15,14 @@ class TextBlockView: TextView, LayoutableView<TextBlockViewModelInterface> {
 
     // mixins
     private val viewComposition = ViewComposition()
-
+    private val viewBlock = ViewBlock(this)
     private val viewBackground = ViewBackground(this)
     private val viewBorder = ViewBorder(this, viewComposition)
     private val viewText = ViewText(this)
 
     override var viewModel: TextBlockViewModelInterface? = null
         set(viewModel) {
+            viewBlock.blockViewModel = viewModel
             viewBackground.backgroundViewModel = viewModel
             viewBorder.borderViewModel = viewModel
             viewText.textViewModel = viewModel

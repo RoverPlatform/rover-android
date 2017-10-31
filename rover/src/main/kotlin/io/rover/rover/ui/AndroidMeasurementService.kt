@@ -43,7 +43,7 @@ class AndroidMeasurementService(
             paint,
             width.dpAsPx(displayMetrics),
             textLayoutAlign,
-            0.5f,
+            1.0f,
             0f,
             false
         )

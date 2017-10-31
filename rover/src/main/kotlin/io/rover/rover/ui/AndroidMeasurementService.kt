@@ -2,13 +2,11 @@ package io.rover.rover.ui
 
 import android.graphics.Paint
 import android.graphics.Typeface
-import android.os.Build
-import android.text.Html
 import android.text.Layout
-import android.text.Spanned
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.DisplayMetrics
+import io.rover.rover.platform.simpleHtmlAsSpanned
 import io.rover.rover.ui.types.dpAsPx
 import io.rover.rover.ui.types.pxAsDp
 import io.rover.rover.ui.viewmodels.FontFace
@@ -21,7 +19,7 @@ class AndroidMeasurementService(
         fontFace: FontFace,
         width: Float
     ): Float {
-        val spanned = legacyModeHtmlParse(richText)
+        val spanned = richText.simpleHtmlAsSpanned()
 
         val paint = TextPaint().apply {
             textSize = fontFace.fontSize.toFloat() * displayMetrics.scaledDensity
@@ -52,11 +50,5 @@ class AndroidMeasurementService(
         return layout.height.pxAsDp(displayMetrics)
     }
 
-    private fun legacyModeHtmlParse(richText: String): Spanned {
-        return if(Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-            Html.fromHtml(richText)
-        } else {
-            Html.fromHtml(richText, Html.FROM_HTML_MODE_LEGACY)
-        }
-    }
+
 }

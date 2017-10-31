@@ -4,6 +4,7 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.view.Gravity
 import android.widget.TextView
+import io.rover.rover.platform.simpleHtmlAsSpanned
 import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
 
 class ViewText(
@@ -12,7 +13,7 @@ class ViewText(
     override var textViewModel: TextBlockViewModelInterface? = null
         set(viewModel) {
             if(viewModel != null) {
-                textView.text = viewModel.text
+                textView.text = viewModel.text.simpleHtmlAsSpanned()
 
                 textView.gravity = when(viewModel.fontFace.align) {
                     Paint.Align.RIGHT -> Gravity.END
@@ -21,6 +22,8 @@ class ViewText(
                 }
 
                 textView.textSize = viewModel.fontFace.fontSize.toFloat()
+
+                textView.setTextColor(viewModel.fontFace.color)
 
                 textView.typeface = Typeface.create(
                     viewModel.fontFace.fontFamily, viewModel.fontFace.fontStyle

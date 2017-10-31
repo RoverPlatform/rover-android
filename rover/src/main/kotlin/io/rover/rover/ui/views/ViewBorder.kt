@@ -13,7 +13,8 @@ import io.rover.rover.ui.viewmodels.BorderViewModelInterface
 
 
 class ViewBorder(
-    private val view: LayoutableView<*>
+    private val view: View,
+    viewComposition: ViewCompositionInterface
 ): ViewBorderInterface {
     // State:
     private var configuration: MaskConfiguration? = null
@@ -22,13 +23,13 @@ class ViewBorder(
     init {
         val displayMetrics = view.resources.displayMetrics
 
-        view.registerOnSizeChangedCallback { width, height, _, _ ->
+        viewComposition.registerOnSizeChangedCallback { width, height, _, _ ->
             size = Pair(width, height)
             renderRoundedCornersMaskIfPossible()
         }
 
         // register callbacks with the View to get into the canvas rendering chain.
-        view.registerAfterDraw { canvas ->
+        viewComposition.registerAfterDraw { canvas ->
             val viewModel = borderViewModel
             val configuration = this.configuration
 

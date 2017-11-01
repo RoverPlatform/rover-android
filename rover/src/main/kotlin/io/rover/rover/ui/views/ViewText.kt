@@ -1,12 +1,10 @@
 package io.rover.rover.ui.views
 
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.view.Gravity
-import android.view.View
 import android.widget.TextView
-import io.rover.rover.platform.simpleHtmlAsSpanned
+import io.rover.rover.platform.roverTextHtmlAsSpanned
 import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
 
 class ViewText(
@@ -19,7 +17,8 @@ class ViewText(
     override var textViewModel: TextBlockViewModelInterface? = null
         set(viewModel) {
             if(viewModel != null) {
-                textView.text = viewModel.text.simpleHtmlAsSpanned()
+                // TODO: transform the spanned
+                textView.text = viewModel.text.roverTextHtmlAsSpanned()
 
                 textView.gravity = when(viewModel.fontFace.align) {
                     Paint.Align.RIGHT -> Gravity.END

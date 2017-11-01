@@ -7,7 +7,7 @@ import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.DisplayMetrics
 import io.rover.rover.core.logging.log
-import io.rover.rover.platform.simpleHtmlAsSpanned
+import io.rover.rover.platform.roverTextHtmlAsSpanned
 import io.rover.rover.ui.types.dpAsPx
 import io.rover.rover.ui.types.pxAsDp
 import io.rover.rover.ui.viewmodels.FontFace
@@ -20,7 +20,7 @@ class AndroidMeasurementService(
         fontFace: FontFace,
         width: Float
     ): Float {
-        val spanned = richText.simpleHtmlAsSpanned()
+        val spanned = richText.roverTextHtmlAsSpanned()
 
         val paint = TextPaint().apply {
             textSize = fontFace.fontSize.toFloat() * displayMetrics.scaledDensity

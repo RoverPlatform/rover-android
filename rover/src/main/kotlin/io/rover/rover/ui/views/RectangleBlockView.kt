@@ -11,9 +11,11 @@ class RectangleBlockView: LayoutableView<RectangleBlockViewModel> {
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
     private val viewBackground = ViewBackground(this)
+    private val viewBorder = ViewBorder(this)
 
     override var viewModel: RectangleBlockViewModel? = null
         set(viewModel) {
             viewBackground.backgroundViewModel = viewModel
+            viewBorder.borderViewModel = viewModel
         }
 }

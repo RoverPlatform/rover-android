@@ -2,6 +2,7 @@ package io.rover.rover.ui.viewmodels
 
 import android.graphics.RectF
 import io.rover.rover.core.domain.Background
+import io.rover.rover.core.domain.Border
 import io.rover.rover.core.domain.Experience
 import io.rover.rover.core.domain.Screen
 import io.rover.rover.ui.BlockAndRowLayoutManager
@@ -16,6 +17,20 @@ import io.rover.rover.ui.types.Layout
  */
 interface BackgroundViewModelInterface {
     val backgroundColor: Int
+}
+
+/**
+ * This interface is exposed by View Models that have support for a border (of arbitrary width and
+ * possibly rounded with a radius).  Equivalent to the [Border] domain model interface.
+ */
+interface BorderViewModelInterface {
+    val borderColor: Int
+
+    val borderRadius: Int
+
+    val borderWidth: Int
+
+    companion object
 }
 
 /**

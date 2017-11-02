@@ -4,10 +4,9 @@ import android.os.Build
 import android.text.Html
 import android.text.SpannableStringBuilder
 import android.text.Spanned
-import android.text.style.ParagraphStyle
 import io.rover.rover.core.logging.log
 
-fun String.roverTextHtmlAsSpanned(): Spanned {
+fun String.roverTextHtmlAsSpanned(): SpannableStringBuilder {
     return if(Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
         val spannedBuilder = Html.fromHtml(this) as SpannableStringBuilder
         // the legacy version of android.text.Html (ie without
@@ -19,6 +18,7 @@ fun String.roverTextHtmlAsSpanned(): Spanned {
         val indexesOfSuperfluousNewlines = spannedBuilder.foldIndexed(listOf<Int>()) { index, accumulatedIndexes, character ->
             if(character != '\n' && index > 0 && spannedBuilder[index - 1] == '\n') {
                 // a sequence of \n's is terminating.  drop the last one.
+                // TODO: the append operation here is causing unnecessary copies
                 accumulatedIndexes + (index - 1)
             } else {
                 accumulatedIndexes
@@ -36,23 +36,27 @@ fun String.roverTextHtmlAsSpanned(): Spanned {
 
         spannedBuilder
     } else {
-        Html.fromHtml(this, Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH)
+        Html.fromHtml(this, Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH) as SpannableStringBuilder
     }
 }
 
-private fun <T> Spanned.orderedSpans(spanClass: Class<T>): List<T> {
-    return orderedSpansX(spanClass, 0, listOf())
-}
-
-tailrec fun <T> Spanned.orderedSpansX(
-    spanClass: Class<T>,
-    startIndex: Int,
-    spans: List<T>
-): List<T> {
-    val nextTransitionIndex = this.nextSpanTransition(startIndex, this.lastIndex, spanClass)
-
-    val foundSpans = this.getSpans(startIndex, nextTransitionIndex, spanClass)
-
-    // TODO: the concat operation here is causing unnecessary copies
-    return this.orderedSpansX(spanClass, nextTransitionIndex, spans + foundSpans)
-}
+//fun <T> Spanned.orderedSpans(spanClass: Class<T>): List<T> {
+//    return orderedSpansRec(spanClass, 0, listOf())
+//}
+//
+//tailrec fun <T> Spanned.orderedSpansRec(
+//    spanClass: Class<T>,
+//    startIndex: Int,
+//    spans: List<T>
+//): List<T> {
+//    val nextTransitionIndex = this.nextSpanTransition(startIndex, this.lastIndex, spanClass)
+//
+//    val foundSpans = this.getSpans(startIndex, nextTransitionIndex, spanClass)
+//
+//    return if(foundSpans.isEmpty()) {
+//        spans
+//    } else {
+//        // TODO: the concat operation here is causing unnecessary copies
+//        this.orderedSpansRec(spanClass, nextTransitionIndex, spans + foundSpans)
+//    }
+//}

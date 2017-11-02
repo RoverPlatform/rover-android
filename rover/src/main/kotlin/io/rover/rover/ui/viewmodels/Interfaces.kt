@@ -118,13 +118,11 @@ interface TextBlockViewModelInterface: BlockViewModelInterface, BackgroundViewMo
     val text: String
 
     val fontFace: FontFace
+
+    fun boldRelativeToBlockWeight(): Font
 }
 
 // TODO: move to types package
-
-
-
-
 // this is viewmodel->view type.
 data class FontFace(
     /**
@@ -132,16 +130,7 @@ data class FontFace(
      */
     val fontSize: Int,
 
-    /**
-     * An Android style value of either [Typeface.NORMAL], [Typeface.BOLD], [Typeface.ITALIC], or
-     * [Typeface.BOLD_ITALIC].
-     */
-    val fontStyle: Int,
-
-    /**
-     * A font family name.
-     */
-    val fontFamily: String,
+    val font: Font,
 
     /**
      * An ARGB color value suitable for use with various Android APIs.
@@ -149,4 +138,17 @@ data class FontFace(
     val color: Int,
 
     val align: Paint.Align
+)
+
+data class Font(
+    /**
+     * A font family name.
+     */
+    val fontFamily: String,
+
+    /**
+     * An Android style value of either [Typeface.NORMAL], [Typeface.BOLD], [Typeface.ITALIC], or
+     * [Typeface.BOLD_ITALIC].
+     */
+    val fontStyle: Int
 )

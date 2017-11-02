@@ -25,7 +25,7 @@ class AndroidMeasurementService(
         val paint = TextPaint().apply {
             textSize = fontFace.fontSize.toFloat() * displayMetrics.scaledDensity
             typeface = Typeface.create(
-                fontFace.fontFamily, fontFace.fontStyle
+                fontFace.font.fontFamily, fontFace.font.fontStyle
             )
             textAlign = fontFace.align
         }

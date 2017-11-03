@@ -1,7 +1,9 @@
 package io.rover.rover.ui.views
 
+import android.content.Context
 import android.graphics.Paint
 import android.graphics.Typeface
+import android.util.AttributeSet
 import android.view.Gravity
 import android.widget.TextView
 import io.rover.rover.ui.RichTextToSpannedTransformer
@@ -13,6 +15,11 @@ class ViewText(
 ): ViewTextInterface {
     init {
         textView.setLineSpacing(0f, 1.0f)
+        // we can disable the built-in font padding because we already take font height padding into
+        // account in our height measurement.  If this were left on, an inappropriate gap would be
+        // left at the top of the text and ironically push the descenders off the bottom (don't
+        // worry, the ascenders do not appear to be clipped either).
+        textView.includeFontPadding = false
     }
 
     override var textViewModel: TextBlockViewModelInterface? = null
@@ -41,5 +48,7 @@ class ViewText(
                 )
             }
         }
+
+
 }
 

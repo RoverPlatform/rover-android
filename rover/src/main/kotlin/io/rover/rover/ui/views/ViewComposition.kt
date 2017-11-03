@@ -1,6 +1,7 @@
 package io.rover.rover.ui.views
 
 import android.graphics.Canvas
+import android.view.View
 
 /**
  * This includes several "backplane" concerns to allow for ... TODO
@@ -14,7 +15,7 @@ class ViewComposition: ViewCompositionInterface {
     private val onSizeChangedCallbacks: MutableList<(width: Int, height: Int, oldWidth: Int, oldHeight: Int) -> Unit> = mutableListOf()
 
     /**
-     * Execute the given callback against the [Canvas] just before the view's main [draw]
+     * Execute the given callback against the [Canvas] just before the view's main [View.draw]
      * pass would occur.
      */
     override fun registerBeforeDraw(stage: (Canvas) -> Unit) {
@@ -22,7 +23,7 @@ class ViewComposition: ViewCompositionInterface {
     }
 
     /**
-     * Execute the given callback against the [Canvas] just after the view's main [draw]
+     * Execute the given callback against the [Canvas] just after the view's main [View.draw]
      * pass has occurred.
      */
     override fun registerAfterDraw(stage: (Canvas) -> Unit) {
@@ -36,7 +37,6 @@ class ViewComposition: ViewCompositionInterface {
     override fun beforeOnDraw(canvas: Canvas) {
         // allow to inject behaviour before main view draw (here)
         beforeDraws.forEach { it(canvas) }
-        // TODO: I may change this back to override draw() instead if it turns out we need to
     }
 
     override fun afterOnDraw(canvas: Canvas) {

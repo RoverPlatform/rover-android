@@ -54,7 +54,7 @@ class AndroidMeasurementService(
 
         // log.v("Measured ${richText.lines().size} lines of text as needing ${layout.height} px")
 
-        return layout.height.pxAsDp(displayMetrics)
+        return (layout.height + layout.topPadding + layout.bottomPadding).pxAsDp(displayMetrics)
     }
 
 

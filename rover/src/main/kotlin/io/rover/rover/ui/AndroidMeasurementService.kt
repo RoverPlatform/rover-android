@@ -6,31 +6,32 @@ import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.DisplayMetrics
-import io.rover.rover.core.logging.log
-import io.rover.rover.platform.roverTextHtmlAsSpanned
+import io.rover.rover.ui.types.Font
+import io.rover.rover.ui.types.FontAppearance
 import io.rover.rover.ui.types.dpAsPx
 import io.rover.rover.ui.types.pxAsDp
-import io.rover.rover.ui.viewmodels.FontFace
 
 class AndroidMeasurementService(
-    private val displayMetrics: DisplayMetrics
+    private val displayMetrics: DisplayMetrics,
+    private val richTextToSpannedTransformer: RichTextToSpannedTransformer
 ): MeasurementService {
     override fun measureHeightNeededForRichText(
         richText: String,
-        fontFace: FontFace,
+        fontAppearance: FontAppearance,
+        boldFontAppearance: Font,
         width: Float
     ): Float {
-        val spanned = richText.roverTextHtmlAsSpanned()
+        val spanned = richTextToSpannedTransformer.transform(richText, boldFontAppearance)
 
         val paint = TextPaint().apply {
-            textSize = fontFace.fontSize.toFloat() * displayMetrics.scaledDensity
+            textSize = fontAppearance.fontSize.toFloat() * displayMetrics.scaledDensity
             typeface = Typeface.create(
-                fontFace.font.fontFamily, fontFace.font.fontStyle
+                fontAppearance.font.fontFamily, fontAppearance.font.fontStyle
             )
-            textAlign = fontFace.align
+            textAlign = fontAppearance.align
         }
 
-        val textLayoutAlign = when(fontFace.align) {
+        val textLayoutAlign = when(fontAppearance.align) {
             Paint.Align.CENTER -> Layout.Alignment.ALIGN_CENTER
             Paint.Align.LEFT -> Layout.Alignment.ALIGN_NORMAL
             Paint.Align.RIGHT -> Layout.Alignment.ALIGN_OPPOSITE
@@ -45,10 +46,13 @@ class AndroidMeasurementService(
             textLayoutAlign,
             1.0f,
             0f,
-            false
+
+            // includePad ensures we don't clip off any of the ligatures that extend down past
+            // the rule line.
+            true
         )
 
-        log.v("Measured ${richText.lines().size} lines of text as needing ${layout.height} px")
+        // log.v("Measured ${richText.lines().size} lines of text as needing ${layout.height} px")
 
         return layout.height.pxAsDp(displayMetrics)
     }

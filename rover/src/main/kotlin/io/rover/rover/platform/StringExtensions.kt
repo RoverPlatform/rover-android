@@ -28,7 +28,6 @@ fun String.roverTextHtmlAsSpanned(): SpannableStringBuilder {
         // now to remove all of these discovered extra newlines.
         var deletionDeflection = 0
         indexesOfSuperfluousNewlines.forEach {
-            log.v("Deleting index $it")
             // mutate the spanned builder.
             spannedBuilder.delete(it + deletionDeflection, it + deletionDeflection + 1)
             deletionDeflection -= 1
@@ -39,24 +38,3 @@ fun String.roverTextHtmlAsSpanned(): SpannableStringBuilder {
         Html.fromHtml(this, Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH) as SpannableStringBuilder
     }
 }
-
-//fun <T> Spanned.orderedSpans(spanClass: Class<T>): List<T> {
-//    return orderedSpansRec(spanClass, 0, listOf())
-//}
-//
-//tailrec fun <T> Spanned.orderedSpansRec(
-//    spanClass: Class<T>,
-//    startIndex: Int,
-//    spans: List<T>
-//): List<T> {
-//    val nextTransitionIndex = this.nextSpanTransition(startIndex, this.lastIndex, spanClass)
-//
-//    val foundSpans = this.getSpans(startIndex, nextTransitionIndex, spanClass)
-//
-//    return if(foundSpans.isEmpty()) {
-//        spans
-//    } else {
-//        // TODO: the concat operation here is causing unnecessary copies
-//        this.orderedSpansRec(spanClass, nextTransitionIndex, spans + foundSpans)
-//    }
-//}

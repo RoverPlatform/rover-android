@@ -3,78 +3,43 @@ package io.rover.rover.ui.views
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.text.TextPaint
-import android.text.style.StyleSpan
 import android.text.style.TypefaceSpan
-import android.util.Log
-import android.util.LogPrinter
 import android.view.Gravity
 import android.widget.TextView
 import io.rover.rover.core.logging.log
-import io.rover.rover.platform.roverTextHtmlAsSpanned
+import io.rover.rover.ui.RichTextToSpannedTransformer
 import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
 
 class ViewText(
-    private val textView: TextView
+    private val textView: TextView,
+    private val textToSpannedTransformer: RichTextToSpannedTransformer
 ): ViewTextInterface {
     init {
         textView.setLineSpacing(0f, 1.0f)
-
-
-
     }
 
     override var textViewModel: TextBlockViewModelInterface? = null
         set(viewModel) {
             if(viewModel != null) {
                 // TODO: this is a lot of compute at bind-time.  But not sure where to put memoized android-specific stuff (the Spanned below) because the ViewModel is offlimits for Android stuff
-
-                // TODO: these span transforms must be made available to the measurement service as well, or the measurements may be slightly out
-
                 // http://flavienlaurent.com/blog/2014/01/31/spans/ handy blog about spanned
 
-                val lp = LogPrinter(Log.VERBOSE, "ViewText")
-
-                val spanned = viewModel.text.roverTextHtmlAsSpanned()
-                // TextUtils.dumpSpans(spanned, lp, "  ")
-
-                // we want the spanned bolds within the text to be relative to the base typeface'
-                // for the entire text block.
-
-                val styleSpans = spanned.getSpans(0, spanned.length, StyleSpan::class.java)
-
-                val boldSpans = styleSpans.filter { it.style == Typeface.BOLD }
-                log.v("There are ${boldSpans.size} bolds for '${viewModel.text}'")
-                val boldFont = viewModel.boldRelativeToBlockWeight()
-                boldSpans.forEach {
-                    // replace the bold span with our own explicit typeface+style span.
-                    val start = spanned.getSpanStart(it)
-                    val end = spanned.getSpanEnd(it)
-
-                    log.v("... bold span from $start to $end ('${spanned.substring(start, end)}')")
-
-                    // spanned.removeSpan(it)
-                    spanned.setSpan(
-                        TypefaceAndExplicitBoldSpan(boldFont.fontFamily, boldFont.fontStyle),
-                        start,
-                        end,
-                        0
-                    )
-                }
+                val spanned = textToSpannedTransformer.transform(viewModel.text, viewModel.boldRelativeToBlockWeight())
 
                 textView.text = spanned
 
-                textView.gravity = when(viewModel.fontFace.align) {
+                textView.gravity = when(viewModel.fontAppearance.align) {
                     Paint.Align.RIGHT -> Gravity.END
                     Paint.Align.LEFT -> Gravity.START
                     Paint.Align.CENTER -> Gravity.CENTER_HORIZONTAL
                 }
 
-                textView.textSize = viewModel.fontFace.fontSize.toFloat()
+                textView.textSize = viewModel.fontAppearance.fontSize.toFloat()
 
-                textView.setTextColor(viewModel.fontFace.color)
+                textView.setTextColor(viewModel.fontAppearance.color)
 
                 textView.typeface = Typeface.create(
-                    viewModel.fontFace.font.fontFamily, viewModel.fontFace.font.fontStyle
+                    viewModel.fontAppearance.font.fontFamily, viewModel.fontAppearance.font.fontStyle
                 )
             }
         }

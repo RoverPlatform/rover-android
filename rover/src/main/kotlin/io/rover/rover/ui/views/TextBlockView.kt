@@ -5,6 +5,8 @@ import android.graphics.Canvas
 import android.util.AttributeSet
 import android.view.View
 import android.widget.TextView
+import io.rover.rover.ui.AndroidRichTextToSpannedTransformer
+import io.rover.rover.ui.RichTextToSpannedTransformer
 import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
 
 class TextBlockView: TextView, LayoutableView<TextBlockViewModelInterface> {
@@ -13,12 +15,12 @@ class TextBlockView: TextView, LayoutableView<TextBlockViewModelInterface> {
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
-    // mixins
+    // mixins (TODO: injections)
     private val viewComposition = ViewComposition()
     private val viewBlock = ViewBlock(this)
     private val viewBackground = ViewBackground(this)
     private val viewBorder = ViewBorder(this, viewComposition)
-    private val viewText = ViewText(this)
+    private val viewText = ViewText(this, AndroidRichTextToSpannedTransformer())
 
     override var viewModel: TextBlockViewModelInterface? = null
         set(viewModel) {

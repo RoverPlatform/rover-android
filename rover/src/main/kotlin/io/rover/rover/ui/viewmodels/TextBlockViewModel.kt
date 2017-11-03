@@ -6,8 +6,9 @@ import android.graphics.Typeface
 import io.rover.rover.core.domain.FontWeight
 import io.rover.rover.core.domain.TextAlignment
 import io.rover.rover.core.domain.TextBlock
-import io.rover.rover.core.logging.log
 import io.rover.rover.ui.MeasurementService
+import io.rover.rover.ui.types.Font
+import io.rover.rover.ui.types.FontAppearance
 import io.rover.rover.ui.types.ViewType
 import io.rover.rover.ui.views.asAndroidColor
 
@@ -23,7 +24,8 @@ class TextBlockViewModel(
     override fun intrinsicHeight(bounds: RectF): Float {
         return measurementService.measureHeightNeededForRichText(
             block.text,
-            fontFace,
+            fontAppearance,
+            boldRelativeToBlockWeight(),
             bounds.width()
         )
     }
@@ -31,23 +33,14 @@ class TextBlockViewModel(
     override val text: String
         get() = block.text
 
-    // TODO: we need to transform a Spanned.  However, that requires an Android dependency,
-    // which breaks our tests, and in this case using our own types isn't really an option here....
-    // I guess I can put it in the view, and acknowledge that it cannot be used in tests (at the
-    // very least though, I can put the font-face step-up logic here in the view-model and test
-    // that).
-    // Perhaps set a TypefaceSpan? However, because we're setting not just family but also style,
-    // it means we will probably have to create a custom version of TypefaceSpan.  Btw most of the
-    //
-
-    override val fontFace: FontFace
+    override val fontAppearance: FontAppearance
         // this maps from the Rover font weight to a named font-family and typeface style,
         // which is what Android will ultimately expect since it doesn't explicitly support
         // a font weight.
         get() {
             val font = mapFontWeightToFont(block.textFont.weight)
 
-            return FontFace(
+            return FontAppearance(
                 block.textFont.size,
                 font,
                 block.textColor.asAndroidColor(),
@@ -68,8 +61,6 @@ class TextBlockViewModel(
         } else {
             FontWeight.values().last()
         }
-
-        log.d("Mapped ${block.textFont.weight} to $addedWeight")
 
         return mapFontWeightToFont(addedWeight)
     }

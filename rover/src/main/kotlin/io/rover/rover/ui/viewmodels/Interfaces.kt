@@ -10,6 +10,8 @@ import io.rover.rover.core.domain.Screen
 import io.rover.rover.ui.BlockAndRowLayoutManager
 import io.rover.rover.ui.types.Alignment
 import io.rover.rover.ui.types.DisplayItem
+import io.rover.rover.ui.types.Font
+import io.rover.rover.ui.types.FontAppearance
 import io.rover.rover.ui.types.Insets
 import io.rover.rover.ui.types.Layout
 
@@ -117,38 +119,7 @@ interface RectangleBlockViewModelInterface: BlockViewModelInterface, BackgroundV
 interface TextBlockViewModelInterface: BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface {
     val text: String
 
-    val fontFace: FontFace
+    val fontAppearance: FontAppearance
 
     fun boldRelativeToBlockWeight(): Font
 }
-
-// TODO: move to types package
-// this is viewmodel->view type.
-data class FontFace(
-    /**
-     * Font size, in Android Scalable Pixels.
-     */
-    val fontSize: Int,
-
-    val font: Font,
-
-    /**
-     * An ARGB color value suitable for use with various Android APIs.
-     */
-    val color: Int,
-
-    val align: Paint.Align
-)
-
-data class Font(
-    /**
-     * A font family name.
-     */
-    val fontFamily: String,
-
-    /**
-     * An Android style value of either [Typeface.NORMAL], [Typeface.BOLD], [Typeface.ITALIC], or
-     * [Typeface.BOLD_ITALIC].
-     */
-    val fontStyle: Int
-)

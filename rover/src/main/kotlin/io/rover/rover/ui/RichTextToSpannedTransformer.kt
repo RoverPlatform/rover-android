@@ -3,7 +3,6 @@ package io.rover.rover.ui
 import android.graphics.Typeface
 import android.text.Spanned
 import android.text.style.StyleSpan
-import io.rover.rover.core.logging.log
 import io.rover.rover.platform.roverTextHtmlAsSpanned
 import io.rover.rover.ui.types.Font
 import io.rover.rover.ui.viewmodels.TextBlockViewModel

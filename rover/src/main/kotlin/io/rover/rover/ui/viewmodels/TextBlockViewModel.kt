@@ -103,19 +103,6 @@ class TextBlockViewModel(
 
             // 900 is aliased to sans-serif-black.
             FontWeight.Black -> Font("sans-serif-black", Typeface.NORMAL)
-
-
-//            FontWeight.UltraLight -> Font("sans-serif-thin", normal)
-//            FontWeight.Thin -> Font("sans-serif-thin", normal)
-//            FontWeight.Light -> Font("sans-serif-light", normal)
-//            FontWeight.Regular -> Font("sans-serif", normal)
-//            FontWeight.Medium -> Font("sans-serif-medium",normal)
-//            FontWeight.SemiBold -> Font("sans-serif-medium", bold)
-//            FontWeight.Bold -> Font("sans-serif-bold", Typeface.NORMAL)
-//            FontWeight.Heavy -> Font("sans-serif", normal)
-//            FontWeight.Black -> Font("sans-serif-black", normal)
-
-
         }
     }
 }

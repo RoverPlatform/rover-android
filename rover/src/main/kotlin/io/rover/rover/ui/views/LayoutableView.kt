@@ -7,16 +7,16 @@ import android.view.View
 import io.rover.rover.ui.viewmodels.LayoutableViewModel
 
 /**
- * An Android view, as thin as possible,
+ * Wraps a Rover Android [View] that can be laid out along with a possible view model that is bound
+ * to it.
  *
- * TODO: factor the "composability" concerns out into a base class.  Actually, MUST move everything
- * out because *duh* gotta be able to use any arbitrary android view base class.
+ * This is usually implemented by the views themselves, and [view] just returns `this`.  This is an
+ * interface rather than an abstract [View] subclass in order to allow implementers to inherit from
+ * various different [View] subclasses.
  */
 interface LayoutableView<VM: LayoutableViewModel> {
     var viewModel: VM?
 
     val view: View
         get() = this as View
-
-    // TODO: maybe I put the composer here just to cut down on chatter passing it around?
 }

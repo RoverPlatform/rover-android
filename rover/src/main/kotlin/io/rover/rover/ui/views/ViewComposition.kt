@@ -68,7 +68,7 @@ interface ViewCompositionInterface {
     fun registerOnSizeChangedCallback(callback: (width: Int, height: Int, oldWidth: Int, oldHeight: Int) -> Unit )
 
     // The following methods must be wired up!
-    // TODO: this invariant is uneforcable.  How to firm it up somehow?!
+    // TODO: this invariant is unenforceable.  How to firm it up somehow?!
 
     fun beforeOnDraw(canvas: Canvas)
 

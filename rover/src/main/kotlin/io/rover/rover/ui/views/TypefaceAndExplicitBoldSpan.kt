@@ -16,25 +16,34 @@ class TypefaceAndExplicitBoldSpan(
     private val fontFamily: String,
     private val fontStyle: Int
 ): TypefaceSpan(fontFamily) {
+    private val typefaceCache: HashMap<Int, Typeface> = hashMapOf()
+
     override fun updateDrawState(paint: TextPaint) {
-        applyWithStyle(paint, fontFamily)
+        applyWithStyle(paint)
     }
 
     override fun updateMeasureState(paint: TextPaint) {
-        applyWithStyle(paint, fontFamily)
+        applyWithStyle(paint)
     }
 
     override fun getSpanTypeId(): Int {
         return 99
     }
 
-    private fun applyWithStyle(paint: Paint, family: String) {
+    /**
+     * Apply the appropriate typeface to the paint.
+     *
+     * Note: this is in a very hot path, so performance matters.
+     */
+    private fun applyWithStyle(paint: Paint) {
         // merge the current paint style italic mode with the requested style of this span.  We
         // don't want the existing BOLD bit to leak through though; we want exclusive control
         // over the build bit with the provided fontStyle.
         val style = (paint.typeface.style and Typeface.ITALIC) or fontStyle
 
-        val tf = Typeface.create(family, style)
+        // cache the typefaces.
+        val tf = typefaceCache[style] ?: Typeface.create(fontFamily, style).apply { typefaceCache[style] = this }
+
         // Typeface would have done best-effort to support the style we specified.  Check to see
         // if the Bold and Italic bits remained on, and if they did not, fall back to emulation.
 

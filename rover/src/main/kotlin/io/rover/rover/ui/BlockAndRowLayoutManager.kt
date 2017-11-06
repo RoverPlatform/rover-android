@@ -5,6 +5,7 @@ import android.graphics.RectF
 import android.os.Build
 import android.support.v7.widget.RecyclerView
 import android.util.DisplayMetrics
+import android.view.View
 import io.rover.rover.core.domain.Block
 import io.rover.rover.core.domain.Row
 import io.rover.rover.core.domain.Screen
@@ -126,10 +127,12 @@ class BlockAndRowLayoutManager(
         val verticalBottomBound = scrollPosition + height
         // now we iterate through the entire display list.
 
-        // TODO: future optimization possible here: build a range data structure to enable us to only iterate over views likely to be relevant to current display position)
+        // TODO: future optimization possible here: build a range data structure to enable us to
+        // only iterate over views likely to be relevant to current display position)
 
-        // TODO: additional future optimization possible here: only add and remove changed rows
-        // rather than relying on the scrap, and then use offsetChildrenVertical().
+        // TODO: additional future optimization possible here: only add and remove changed rows,
+        // translate the rest. this will avoid re-measuring every frame and whatnot rather than
+        // relying on the scrap, and then use offsetChildrenVertical().
 
         // note: we infer a naturally increasing z-order; Android treats order of addition as
         // z-order, and we process through our blocks-and-rows sequentially.
@@ -142,12 +145,14 @@ class BlockAndRowLayoutManager(
 
                 val view = recycler.getViewForPosition(index)
 
-                // TODO: to avoid expensive re-clipping we may want to tag Views that are clipped differently so as to recycle the ones with the same clip.
-                // TODO: indeed, re-clipping is being unnecessarily done for every frame while the view is onscreen because we are scrapping and re-adding everything (the range optimization spoken about above will help here)
-                view.clipBounds = null
-                if(clipBounds != null) {
-                    view.clipBounds = clipBounds.dpAsPx(displayMetrics)
-                }
+                // TODO: to avoid expensive re-clipping we may want to tag Views that are clipped
+                // differently so as to recycle the ones with the same clip. indeed,
+                // re-clipping is being unnecessarily done for every frame while the view is
+                // onscreen because we are scrapping and re-adding everything (the range
+                // optimization spoken about above will help here)
+
+                 view.clipBounds = null
+                 if(clipBounds != null) { view.clipBounds = clipBounds.dpAsPx(displayMetrics) }
 
                 // TODO: when implementing the aforementioned additional future optimization, the natural
                 // viewmodel order will no longer carry through to the order of the addView() calls
@@ -163,7 +168,17 @@ class BlockAndRowLayoutManager(
 
                 addView(view)
 
-                view.measure(displayPosition.width(), displayPosition.height())
+                //view.measure(displayPosition.width(), displayPosition.height())
+                view.measure(
+                    View.MeasureSpec.makeMeasureSpec(
+                        displayPosition.width(),
+                        View.MeasureSpec.EXACTLY
+                    ),
+                    View.MeasureSpec.makeMeasureSpec(
+                        displayPosition.height(),
+                        View.MeasureSpec.EXACTLY
+                    )
+                )
 
                 layoutDecorated(
                     view,

@@ -1,7 +1,13 @@
 package io.rover.rover.ui.views
 
 import io.rover.rover.ui.viewmodels.BackgroundViewModelInterface
+import io.rover.rover.ui.viewmodels.BlockViewModelInterface
 import io.rover.rover.ui.viewmodels.BorderViewModelInterface
+import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
+
+interface ViewBlockInterface {
+    var blockViewModel: BlockViewModelInterface?
+}
 
 /**
  * Binds [BackgroundViewModelInterface] properties to that of a view.
@@ -19,4 +25,8 @@ interface ViewBackgroundInterface {
  */
 interface ViewBorderInterface {
     var borderViewModel: BorderViewModelInterface?
+}
+
+interface ViewTextInterface {
+    var textViewModel: TextBlockViewModelInterface?
 }

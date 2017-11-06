@@ -2,12 +2,12 @@ package io.rover.rover.ui
 
 import android.support.v7.widget.RecyclerView
 import android.view.ViewGroup
-import io.rover.rover.ui.types.Layout
 import io.rover.rover.ui.types.ViewType
 import io.rover.rover.ui.viewmodels.LayoutableViewModel
 import io.rover.rover.ui.views.LayoutableView
 import io.rover.rover.ui.views.RectangleBlockView
 import io.rover.rover.ui.views.RowView
+import io.rover.rover.ui.views.TextBlockView
 
 /**
  * This [RecyclerView.ViewHolder] wraps a [LayoutableViewModel].
@@ -16,7 +16,7 @@ class LayoutableBlockHolder(
     private val layoutableItemView: LayoutableView<in LayoutableViewModel>,
     private val viewType: ViewType
 ): RecyclerView.ViewHolder(
-    layoutableItemView
+    layoutableItemView.view
 ) {
     var viewModel: LayoutableViewModel? = null
         set(value) {
@@ -57,6 +57,7 @@ class BlockAndRowRecyclerAdapter(
             // TODO: this is terrible
             ViewType.Row -> RowView(parent.context) as LayoutableView<LayoutableViewModel>
             ViewType.Rectangle -> RectangleBlockView(parent.context) as LayoutableView<LayoutableViewModel>
+            ViewType.Text -> TextBlockView(parent.context) as LayoutableView<LayoutableViewModel>
         }
     }
 }

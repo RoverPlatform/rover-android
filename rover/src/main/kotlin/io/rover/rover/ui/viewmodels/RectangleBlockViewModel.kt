@@ -5,7 +5,7 @@ import io.rover.rover.ui.types.ViewType
 
 class RectangleBlockViewModel(
     block: RectangleBlock
-) : RectangleBlockViewModelInterface,
+): RectangleBlockViewModelInterface,
     BlockViewModel(block),
     BackgroundViewModelInterface by BackgroundViewModel(block),
     BorderViewModelInterface by BorderViewModel(block) {

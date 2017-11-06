@@ -300,14 +300,49 @@ data class Font(
 enum class FontWeight(
     val wireFormat: String
 ) {
+    /**
+     * Font weight 100.
+     */
     UltraLight("ULTRA_LIGHT"),
+
+    /**
+     * Font weight 200.
+     */
     Thin("THIN"),
+
+    /**
+     * Font weight 300.
+     */
     Light("LIGHT"),
+
+    /**
+     * Font weight 400.
+     */
     Regular("REGULAR"),
+
+    /**
+     * Font weight 500.
+     */
     Medium("MEDIUM"),
+
+    /**
+     * Font weight 600.
+     */
     SemiBold("SEMI_BOLD"),
+
+    /**
+     * Font weight 700.
+     */
     Bold("BOLD"),
+
+    /**
+     * Font weight 800.
+     */
     Heavy("HEAVY"),
+
+    /**
+     * Font weight 900.
+     */
     Black("BLACK");
 
     companion object

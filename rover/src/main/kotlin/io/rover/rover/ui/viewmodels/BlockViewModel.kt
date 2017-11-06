@@ -1,12 +1,10 @@
 package io.rover.rover.ui.viewmodels
 
-import android.graphics.Rect
 import android.graphics.RectF
 import io.rover.rover.core.domain.Block
 import io.rover.rover.core.domain.HorizontalAlignment
 import io.rover.rover.core.domain.Position
 import io.rover.rover.core.domain.VerticalAlignment
-import io.rover.rover.core.logging.log
 import io.rover.rover.ui.measuredAgainst
 import io.rover.rover.ui.types.Alignment
 import io.rover.rover.ui.types.Insets
@@ -81,7 +79,13 @@ abstract class BlockViewModel(
         }
         else -> {
             if(block.autoHeight) {
-                intrinsicHeight(bounds)
+                val boundsConsideringInsets = RectF(
+                    bounds.left + insets.left,
+                    bounds.top,
+                    bounds.left + width(bounds) - insets.right,
+                    bounds.bottom
+                )
+                intrinsicHeight(boundsConsideringInsets) + insets.bottom + insets.top
             } else {
                 block.height.measuredAgainst(bounds.height())
             }

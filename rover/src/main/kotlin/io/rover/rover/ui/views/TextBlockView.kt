@@ -4,23 +4,30 @@ import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
 import android.view.View
-import io.rover.rover.ui.viewmodels.RectangleBlockViewModelInterface
+import android.widget.TextView
+import io.rover.rover.ui.AndroidRichTextToSpannedTransformer
+import io.rover.rover.ui.RichTextToSpannedTransformer
+import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
 
-class RectangleBlockView: View, LayoutableView<RectangleBlockViewModelInterface> {
+class TextBlockView: TextView, LayoutableView<TextBlockViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
-    // mixins
+    // mixins (TODO: injections)
     private val viewComposition = ViewComposition()
+    private val viewBlock = ViewBlock(this)
     private val viewBackground = ViewBackground(this)
     private val viewBorder = ViewBorder(this, viewComposition)
+    private val viewText = ViewText(this, AndroidRichTextToSpannedTransformer())
 
-    override var viewModel: RectangleBlockViewModelInterface? = null
+    override var viewModel: TextBlockViewModelInterface? = null
         set(viewModel) {
+            viewBlock.blockViewModel = viewModel
             viewBackground.backgroundViewModel = viewModel
             viewBorder.borderViewModel = viewModel
+            viewText.textViewModel = viewModel
         }
 
     override val view: View

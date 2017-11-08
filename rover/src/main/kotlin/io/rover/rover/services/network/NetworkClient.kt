@@ -1,10 +1,13 @@
 package io.rover.rover.services.network
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.net.http.HttpResponseCache
 import android.os.AsyncTask
 import io.rover.rover.core.logging.log
 import java.io.BufferedInputStream
 import java.io.DataOutputStream
+import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
@@ -30,6 +33,20 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
                 log.d("POST $request")
                 val connection = request.url
                     .openConnection() as HttpsURLConnection
+
+                if(!connection.useCaches || HttpResponseCache.getInstalled() == null) {
+                    // We expect the user to agree to and implement setting up a global
+                    // HttpUrlConnection cache. We would much prefer to maintain our own. However,
+                    // the global-side-effect nature of the Android HttpClient API means that we
+                    // won't be able to achieve that without just building our own cache regime
+                    // rather than using the stock Android cache, so we'll stick with this approach
+                    // for now.
+
+                    // TODO: exception message should refer to a façade method once we have one
+                    throw RuntimeException("An HTTPUrlConnection cache is not enabled.\n" +
+                        "Please see the Rover documentation and the Google documentation: https://developer.android.com/reference/android/net/http/HttpResponseCache.html\n" +
+                        "As a quick fix you may call io.rover.rover.network.AsyncTaskAndHttpUrlConnectionNetworkClient.installSaneGlobalHttpCacheCache()")
+                }
 
                 val requestBody = bodyData?.toByteArray(Charsets.UTF_8)
 
@@ -107,10 +124,27 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
                     }
                 }
                 completionHandler(result)
+                log.v("Cache hit count currently is: ${HttpResponseCache.getInstalled().hitCount}")
             }
         }
 
         return AsyncTaskNetworkTask(asyncTask)
+    }
+
+    companion object {
+        /**
+         * Sets up a *global* HTTP cache for any users of HttpUrlConnection in your app,
+         * including Rover.
+         */
+        @JvmStatic
+        fun installSaneGlobalHttpCacheCache(context: Context) {
+            // TODO: change back to internal cache dir later after becoming confident about cache
+            // behaviour.
+            val httpCacheDir = File(context.externalCacheDir, "http")
+            val httpCacheSize = (50 * 1024 * 1024).toLong() // 50 MiB
+            HttpResponseCache.install(httpCacheDir, httpCacheSize)
+            log.v("Global HttpUrlConnection cache installed.")
+        }
     }
 }
 

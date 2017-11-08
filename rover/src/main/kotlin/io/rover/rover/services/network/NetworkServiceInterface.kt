@@ -8,7 +8,7 @@ import io.rover.rover.core.domain.ID
 import org.json.JSONObject
 
 /**
- *
+ * Rover GraphQL API-flavored network response.
  */
 sealed class NetworkResult<T> {
     class Error<T>(
@@ -37,7 +37,7 @@ sealed class NetworkError(
 }
 
 /**
- * A GraphQL-flavored network request.
+ * A Rover GraphQL API-flavored network request.
  *
  * @param TInput This is the type of the reply you expect to arrive back from the cloud API.
  */

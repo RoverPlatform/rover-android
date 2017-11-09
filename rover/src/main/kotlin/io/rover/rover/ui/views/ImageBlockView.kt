@@ -2,32 +2,29 @@ package io.rover.rover.ui.views
 
 import android.content.Context
 import android.graphics.Canvas
+import android.support.v7.widget.AppCompatImageView
 import android.util.AttributeSet
-import android.view.View
-import android.widget.TextView
-import io.rover.rover.ui.AndroidRichTextToSpannedTransformer
-import io.rover.rover.ui.RichTextToSpannedTransformer
-import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
+import io.rover.rover.core.logging.log
+import io.rover.rover.ui.viewmodels.ImageBlockViewModelInterface
 
-class TextBlockView: TextView, LayoutableView<TextBlockViewModelInterface> {
+class ImageBlockView: AppCompatImageView, LayoutableView<ImageBlockViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
     // mixins (TODO: injections)
     private val viewComposition = ViewComposition()
     private val viewBlock = ViewBlock(this)
     private val viewBackground = ViewBackground(this)
     private val viewBorder = ViewBorder(this, viewComposition)
-    private val viewText = ViewText(this, AndroidRichTextToSpannedTransformer())
+    private val viewImage = ViewImage(this)
 
-    override var viewModel: TextBlockViewModelInterface? = null
+    override var viewModel: ImageBlockViewModelInterface? = null
         set(viewModel) {
             viewBlock.blockViewModel = viewModel
             viewBackground.backgroundViewModel = viewModel
             viewBorder.borderViewModel = viewModel
-            viewText.textViewModel = viewModel
+            viewImage.imageViewModel = viewModel
         }
 
     override fun onDraw(canvas: Canvas) {
@@ -35,6 +32,7 @@ class TextBlockView: TextView, LayoutableView<TextBlockViewModelInterface> {
         super.onDraw(canvas)
         viewComposition.afterOnDraw(canvas)
     }
+
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         viewComposition.onSizeChanged(w, h, oldw, oldh)

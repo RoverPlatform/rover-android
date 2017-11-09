@@ -3,6 +3,7 @@ package io.rover.rover.ui.views
 import io.rover.rover.ui.viewmodels.BackgroundViewModelInterface
 import io.rover.rover.ui.viewmodels.BlockViewModelInterface
 import io.rover.rover.ui.viewmodels.BorderViewModelInterface
+import io.rover.rover.ui.viewmodels.ImageBlockViewModelInterface
 import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
 
 interface ViewBlockInterface {
@@ -29,4 +30,8 @@ interface ViewBorderInterface {
 
 interface ViewTextInterface {
     var textViewModel: TextBlockViewModelInterface?
+}
+
+interface ViewImageInterface {
+    var imageViewModel: ImageBlockViewModelInterface?
 }

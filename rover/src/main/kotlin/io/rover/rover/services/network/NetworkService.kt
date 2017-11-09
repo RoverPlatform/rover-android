@@ -39,7 +39,7 @@ class NetworkService(
         return authHeaders
     }
 
-    private fun urlRequest(authHeaders: HashMap<String, String>): HttpRequest = HttpRequest(
+    private fun urlRequest(authHeaders: HashMap<String, String>, mutation: Boolean): HttpRequest = HttpRequest(
         endpoint,
         hashMapOf<String, String>().apply {
             this["Content-Type"] = "application/json"
@@ -47,7 +47,8 @@ class NetworkService(
             authHeaders.entries.forEach { (key, value) ->
                 this[key] = value
             }
-        }
+        },
+        if(mutation) { HttpVerb.POST } else { HttpVerb.GET }
     )
 
     private fun <TEntity> httpResult(httpRequest: NetworkRequest<TEntity>, httpResponse: HttpClientResponse): NetworkResult<TEntity> =
@@ -105,7 +106,9 @@ class NetworkService(
      */
     fun <TEntity> uploadTask(request: NetworkRequest<TEntity>, profileIdentifier: String?, completionHandler: ((NetworkResult<TEntity>) -> Unit)?): NetworkTask {
         val authHeaders = authHeaders(profileIdentifier)
-        val urlRequest = urlRequest(authHeaders)
+        // TODO: once we change urlRequest() to use query parameters and GET for non-mutation
+        // requests, replace true `below` with `request.mutation`.
+        val urlRequest = urlRequest(authHeaders, true)
         val bodyData = request.encode()
 
         return client.networkTask(urlRequest, bodyData) { httpClientResponse ->

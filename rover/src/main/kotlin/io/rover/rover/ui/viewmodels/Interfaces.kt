@@ -1,5 +1,6 @@
 package io.rover.rover.ui.viewmodels
 
+import android.graphics.Bitmap
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
@@ -7,6 +8,7 @@ import io.rover.rover.core.domain.Background
 import io.rover.rover.core.domain.Border
 import io.rover.rover.core.domain.Experience
 import io.rover.rover.core.domain.Screen
+import io.rover.rover.services.network.NetworkTask
 import io.rover.rover.ui.BlockAndRowLayoutManager
 import io.rover.rover.ui.types.Alignment
 import io.rover.rover.ui.types.DisplayItem
@@ -122,4 +124,12 @@ interface TextBlockViewModelInterface: BlockViewModelInterface, BackgroundViewMo
     val fontAppearance: FontAppearance
 
     fun boldRelativeToBlockWeight(): Font
+}
+
+interface ImageBlockViewModelInterface: BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface {
+    // TODO: I may elect to demote the Bitmap concern from the ViewModel into just the View (or a
+    // helper of some kind) in order to avoid a thick Android object (Bitmap) being touched here
+    // TODO: it also needs to be async/observable so that UI can wait for it to appear.
+
+    fun requestImage(callback: (Bitmap) -> Unit): NetworkTask?
 }

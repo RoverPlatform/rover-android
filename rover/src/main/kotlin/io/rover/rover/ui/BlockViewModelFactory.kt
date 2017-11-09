@@ -1,9 +1,12 @@
 package io.rover.rover.ui
 
 import io.rover.rover.core.domain.Block
+import io.rover.rover.core.domain.ImageBlock
 import io.rover.rover.core.domain.RectangleBlock
 import io.rover.rover.core.domain.TextBlock
+import io.rover.rover.services.assets.AssetService
 import io.rover.rover.ui.viewmodels.BlockViewModelInterface
+import io.rover.rover.ui.viewmodels.ImageBlockViewModel
 import io.rover.rover.ui.viewmodels.RectangleBlockViewModel
 import io.rover.rover.ui.viewmodels.TextBlockViewModel
 
@@ -12,12 +15,14 @@ interface BlockViewModelFactoryInterface {
 }
 
 class BlockViewModelFactory(
-    private val measurementService: MeasurementService
+    private val measurementService: MeasurementService,
+    private val assetService: AssetService
 ): BlockViewModelFactoryInterface {
     override fun viewModelForBlock(block: Block): BlockViewModelInterface {
         return when(block) {
             is RectangleBlock -> RectangleBlockViewModel(block)
             is TextBlock -> TextBlockViewModel(block, measurementService)
+            is ImageBlock -> ImageBlockViewModel(block, assetService)
             else -> throw Exception(
                 "This Rover UI block type is not yet supported by the 2.0 SDK: ${block.javaClass.simpleName}."
             )

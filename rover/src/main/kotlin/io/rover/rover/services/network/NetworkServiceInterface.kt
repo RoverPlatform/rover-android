@@ -49,6 +49,16 @@ interface NetworkRequest<out TInput> {
         get() = null
 
     /**
+     * Does this request expect to change the state of the remote of the API (or anything in
+     * the larger world at large)?
+     *
+     * If so, then we will submit the GraphQL query with a POST verb and opt-out of caching
+     * behaviour.
+     */
+    val mutation: Boolean
+        get() = false
+
+    /**
      * GraphQL query string.
      */
     val query: String

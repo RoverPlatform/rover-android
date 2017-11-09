@@ -4,7 +4,8 @@ import android.graphics.Canvas
 import android.view.View
 
 /**
- * This includes several "backplane" concerns to allow for ... TODO
+ * This allows the mixins to receive notification of certain important events and state changes that
+ * are only exposed by Android with a template pattern and not a callback registration pattern.
  *
  * TODO add notes about: why this isn't done with class delegation, and thus why it has to be passed
  * alongside the view to any other View* mixins

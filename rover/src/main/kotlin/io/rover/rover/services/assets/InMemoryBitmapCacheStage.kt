@@ -2,6 +2,7 @@ package io.rover.rover.services.assets
 
 import android.graphics.Bitmap
 import android.util.LruCache
+import io.rover.rover.core.logging.log
 import java.net.URL
 
 /**
@@ -42,6 +43,7 @@ class InMemoryBitmapCacheStage(
         }
 
         override fun create(key: URL): Bitmap {
+            log.v("Image not available in cache, faulting to next layer.")
             return faultTo.request(key)
         }
     }

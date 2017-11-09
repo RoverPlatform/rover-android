@@ -168,7 +168,6 @@ class BlockAndRowLayoutManager(
 
                 addView(view)
 
-                //view.measure(displayPosition.width(), displayPosition.height())
                 view.measure(
                     View.MeasureSpec.makeMeasureSpec(
                         displayPosition.width(),

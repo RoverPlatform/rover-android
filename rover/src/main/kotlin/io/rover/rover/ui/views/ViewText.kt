@@ -9,6 +9,9 @@ import android.widget.TextView
 import io.rover.rover.ui.RichTextToSpannedTransformer
 import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
 
+/**
+ * Mixin that binds a text block view model to the relevant parts of a [TextView].
+ */
 class ViewText(
     private val textView: TextView,
     private val textToSpannedTransformer: RichTextToSpannedTransformer
@@ -29,7 +32,10 @@ class ViewText(
                 // memoized android-specific stuff (the Spanned below) because the ViewModel is
                 // off-limits for Android stuff
 
-                val spanned = textToSpannedTransformer.transform(viewModel.text, viewModel.boldRelativeToBlockWeight())
+                val spanned = textToSpannedTransformer.transform(
+                    viewModel.text,
+                    viewModel.boldRelativeToBlockWeight()
+                )
 
                 textView.text = spanned
 

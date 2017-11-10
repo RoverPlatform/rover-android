@@ -3,7 +3,6 @@ package io.rover.rover.services.assets
 import android.graphics.Bitmap
 import android.os.Handler
 import android.os.Looper
-import io.rover.rover.core.logging.log
 import io.rover.rover.services.network.NetworkClient
 import io.rover.rover.services.network.NetworkResult
 import io.rover.rover.services.network.NetworkTask
@@ -30,7 +29,7 @@ interface AssetService {
 class AndroidAssetService(
     networkClient: NetworkClient,
     private val ioExecutor: Executor
-): AssetService {
+) : AssetService {
     private val mainThreadHandler = Handler(Looper.getMainLooper())
 
     private val synchronousImagePipeline = BitmapWarmGpuCacheStage(
@@ -68,7 +67,7 @@ class AndroidAssetService(
         private val executor: Executor,
         private val doSynchronousWorkload: () -> T,
         private val emitResult: (T) -> Unit
-    ): NetworkTask {
+    ) : NetworkTask {
         private var cancelled = false
 
         override fun cancel() {

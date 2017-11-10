@@ -10,7 +10,7 @@ import java.net.URL
  */
 class BitmapWarmGpuCacheStage(
     private val nextStage: SynchronousPipelineStage<URL, Bitmap>
-): SynchronousPipelineStage<URL, Bitmap> {
+) : SynchronousPipelineStage<URL, Bitmap> {
     override fun request(input: URL): Bitmap {
         return nextStage.request(input).apply {
             // Ask Android to upload the bitmap into GPU memory.  Notice that we're able to do this

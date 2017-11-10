@@ -14,7 +14,7 @@ import io.rover.rover.ui.types.pxAsDp
 class AndroidMeasurementService(
     private val displayMetrics: DisplayMetrics,
     private val richTextToSpannedTransformer: RichTextToSpannedTransformer
-): MeasurementService {
+) : MeasurementService {
     override fun measureHeightNeededForRichText(
         richText: String,
         fontAppearance: FontAppearance,
@@ -31,7 +31,7 @@ class AndroidMeasurementService(
             textAlign = fontAppearance.align
         }
 
-        val textLayoutAlign = when(fontAppearance.align) {
+        val textLayoutAlign = when (fontAppearance.align) {
             Paint.Align.CENTER -> Layout.Alignment.ALIGN_CENTER
             Paint.Align.LEFT -> Layout.Alignment.ALIGN_NORMAL
             Paint.Align.RIGHT -> Layout.Alignment.ALIGN_OPPOSITE

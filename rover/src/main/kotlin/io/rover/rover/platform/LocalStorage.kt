@@ -23,7 +23,7 @@ interface LocalStorage {
  */
 class SharedPreferencesLocalStorage(
     val context: Context
-): LocalStorage {
+) : LocalStorage {
     private val baseContextName = "io.rover.rover.platform.localstorage"
 
     val prefs = context.getSharedPreferences(baseContextName, MODE_PRIVATE)

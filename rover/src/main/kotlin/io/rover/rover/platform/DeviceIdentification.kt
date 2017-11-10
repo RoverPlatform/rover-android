@@ -11,7 +11,7 @@ interface DeviceIdentificationInterface {
  */
 class DeviceIdentification(
     localStorage: LocalStorage
-): DeviceIdentificationInterface {
+) : DeviceIdentificationInterface {
     private val storageContextIdentifier = "io.rover.rover.device-identification"
     private val identifierKey = "identifier"
     private val storage = localStorage.getKeyValueStorageFor(storageContextIdentifier)
@@ -24,6 +24,6 @@ class DeviceIdentification(
             UUID.randomUUID().toString().apply {
                 storage.set(identifierKey, this)
             }
-        )
+            )
     }
 }

@@ -17,7 +17,7 @@ import io.rover.rover.ui.views.asAndroidColor
 class TextViewModel(
     private val block: TextBlock,
     private val measurementService: MeasurementService
-): TextViewModelInterface {
+) : TextViewModelInterface {
     override val text: String
         get() = block.text
 
@@ -32,7 +32,7 @@ class TextViewModel(
                 block.textFont.size,
                 font,
                 block.textColor.asAndroidColor(),
-                when(block.textAlignment) {
+                when (block.textAlignment) {
                     TextAlignment.Center -> Paint.Align.CENTER
                     TextAlignment.Left -> Paint.Align.LEFT
                     TextAlignment.Right -> Paint.Align.RIGHT
@@ -44,7 +44,7 @@ class TextViewModel(
         FontWeight.values().lastIndex
 
         val addedOrdinal = block.textFont.weight.ordinal + 3
-        val addedWeight = if(addedOrdinal <= FontWeight.values().lastIndex) {
+        val addedWeight = if (addedOrdinal <= FontWeight.values().lastIndex) {
             FontWeight.values()[addedOrdinal]
         } else {
             FontWeight.values().last()
@@ -54,46 +54,45 @@ class TextViewModel(
     }
 
     private fun mapFontWeightToFont(fontWeight: FontWeight): Font {
-        return when(fontWeight) {
-        // Refer to Android's frameworks/base's data/fonts.xml.  We are basically reversing the
-        // aliases and filling in the gaps where a font weight is not available at all
-        // (typically by rounding down).  Note that the typeface style
-        // (Typeface.NORMAL/Typeface.BOLD, etc.) causes Android to use one of two behaviours:
-        // for bold or regular, select font weight 400 (regular) or 700 (bold).  For all others,
-        // it does the standard behaviour of adding 300 to the font weight.  We never need to
-        // avail ourselves of that second behaviour; aliases are available for all the other
-        // font weights, so we only will use Typeface.BOLD for selecting base bold (700).
+        return when (fontWeight) {
+            // Refer to Android's frameworks/base's data/fonts.xml.  We are basically reversing the
+            // aliases and filling in the gaps where a font weight is not available at all
+            // (typically by rounding down).  Note that the typeface style
+            // (Typeface.NORMAL/Typeface.BOLD, etc.) causes Android to use one of two behaviours:
+            // for bold or regular, select font weight 400 (regular) or 700 (bold).  For all others,
+            // it does the standard behaviour of adding 300 to the font weight.  We never need to
+            // avail ourselves of that second behaviour; aliases are available for all the other
+            // font weights, so we only will use Typeface.BOLD for selecting base bold (700).
 
-        // 100 is aliased to sans-serif-thin, which is more like a 200.  Rounding up here.
+            // 100 is aliased to sans-serif-thin, which is more like a 200.  Rounding up here.
             FontWeight.UltraLight -> Font("sans-serif-thin", Typeface.NORMAL)
 
-        // 200 is missing, but sans-serif-thin, the "100 weight" font is more like a 200 anyway.
+            // 200 is missing, but sans-serif-thin, the "100 weight" font is more like a 200 anyway.
             FontWeight.Thin -> Font("sans-serif-thin", Typeface.NORMAL)
 
-        // 300 is aliased to sans-serif-light.
+            // 300 is aliased to sans-serif-light.
             FontWeight.Light -> Font("sans-serif-light", Typeface.NORMAL)
 
-        // 400 is the default weight for sans-serif, no alias needed.
+            // 400 is the default weight for sans-serif, no alias needed.
             FontWeight.Regular -> Font("sans-serif", Typeface.NORMAL)
 
-        // 500 is aliased to sans-serif-medium.
+            // 500 is aliased to sans-serif-medium.
             FontWeight.Medium -> Font("sans-serif-medium", Typeface.NORMAL)
 
-        // 600 is missing.  We'll round it down to 500.
+            // 600 is missing.  We'll round it down to 500.
             FontWeight.SemiBold -> Font("sans-serif-medium", Typeface.NORMAL)
 
-        // 700 is standard bold, no alias needed.
+            // 700 is standard bold, no alias needed.
             FontWeight.Bold -> Font("sans-serif", Typeface.BOLD)
 
-        // 800 is missing.  We'll round down to standard bold.
+            // 800 is missing.  We'll round down to standard bold.
             FontWeight.Heavy -> Font("sans-serif", Typeface.BOLD)
 
-        // 900 is aliased to sans-serif-black.
+            // 900 is aliased to sans-serif-black.
             FontWeight.Black -> Font("sans-serif-black", Typeface.NORMAL)
         }
     }
 
-    // TODO:  delegated soon wheeee
     override fun intrinsicHeight(bounds: RectF): Float {
         return measurementService.measureHeightNeededForRichText(
             block.text,

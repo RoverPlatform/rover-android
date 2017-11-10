@@ -42,7 +42,7 @@ class RowViewModel(
     }
 
     private fun height(bounds: RectF): Float {
-        return if(row.autoHeight) {
+        return if (row.autoHeight) {
             blockViewModels.map { it.stackedHeight(bounds) }.sum()
         } else {
             row.height.measuredAgainst(bounds.height())
@@ -85,7 +85,7 @@ class RowViewModel(
         val tail = remainingBlockViewModels.subList(1, remainingBlockViewModels.size)
 
         // if blockFrame exceeds the blockBounds, we need clip, and in terms relative to blockBounds
-        val clip = if(!rowFrame.contains(blockFrame)) {
+        val clip = if (!rowFrame.contains(blockFrame)) {
             // RectF has the functionality we need but has an imperative/mutation-style of API.
             RectF().apply {
                 // this just copies blockBounds because intersect() mutates the instance.

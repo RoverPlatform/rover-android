@@ -18,7 +18,7 @@ interface RichTextToSpannedTransformer {
     fun transform(string: String, boldRelativeToBlockWeight: Font): Spanned
 }
 
-class AndroidRichTextToSpannedTransformer: RichTextToSpannedTransformer {
+class AndroidRichTextToSpannedTransformer : RichTextToSpannedTransformer {
     override fun transform(string: String, boldRelativeToBlockWeight: Font): Spanned {
         val spanned = string.roverTextHtmlAsSpanned()
 

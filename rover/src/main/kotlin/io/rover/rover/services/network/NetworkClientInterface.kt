@@ -41,7 +41,7 @@ interface NetworkClient {
 
 class AsyncTaskNetworkTask(
     private val asyncTask: AsyncTask<*, *, *>
-): NetworkTask {
+) : NetworkTask {
     override fun cancel() {
         asyncTask.cancel(false)
     }

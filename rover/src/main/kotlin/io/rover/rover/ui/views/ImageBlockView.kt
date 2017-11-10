@@ -6,7 +6,7 @@ import android.support.v7.widget.AppCompatImageView
 import android.util.AttributeSet
 import io.rover.rover.ui.viewmodels.ImageBlockViewModelInterface
 
-class ImageBlockView: AppCompatImageView, LayoutableView<ImageBlockViewModelInterface> {
+class ImageBlockView : AppCompatImageView, LayoutableView<ImageBlockViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)

@@ -16,7 +16,7 @@ import io.rover.rover.ui.viewmodels.BorderViewModelInterface
 class ViewBorder(
     private val view: View,
     viewComposition: ViewCompositionInterface
-): ViewBorderInterface, PaddingContributor {
+) : ViewBorderInterface, PaddingContributor {
     // State:
     private var configuration: MaskConfiguration? = null
     private var size: Pair<Int, Int>? = null
@@ -35,9 +35,9 @@ class ViewBorder(
             val configuration = this.configuration
 
             // have we discovered the view size and also been bound to a viewmodel?
-            if(viewModel != null && configuration != null) {
+            if (viewModel != null && configuration != null) {
                 // draw the solid border, if needed:
-                if(configuration.borderPaint != null) {
+                if (configuration.borderPaint != null) {
                     canvas.drawRoundRect(
                         configuration.borderRect,
                         viewModel.borderRadius.dpAsPx(displayMetrics).toFloat(),
@@ -49,7 +49,7 @@ class ViewBorder(
                 // if there's a border radius set, then we draw our rendered alpha mask texture
                 // that was rendered to an appropriate size (at configuration time) on top of the
                 // rendered view.
-                if(configuration.roundedCornersMask != null) {
+                if (configuration.roundedCornersMask != null) {
                     // The first frame we run this, the mask texture (roundedCornersMask) will
                     // be uploaded to the GPU.
                     canvas.drawBitmap(
@@ -92,7 +92,7 @@ class ViewBorder(
         val viewModel = borderViewModel
         val size = this.size
 
-        configuration = if(viewModel != null && size != null) {
+        configuration = if (viewModel != null && size != null) {
             val displayMetrics = view.resources.displayMetrics
 
             val (width, height) = size
@@ -148,7 +148,7 @@ class ViewBorder(
         // below.  In order to have Android's UI framework composite this view with the views
         // below this one, we have to ask it to render us into an offscreen framebuffer object
         // (aka have the view use a "hardware layer").
-        if(configuration?.roundedCornersMask != null) {
+        if (configuration?.roundedCornersMask != null) {
             // view model is now displaying a view with rounded corners that needs the alpha mask,
             // so force to a hardware layer is explained above.
             view.setLayerType(View.LAYER_TYPE_HARDWARE, null)

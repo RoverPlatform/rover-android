@@ -3,11 +3,9 @@ package io.rover.rover.platform
 import android.os.Build
 import android.text.Html
 import android.text.SpannableStringBuilder
-import android.text.Spanned
-import io.rover.rover.core.logging.log
 
 fun String.roverTextHtmlAsSpanned(): SpannableStringBuilder {
-    return if(Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+    return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
         val spannedBuilder = Html.fromHtml(this) as SpannableStringBuilder
         // the legacy version of android.text.Html (ie without
         // Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH), Html.fromHtml() returns one additional
@@ -16,7 +14,7 @@ fun String.roverTextHtmlAsSpanned(): SpannableStringBuilder {
         // newlines.
 
         val indexesOfSuperfluousNewlines = spannedBuilder.foldIndexed(listOf<Int>()) { index, accumulatedIndexes, character ->
-            if(character != '\n' && index > 0 && spannedBuilder[index - 1] == '\n') {
+            if (character != '\n' && index > 0 && spannedBuilder[index - 1] == '\n') {
                 // a sequence of \n's is terminating.  drop the last one.
                 // TODO: the append operation here is causing unnecessary copies
                 accumulatedIndexes + (index - 1)

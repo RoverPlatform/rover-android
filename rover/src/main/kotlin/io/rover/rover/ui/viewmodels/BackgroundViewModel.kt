@@ -5,7 +5,7 @@ import io.rover.rover.ui.views.asAndroidColor
 
 class BackgroundViewModel(
     val background: Background
-): BackgroundViewModelInterface {
+) : BackgroundViewModelInterface {
     override val backgroundColor: Int
         get() = background.backgroundColor.asAndroidColor()
 }

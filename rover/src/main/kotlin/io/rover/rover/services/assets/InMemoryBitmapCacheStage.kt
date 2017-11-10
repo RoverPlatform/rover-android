@@ -13,7 +13,7 @@ import java.net.URL
  */
 class InMemoryBitmapCacheStage(
     private val faultTo: SynchronousPipelineStage<URL, Bitmap>
-): SynchronousPipelineStage<URL, Bitmap> {
+) : SynchronousPipelineStage<URL, Bitmap> {
 
     // TODO: how do we tune size? Google recommends tuning by creating a formula that uses a static
     // factor (here, 8) suited to your app and then a dynamic factor for the device’s available

@@ -12,16 +12,16 @@ import io.rover.rover.ui.viewmodels.ImageBlockViewModelInterface
  */
 class ViewImage(
     private val imageView: AppCompatImageView
-): ViewImageInterface {
+) : ViewImageInterface {
     var runningTask: NetworkTask? = null
 
     init {
-        imageView.addOnAttachStateChangeListener(object: View.OnAttachStateChangeListener {
+        imageView.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
             override fun onViewDetachedFromWindow(v: View?) {
                 runningTask?.cancel()
             }
 
-            override fun onViewAttachedToWindow(v: View?) { }
+            override fun onViewAttachedToWindow(v: View?) {}
         })
         imageView.scaleType = ImageView.ScaleType.FIT_XY
     }

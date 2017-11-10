@@ -7,7 +7,7 @@ class ImageBlockViewModel(
     private val backgroundViewModel: BackgroundViewModelInterface,
     private val imageViewModel: ImageViewModelInterface,
     private val borderViewModel: BorderViewModelInterface
-): ImageBlockViewModelInterface,
+) : ImageBlockViewModelInterface,
     BlockViewModelInterface by blockViewModel,
     ImageViewModelInterface by imageViewModel,
     BackgroundViewModelInterface by backgroundViewModel,

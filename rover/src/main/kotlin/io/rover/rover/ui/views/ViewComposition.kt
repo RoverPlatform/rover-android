@@ -10,7 +10,7 @@ import android.view.View
  * TODO add notes about: why this isn't done with class delegation, and thus why it has to be passed
  * alongside the view to any other View* mixins
  */
-class ViewComposition: ViewCompositionInterface {
+class ViewComposition : ViewCompositionInterface {
     private val beforeDraws: MutableList<(Canvas) -> Unit> = mutableListOf()
     private val afterDraws: MutableList<(Canvas) -> Unit> = mutableListOf()
     private val onSizeChangedCallbacks: MutableList<(width: Int, height: Int, oldWidth: Int, oldHeight: Int) -> Unit> = mutableListOf()
@@ -31,7 +31,7 @@ class ViewComposition: ViewCompositionInterface {
         afterDraws.add(stage)
     }
 
-    override fun registerOnSizeChangedCallback(callback: (width: Int, height: Int, oldWidth: Int, oldHeight: Int) -> Unit ) {
+    override fun registerOnSizeChangedCallback(callback: (width: Int, height: Int, oldWidth: Int, oldHeight: Int) -> Unit) {
         onSizeChangedCallbacks.add(callback)
     }
 
@@ -66,7 +66,7 @@ interface ViewCompositionInterface {
      */
     fun registerAfterDraw(stage: (Canvas) -> Unit)
 
-    fun registerOnSizeChangedCallback(callback: (width: Int, height: Int, oldWidth: Int, oldHeight: Int) -> Unit )
+    fun registerOnSizeChangedCallback(callback: (width: Int, height: Int, oldWidth: Int, oldHeight: Int) -> Unit)
 
     // The following methods must be wired up!
     // TODO: this invariant is unenforceable.  How to firm it up somehow?!

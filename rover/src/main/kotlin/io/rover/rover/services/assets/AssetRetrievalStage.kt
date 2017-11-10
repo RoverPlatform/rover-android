@@ -1,6 +1,5 @@
 package io.rover.rover.services.assets
 
-import io.rover.rover.core.logging.log
 import io.rover.rover.services.network.HttpClientResponse
 import io.rover.rover.services.network.HttpRequest
 import io.rover.rover.services.network.HttpVerb
@@ -17,7 +16,7 @@ import java.util.concurrent.CountDownLatch
  */
 class AssetRetrievalStage(
     private val networkClient: NetworkClient
-): SynchronousPipelineStage<URL, BufferedInputStream> {
+) : SynchronousPipelineStage<URL, BufferedInputStream> {
     override fun request(input: URL): BufferedInputStream {
         // so now I am going to just *block* while waiting for the callback.
         return blockWaitForNetworkTask { completionHandler ->
@@ -34,14 +33,16 @@ internal fun blockWaitForNetworkTask(invocation: (completionHandler: (HttpClient
     val latch = CountDownLatch(1)
     var returnStream: BufferedInputStream? = null
     invocation { clientResponse ->
-        returnStream = when(clientResponse) {
+        returnStream = when (clientResponse) {
             is HttpClientResponse.ConnectionFailure -> {
                 throw RuntimeException("Network or HTTP error downloading asset", clientResponse.reason)
             }
             is HttpClientResponse.ApplicationError -> {
                 throw RuntimeException("Remote HTTP API error downloading asset (code ${clientResponse.responseCode}): ${clientResponse.reportedReason}")
             }
-            is HttpClientResponse.Success -> { clientResponse.bufferedInputStream }
+            is HttpClientResponse.Success -> {
+                clientResponse.bufferedInputStream
+            }
         }
         latch.countDown()
     }.resume()

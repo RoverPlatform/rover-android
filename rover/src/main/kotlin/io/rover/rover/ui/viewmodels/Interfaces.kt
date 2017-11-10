@@ -35,7 +35,7 @@ interface BackgroundViewModelInterface {
  * This interface is exposed by View Models that have support for a border (of arbitrary width and
  * possibly rounded with a radius).  Equivalent to the [Border] domain model interface.
  */
-interface BorderViewModelInterface: LayoutPaddingDeflection {
+interface BorderViewModelInterface : LayoutPaddingDeflection {
     val borderColor: Int
 
     val borderRadius: Int
@@ -49,7 +49,7 @@ interface BorderViewModelInterface: LayoutPaddingDeflection {
  * View Model for a block that contains rich text content (decorated with strong, italic, and
  * underline HTML tags).
  */
-interface TextViewModelInterface: Measureable {
+interface TextViewModelInterface : Measureable {
     val text: String
 
     val fontAppearance: FontAppearance
@@ -57,7 +57,7 @@ interface TextViewModelInterface: Measureable {
     fun boldRelativeToBlockWeight(): Font
 }
 
-interface ImageViewModelInterface: Measureable {
+interface ImageViewModelInterface : Measureable {
     // TODO: I may elect to demote the Bitmap concern from the ViewModel into just the View (or a
     // helper of some kind) in order to avoid a thick Android object (Bitmap) being touched here
     // TODO: it also needs to be async/observable so that UI can wait for it to appear.
@@ -80,7 +80,7 @@ interface Measureable {
 /**
  * A view model for Blocks (particularly, the dynamic layout thereof).
  */
-interface BlockViewModelInterface: LayoutableViewModel {
+interface BlockViewModelInterface : LayoutableViewModel {
 
     /**
      * The full amount contributed by this block (including its own height and offsets) to the
@@ -151,12 +151,12 @@ interface ScreenViewModelInterface {
  * View Model for a block that contains no content (other than its own border and
  * background).
  */
-interface RectangleBlockViewModelInterface: LayoutableViewModel, BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface
+interface RectangleBlockViewModelInterface : LayoutableViewModel, BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface
 
 /**
  * View Model for a block that contains rich text content (decorated with strong, italic, and
  * underline HTML tags).
  */
-interface TextBlockViewModelInterface: LayoutableViewModel, BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface, TextViewModelInterface
+interface TextBlockViewModelInterface : LayoutableViewModel, BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface, TextViewModelInterface
 
-interface ImageBlockViewModelInterface: LayoutableViewModel, BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface, ImageViewModelInterface
+interface ImageBlockViewModelInterface : LayoutableViewModel, BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface, ImageViewModelInterface

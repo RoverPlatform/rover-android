@@ -12,13 +12,13 @@ val Region.GeofenceRegion.Companion.resourceName get() = "GeofenceRegion"
 fun Region.Companion.decodeJson(json: JSONObject): Region {
     val typeName = json.getString("__typename")
 
-    return when(typeName) {
+    return when (typeName) {
         Region.BeaconRegion.resourceName -> Region.BeaconRegion(
             uuid = UUID.fromString(json.getString("uuid")),
             major = json.optIntOrNull("major"),
             minor = json.optIntOrNull("minor")
         )
-        Region.GeofenceRegion.resourceName ->  Region.GeofenceRegion(
+        Region.GeofenceRegion.resourceName -> Region.GeofenceRegion(
             latitude = json.getDouble("latitude"),
             longitude = json.getDouble("longitude"),
             radius = json.getDouble("radius")
@@ -29,7 +29,7 @@ fun Region.Companion.decodeJson(json: JSONObject): Region {
 
 fun Region.encodeJson(): JSONObject {
     return JSONObject().apply {
-        put("__typename", when(this@encodeJson) {
+        put("__typename", when (this@encodeJson) {
             is Region.BeaconRegion -> {
                 putProp(this@encodeJson, Region.BeaconRegion::uuid) { it.toString().toUpperCase() }
                 putProp(this@encodeJson, Region.BeaconRegion::major) { it ?: JSONObject.NULL }

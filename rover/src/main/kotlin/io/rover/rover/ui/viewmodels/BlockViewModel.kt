@@ -25,12 +25,12 @@ class BlockViewModel(
     private val block: Block,
     private val paddingDeflections: Set<LayoutPaddingDeflection> = emptySet(),
     private val measureable: Measureable? = null
-): BlockViewModelInterface {
+) : BlockViewModelInterface {
 
     override val viewType: ViewType
         get() = TODO("This will be removed when LayoutableViewModel is split") //To change initializer of created properties use File | Settings | File Templates.
 
-    override fun stackedHeight(bounds: RectF): Float = when(block.position) {
+    override fun stackedHeight(bounds: RectF): Float = when (block.position) {
         Position.Floating -> 0.0f
         Position.Stacked -> {
             // TODO: what about if the block top and bottom values are proportional (percentage?)
@@ -55,7 +55,7 @@ class BlockViewModel(
     override val verticalAlignment: Alignment
         // maps the domain model type [VerticalAlignment] to a UI subsystem type [Alignment].  We
         // don't want model types to be exposed by the view models.
-        get() = when(block.verticalAlignment) {
+        get() = when (block.verticalAlignment) {
             VerticalAlignment.Bottom -> Alignment.Bottom
             VerticalAlignment.Fill -> Alignment.Fill
             VerticalAlignment.Middle -> Alignment.Center
@@ -79,14 +79,14 @@ class BlockViewModel(
     /**
      * Computes the Block's width.
      */
-    fun height(bounds: RectF): Float = when(block.verticalAlignment) {
+    fun height(bounds: RectF): Float = when (block.verticalAlignment) {
         VerticalAlignment.Fill -> {
             val top = block.offsets.top.measuredAgainst(bounds.height())
             val bottom = block.offsets.bottom.measuredAgainst(bounds.height())
             bounds.height() - top - bottom
         }
         else -> {
-            if(block.autoHeight) {
+            if (block.autoHeight) {
                 val boundsConsideringInsets = RectF(
                     bounds.left + insets.left + paddingDeflections.map { it.paddingDeflection.left }.sum(),
                     bounds.top,
@@ -94,7 +94,7 @@ class BlockViewModel(
                     bounds.bottom
                 )
 
-                if(measureable == null) {
+                if (measureable == null) {
                     log.e("Block is set to autoheight but no measurable is given.")
                     0f
                 } else {
@@ -115,7 +115,7 @@ class BlockViewModel(
      * Computes the Block's width.
      */
     override fun width(bounds: RectF): Float {
-        val width = when(block.horizontalAlignment) {
+        val width = when (block.horizontalAlignment) {
             HorizontalAlignment.Fill -> {
                 val left = block.offsets.left.measuredAgainst(bounds.width())
                 val right = block.offsets.right.measuredAgainst(bounds.width())
@@ -135,7 +135,7 @@ class BlockViewModel(
     private fun x(bounds: RectF): Float {
         val width = width(bounds)
 
-        return when(block.horizontalAlignment) {
+        return when (block.horizontalAlignment) {
             HorizontalAlignment.Center -> bounds.left + ((bounds.width() - width) / 2) + block.offsets.center.measuredAgainst(bounds.width())
             HorizontalAlignment.Fill, HorizontalAlignment.Left -> bounds.left + block.offsets.left.measuredAgainst(bounds.width())
             HorizontalAlignment.Right -> bounds.right - width - block.offsets.right.measuredAgainst(bounds.width())
@@ -149,13 +149,13 @@ class BlockViewModel(
     private fun y(bounds: RectF): Float {
         val height = height(bounds)
 
-        val alignment = if(isStacked) {
+        val alignment = if (isStacked) {
             VerticalAlignment.Top
         } else {
             block.verticalAlignment
         }
 
-        return when(alignment) {
+        return when (alignment) {
             VerticalAlignment.Bottom -> bounds.bottom - height - block.offsets.bottom.measuredAgainst(bounds.height())
             VerticalAlignment.Fill, VerticalAlignment.Top -> bounds.top + block.offsets.top.measuredAgainst(bounds.height())
             VerticalAlignment.Middle -> bounds.top + ((bounds.height() - height) / 2) + block.offsets.middle.measuredAgainst(bounds.height())

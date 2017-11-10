@@ -16,7 +16,7 @@ import javax.net.ssl.HttpsURLConnection
 /**
  * An implementation of [NetworkClient] powered by Android's stock [HttpsURLConnection] and [AsyncTask].
  */
-class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
+class AsyncTaskAndHttpUrlConnectionNetworkClient : NetworkClient {
 
     private var interceptor: AsyncTaskAndHttpUrlConnectionInterceptor? = null
 
@@ -38,7 +38,7 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
                 val connection = request.url
                     .openConnection() as HttpsURLConnection
 
-                if(!connection.useCaches || HttpResponseCache.getInstalled() == null) {
+                if (!connection.useCaches || HttpResponseCache.getInstalled() == null) {
                     // We expect the user to agree to and implement setting up a global
                     // HttpUrlConnection cache. While we would much prefer to maintain our own,
                     // however, the global-side-effect nature of the Android HttpClient API means
@@ -62,7 +62,7 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
                 }
 
                 val requestBody = bodyData?.toByteArray(Charsets.UTF_8)
-                val requestHasBody = when(request.verb) {
+                val requestHasBody = when (request.verb) {
                     HttpVerb.POST, HttpVerb.PUT -> requestBody != null
                     else -> false
                 }
@@ -83,7 +83,7 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
                 val intercepted = interceptor?.onOpened(connection, request.url.path, requestBody ?: kotlin.ByteArray(0))
 
                 // synchronously write the body to the connection.
-                if(requestHasBody) try {
+                if (requestHasBody) try {
                     DataOutputStream(connection.outputStream).write(requestBody)
                 } catch (e: IOException) {
                     intercepted?.onError(e)
@@ -166,9 +166,9 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
 }
 
 interface AsyncTaskAndHttpUrlConnectionInterception {
-    fun onConnected() { }
+    fun onConnected() {}
 
-    fun onError(exception: IOException) { }
+    fun onError(exception: IOException) {}
 
     fun sniffStream(source: InputStream): InputStream = source
 }

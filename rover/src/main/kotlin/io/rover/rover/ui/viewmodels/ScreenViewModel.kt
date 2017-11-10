@@ -1,10 +1,7 @@
 package io.rover.rover.ui.viewmodels
 
-import android.graphics.Rect
 import android.graphics.RectF
 import io.rover.rover.core.domain.Screen
-import io.rover.rover.core.logging.log
-import io.rover.rover.ui.BlockViewModelFactory
 import io.rover.rover.ui.BlockViewModelFactoryInterface
 import io.rover.rover.ui.types.DisplayItem
 import io.rover.rover.ui.types.Layout
@@ -12,7 +9,7 @@ import io.rover.rover.ui.types.Layout
 class ScreenViewModel(
     private val screen: Screen,
     private val blockViewModelFactory: BlockViewModelFactoryInterface
-): ScreenViewModelInterface {
+) : ScreenViewModelInterface {
 
     override fun rowViewModels(): List<RowViewModelInterface> {
         return screen.rows.map {
@@ -41,7 +38,7 @@ class ScreenViewModel(
         width: Float,
         results: Layout = Layout(listOf(), 0f)
     ): Layout {
-        if(remainingRowViewModels.isEmpty()) {
+        if (remainingRowViewModels.isEmpty()) {
             return results
         }
 

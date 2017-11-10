@@ -7,7 +7,7 @@ sealed class Region {
         val uuid: UUID,
         val major: Int?,
         val minor: Int?
-    ): Region() {
+    ) : Region() {
         companion object
     }
 
@@ -15,7 +15,7 @@ sealed class Region {
         val latitude: Double,
         val longitude: Double,
         val radius: Double
-    ): Region() {
+    ) : Region() {
         companion object
     }
 

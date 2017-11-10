@@ -16,12 +16,12 @@ import io.rover.rover.ui.views.TextBlockView
 class LayoutableBlockHolder(
     private val layoutableItemView: LayoutableView<in LayoutableViewModel>,
     private val viewType: ViewType
-): RecyclerView.ViewHolder(
+) : RecyclerView.ViewHolder(
     layoutableItemView.view
 ) {
     var viewModel: LayoutableViewModel? = null
         set(value) {
-            if(value != null ) {
+            if (value != null) {
 
                 layoutableItemView.viewModel = value
             }
@@ -54,7 +54,7 @@ class BlockAndRowRecyclerAdapter(
     }
 
     private fun viewFactory(parent: ViewGroup, viewType: ViewType): LayoutableView<in LayoutableViewModel> {
-        return when(viewType) {
+        return when (viewType) {
             ViewType.Row -> RowView(parent.context)
             ViewType.Rectangle -> RectangleBlockView(parent.context)
             ViewType.Text -> TextBlockView(parent.context)

@@ -15,7 +15,7 @@ import io.rover.rover.core.logging.log
 class TypefaceAndExplicitBoldSpan(
     private val fontFamily: String,
     private val fontStyle: Int
-): TypefaceSpan(fontFamily) {
+) : TypefaceSpan(fontFamily) {
     private val typefaceCache: HashMap<Int, Typeface> = hashMapOf()
 
     override fun updateDrawState(paint: TextPaint) {

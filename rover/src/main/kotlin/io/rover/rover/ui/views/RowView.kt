@@ -6,7 +6,7 @@ import android.util.AttributeSet
 import android.view.View
 import io.rover.rover.ui.viewmodels.RowViewModelInterface
 
-class RowView: View, LayoutableView<RowViewModelInterface> {
+class RowView : View, LayoutableView<RowViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)

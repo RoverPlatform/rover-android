@@ -6,7 +6,7 @@ import io.rover.rover.ui.views.asAndroidColor
 
 class BorderViewModel(
     val border: Border
-): BorderViewModelInterface {
+) : BorderViewModelInterface {
     override val borderColor: Int
         get() = border.borderColor.asAndroidColor()
 

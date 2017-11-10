@@ -3,8 +3,6 @@ package io.rover.rover.services.network.requests.data
 import io.rover.rover.core.domain.Profile
 import io.rover.rover.services.network.putProp
 import org.json.JSONObject
-import java.net.URI
-import java.net.URL
 
 fun Profile.Companion.decodeJson(jsonObject: JSONObject): Profile {
     return Profile(

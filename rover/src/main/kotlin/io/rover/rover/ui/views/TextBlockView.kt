@@ -7,7 +7,7 @@ import android.widget.TextView
 import io.rover.rover.ui.AndroidRichTextToSpannedTransformer
 import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
 
-class TextBlockView: TextView, LayoutableView<TextBlockViewModelInterface> {
+class TextBlockView : TextView, LayoutableView<TextBlockViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)

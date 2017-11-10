@@ -22,9 +22,9 @@ interface BlockViewModelFactoryInterface {
 class BlockViewModelFactory(
     private val measurementService: MeasurementService,
     private val assetService: AssetService
-): BlockViewModelFactoryInterface {
+) : BlockViewModelFactoryInterface {
     override fun viewModelForBlock(block: Block): BlockViewModelInterface {
-        return when(block) {
+        return when (block) {
             is RectangleBlock -> RectangleBlockViewModel(block, BlockViewModel(block))
             is TextBlock -> {
                 val textViewModel = TextViewModel(block, measurementService)

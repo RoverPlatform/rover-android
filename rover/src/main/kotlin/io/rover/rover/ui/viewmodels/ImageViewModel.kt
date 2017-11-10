@@ -14,18 +14,18 @@ import io.rover.rover.services.network.NetworkTask
 class ImageViewModel(
     private val block: ImageBlock,
     private val assetService: AssetService
-    ): ImageViewModelInterface {
+) : ImageViewModelInterface {
 
     override fun requestImage(callback: (Bitmap) -> Unit): NetworkTask? {
-        val uri= block.image?.url
+        val uri = block.image?.url
 
-        return if(uri != null) {
+        return if (uri != null) {
             log.v("There is an image to retrieve.  Starting.")
             // these are always URLs (HTTP/HTTPS), not open-ended URIs, so:
             val url = uri.toURL()
 
             assetService.getImageByUrl(url) { result ->
-                val y = when(result) {
+                val y = when (result) {
                     is NetworkResult.Success -> callback(result.response)
                     is NetworkResult.Error -> {
                         // TODO perhaps attempt a retry? or should a lower layer attempt retry?
@@ -44,7 +44,7 @@ class ImageViewModel(
     override fun intrinsicHeight(bounds: RectF): Float {
         val image = block.image
 
-        return if(image == null) {
+        return if (image == null) {
             // no image set means no height at all.
             0f
         } else {

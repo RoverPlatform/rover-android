@@ -1,8 +1,8 @@
 package io.rover.rover.core.domain
 
-import java.net.URI
-
 import android.util.DisplayMetrics
+import io.rover.rover.core.domain.BackgroundScale.X3
+import java.net.URI
 
 /**
  * A Rover experience.
@@ -85,7 +85,7 @@ interface Block {
     companion object
 }
 
-data class BarcodeBlock (
+data class BarcodeBlock(
     override val action: BlockAction?,
     override val autoHeight: Boolean,
     override val backgroundColor: Color,
@@ -107,7 +107,7 @@ data class BarcodeBlock (
     override val position: Position,
     override val verticalAlignment: VerticalAlignment,
     override val width: Length
-): Block, Background, Border {
+) : Block, Background, Border {
     companion object
 }
 
@@ -127,7 +127,7 @@ data class ButtonBlock(
     val selected: ButtonState,
     override val verticalAlignment: VerticalAlignment,
     override val width: Length
-): Block {
+) : Block {
     companion object
 }
 
@@ -151,7 +151,7 @@ data class ImageBlock(
     override val position: Position,
     override val verticalAlignment: VerticalAlignment,
     override val width: Length
-): Block, Background, Border {
+) : Block, Background, Border {
     companion object
 }
 
@@ -174,7 +174,7 @@ data class RectangleBlock(
     override val position: Position,
     override val verticalAlignment: VerticalAlignment,
     override val width: Length
-): Block, Background, Border {
+) : Block, Background, Border {
     companion object
 }
 
@@ -201,7 +201,7 @@ data class TextBlock(
     override val text: String,
     override val verticalAlignment: VerticalAlignment,
     override val width: Length
-): Block, Background, Border, Text {
+) : Block, Background, Border, Text {
     companion object
 }
 
@@ -226,7 +226,7 @@ data class WebViewBlock(
     val url: URI,
     override val verticalAlignment: VerticalAlignment,
     override val width: Length
-): Block, Background, Border {
+) : Block, Background, Border {
     companion object
 }
 
@@ -244,13 +244,14 @@ enum class BarcodeFormat(
 sealed class BlockAction {
     class OpenUrlAction(
         val url: URI
-    ): BlockAction() {
+    ) : BlockAction() {
         companion object
     }
+
     class GoToScreenAction(
         val experienceId: ID,
         val screenId: ID
-    ): BlockAction() {
+    ) : BlockAction() {
         companion object
     }
 
@@ -265,7 +266,7 @@ interface Border {
     companion object
 }
 
-data class ButtonState (
+data class ButtonState(
     override val backgroundColor: Color,
     override val backgroundContentMode: BackgroundContentMode,
     override val backgroundImage: Image?,
@@ -277,7 +278,7 @@ data class ButtonState (
     override val textColor: Color,
     override val textFont: Font,
     override val text: String
-): Background, Border, Text {
+) : Background, Border, Text {
     companion object
 }
 
@@ -450,7 +451,7 @@ data class Row(
     val blocks: List<Block>,
     val height: Length,
     val id: ID
-): Background {
+) : Background {
     companion object
 }
 
@@ -471,7 +472,7 @@ data class Screen(
     val titleBarText: String,
     val titleBarTextColor: Color,
     val useDefaultTitleBarStyle: Boolean
-): Background {
+) : Background {
     companion object
 }
 

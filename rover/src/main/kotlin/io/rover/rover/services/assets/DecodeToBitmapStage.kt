@@ -13,7 +13,7 @@ import java.net.URL
  */
 class DecodeToBitmapStage(
     private val priorStage: SynchronousPipelineStage<URL, BufferedInputStream>
-): SynchronousPipelineStage<URL, Bitmap> {
+) : SynchronousPipelineStage<URL, Bitmap> {
     override fun request(input: URL): Bitmap {
         val stream = priorStage.request(input)
 

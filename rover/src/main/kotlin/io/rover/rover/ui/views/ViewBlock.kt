@@ -21,9 +21,9 @@ class ViewBlock(
                     (viewModel.insets.right + contributedPaddings.map { it.right }.sum()).dpAsPx(displayMetrics),
                     (viewModel.insets.bottom + contributedPaddings.map { it.bottom }.sum()).dpAsPx(displayMetrics)
                 )
+                view.alpha = viewModel.opacity
             } else {
                 view.setPaddingRelative(0, 0, 0, 0)
             }
-
         }
 }

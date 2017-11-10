@@ -94,6 +94,11 @@ interface BlockViewModelInterface : LayoutableViewModel {
 
     val isStacked: Boolean
 
+    /**
+     * Alpha applied to the entire view.
+     *
+     * Between 0 (transparent) and 1 (fully opaque).
+     */
     val opacity: Float
 
     val verticalAlignment: Alignment

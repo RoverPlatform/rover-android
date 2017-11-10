@@ -155,9 +155,7 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient : NetworkClient {
          */
         @JvmStatic
         fun installSaneGlobalHttpCacheCache(context: Context) {
-            // TODO: change back to internal cache dir later after becoming confident about cache
-            // behaviour.
-            val httpCacheDir = File(context.externalCacheDir, "http")
+            val httpCacheDir = File(context.cacheDir, "http")
             val httpCacheSize = (50 * 1024 * 1024).toLong() // 50 MiB
             HttpResponseCache.install(httpCacheDir, httpCacheSize)
             log.v("Global HttpUrlConnection cache installed.")

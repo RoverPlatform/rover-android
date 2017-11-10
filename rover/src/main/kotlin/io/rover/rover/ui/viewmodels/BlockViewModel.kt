@@ -18,8 +18,6 @@ import io.rover.rover.ui.types.ViewType
  *
  * - LayoutableViewModel probably needs to split, because we want to be able to delegate the frame()
  *   method to the new mixin version of BlockViewModel but obviously it should not specify view type
- * - something will need to be passed in for intrinsic height measuring.  not clear how this should
- *   work if the view model is constructed outside.
  */
 class BlockViewModel(
     private val block: Block,
@@ -95,7 +93,7 @@ class BlockViewModel(
                 )
 
                 if (measureable == null) {
-                    log.e("Block is set to autoheight but no measurable is given.")
+                    log.e("Block is set to auto-height but no measurable is given.")
                     0f
                 } else {
                     measureable.intrinsicHeight(boundsConsideringInsets) +

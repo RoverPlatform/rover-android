@@ -14,16 +14,17 @@ class ImageBlockView: AppCompatImageView, LayoutableView<ImageBlockViewModelInte
 
     // mixins (TODO: injections)
     private val viewComposition = ViewComposition()
-    private val viewBlock = ViewBlock(this)
+
     private val viewBackground = ViewBackground(this)
-    private val viewBorder = ViewBorder(this, viewComposition, viewBlock)
+    private val viewBorder = ViewBorder(this, viewComposition)
+    private val viewBlock = ViewBlock(this, setOf(viewBorder))
     private val viewImage = ViewImage(this)
 
     override var viewModel: ImageBlockViewModelInterface? = null
         set(viewModel) {
+            viewBorder.borderViewModel = viewModel
             viewBlock.blockViewModel = viewModel
             viewBackground.backgroundViewModel = viewModel
-            viewBorder.borderViewModel = viewModel
             viewImage.imageViewModel = viewModel
         }
 

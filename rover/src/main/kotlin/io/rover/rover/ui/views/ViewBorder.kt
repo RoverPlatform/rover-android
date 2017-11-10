@@ -9,14 +9,14 @@ import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
 import android.graphics.RectF
 import android.view.View
+import io.rover.rover.platform.whenNotNull
 import io.rover.rover.ui.types.dpAsPx
 import io.rover.rover.ui.viewmodels.BorderViewModelInterface
 
 class ViewBorder(
     private val view: View,
-    viewComposition: ViewCompositionInterface,
-    private val viewBlock: ViewBlockInterface? = null
-): ViewBorderInterface {
+    viewComposition: ViewCompositionInterface
+): ViewBorderInterface, PaddingContributor {
     // State:
     private var configuration: MaskConfiguration? = null
     private var size: Pair<Int, Int>? = null
@@ -170,18 +170,20 @@ class ViewBorder(
             if (viewModel != null) {
                 field = viewModel
 
-                // contribute our border width to the padding if needed.
-                viewBlock?.contributeAdditionalPadding(
-                    Rect(
-                        viewModel.borderWidth,
-                        viewModel.borderWidth,
-                        viewModel.borderWidth,
-                        viewModel.borderWidth
-                    )
-                )
-
                 renderRoundedCornersMaskIfPossible()
             }
+        }
+
+    override val contributedPadding: Rect
+        get() {
+            return borderViewModel.whenNotNull {
+                Rect(
+                    it.borderWidth,
+                    it.borderWidth,
+                    it.borderWidth,
+                    it.borderWidth
+                )
+            } ?: throw RuntimeException("ViewBorder must be bound to the view model before ViewBlock.") // not a good way to enforce this invariant, alas.
         }
 
     data class MaskConfiguration(

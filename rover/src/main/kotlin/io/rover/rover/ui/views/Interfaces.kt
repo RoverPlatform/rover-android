@@ -7,6 +7,10 @@ import io.rover.rover.ui.viewmodels.BorderViewModelInterface
 import io.rover.rover.ui.viewmodels.ImageBlockViewModelInterface
 import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
 
+interface PaddingContributor {
+    val contributedPadding: Rect
+}
+
 /**
  * Binds [BlockViewModelInterface] properties to that of a view.
  *
@@ -14,15 +18,6 @@ import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
  */
 interface ViewBlockInterface {
     var blockViewModel: BlockViewModelInterface?
-
-    /**
-     * Other View* mixin classes can call this to contribute additional padding.
-     *
-     * TODO: this stateful approach currently requires an invariant that View mixins that contribute
-     * padding must have their view model bound after ViewBlock.  Would be nice if there was
-     * a firmer way to achieve this.
-     */
-    fun contributeAdditionalPadding(additionalPadding: Rect)
 }
 
 /**

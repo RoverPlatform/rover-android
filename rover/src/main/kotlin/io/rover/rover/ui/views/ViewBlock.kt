@@ -6,7 +6,8 @@ import io.rover.rover.ui.types.dpAsPx
 import io.rover.rover.ui.viewmodels.BlockViewModelInterface
 
 class ViewBlock(
-    private val view: View
+    private val view: View,
+    private val paddingContributors: Set<PaddingContributor> = emptySet()
 ): ViewBlockInterface {
     // State:
     override var blockViewModel: BlockViewModelInterface? = null
@@ -14,35 +15,16 @@ class ViewBlock(
             field = viewModel
             val displayMetrics = view.resources.displayMetrics
             if(viewModel != null) {
-                // zero out the contributed padding
-                contributedPadding = Rect()
-                refreshPadding()
+                val contributedPaddings = paddingContributors.map { it.contributedPadding }
+                view.setPaddingRelative(
+                    (viewModel.insets.left + contributedPaddings.map { it.left }.sum()).dpAsPx(displayMetrics),
+                    (viewModel.insets.top + contributedPaddings.map { it.top }.sum()).dpAsPx(displayMetrics),
+                    (viewModel.insets.right + contributedPaddings.map { it.right }.sum()).dpAsPx(displayMetrics),
+                    (viewModel.insets.bottom + contributedPaddings.map { it.bottom }.sum()).dpAsPx(displayMetrics)
+                )
+            } else {
+                view.setPaddingRelative(0, 0,0, 0)
             }
 
         }
-
-    private var contributedPadding: Rect = Rect()
-
-    override fun contributeAdditionalPadding(additionalPadding: Rect) {
-        contributedPadding = Rect(
-            contributedPadding.left + additionalPadding.left,
-            contributedPadding.top + additionalPadding.top,
-            contributedPadding.right + additionalPadding.right,
-            contributedPadding.bottom + additionalPadding.bottom
-        )
-        refreshPadding()
-    }
-
-    private fun refreshPadding() {
-        val displayMetrics = view.resources.displayMetrics
-        val viewModel = blockViewModel
-        if(viewModel != null) {
-            view.setPaddingRelative(
-                (viewModel.insets.left + contributedPadding.left).dpAsPx(displayMetrics),
-                (viewModel.insets.top + contributedPadding.top).dpAsPx(displayMetrics),
-                (viewModel.insets.right + contributedPadding.right).dpAsPx(displayMetrics),
-                (viewModel.insets.bottom + contributedPadding.bottom).dpAsPx(displayMetrics)
-            )
-        }
-    }
 }

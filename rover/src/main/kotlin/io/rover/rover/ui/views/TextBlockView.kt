@@ -17,16 +17,17 @@ class TextBlockView: TextView, LayoutableView<TextBlockViewModelInterface> {
 
     // mixins (TODO: injections)
     private val viewComposition = ViewComposition()
-    private val viewBlock = ViewBlock(this)
+
     private val viewBackground = ViewBackground(this)
-    private val viewBorder = ViewBorder(this, viewComposition, viewBlock)
+    private val viewBorder = ViewBorder(this, viewComposition)
+    private val viewBlock = ViewBlock(this, setOf(viewBorder))
     private val viewText = ViewText(this, AndroidRichTextToSpannedTransformer())
 
     override var viewModel: TextBlockViewModelInterface? = null
         set(viewModel) {
+            viewBorder.borderViewModel = viewModel
             viewBlock.blockViewModel = viewModel
             viewBackground.backgroundViewModel = viewModel
-            viewBorder.borderViewModel = viewModel
             viewText.textViewModel = viewModel
         }
 

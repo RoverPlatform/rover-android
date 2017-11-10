@@ -57,6 +57,14 @@ interface TextViewModelInterface: Measureable {
     fun boldRelativeToBlockWeight(): Font
 }
 
+interface ImageViewModelInterface: Measureable {
+    // TODO: I may elect to demote the Bitmap concern from the ViewModel into just the View (or a
+    // helper of some kind) in order to avoid a thick Android object (Bitmap) being touched here
+    // TODO: it also needs to be async/observable so that UI can wait for it to appear.
+
+    fun requestImage(callback: (Bitmap) -> Unit): NetworkTask?
+}
+
 /**
  * Can vertically measure its content for stacked/autoheight purposes.
  */
@@ -72,7 +80,8 @@ interface Measureable {
 /**
  * A view model for Blocks (particularly, the dynamic layout thereof).
  */
-interface BlockViewModelInterface {
+interface BlockViewModelInterface: LayoutableViewModel {
+
     /**
      * The full amount contributed by this block (including its own height and offsets) to the
      * height of all the stacked blocks within the row.  So, the subsequent stacked block must be
@@ -150,10 +159,4 @@ interface RectangleBlockViewModelInterface: LayoutableViewModel, BlockViewModelI
  */
 interface TextBlockViewModelInterface: LayoutableViewModel, BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface, TextViewModelInterface
 
-interface ImageBlockViewModelInterface: LayoutableViewModel, BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface {
-    // TODO: I may elect to demote the Bitmap concern from the ViewModel into just the View (or a
-    // helper of some kind) in order to avoid a thick Android object (Bitmap) being touched here
-    // TODO: it also needs to be async/observable so that UI can wait for it to appear.
-
-    fun requestImage(callback: (Bitmap) -> Unit): NetworkTask?
-}
+interface ImageBlockViewModelInterface: LayoutableViewModel, BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface, ImageViewModelInterface

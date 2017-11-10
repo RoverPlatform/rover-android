@@ -14,8 +14,6 @@ import io.rover.rover.ui.types.ViewType
 import io.rover.rover.ui.views.asAndroidColor
 
 class TextBlockViewModel(
-    private val block: TextBlock,
-    private val measurementService: MeasurementService,
     private val blockViewModel: BlockViewModelInterface,
     private val textViewModel: TextViewModelInterface,
     private val backgroundViewModel: BackgroundViewModelInterface,

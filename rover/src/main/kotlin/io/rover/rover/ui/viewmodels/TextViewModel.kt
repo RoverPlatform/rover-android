@@ -17,8 +17,7 @@ import io.rover.rover.ui.views.asAndroidColor
 class TextViewModel(
     private val block: TextBlock,
     private val measurementService: MeasurementService
-    ): TextViewModelInterface {
-
+): TextViewModelInterface {
     override val text: String
         get() = block.text
 

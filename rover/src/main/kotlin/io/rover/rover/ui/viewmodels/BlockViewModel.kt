@@ -5,9 +5,11 @@ import io.rover.rover.core.domain.Block
 import io.rover.rover.core.domain.HorizontalAlignment
 import io.rover.rover.core.domain.Position
 import io.rover.rover.core.domain.VerticalAlignment
+import io.rover.rover.core.logging.log
 import io.rover.rover.ui.measuredAgainst
 import io.rover.rover.ui.types.Alignment
 import io.rover.rover.ui.types.Insets
+import io.rover.rover.ui.types.ViewType
 
 /**
  * A base class used by all blocks that contains the block layout and positioning concerns.
@@ -21,8 +23,12 @@ import io.rover.rover.ui.types.Insets
  */
 class BlockViewModel(
     private val block: Block,
-    private val paddingDeflections: Set<LayoutPaddingDeflection> = emptySet()
+    private val paddingDeflections: Set<LayoutPaddingDeflection> = emptySet(),
+    private val measureable: Measureable? = null
 ): BlockViewModelInterface {
+
+    override val viewType: ViewType
+        get() = TODO("This will be removed when LayoutableViewModel is split") //To change initializer of created properties use File | Settings | File Templates.
 
     override fun stackedHeight(bounds: RectF): Float = when(block.position) {
         Position.Floating -> 0.0f
@@ -88,12 +94,17 @@ class BlockViewModel(
                     bounds.bottom
                 )
 
-                intrinsicHeight(boundsConsideringInsets) +
-                    insets.bottom +
-                    insets.top +
-                    paddingDeflections.map {
-                        it.paddingDeflection.top + it.paddingDeflection.bottom
-                    }.sum()
+                if(measureable == null) {
+                    log.e("Block is set to autoheight but no measurable is given.")
+                    0f
+                } else {
+                    measureable.intrinsicHeight(boundsConsideringInsets) +
+                        insets.bottom +
+                        insets.top +
+                        paddingDeflections.map {
+                            it.paddingDeflection.top + it.paddingDeflection.bottom
+                        }.sum()
+                }
             } else {
                 block.height.measuredAgainst(bounds.height())
             }

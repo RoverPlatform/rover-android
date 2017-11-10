@@ -4,9 +4,10 @@ import io.rover.rover.core.domain.RectangleBlock
 import io.rover.rover.ui.types.ViewType
 
 class RectangleBlockViewModel(
-    block: RectangleBlock
+    block: RectangleBlock,
+    blockViewModel: BlockViewModelInterface
 ): RectangleBlockViewModelInterface,
-    BlockViewModel(block),
+    BlockViewModelInterface by blockViewModel,
     BackgroundViewModelInterface by BackgroundViewModel(block),
     BorderViewModelInterface by BorderViewModel(block) {
     override val viewType: ViewType = ViewType.Rectangle

@@ -1,5 +1,6 @@
 package io.rover.rover.ui.viewmodels
 
+import android.graphics.Rect
 import android.graphics.RectF
 import io.rover.rover.core.domain.Block
 import io.rover.rover.core.domain.HorizontalAlignment
@@ -9,9 +10,16 @@ import io.rover.rover.ui.measuredAgainst
 import io.rover.rover.ui.types.Alignment
 import io.rover.rover.ui.types.Insets
 
+/**
+ * A base class used by all blocks that contains the block layout and positioning concerns.
+ *
+ * TODO: consider moving this logic into a mixin/delegate like the other view model concerns.
+ */
 abstract class BlockViewModel(
-    private val block: Block
+    private val block: Block,
+    private val paddingDeflections: Set<LayoutPaddingDeflection> = emptySet()
 ): BlockViewModelInterface {
+
     override fun stackedHeight(bounds: RectF): Float = when(block.position) {
         Position.Floating -> 0.0f
         Position.Stacked -> {
@@ -80,12 +88,23 @@ abstract class BlockViewModel(
         else -> {
             if(block.autoHeight) {
                 val boundsConsideringInsets = RectF(
-                    bounds.left + insets.left,
+                    bounds.left + insets.left + paddingDeflections.map { it.paddingDeflection.left }.sum(),
                     bounds.top,
-                    bounds.left + width(bounds) - insets.right,
+                    bounds.left + width(bounds) - insets.right - paddingDeflections.map { it.paddingDeflection.right }.sum(),
                     bounds.bottom
                 )
-                intrinsicHeight(boundsConsideringInsets) + insets.bottom + insets.top
+
+                // TODO So I have to include the border width in the insets I pass to intrinisic height
+                // AND I need to add the border height to the output of intrinsic height, so that means that
+                // this somehow also needs to take into account border (which is a concern in
+                // the Border view model, so we need composable measuring now dang).
+
+                intrinsicHeight(boundsConsideringInsets) +
+                    insets.bottom +
+                    insets.top +
+                    paddingDeflections.map {
+                        it.paddingDeflection.top + it.paddingDeflection.bottom
+                    }.sum()
             } else {
                 block.height.measuredAgainst(bounds.height())
             }

@@ -19,7 +19,7 @@ class TextBlockView: TextView, LayoutableView<TextBlockViewModelInterface> {
     private val viewComposition = ViewComposition()
     private val viewBlock = ViewBlock(this)
     private val viewBackground = ViewBackground(this)
-    private val viewBorder = ViewBorder(this, viewComposition)
+    private val viewBorder = ViewBorder(this, viewComposition, viewBlock)
     private val viewText = ViewText(this, AndroidRichTextToSpannedTransformer())
 
     override var viewModel: TextBlockViewModelInterface? = null

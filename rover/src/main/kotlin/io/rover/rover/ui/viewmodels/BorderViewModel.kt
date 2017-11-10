@@ -1,11 +1,10 @@
 package io.rover.rover.ui.viewmodels
 
-import android.graphics.RectF
-import io.rover.rover.core.domain.Block
+import android.graphics.Rect
 import io.rover.rover.core.domain.Border
 import io.rover.rover.ui.views.asAndroidColor
 
-open class BorderViewModel(
+class BorderViewModel(
     val border: Border
 ): BorderViewModelInterface {
     override val borderColor: Int
@@ -16,4 +15,12 @@ open class BorderViewModel(
 
     override val borderWidth: Int
         get() = border.borderWidth
+
+    override val paddingDeflection: Rect
+        get() = Rect(
+            border.borderWidth,
+            border.borderWidth,
+            border.borderWidth,
+            border.borderWidth
+        )
 }

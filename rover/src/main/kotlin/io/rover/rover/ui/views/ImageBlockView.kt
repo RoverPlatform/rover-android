@@ -16,7 +16,7 @@ class ImageBlockView: AppCompatImageView, LayoutableView<ImageBlockViewModelInte
     private val viewComposition = ViewComposition()
     private val viewBlock = ViewBlock(this)
     private val viewBackground = ViewBackground(this)
-    private val viewBorder = ViewBorder(this, viewComposition)
+    private val viewBorder = ViewBorder(this, viewComposition, viewBlock)
     private val viewImage = ViewImage(this)
 
     override var viewModel: ImageBlockViewModelInterface? = null

@@ -6,6 +6,7 @@ import android.graphics.Typeface
 import io.rover.rover.core.domain.FontWeight
 import io.rover.rover.core.domain.TextAlignment
 import io.rover.rover.core.domain.TextBlock
+import io.rover.rover.core.domain.WebViewBlock
 import io.rover.rover.ui.MeasurementService
 import io.rover.rover.ui.types.Font
 import io.rover.rover.ui.types.FontAppearance
@@ -14,11 +15,13 @@ import io.rover.rover.ui.views.asAndroidColor
 
 class TextBlockViewModel(
     private val block: TextBlock,
-    private val measurementService: MeasurementService
+    private val measurementService: MeasurementService,
+    private val backgroundViewModel: BackgroundViewModelInterface,
+    private val borderViewModel: BorderViewModelInterface
 ): TextBlockViewModelInterface,
-    BlockViewModel(block),
-    BackgroundViewModelInterface by BackgroundViewModel(block),
-    BorderViewModelInterface by BorderViewModel(block) {
+    BlockViewModel(block, setOf(borderViewModel)),
+    BackgroundViewModelInterface by backgroundViewModel,
+    BorderViewModelInterface by borderViewModel {
     override val viewType: ViewType = ViewType.Text
 
     override fun intrinsicHeight(bounds: RectF): Float {
@@ -67,7 +70,6 @@ class TextBlockViewModel(
 
     private fun mapFontWeightToFont(fontWeight: FontWeight): Font {
         return when(fontWeight) {
-
             // Refer to Android's frameworks/base's data/fonts.xml.  We are basically reversing the
             // aliases and filling in the gaps where a font weight is not available at all
             // (typically by rounding down).  Note that the typeface style

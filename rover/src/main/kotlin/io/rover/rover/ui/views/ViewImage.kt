@@ -3,7 +3,6 @@ package io.rover.rover.ui.views
 import android.support.v7.widget.AppCompatImageView
 import android.view.View
 import android.widget.ImageView
-import io.rover.rover.core.logging.log
 import io.rover.rover.platform.whenNotNull
 import io.rover.rover.services.network.NetworkTask
 import io.rover.rover.ui.viewmodels.ImageBlockViewModelInterface
@@ -33,10 +32,7 @@ class ViewImage(
                 // if there's already a running image fetch, cancel it before starting another.
                 runningTask?.cancel()
 
-                log.v("About to retrieve an image if there is one")
-
                 runningTask = viewModel.requestImage { bitmap ->
-                    log.v("received back bitmap! setting it!")
                     imageView.setImageBitmap(bitmap)
                 }.apply { this.whenNotNull { it.resume() } }
             }

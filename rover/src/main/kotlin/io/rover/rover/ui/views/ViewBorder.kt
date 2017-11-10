@@ -6,17 +6,16 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
+import android.graphics.Rect
 import android.graphics.RectF
 import android.view.View
-import android.widget.TextView
-import io.rover.rover.core.logging.log
 import io.rover.rover.ui.types.dpAsPx
 import io.rover.rover.ui.viewmodels.BorderViewModelInterface
 
-
 class ViewBorder(
     private val view: View,
-    viewComposition: ViewCompositionInterface
+    viewComposition: ViewCompositionInterface,
+    private val viewBlock: ViewBlockInterface? = null
 ): ViewBorderInterface {
     // State:
     private var configuration: MaskConfiguration? = null
@@ -170,6 +169,16 @@ class ViewBorder(
             field = viewModel
             if (viewModel != null) {
                 field = viewModel
+
+                // contribute our border width to the padding if needed.
+                viewBlock?.contributeAdditionalPadding(
+                    Rect(
+                        viewModel.borderWidth,
+                        viewModel.borderWidth,
+                        viewModel.borderWidth,
+                        viewModel.borderWidth
+                    )
+                )
 
                 renderRoundedCornersMaskIfPossible()
             }

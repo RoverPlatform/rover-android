@@ -11,11 +11,13 @@ import io.rover.rover.ui.types.ViewType
 
 class ImageBlockViewModel(
     private val block: ImageBlock,
-    private val assetService: AssetService
+    private val assetService: AssetService,
+    private val backgroundViewModel: BackgroundViewModelInterface,
+    private val borderViewModel: BorderViewModelInterface
 ): ImageBlockViewModelInterface,
-    BlockViewModel(block),
-    BackgroundViewModelInterface by BackgroundViewModel(block),
-    BorderViewModelInterface by BorderViewModel(block) {
+    BlockViewModel(block, setOf(borderViewModel)),
+    BackgroundViewModelInterface by backgroundViewModel,
+    BorderViewModelInterface by borderViewModel {
     override val viewType: ViewType = ViewType.Image
 
     override fun intrinsicHeight(bounds: RectF): Float {

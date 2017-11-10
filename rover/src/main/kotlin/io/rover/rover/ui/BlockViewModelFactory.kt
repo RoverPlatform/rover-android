@@ -5,7 +5,9 @@ import io.rover.rover.core.domain.ImageBlock
 import io.rover.rover.core.domain.RectangleBlock
 import io.rover.rover.core.domain.TextBlock
 import io.rover.rover.services.assets.AssetService
+import io.rover.rover.ui.viewmodels.BackgroundViewModel
 import io.rover.rover.ui.viewmodels.BlockViewModelInterface
+import io.rover.rover.ui.viewmodels.BorderViewModel
 import io.rover.rover.ui.viewmodels.ImageBlockViewModel
 import io.rover.rover.ui.viewmodels.RectangleBlockViewModel
 import io.rover.rover.ui.viewmodels.TextBlockViewModel
@@ -20,9 +22,21 @@ class BlockViewModelFactory(
 ): BlockViewModelFactoryInterface {
     override fun viewModelForBlock(block: Block): BlockViewModelInterface {
         return when(block) {
+            // TODO: gonna have to start injecting all of the delegated viewmodels here.  The
+            // upcoming DI backplane is gonna have its work cut out for it.
             is RectangleBlock -> RectangleBlockViewModel(block)
-            is TextBlock -> TextBlockViewModel(block, measurementService)
-            is ImageBlock -> ImageBlockViewModel(block, assetService)
+            is TextBlock -> TextBlockViewModel(
+                block,
+                measurementService,
+                BackgroundViewModel(block),
+                BorderViewModel(block)
+            )
+            is ImageBlock -> ImageBlockViewModel(
+                block,
+                assetService,
+                BackgroundViewModel(block),
+                BorderViewModel(block)
+            )
             else -> throw Exception(
                 "This Rover UI block type is not yet supported by the 2.0 SDK: ${block.javaClass.simpleName}."
             )

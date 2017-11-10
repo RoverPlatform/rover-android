@@ -39,9 +39,9 @@ interface ViewBorderInterface {
 }
 
 interface ViewTextInterface {
-    var textViewModel: TextBlockViewModelInterface?
+    var textBlockViewModel: TextBlockViewModelInterface?
 }
 
 interface ViewImageInterface {
-    var imageViewModel: ImageBlockViewModelInterface?
+    var imageBlockViewModel: ImageBlockViewModelInterface?
 }

@@ -26,7 +26,7 @@ class ViewImage(
         imageView.scaleType = ImageView.ScaleType.FIT_XY
     }
 
-    override var imageViewModel: ImageBlockViewModelInterface? = null
+    override var imageBlockViewModel: ImageBlockViewModelInterface? = null
         set(viewModel) {
             if (viewModel != null) {
                 // if there's already a running image fetch, cancel it before starting another.

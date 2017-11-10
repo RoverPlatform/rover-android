@@ -1,6 +1,5 @@
 package io.rover.rover.ui.viewmodels
 
-import android.graphics.Rect
 import android.graphics.RectF
 import io.rover.rover.core.domain.Block
 import io.rover.rover.core.domain.HorizontalAlignment
@@ -13,9 +12,14 @@ import io.rover.rover.ui.types.Insets
 /**
  * A base class used by all blocks that contains the block layout and positioning concerns.
  *
- * TODO: consider moving this logic into a mixin/delegate like the other view model concerns.
+ * TODO: consider moving this logic into a mixin/delegate like the other view model concerns.  This needs two things:
+ *
+ * - LayoutableViewModel probably needs to split, because we want to be able to delegate the frame()
+ *   method to the new mixin version of BlockViewModel but obviously it should not specify view type
+ * - something will need to be passed in for intrinsic height measuring.  not clear how this should
+ *   work if the view model is constructed outside.
  */
-abstract class BlockViewModel(
+class BlockViewModel(
     private val block: Block,
     private val paddingDeflections: Set<LayoutPaddingDeflection> = emptySet()
 ): BlockViewModelInterface {
@@ -67,16 +71,6 @@ abstract class BlockViewModel(
     }
 
     /**
-     * Measure the "natural" height for the content contained in this block (for
-     * example, a wrapped block of text will consume up to some height depending on content and
-     * other factors), given the width of the bounds.  Used for our auto-height feature.
-     *
-     * In the base class implementation [BlockViewModel.intrinsicHeight] returns 0; the base
-     * block type has no content.
-     */
-    open fun intrinsicHeight(bounds: RectF): Float = 0.0f
-
-    /**
      * Computes the Block's width.
      */
     fun height(bounds: RectF): Float = when(block.verticalAlignment) {
@@ -93,11 +87,6 @@ abstract class BlockViewModel(
                     bounds.left + width(bounds) - insets.right - paddingDeflections.map { it.paddingDeflection.right }.sum(),
                     bounds.bottom
                 )
-
-                // TODO So I have to include the border width in the insets I pass to intrinisic height
-                // AND I need to add the border height to the output of intrinsic height, so that means that
-                // this somehow also needs to take into account border (which is a concern in
-                // the Border view model, so we need composable measuring now dang).
 
                 intrinsicHeight(boundsConsideringInsets) +
                     insets.bottom +

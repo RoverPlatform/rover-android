@@ -3,10 +3,8 @@ package io.rover.rover.ui.views
 import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
-import android.view.View
 import android.widget.TextView
 import io.rover.rover.ui.AndroidRichTextToSpannedTransformer
-import io.rover.rover.ui.RichTextToSpannedTransformer
 import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
 
 class TextBlockView: TextView, LayoutableView<TextBlockViewModelInterface> {
@@ -28,7 +26,7 @@ class TextBlockView: TextView, LayoutableView<TextBlockViewModelInterface> {
             viewBorder.borderViewModel = viewModel
             viewBlock.blockViewModel = viewModel
             viewBackground.backgroundViewModel = viewModel
-            viewText.textViewModel = viewModel
+            viewText.textBlockViewModel = viewModel
         }
 
     override fun onDraw(canvas: Canvas) {

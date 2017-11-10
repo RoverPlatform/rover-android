@@ -1,9 +1,7 @@
 package io.rover.rover.ui.views
 
-import android.content.Context
 import android.graphics.Paint
 import android.graphics.Typeface
-import android.util.AttributeSet
 import android.view.Gravity
 import android.widget.TextView
 import io.rover.rover.ui.RichTextToSpannedTransformer
@@ -25,7 +23,7 @@ class ViewText(
         textView.includeFontPadding = false
     }
 
-    override var textViewModel: TextBlockViewModelInterface? = null
+    override var textBlockViewModel: TextBlockViewModelInterface? = null
         set(viewModel) {
             if(viewModel != null) {
                 // TODO: this may be a fair bit of compute at bind-time.  But not sure where to put

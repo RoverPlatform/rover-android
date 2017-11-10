@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Canvas
 import android.support.v7.widget.AppCompatImageView
 import android.util.AttributeSet
-import io.rover.rover.core.logging.log
 import io.rover.rover.ui.viewmodels.ImageBlockViewModelInterface
 
 class ImageBlockView: AppCompatImageView, LayoutableView<ImageBlockViewModelInterface> {
@@ -25,7 +24,7 @@ class ImageBlockView: AppCompatImageView, LayoutableView<ImageBlockViewModelInte
             viewBorder.borderViewModel = viewModel
             viewBlock.blockViewModel = viewModel
             viewBackground.backgroundViewModel = viewModel
-            viewImage.imageViewModel = viewModel
+            viewImage.imageBlockViewModel = viewModel
         }
 
     override fun onDraw(canvas: Canvas) {

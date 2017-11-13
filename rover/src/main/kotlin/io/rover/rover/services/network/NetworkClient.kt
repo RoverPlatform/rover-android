@@ -1,10 +1,13 @@
 package io.rover.rover.services.network
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.net.http.HttpResponseCache
 import android.os.AsyncTask
 import io.rover.rover.core.logging.log
 import java.io.BufferedInputStream
 import java.io.DataOutputStream
+import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
@@ -13,10 +16,13 @@ import javax.net.ssl.HttpsURLConnection
 /**
  * An implementation of [NetworkClient] powered by Android's stock [HttpsURLConnection] and [AsyncTask].
  */
-class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
+class AsyncTaskAndHttpUrlConnectionNetworkClient : NetworkClient {
 
     private var interceptor: AsyncTaskAndHttpUrlConnectionInterceptor? = null
 
+    /**
+     * Add an interceptor
+     */
     fun registerInterceptor(newInterceptor: AsyncTaskAndHttpUrlConnectionInterceptor?) {
         interceptor = newInterceptor
     }
@@ -27,11 +33,39 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
         val asyncTask = @SuppressLint("StaticFieldLeak")
         object : AsyncTask<Void, Void, Unit>() {
             override fun doInBackground(vararg params: Void?) {
-                log.d("POST $request")
+                // TODO: use verb
+                log.d("$request")
                 val connection = request.url
                     .openConnection() as HttpsURLConnection
 
+                if (!connection.useCaches || HttpResponseCache.getInstalled() == null) {
+                    // We expect the user to agree to and implement setting up a global
+                    // HttpUrlConnection cache. While we would much prefer to maintain our own,
+                    // however, the global-side-effect nature of the Android HttpClient API means
+                    // that we won't be able to achieve that without just building our own cache
+                    // regime rather than using the stock Android cache, so we'll stick with this
+                    // approach for now.
+                    //
+                    // This is made even more unfortunate because it would have been to our
+                    // advantage to set up parallel NetworkClients with different caches in order to
+                    // cache different request payloads separately: when the goal is to save
+                    // perceptible delay for users small JSON payloads are more valuable to cache
+                    // byte-for-byte compared with large bulky asset (say, images) payloads. Leaving
+                    // them in the same LRU cache pool will mean that rotating through just a few
+                    // large photos will cause the small payloads to be evicted even though their
+                    // contribution to consumption of the cache is tiny.
+
+                    // TODO: exception message should refer to a façade method once we have one
+                    throw RuntimeException("An HTTPUrlConnection cache is not enabled.\n" +
+                        "Please see the Rover documentation and the Google documentation: https://developer.android.com/reference/android/net/http/HttpResponseCache.html\n" +
+                        "As a quick fix you may call io.rover.rover.network.AsyncTaskAndHttpUrlConnectionNetworkClient.installSaneGlobalHttpCacheCache()")
+                }
+
                 val requestBody = bodyData?.toByteArray(Charsets.UTF_8)
+                val requestHasBody = when (request.verb) {
+                    HttpVerb.POST, HttpVerb.PUT -> requestBody != null
+                    else -> false
+                }
 
                 connection
                     .apply {
@@ -42,15 +76,14 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
                         // add the request headers.
                         request.headers.onEach { (field, value) -> setRequestProperty(field, value) }
 
-                        // sets HttpUrlConnection to use POST.
-                        doOutput = true
-                        requestMethod = "POST"
+                        doOutput = requestHasBody
+                        requestMethod = request.verb.wireFormat
                     }
 
                 val intercepted = interceptor?.onOpened(connection, request.url.path, requestBody ?: kotlin.ByteArray(0))
 
                 // synchronously write the body to the connection.
-                try {
+                if (requestHasBody) try {
                     DataOutputStream(connection.outputStream).write(requestBody)
                 } catch (e: IOException) {
                     intercepted?.onError(e)
@@ -74,7 +107,7 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
                     return
                 }
 
-                log.d("POST $request : $responseCode")
+                log.d("$request : $responseCode")
 
                 val result = when (responseCode) {
                     in 200..299 -> {
@@ -106,18 +139,34 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient: NetworkClient {
                         }
                     }
                 }
+                // TODO: detect if this was a cache hit and log as such.
                 completionHandler(result)
+                log.v("Cache hit count currently is: ${HttpResponseCache.getInstalled().hitCount}")
             }
         }
 
         return AsyncTaskNetworkTask(asyncTask)
     }
+
+    companion object {
+        /**
+         * Sets up a *global* HTTP cache for any users of HttpUrlConnection in your app,
+         * including Rover.
+         */
+        @JvmStatic
+        fun installSaneGlobalHttpCacheCache(context: Context) {
+            val httpCacheDir = File(context.cacheDir, "http")
+            val httpCacheSize = (50 * 1024 * 1024).toLong() // 50 MiB
+            HttpResponseCache.install(httpCacheDir, httpCacheSize)
+            log.v("Global HttpUrlConnection cache installed.")
+        }
+    }
 }
 
 interface AsyncTaskAndHttpUrlConnectionInterception {
-    fun onConnected() { }
+    fun onConnected() {}
 
-    fun onError(exception: IOException) { }
+    fun onError(exception: IOException) {}
 
     fun sniffStream(source: InputStream): InputStream = source
 }

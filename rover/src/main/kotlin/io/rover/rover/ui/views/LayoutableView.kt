@@ -1,8 +1,5 @@
 package io.rover.rover.ui.views
 
-import android.content.Context
-import android.graphics.Canvas
-import android.util.AttributeSet
 import android.view.View
 import io.rover.rover.ui.viewmodels.LayoutableViewModel
 
@@ -14,7 +11,7 @@ import io.rover.rover.ui.viewmodels.LayoutableViewModel
  * interface rather than an abstract [View] subclass in order to allow implementers to inherit from
  * various different [View] subclasses.
  */
-interface LayoutableView<VM: LayoutableViewModel> {
+interface LayoutableView<VM : LayoutableViewModel> {
     var viewModel: VM?
 
     val view: View

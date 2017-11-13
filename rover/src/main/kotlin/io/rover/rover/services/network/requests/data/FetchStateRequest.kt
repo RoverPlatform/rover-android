@@ -5,7 +5,7 @@ import io.rover.rover.services.network.NetworkRequest
 import io.rover.rover.services.network.WireEncoderInterface
 import org.json.JSONObject
 
-class FetchStateRequest(): NetworkRequest<DeviceState> {
+class FetchStateRequest : NetworkRequest<DeviceState> {
     override val query: String
         get() = """
             query {

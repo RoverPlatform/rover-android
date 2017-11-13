@@ -15,7 +15,7 @@ import java.net.URI
 private fun Any.mapToAttributeValueFromJsonPrimitive(): AttributeValue =
     // org.json will return a best-effort coercion to either a system type
     // or one of its own internal types.
-    when(this) {
+    when (this) {
         is String -> {
             // now we have to try URL first before just returning a String type
             try {
@@ -39,6 +39,7 @@ private fun Any.mapToAttributeValueFromJsonPrimitive(): AttributeValue =
         }
         else -> throw RuntimeException("Unsupported data type appeared in an attributes hash: ${javaClass.simpleName}")
     }
+
 /**
  * If we receive an arbitrary hash of values as JSON that does not map statically to
  * any sort of type, then [Attributes] is an appropriate choice.
@@ -55,7 +56,7 @@ fun JSONObject.toFlatAttributesHash(): Attributes {
  * Return type is [Object] because this will return any of [Int], [String], [Double], [JSONObject],
  * [JSONArray] (again, the JSON library will treat these appropriately at render time).
  */
-fun AttributeValue.encodeJson(): Any = when(this) {
+fun AttributeValue.encodeJson(): Any = when (this) {
     is AttributeValue.Boolean -> this.value
     is AttributeValue.Double -> this.value
     is AttributeValue.Hash -> this.hash.encodeJson()

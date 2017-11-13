@@ -1,12 +1,13 @@
 package io.rover.rover.ui.viewmodels
 
-import android.graphics.Paint
+import android.graphics.Bitmap
+import android.graphics.Rect
 import android.graphics.RectF
-import android.graphics.Typeface
 import io.rover.rover.core.domain.Background
 import io.rover.rover.core.domain.Border
 import io.rover.rover.core.domain.Experience
 import io.rover.rover.core.domain.Screen
+import io.rover.rover.services.network.NetworkTask
 import io.rover.rover.ui.BlockAndRowLayoutManager
 import io.rover.rover.ui.types.Alignment
 import io.rover.rover.ui.types.DisplayItem
@@ -14,6 +15,13 @@ import io.rover.rover.ui.types.Font
 import io.rover.rover.ui.types.FontAppearance
 import io.rover.rover.ui.types.Insets
 import io.rover.rover.ui.types.Layout
+
+/**
+ * Exposed by a view model that may need to contribute to the padding around the content.
+ */
+interface LayoutPaddingDeflection {
+    val paddingDeflection: Rect
+}
 
 /**
  * This interface is exposed by View Models that have support for a background.  Equivalent to
@@ -27,7 +35,7 @@ interface BackgroundViewModelInterface {
  * This interface is exposed by View Models that have support for a border (of arbitrary width and
  * possibly rounded with a radius).  Equivalent to the [Border] domain model interface.
  */
-interface BorderViewModelInterface {
+interface BorderViewModelInterface : LayoutPaddingDeflection {
     val borderColor: Int
 
     val borderRadius: Int
@@ -38,9 +46,47 @@ interface BorderViewModelInterface {
 }
 
 /**
+ * View Model for a block that contains rich text content (decorated with strong, italic, and
+ * underline HTML tags).
+ */
+interface TextViewModelInterface : Measureable {
+    val text: String
+
+    val fontAppearance: FontAppearance
+
+    fun boldRelativeToBlockWeight(): Font
+}
+
+interface ImageViewModelInterface : Measureable {
+    // TODO: I may elect to demote the Bitmap concern from the ViewModel into just the View (or a
+    // helper of some kind) in order to avoid a thick Android object (Bitmap) being touched here
+
+    /**
+     * Get the needed image for display, hitting caches if possible and the network if necessary.
+     *
+     * Remember to call [NetworkTask.resume] to start the retrieval, or your callback will never
+     * be hit.
+     */
+    fun requestImage(callback: (Bitmap) -> Unit): NetworkTask?
+}
+
+/**
+ * Can vertically measure its content for stacked/autoheight purposes.
+ */
+interface Measureable {
+    /**
+     * Measure the "natural" height for the content contained in this block (for
+     * example, a wrapped block of text will consume up to some height depending on content and
+     * other factors), given the width of the bounds.  Used for our auto-height feature.
+     */
+    fun intrinsicHeight(bounds: RectF): Float
+}
+
+/**
  * A view model for Blocks (particularly, the dynamic layout thereof).
  */
 interface BlockViewModelInterface : LayoutableViewModel {
+
     /**
      * The full amount contributed by this block (including its own height and offsets) to the
      * height of all the stacked blocks within the row.  So, the subsequent stacked block must be
@@ -53,6 +99,11 @@ interface BlockViewModelInterface : LayoutableViewModel {
 
     val isStacked: Boolean
 
+    /**
+     * Alpha applied to the entire view.
+     *
+     * Between 0 (transparent) and 1 (fully opaque).
+     */
     val opacity: Float
 
     val verticalAlignment: Alignment
@@ -110,16 +161,12 @@ interface ScreenViewModelInterface {
  * View Model for a block that contains no content (other than its own border and
  * background).
  */
-interface RectangleBlockViewModelInterface: BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface
+interface RectangleBlockViewModelInterface : LayoutableViewModel, BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface
 
 /**
  * View Model for a block that contains rich text content (decorated with strong, italic, and
  * underline HTML tags).
  */
-interface TextBlockViewModelInterface: BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface {
-    val text: String
+interface TextBlockViewModelInterface : LayoutableViewModel, BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface, TextViewModelInterface
 
-    val fontAppearance: FontAppearance
-
-    fun boldRelativeToBlockWeight(): Font
-}
+interface ImageBlockViewModelInterface : LayoutableViewModel, BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface, ImageViewModelInterface

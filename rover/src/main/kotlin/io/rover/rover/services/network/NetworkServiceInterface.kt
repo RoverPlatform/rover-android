@@ -1,14 +1,14 @@
 package io.rover.rover.services.network
 
-import io.rover.rover.core.domain.DeviceState
 import io.rover.rover.core.domain.Context
+import io.rover.rover.core.domain.DeviceState
 import io.rover.rover.core.domain.Event
 import io.rover.rover.core.domain.Experience
 import io.rover.rover.core.domain.ID
 import org.json.JSONObject
 
 /**
- *
+ * Rover GraphQL API-flavored network response.
  */
 sealed class NetworkResult<T> {
     class Error<T>(
@@ -21,23 +21,24 @@ sealed class NetworkResult<T> {
          * should attempt a retry after a momentary wait.
          */
         val shouldRetry: Boolean
-    ): NetworkResult<T>()
-    class Success<T>(val response: T): NetworkResult<T>()
+    ) : NetworkResult<T>()
+
+    class Success<T>(val response: T) : NetworkResult<T>()
 }
 
 sealed class NetworkError(
     description: String
-): Exception(description) {
-    class EmptyResponseData: NetworkError("Empty response data")
+) : Exception(description) {
+    class EmptyResponseData : NetworkError("Empty response data")
     class FailedToDecodeResponseData : NetworkError("Failed to deserialize response data")
     class InvalidResponse : NetworkError("Invalid response")
-    class InvalidResponseData(val serverMessage: String): NetworkError("Invalid response data: $serverMessage")
-    class InvalidStatusCode(val statusCode: Int, val serverMessage: String): NetworkError("Invalid status code: $statusCode.  Given reason: '$serverMessage'")
+    class InvalidResponseData(val serverMessage: String) : NetworkError("Invalid response data: $serverMessage")
+    class InvalidStatusCode(val statusCode: Int, val serverMessage: String) : NetworkError("Invalid status code: $statusCode.  Given reason: '$serverMessage'")
     class InvalidURL : NetworkError("Invalid URL")
 }
 
 /**
- * A GraphQL-flavored network request.
+ * A Rover GraphQL API-flavored network request.
  *
  * @param TInput This is the type of the reply you expect to arrive back from the cloud API.
  */
@@ -49,6 +50,16 @@ interface NetworkRequest<out TInput> {
         get() = null
 
     /**
+     * Does this request expect to change the state of the remote of the API (or anything in
+     * the larger world at large)?
+     *
+     * If so, then we will submit the GraphQL query with a POST verb and opt-out of caching
+     * behaviour.
+     */
+    val mutation: Boolean
+        get() = false
+
+    /**
      * GraphQL query string.
      */
     val query: String
@@ -58,7 +69,7 @@ interface NetworkRequest<out TInput> {
     fun decode(json: String, wireEncoder: WireEncoderInterface): TInput {
         val parsed = JSONObject(json)
         val possibleErrors = parsed.optJSONArray("errors")
-        if(possibleErrors != null) {
+        if (possibleErrors != null) {
             throw APIException(wireEncoder.decodeErrors(possibleErrors))
         } else {
             return decodePayload(parsed, wireEncoder)
@@ -83,7 +94,7 @@ interface NetworkRequest<out TInput> {
         return JSONObject().apply {
             put("variables", variables)
             put("query", query)
-            if(operationName != null) {
+            if (operationName != null) {
                 put("operationName", operationName)
             }
         }.toString(4)
@@ -102,4 +113,4 @@ interface NetworkServiceInterface {
 
 class APIException(
     val errors: List<Exception>
-): Exception("Rover API reported: ${errors.map { it.message }.joinToString(", ")}")
+) : Exception("Rover API reported: ${errors.map { it.message }.joinToString(", ")}")

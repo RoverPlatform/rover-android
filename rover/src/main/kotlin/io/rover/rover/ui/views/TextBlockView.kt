@@ -3,13 +3,11 @@ package io.rover.rover.ui.views
 import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
-import android.view.View
 import android.widget.TextView
 import io.rover.rover.ui.AndroidRichTextToSpannedTransformer
-import io.rover.rover.ui.RichTextToSpannedTransformer
 import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
 
-class TextBlockView: TextView, LayoutableView<TextBlockViewModelInterface> {
+class TextBlockView : TextView, LayoutableView<TextBlockViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
@@ -17,28 +15,25 @@ class TextBlockView: TextView, LayoutableView<TextBlockViewModelInterface> {
 
     // mixins (TODO: injections)
     private val viewComposition = ViewComposition()
-    private val viewBlock = ViewBlock(this)
+
     private val viewBackground = ViewBackground(this)
     private val viewBorder = ViewBorder(this, viewComposition)
+    private val viewBlock = ViewBlock(this, setOf(viewBorder))
     private val viewText = ViewText(this, AndroidRichTextToSpannedTransformer())
 
     override var viewModel: TextBlockViewModelInterface? = null
         set(viewModel) {
+            viewBorder.borderViewModel = viewModel
             viewBlock.blockViewModel = viewModel
             viewBackground.backgroundViewModel = viewModel
-            viewBorder.borderViewModel = viewModel
-            viewText.textViewModel = viewModel
+            viewText.textBlockViewModel = viewModel
         }
-
-    override val view: View
-        get() = this
 
     override fun onDraw(canvas: Canvas) {
         viewComposition.beforeOnDraw(canvas)
         super.onDraw(canvas)
         viewComposition.afterOnDraw(canvas)
     }
-
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         viewComposition.onSizeChanged(w, h, oldw, oldh)

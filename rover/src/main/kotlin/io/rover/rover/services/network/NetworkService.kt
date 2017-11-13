@@ -21,7 +21,7 @@ class NetworkService(
     private val deviceIdentification: DeviceIdentificationInterface,
     private val wireEncoder: WireEncoderInterface,
     override var profileIdentifier: String?
-): NetworkServiceInterface {
+) : NetworkServiceInterface {
 
     private val mainThreadHandler = Handler(Looper.getMainLooper())
 
@@ -32,14 +32,14 @@ class NetworkService(
         authHeaders["x-rover-device-identifier"] = deviceIdentification.installationIdentifier
 
         val possibleProfileIdentifier = profileIdentifier ?: this.profileIdentifier
-        if(possibleProfileIdentifier != null) {
+        if (possibleProfileIdentifier != null) {
             authHeaders["x-rover-profile-identifier"] = possibleProfileIdentifier
         }
 
         return authHeaders
     }
 
-    private fun urlRequest(authHeaders: HashMap<String, String>): HttpRequest = HttpRequest(
+    private fun urlRequest(authHeaders: HashMap<String, String>, mutation: Boolean): HttpRequest = HttpRequest(
         endpoint,
         hashMapOf<String, String>().apply {
             this["Content-Type"] = "application/json"
@@ -47,6 +47,11 @@ class NetworkService(
             authHeaders.entries.forEach { (key, value) ->
                 this[key] = value
             }
+        },
+        if (mutation) {
+            HttpVerb.POST
+        } else {
+            HttpVerb.GET
         }
     )
 
@@ -57,15 +62,15 @@ class NetworkService(
                 NetworkResult.Error(
                     NetworkError.InvalidStatusCode(httpResponse.responseCode, httpResponse.reportedReason),
                     when {
-                        // actually won't see any 200 codes here; already filtered about in the
-                        // HttpClient response mapping.
+                    // actually won't see any 200 codes here; already filtered about in the
+                    // HttpClient response mapping.
                         httpResponse.responseCode < 300 -> false
-                        // 3xx redirects
+                    // 3xx redirects
                         httpResponse.responseCode < 400 -> false
-                        // 4xx request errors (we don't want to retry these; onus is likely on
-                        // request creator).
+                    // 4xx request errors (we don't want to retry these; onus is likely on
+                    // request creator).
                         httpResponse.responseCode < 500 -> false
-                        // 5xx - any transient errors from the backend.
+                    // 5xx - any transient errors from the backend.
                         else -> true
                     }
                 )
@@ -73,7 +78,7 @@ class NetworkService(
             is HttpClientResponse.Success -> {
                 try {
                     val body = httpResponse.bufferedInputStream.reader(Charsets.UTF_8).readText()
-                    when(body) {
+                    when (body) {
                         "" -> NetworkResult.Error<TEntity>(NetworkError.EmptyResponseData(), false)
                         else -> {
                             try {
@@ -105,7 +110,9 @@ class NetworkService(
      */
     fun <TEntity> uploadTask(request: NetworkRequest<TEntity>, profileIdentifier: String?, completionHandler: ((NetworkResult<TEntity>) -> Unit)?): NetworkTask {
         val authHeaders = authHeaders(profileIdentifier)
-        val urlRequest = urlRequest(authHeaders)
+        // TODO: once we change urlRequest() to use query parameters and GET for non-mutation
+        // requests, replace true `below` with `request.mutation`.
+        val urlRequest = urlRequest(authHeaders, true)
         val bodyData = request.encode()
 
         return client.networkTask(urlRequest, bodyData) { httpClientResponse ->

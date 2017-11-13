@@ -39,7 +39,7 @@ class RowViewModelSpec: Spek({
                         )
                     )
                 ),
-            BlockViewModelFactory(mock())
+            BlockViewModelFactory(mock(), mock())
         )
 
         on("frame()") {
@@ -92,7 +92,7 @@ class RowViewModelSpec: Spek({
                         )
                     )
                 ),
-            BlockViewModelFactory(mock())
+            BlockViewModelFactory(mock(), mock())
         )
 
         on("frame()") {
@@ -138,7 +138,7 @@ class RowViewModelSpec: Spek({
                         )
                     )
                 ),
-            BlockViewModelFactory(mock())
+            BlockViewModelFactory(mock(), mock())
         )
 
         on("frame()") {
@@ -191,7 +191,7 @@ class RowViewModelSpec: Spek({
                             )
                         )
                     ),
-                BlockViewModelFactory(mock())
+                BlockViewModelFactory(mock(), mock())
             )
         }
 

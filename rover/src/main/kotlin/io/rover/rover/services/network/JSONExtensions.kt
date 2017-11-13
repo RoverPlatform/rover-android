@@ -10,7 +10,7 @@ import org.json.JSONObject
  */
 fun JSONObject.optIntOrNull(name: String): Int? {
     val value = opt(name)
-    return when(value) {
+    return when (value) {
         is Int -> value
         is Number -> value.toInt()
         is String -> {

@@ -7,6 +7,9 @@ import io.rover.rover.ui.types.ViewType
 /**
  * Any View Model that implements this interface can be laid out in in the vertically
  * scrollable plane of a [ScreenViewModel].
+ *
+ * (View models that do not implement this interface are typically used in a compositional way
+ * as a part of other view models that do implement [LayoutableViewModel].
  */
 interface LayoutableViewModel {
     // TODO: in here go parameters common to the display of both Rows and Blocks.  So, possibly,

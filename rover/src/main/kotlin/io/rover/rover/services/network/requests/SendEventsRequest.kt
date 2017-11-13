@@ -3,7 +3,6 @@ package io.rover.rover.services.network.requests
 import io.rover.rover.core.domain.Context
 import io.rover.rover.core.domain.Event
 import io.rover.rover.services.network.NetworkRequest
-import io.rover.rover.services.network.WireEncoder
 import io.rover.rover.services.network.WireEncoderInterface
 import org.json.JSONObject
 

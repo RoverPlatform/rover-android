@@ -79,7 +79,7 @@ fun BackgroundContentMode.Companion.decodeJSON(value: String): BackgroundContent
 fun BarcodeFormat.Companion.decodeJson(value: String): BarcodeFormat =
     BarcodeFormat.values().firstOrNull { it.wireFormat == value } ?: throw Exception("Unknown BarcodeFormat value '$value'")
 
-fun Image.Companion.optDecodeJSON(json: JSONObject?): Image? = when(json) {
+fun Image.Companion.optDecodeJSON(json: JSONObject?): Image? = when (json) {
     null -> null
     else -> Image(
         json.getInt("height"),
@@ -194,16 +194,16 @@ fun TextAlignment.Companion.decodeJson(value: String): TextAlignment =
 fun FontWeight.Companion.decodeJson(value: String): FontWeight =
     FontWeight.values().firstOrNull { it.wireFormat == value } ?: throw Exception("Unknown FontWeight type '$value'.")
 
-fun BackgroundContentMode.Companion.decodeJson(value: String): BackgroundContentMode  =
+fun BackgroundContentMode.Companion.decodeJson(value: String): BackgroundContentMode =
     BackgroundContentMode.values().firstOrNull { it.wireFormat == value } ?: throw Exception("Unknown BackgroundContentMode type '$value'.")
 
-fun BackgroundScale.Companion.decodeJson(value: String): BackgroundScale  =
+fun BackgroundScale.Companion.decodeJson(value: String): BackgroundScale =
     BackgroundScale.values().firstOrNull { it.wireFormat == value } ?: throw Exception("Unknown BackgroundScale type '$value'.")
 
-fun StatusBarStyle.Companion.decodeJson(value: String): StatusBarStyle  =
+fun StatusBarStyle.Companion.decodeJson(value: String): StatusBarStyle =
     StatusBarStyle.values().firstOrNull { it.wireFormat == value } ?: throw Exception("Unknown StatusBarStyle type '$value'.")
 
-fun TitleBarButtons.Companion.decodeJson(value: String): TitleBarButtons  =
+fun TitleBarButtons.Companion.decodeJson(value: String): TitleBarButtons =
     TitleBarButtons.values().firstOrNull { it.wireFormat == value } ?: throw Exception("Unknown StatusBTitleBarButtonsarStyle type '$value'.")
 
 fun ButtonState.Companion.decodeJson(json: JSONObject): ButtonState {
@@ -293,7 +293,7 @@ fun Block.encodeJson(experienceId: String, screenId: String, rowId: String): JSO
         putProp(this@encodeJson, Block::position) { it.wireFormat }
         putProp(this@encodeJson, Block::verticalAlignment) { it.wireFormat }
         putProp(this@encodeJson, Block::width) { it.encodeJson() }
-        put("__typename", when(this@encodeJson) {
+        put("__typename", when (this@encodeJson) {
             is BarcodeBlock -> {
                 putProp(this@encodeJson, BarcodeBlock::barcodeScale)
                 putProp(this@encodeJson, BarcodeBlock::barcodeText)
@@ -461,13 +461,13 @@ val BlockAction.OpenUrlAction.Companion.resourceName get() = "OpenUrlAction"
 val BlockAction.GoToScreenAction.Companion.resourceName get() = "GoToScreenAction"
 
 fun BlockAction.Companion.optDecodeJson(json: JSONObject?): BlockAction? {
-    if(json == null) return null
+    if (json == null) return null
     // BlockAction has subclasses, so we need to delegate to the appropriate deserializer for each
     // block action type.
 
     val typeName = json.getString("__typename")
 
-    return when(typeName) {
+    return when (typeName) {
         BlockAction.OpenUrlAction.resourceName -> BlockAction.OpenUrlAction(
             url = URI.create(json.getString("url"))
         )
@@ -482,7 +482,7 @@ fun BlockAction.Companion.optDecodeJson(json: JSONObject?): BlockAction? {
 fun BlockAction?.optEncodeJson(): JSONObject? {
     return this?.let {
         JSONObject().apply {
-            put("__typename", when(this@optEncodeJson) {
+            put("__typename", when (this@optEncodeJson) {
                 is BlockAction.OpenUrlAction -> {
                     putProp(this@optEncodeJson, BlockAction.OpenUrlAction::url) { it.toString() }
                     BlockAction.OpenUrlAction.resourceName
@@ -509,7 +509,7 @@ fun Block.Companion.decodeJson(json: JSONObject): Block {
     // block type.
     val typeName = json.getString("__typename")
 
-    return when(typeName) {
+    return when (typeName) {
         BarcodeBlock.resourceName -> BarcodeBlock.decodeJson(json)
         ButtonBlock.resourceName -> ButtonBlock.decodeJson(json)
         RectangleBlock.resourceName -> RectangleBlock.decodeJson(json)
@@ -609,7 +609,7 @@ fun <T> JSONArray.getIterable(): Iterable<T> {
                 override fun hasNext(): Boolean = counter < this@getIterable.length()
 
                 override fun next(): T {
-                    if(counter >= this@getIterable.length()) {
+                    if (counter >= this@getIterable.length()) {
                         throw Exception("Iterator ran past the end!")
                     }
                     val jsonObject = this@getIterable.get(counter)

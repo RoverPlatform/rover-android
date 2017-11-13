@@ -2,22 +2,29 @@ package io.rover.rover.ui.views
 
 import android.content.Context
 import android.graphics.Canvas
+import android.support.v7.widget.AppCompatImageView
 import android.util.AttributeSet
-import android.view.View
-import io.rover.rover.ui.viewmodels.RowViewModelInterface
+import io.rover.rover.ui.viewmodels.ImageBlockViewModelInterface
 
-class RowView : View, LayoutableView<RowViewModelInterface> {
+class ImageBlockView : AppCompatImageView, LayoutableView<ImageBlockViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
+    // mixins (TODO: injections)
     private val viewComposition = ViewComposition()
-    private val viewBackground = ViewBackground(this)
 
-    override var viewModel: RowViewModelInterface? = null
+    private val viewBackground = ViewBackground(this)
+    private val viewBorder = ViewBorder(this, viewComposition)
+    private val viewBlock = ViewBlock(this, setOf(viewBorder))
+    private val viewImage = ViewImage(this)
+
+    override var viewModel: ImageBlockViewModelInterface? = null
         set(viewModel) {
+            viewBorder.borderViewModel = viewModel
+            viewBlock.blockViewModel = viewModel
             viewBackground.backgroundViewModel = viewModel
+            viewImage.imageBlockViewModel = viewModel
         }
 
     override fun onDraw(canvas: Canvas) {

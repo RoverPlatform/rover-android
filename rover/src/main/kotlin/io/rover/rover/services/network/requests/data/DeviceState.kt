@@ -19,6 +19,6 @@ fun DeviceState.Companion.decodeJson(jsonObject: JSONObject): DeviceState {
 fun DeviceState.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, DeviceState::profile) { it.encodeJson() }
-        putProp(this@encodeJson, DeviceState::regions) { JSONArray(it.map { it.encodeJson() } ) }
+        putProp(this@encodeJson, DeviceState::regions) { JSONArray(it.map { it.encodeJson() }) }
     }
 }

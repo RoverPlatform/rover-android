@@ -4,6 +4,7 @@ import android.support.v7.widget.RecyclerView
 import android.view.ViewGroup
 import io.rover.rover.ui.types.ViewType
 import io.rover.rover.ui.viewmodels.LayoutableViewModel
+import io.rover.rover.ui.views.ImageBlockView
 import io.rover.rover.ui.views.LayoutableView
 import io.rover.rover.ui.views.RectangleBlockView
 import io.rover.rover.ui.views.RowView
@@ -15,12 +16,12 @@ import io.rover.rover.ui.views.TextBlockView
 class LayoutableBlockHolder(
     private val layoutableItemView: LayoutableView<in LayoutableViewModel>,
     private val viewType: ViewType
-): RecyclerView.ViewHolder(
+) : RecyclerView.ViewHolder(
     layoutableItemView.view
 ) {
     var viewModel: LayoutableViewModel? = null
         set(value) {
-            if(value != null ) {
+            if (value != null) {
 
                 layoutableItemView.viewModel = value
             }
@@ -53,11 +54,11 @@ class BlockAndRowRecyclerAdapter(
     }
 
     private fun viewFactory(parent: ViewGroup, viewType: ViewType): LayoutableView<in LayoutableViewModel> {
-        return when(viewType) {
-            // TODO: this is terrible
-            ViewType.Row -> RowView(parent.context) as LayoutableView<LayoutableViewModel>
-            ViewType.Rectangle -> RectangleBlockView(parent.context) as LayoutableView<LayoutableViewModel>
-            ViewType.Text -> TextBlockView(parent.context) as LayoutableView<LayoutableViewModel>
-        }
+        return when (viewType) {
+            ViewType.Row -> RowView(parent.context)
+            ViewType.Rectangle -> RectangleBlockView(parent.context)
+            ViewType.Text -> TextBlockView(parent.context)
+            ViewType.Image -> ImageBlockView(parent.context)
+        } as LayoutableView<LayoutableViewModel> // TODO: this cast is terrible
     }
 }

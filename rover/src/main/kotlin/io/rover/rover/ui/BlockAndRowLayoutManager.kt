@@ -1,8 +1,5 @@
 package io.rover.rover.ui
 
-import android.graphics.Rect
-import android.graphics.RectF
-import android.os.Build
 import android.support.v7.widget.RecyclerView
 import android.util.DisplayMetrics
 import android.view.View
@@ -29,7 +26,7 @@ class BlockAndRowLayoutManager(
     private val screenViewModel: ScreenViewModelInterface,
     private val displayMetrics: DisplayMetrics
 ) : RecyclerView.LayoutManager() {
-    private var layout : Layout by Delegates.notNull()
+    private var layout: Layout by Delegates.notNull()
 
     // State:
     /**
@@ -45,7 +42,7 @@ class BlockAndRowLayoutManager(
      * getting recreated?  seems likely that remembering the top-most item and travelling back to
      * it is better.
      */
-    private var scrollPosition : Int = 0
+    private var scrollPosition: Int = 0
 
     override fun canScrollVertically(): Boolean = true
 
@@ -82,7 +79,7 @@ class BlockAndRowLayoutManager(
         // deflect the state variable by the appropriate amount (taking into account the edges)
         val deflection = if (dy > 0) {
             // going down
-            if((scrollPosition + height + dy) > layoutDisplayHeight) {
+            if ((scrollPosition + height + dy) > layoutDisplayHeight) {
                 // would scroll past end of the content.
                 // determine amount needed to scroll to absolute end, but no further.
                 layoutDisplayHeight - height - scrollPosition
@@ -92,7 +89,7 @@ class BlockAndRowLayoutManager(
             }
         } else {
             // going up
-            if((scrollPosition + dy) <= 0) {
+            if ((scrollPosition + dy) <= 0) {
                 // would scroll back past the beginning.
                 // instead determine the amount needed to go back to the absolute beginning, but no
                 // further.
@@ -140,7 +137,7 @@ class BlockAndRowLayoutManager(
             val displayPosition = viewPosition.dpAsPx(displayMetrics)
 
             val visible = displayPosition.bottom > verticalTopBound && displayPosition.top < verticalBottomBound
-            if(visible) {
+            if (visible) {
                 // retrieve either a newly recycled view, or perhaps, get the exact same view back
 
                 val view = recycler.getViewForPosition(index)
@@ -151,8 +148,10 @@ class BlockAndRowLayoutManager(
                 // onscreen because we are scrapping and re-adding everything (the range
                 // optimization spoken about above will help here)
 
-                 view.clipBounds = null
-                 if(clipBounds != null) { view.clipBounds = clipBounds.dpAsPx(displayMetrics) }
+                view.clipBounds = null
+                if (clipBounds != null) {
+                    view.clipBounds = clipBounds.dpAsPx(displayMetrics)
+                }
 
                 // TODO: when implementing the aforementioned additional future optimization, the natural
                 // viewmodel order will no longer carry through to the order of the addView() calls
@@ -168,7 +167,6 @@ class BlockAndRowLayoutManager(
 
                 addView(view)
 
-                //view.measure(displayPosition.width(), displayPosition.height())
                 view.measure(
                     View.MeasureSpec.makeMeasureSpec(
                         displayPosition.width(),

@@ -9,7 +9,7 @@ interface DateFormattingInterface {
     fun iso8601AsDate(iso8601Date: String): Date
 }
 
-class DateFormatting: DateFormattingInterface {
+class DateFormatting : DateFormattingInterface {
     private val format8601 = SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }

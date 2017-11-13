@@ -11,7 +11,7 @@ import io.rover.rover.core.domain.UnitOfMeasure
  * The main goal of this function is to abstract away [Length]'s absolute
  * and proportional modalities.
  */
-fun Length.measuredAgainst(against: Double): Double = when(unit) {
+fun Length.measuredAgainst(against: Double): Double = when (unit) {
     UnitOfMeasure.Percentage -> value * against
     UnitOfMeasure.Points -> value
 }
@@ -23,7 +23,7 @@ fun Length.measuredAgainst(against: Double): Double = when(unit) {
  * The goal of this function is to abstract away [Length]'s absolute
  * and proportional modalities.
  */
-fun Length.measuredAgainst(against: Float): Float = when(unit) {
+fun Length.measuredAgainst(against: Float): Float = when (unit) {
     UnitOfMeasure.Percentage -> value.toFloat() * against
     UnitOfMeasure.Points -> value.toFloat()
 }

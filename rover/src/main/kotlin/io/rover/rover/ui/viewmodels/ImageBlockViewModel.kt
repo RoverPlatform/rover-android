@@ -2,16 +2,15 @@ package io.rover.rover.ui.viewmodels
 
 import io.rover.rover.ui.types.ViewType
 
-class TextBlockViewModel(
+class ImageBlockViewModel(
     private val blockViewModel: BlockViewModelInterface,
-    private val textViewModel: TextViewModelInterface,
     private val backgroundViewModel: BackgroundViewModelInterface,
+    private val imageViewModel: ImageViewModelInterface,
     private val borderViewModel: BorderViewModelInterface
-) : TextBlockViewModelInterface,
+) : ImageBlockViewModelInterface,
     BlockViewModelInterface by blockViewModel,
+    ImageViewModelInterface by imageViewModel,
     BackgroundViewModelInterface by backgroundViewModel,
-    TextViewModelInterface by textViewModel,
     BorderViewModelInterface by borderViewModel {
-
-    override val viewType: ViewType = ViewType.Text
+    override val viewType: ViewType = ViewType.Image
 }

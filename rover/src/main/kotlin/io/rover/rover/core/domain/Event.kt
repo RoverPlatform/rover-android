@@ -1,7 +1,5 @@
 package io.rover.rover.core.domain
 
-import io.rover.rover.platform.DateFormatting
-import org.json.JSONObject
 import java.util.*
 
 data class Event(

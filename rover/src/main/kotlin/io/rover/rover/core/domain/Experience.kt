@@ -235,8 +235,8 @@ enum class BarcodeFormat(
 ) {
     QrCode("QR_CODE"),
     AztecCode("AZTEC_CODE"),
-    Pdf417("PDF417"),
-    Code128("CODE128");
+    Pdf417("PDF_417"),
+    Code128("CODE_128");
 
     companion object
 }

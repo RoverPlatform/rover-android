@@ -8,9 +8,6 @@ import io.rover.rover.services.assets.AssetService
 import io.rover.rover.services.network.NetworkResult
 import io.rover.rover.services.network.NetworkTask
 
-/**
- * Created by andrewclunis on 2017-11-10.
- */
 class ImageViewModel(
     private val block: ImageBlock,
     private val assetService: AssetService
@@ -36,7 +33,7 @@ class ImageViewModel(
                 }
             }
         } else {
-            log.v("Null URI.  No image set.")
+            // log.v("Null URI.  No image set.")
             null
         }
     }

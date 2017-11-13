@@ -7,11 +7,10 @@ import io.rover.rover.core.domain.Length
 import io.rover.rover.core.domain.Offsets
 import io.rover.rover.core.domain.UnitOfMeasure
 import io.rover.rover.core.domain.VerticalAlignment
-import io.rover.rover.ui.BlockViewModelFactory
+import io.rover.rover.ui.ViewModelFactory
 import io.rover.rover.ui.types.DisplayItem
 import org.amshove.kluent.mock
 import org.amshove.kluent.shouldBeInstanceOf
-import org.amshove.kluent.shouldBeTrue
 import org.amshove.kluent.shouldEqual
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
@@ -33,7 +32,7 @@ class ScreenViewModelSpec: Spek({
                     )
                 )
             )
-            val screenViewModel = ScreenViewModel(screen, BlockViewModelFactory(mock(), mock()))
+            val screenViewModel = ScreenViewModel(screen, ViewModelFactory(mock(), mock()))
 
             on("rendering") {
                 val rendered = screenViewModel.render(
@@ -71,7 +70,7 @@ class ScreenViewModelSpec: Spek({
                     )
                 )
             )
-            val screenViewModel = ScreenViewModel(screen, BlockViewModelFactory(mock(), mock()))
+            val screenViewModel = ScreenViewModel(screen, ViewModelFactory(mock(), mock()))
 
             on("rendering") {
                 val rendered = screenViewModel.render(
@@ -126,7 +125,7 @@ class ScreenViewModelSpec: Spek({
                     )
                 )
             )
-            val screenViewModel = ScreenViewModel(screen, BlockViewModelFactory(mock(), mock()))
+            val screenViewModel = ScreenViewModel(screen, ViewModelFactory(mock(), mock()))
 
             on("rendering") {
                 val rendered = screenViewModel.render(
@@ -157,7 +156,7 @@ class ScreenViewModelSpec: Spek({
                     )
                 )
             )
-            val screenViewModel = ScreenViewModel(screen, BlockViewModelFactory(mock(), mock()))
+            val screenViewModel = ScreenViewModel(screen, ViewModelFactory(mock(), mock()))
 
             on("rendering") {
                 val rendered = screenViewModel.render(

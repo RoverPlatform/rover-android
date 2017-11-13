@@ -3,6 +3,7 @@ package io.rover.rover.ui.viewmodels
 import android.graphics.Bitmap
 import android.graphics.Rect
 import android.graphics.RectF
+import android.graphics.drawable.Drawable
 import io.rover.rover.core.domain.Background
 import io.rover.rover.core.domain.Border
 import io.rover.rover.core.domain.Experience
@@ -24,11 +25,33 @@ interface LayoutPaddingDeflection {
 }
 
 /**
+ * Specifies what version of [Drawable] should be be used, and with what configuration.
+ */
+sealed class BackgroundImageConfiguration {
+
+    // this class will capture the different modalities of drawable.
+
+    class Fit
+
+    class Original
+
+    class Stretch
+
+    class Fill
+
+    class Tile
+}
+
+/**
  * This interface is exposed by View Models that have support for a background.  Equivalent to
  * the [Background] domain model interface.
  */
 interface BackgroundViewModelInterface {
     val backgroundColor: Int
+
+    // val backgroundImageConfiguration: BackgroundImageConfiguration
+
+    fun requestBackgroundImage(callback: (Bitmap) -> Unit): NetworkTask?
 }
 
 /**
@@ -49,7 +72,7 @@ interface BorderViewModelInterface : LayoutPaddingDeflection {
  * View Model for a block that contains rich text content (decorated with strong, italic, and
  * underline HTML tags).
  */
-interface TextViewModelInterface : Measureable {
+interface TextViewModelInterface : Measurable {
     val text: String
 
     val fontAppearance: FontAppearance
@@ -57,7 +80,7 @@ interface TextViewModelInterface : Measureable {
     fun boldRelativeToBlockWeight(): Font
 }
 
-interface ImageViewModelInterface : Measureable {
+interface ImageViewModelInterface : Measurable {
     // TODO: I may elect to demote the Bitmap concern from the ViewModel into just the View (or a
     // helper of some kind) in order to avoid a thick Android object (Bitmap) being touched here
 
@@ -73,7 +96,7 @@ interface ImageViewModelInterface : Measureable {
 /**
  * Can vertically measure its content for stacked/autoheight purposes.
  */
-interface Measureable {
+interface Measurable {
     /**
      * Measure the "natural" height for the content contained in this block (for
      * example, a wrapped block of text will consume up to some height depending on content and

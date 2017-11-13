@@ -60,8 +60,13 @@ interface TextViewModelInterface : Measureable {
 interface ImageViewModelInterface : Measureable {
     // TODO: I may elect to demote the Bitmap concern from the ViewModel into just the View (or a
     // helper of some kind) in order to avoid a thick Android object (Bitmap) being touched here
-    // TODO: it also needs to be async/observable so that UI can wait for it to appear.
 
+    /**
+     * Get the needed image for display, hitting caches if possible and the network if necessary.
+     *
+     * Remember to call [NetworkTask.resume] to start the retrieval, or your callback will never
+     * be hit.
+     */
     fun requestImage(callback: (Bitmap) -> Unit): NetworkTask?
 }
 

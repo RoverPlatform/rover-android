@@ -14,9 +14,7 @@ import io.rover.rover.ui.types.ViewType
 /**
  * A base class used by all blocks that contains the block layout and positioning concerns.
  *
- * TODO: consider moving this logic into a mixin/delegate like the other view model concerns.  This needs two things:
- *
- * - LayoutableViewModel probably needs to split, because we want to be able to delegate the frame()
+ * - TODO: LayoutableViewModel probably needs to split, because we want to be able to delegate the frame()
  *   method to the new mixin version of BlockViewModel but obviously it should not specify view type
  */
 class BlockViewModel(

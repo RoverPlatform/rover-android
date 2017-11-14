@@ -32,7 +32,7 @@ class ViewModelFactory(
         return when (block) {
             is RectangleBlock -> {
                 val borderViewModel = BorderViewModel(block)
-                val backgroundViewModel = BackgroundViewModel(block, assetService)
+                val backgroundViewModel = BackgroundViewModel(block, assetService, borderViewModel)
                 RectangleBlockViewModel(BlockViewModel(block), backgroundViewModel, borderViewModel)
             }
             is TextBlock -> {
@@ -41,7 +41,7 @@ class ViewModelFactory(
                 TextBlockViewModel(
                     BlockViewModel(block, setOf(borderViewModel), textViewModel),
                     textViewModel,
-                    BackgroundViewModel(block, assetService),
+                    BackgroundViewModel(block, assetService, borderViewModel),
                     borderViewModel
                     // TODO: I would need to pass in some sort of measure-ator to blockviewmodel...
                     // actually, I could take the Text Concerns themselves out and put them into their own headless viewmodel, and have that implement
@@ -53,7 +53,7 @@ class ViewModelFactory(
                 val borderViewModel = BorderViewModel(block)
                 ImageBlockViewModel(
                     BlockViewModel(block, setOf(borderViewModel), imageViewModel),
-                    BackgroundViewModel(block, assetService),
+                    BackgroundViewModel(block, assetService, borderViewModel),
                     imageViewModel,
                     borderViewModel
                 )

@@ -28,6 +28,10 @@ class InMemoryBitmapCacheStage(
      */
     private val maxMemory = (Runtime.getRuntime().maxMemory() / 1024).toInt()
 
+    init {
+        log.v("There are $maxMemory KiB available to the in memory bitmap cache.")
+    }
+
     /**
      * The LRU cache itself, set up to use one eighth of the total memory allowed for this process,
      * as recommended by https://developer.android.com/topic/performance/graphics/cache-bitmap.html.
@@ -37,13 +41,15 @@ class InMemoryBitmapCacheStage(
             return value.byteCount / 1024
         }
 
-        override fun entryRemoved(evicted: Boolean, key: URL?, oldValue: Bitmap, newValue: Bitmap?) {
-            // release the heap memory containing the bitmap and also any video memory
-            oldValue.recycle()
-        }
+//        override fun entryRemoved(evicted: Boolean, key: URL?, oldValue: Bitmap, newValue: Bitmap?) {
+//            // release the heap memory containing the bitmap and also any video memory
+//            // TODO: this can break if the image is bigger than the total cache (which should *probably never happen?) because it will be evicted while still in use.  Maybe not strictly necessary to recycle on our own?
+//            log.v("Value getting recycled.")
+//            oldValue.recycle()
+//        }
 
         override fun create(key: URL): Bitmap {
-            log.v("Image not available in cache, faulting to next layer.")
+            this@InMemoryBitmapCacheStage.log.v("Image not available in cache, faulting to next layer.")
             return faultTo.request(key)
         }
     }

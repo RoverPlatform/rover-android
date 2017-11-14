@@ -26,9 +26,14 @@ class BlockAndRowLayoutManager(
     private val screenViewModel: ScreenViewModelInterface,
     private val displayMetrics: DisplayMetrics
 ) : RecyclerView.LayoutManager() {
-    private var layout: Layout by Delegates.notNull()
-
     // State:
+
+    /**
+     * The cached results of the last layout pass.
+     */
+    private var layout: Layout? = null
+
+
     /**
      * The current scroll position of the recycler view (specifically, the top of the RecyclerView's
      * 'viewport' into the list contents).  This is kept as state because it is
@@ -59,15 +64,33 @@ class BlockAndRowLayoutManager(
         // display.  This also flattens out all the rows and blocks into a single dimensional
         // sequence.
         // We then persist this as in-memory state
-        layout = screenViewModel.render(
-            this.width.pxAsDp(displayMetrics)
-        )
-        fill(recycler)
+
+        val widthDp = this.width.pxAsDp(displayMetrics)
+
+        val existingLayout = layout
+
+        if(existingLayout == null || existingLayout.width != widthDp) {
+            // a layout (re-)pass is needed.
+            layout = screenViewModel.render(
+                widthDp
+            )
+
+            fill(recycler, layout!!)
+        }
+
+        // print a warning if this is a patently unnecessary layout pass.  This is probably caused
+        // by a content-bearing view based on a stock Android view triggering an Android layout
+        // pass (which under our custom layout regime is unnecessary).
+        if(existingLayout != null && existingLayout.width == widthDp) {
+            log.w("Unnecessary layout pass.  Make sure all views are inhibiting requestLayout() and forceLayout().")
+        }
     }
 
     override fun scrollVerticallyBy(dy: Int, recycler: RecyclerView.Recycler, state: RecyclerView.State): Int {
         // now we need to figure out how much we can scroll by, and if indeed dy would bring
         // us out-of-bounds and cap it.
+
+        val layout = (this.layout ?: throw RuntimeException("RecyclerView scrolling occurred before layout?"))
 
         val layoutDisplayHeight = layout.height.dpAsPx(displayMetrics)
 
@@ -107,7 +130,7 @@ class BlockAndRowLayoutManager(
         scrollPosition += deflection
 
         // and re-run the fill:
-        fill(recycler)
+        fill(recycler, layout)
 
         // let RecyclerView know how much we moved.
         return deflection
@@ -116,7 +139,10 @@ class BlockAndRowLayoutManager(
     /**
      * Ensure all views needed for the current [scrollPosition] are populated.
      */
-    private fun fill(recycler: RecyclerView.Recycler) {
+    private fun fill(
+        recycler: RecyclerView.Recycler,
+        layout: Layout
+    ) {
         // put all the views in scrap (for now; performance optimizations may be possible here, too?)
         detachAndScrapAttachedViews(recycler)
 

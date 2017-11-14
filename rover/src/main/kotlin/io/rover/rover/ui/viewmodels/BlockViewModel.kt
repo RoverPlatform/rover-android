@@ -24,7 +24,7 @@ class BlockViewModel(
 ) : BlockViewModelInterface {
 
     override val viewType: ViewType
-        get() = TODO("This will be removed when LayoutableViewModel is split") //To change initializer of created properties use File | Settings | File Templates.
+        get() = TODO("This will be removed when LayoutableViewModel is split")
 
     override fun stackedHeight(bounds: RectF): Float = when (block.position) {
         Position.Floating -> 0.0f

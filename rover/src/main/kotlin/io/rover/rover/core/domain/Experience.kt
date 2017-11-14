@@ -235,7 +235,7 @@ enum class BarcodeFormat(
 ) {
     QrCode("QR_CODE"),
     AztecCode("AZTEC_CODE"),
-    Pdf417("PDF_417"),
+    Pdf417("PDF417"),
     Code128("CODE_128");
 
     companion object
@@ -361,11 +361,10 @@ enum class HorizontalAlignment(
 }
 
 data class Image(
+    val width: Int,
     val height: Int,
-    val isURLOptimizationEnabled: Boolean,
     val name: String,
     val size: Int,
-    val width: Int,
     val url: URI
 ) {
     companion object

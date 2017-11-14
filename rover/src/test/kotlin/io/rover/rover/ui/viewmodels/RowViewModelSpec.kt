@@ -36,7 +36,8 @@ class RowViewModelSpec: Spek({
                         )
                     )
                 ),
-            ViewModelFactory(mock(), mock())
+            ViewModelFactory(mock(), mock()),
+            mock()
         )
 
         on("frame()") {
@@ -89,7 +90,8 @@ class RowViewModelSpec: Spek({
                         )
                     )
                 ),
-            ViewModelFactory(mock(), mock())
+            ViewModelFactory(mock(), mock()),
+            mock()
         )
 
         on("frame()") {
@@ -135,7 +137,8 @@ class RowViewModelSpec: Spek({
                         )
                     )
                 ),
-            ViewModelFactory(mock(), mock())
+            ViewModelFactory(mock(), mock()),
+            mock()
         )
 
         on("frame()") {
@@ -188,7 +191,8 @@ class RowViewModelSpec: Spek({
                             )
                         )
                     ),
-                ViewModelFactory(mock(), mock())
+                ViewModelFactory(mock(), mock()),
+                mock()
             )
         }
 

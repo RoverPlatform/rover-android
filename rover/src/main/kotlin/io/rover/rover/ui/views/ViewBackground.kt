@@ -1,11 +1,12 @@
 package io.rover.rover.ui.views
 
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.DrawableWrapper
 import android.graphics.drawable.InsetDrawable
+import android.support.v7.graphics.drawable.DrawableWrapper
 import android.view.Gravity
 import android.view.View
 import io.rover.rover.core.logging.log
@@ -87,23 +88,26 @@ class ViewBackground(
                             }
 
                         view.background =
-                            if(backgroundImageConfiguration.tileMode != null) {
-                                // we're tiling, so we want to use our alternative version of
-                                // InsetDrawable to avoid the shader missing-offset problem.
-                                BetterInsetDrawableForTiling(
-                                    bitmapDrawable,
-                                    backgroundImageConfiguration.insets.left,
-                                    backgroundImageConfiguration.insets.top
-                                )
-                            } else {
-                                InsetDrawable(
-                                    bitmapDrawable,
-                                    backgroundImageConfiguration.insets.left,
-                                    backgroundImageConfiguration.insets.top,
-                                    backgroundImageConfiguration.insets.right,
-                                    backgroundImageConfiguration.insets.bottom
-                                )
-                            }
+                            BackgroundColorDrawableWrapper(
+                                viewModel.backgroundColor,
+                                if(backgroundImageConfiguration.tileMode != null) {
+                                    // we're tiling, so we want to use our alternative version of
+                                    // InsetDrawable to avoid the shader missing-offset problem.
+                                    BetterInsetDrawableForTiling(
+                                        bitmapDrawable,
+                                        backgroundImageConfiguration.insets.left,
+                                        backgroundImageConfiguration.insets.top
+                                    )
+                                } else {
+                                    InsetDrawable(
+                                        bitmapDrawable,
+                                        backgroundImageConfiguration.insets.left,
+                                        backgroundImageConfiguration.insets.top,
+                                        backgroundImageConfiguration.insets.right,
+                                        backgroundImageConfiguration.insets.bottom
+                                    )
+                                }
+                            )
                     }.apply { this.whenNotNull { it.resume() } }
                 }
             }
@@ -124,10 +128,10 @@ class ViewBackground(
  * for tiling usage.
  */
 class BetterInsetDrawableForTiling(
-    private val wrappedDrawable: Drawable,
+    private val drawableToInset: Drawable,
     private val left: Int,
     private val top: Int
-): DrawableWrapper(wrappedDrawable) {
+): DrawableWrapper(drawableToInset) {
     override fun draw(canvas: Canvas) {
         // rather than using the super implementation we're going to actually specify the rect.
         canvas.matrix = Matrix().apply {
@@ -137,6 +141,17 @@ class BetterInsetDrawableForTiling(
             // side from appearing, although it appears for our use case (borders) that it's always
             // overdrawn anyway and therefore doesn't particularly matter.
         }
-        wrappedDrawable.draw(canvas)
+        drawableToInset.draw(canvas)
+    }
+}
+
+class BackgroundColorDrawableWrapper(
+    private val backgroundColor: Int,
+    private val drawableOnTopOfColor: Drawable
+): DrawableWrapper(drawableOnTopOfColor) {
+
+    override fun draw(canvas: Canvas) {
+        canvas.drawColor(backgroundColor)
+        drawableOnTopOfColor.draw(canvas)
     }
 }

@@ -194,16 +194,10 @@ class BackgroundViewModel(
                 // Imgix has a mode where I can crop & scale at the same time: apply `rect` and
                 // then `w` and `h` after the fact.
 
-                // all we need to do is figure out what area rect (centered) of the image we want to
-                // keep.
                 val viewPortSizeAsImagePixels = Pair(
-                    // TODO: include border width
                     (targetViewPixelSize.width / imageDensityScalingFactor).toInt(),
                     (targetViewPixelSize.height / imageDensityScalingFactor).toInt()
                 )
-
-
-                // TODO: include border width
 
                 val horizontalInsetOffsetScreenPixels = ((targetViewPixelSize.width - imageWidthPx) / 2f).toInt()
                 val verticalInsetOffsetScreenPixels = ((targetViewPixelSize.height - imageHeightPx) / 2f).toInt()

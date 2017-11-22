@@ -14,10 +14,8 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
 import org.jetbrains.spek.api.dsl.on
-import org.jetbrains.spek.api.dsl.xon
 import java.net.URI
 import java.net.URLDecoder
-import java.net.URLEncoder
 
 
 class BackgroundViewModelSpec: Spek({
@@ -59,8 +57,6 @@ class BackgroundViewModelSpec: Spek({
             assetService,
             null
         )
-
-        // TODO: test with a border later
 
         on("optimized to display in exactly the same size block on same density display") {
             val displayMetrics = createDisplayMetrics(480)

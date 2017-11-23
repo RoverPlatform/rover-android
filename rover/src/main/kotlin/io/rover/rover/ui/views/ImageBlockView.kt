@@ -1,9 +1,11 @@
 package io.rover.rover.ui.views
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.support.v7.widget.AppCompatImageView
 import android.util.AttributeSet
+import io.rover.rover.core.logging.log
 import io.rover.rover.ui.viewmodels.ImageBlockViewModelInterface
 
 class ImageBlockView : AppCompatImageView, LayoutableView<ImageBlockViewModelInterface> {
@@ -36,5 +38,14 @@ class ImageBlockView : AppCompatImageView, LayoutableView<ImageBlockViewModelInt
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         viewComposition.onSizeChanged(w, h, oldw, oldh)
+    }
+
+    @SuppressLint("MissingSuperCall")
+    override fun requestLayout() {
+        log.v("Tried to invalidate layout.  Inhibited.")
+    }
+
+    override fun forceLayout() {
+        log.v("Tried to forcefully invalidate layout.  Inhibited.")
     }
 }

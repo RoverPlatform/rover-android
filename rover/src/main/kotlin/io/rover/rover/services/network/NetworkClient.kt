@@ -33,8 +33,7 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient : NetworkClient {
         val asyncTask = @SuppressLint("StaticFieldLeak")
         object : AsyncTask<Void, Void, Unit>() {
             override fun doInBackground(vararg params: Void?) {
-                // TODO: use verb
-                log.d("$request")
+                this@AsyncTaskAndHttpUrlConnectionNetworkClient.log.d("Starting request: $request")
                 val connection = request.url
                     .openConnection() as HttpsURLConnection
 
@@ -107,7 +106,7 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient : NetworkClient {
                     return
                 }
 
-                log.d("$request : $responseCode")
+                this@AsyncTaskAndHttpUrlConnectionNetworkClient.log.d("$request : $responseCode")
 
                 val result = when (responseCode) {
                     in 200..299 -> {
@@ -141,7 +140,7 @@ class AsyncTaskAndHttpUrlConnectionNetworkClient : NetworkClient {
                 }
                 // TODO: detect if this was a cache hit and log as such.
                 completionHandler(result)
-                log.v("Cache hit count currently is: ${HttpResponseCache.getInstalled().hitCount}")
+                this@AsyncTaskAndHttpUrlConnectionNetworkClient.log.v("Cache hit count currently is: ${HttpResponseCache.getInstalled().hitCount}")
             }
         }
 

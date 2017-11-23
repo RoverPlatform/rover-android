@@ -21,13 +21,21 @@ fun Float.dpAsPx(displayMetrics: DisplayMetrics): Int {
  * See [Converting DP Units to Pixel Units](https://developer.android.com/guide/practices/screens_support.html)
  */
 fun Int.dpAsPx(displayMetrics: DisplayMetrics): Int {
+    return dpAsPx(displayMetrics.density)
+}
+
+fun Int.dpAsPx(displayDensity: Float): Int {
     // TODO change to: TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this, metrics)
-    val scale = displayMetrics.density
+    val scale = displayDensity
     return (this * scale + 0.5f).toInt()
 }
 
 fun Int.pxAsDp(displayMetrics: DisplayMetrics): Float {
-    val scale = displayMetrics.density
+    return pxAsDp(displayMetrics.density)
+}
+
+fun Int.pxAsDp(displayDensity: Float): Float {
+    val scale = displayDensity
     return this / scale
 }
 

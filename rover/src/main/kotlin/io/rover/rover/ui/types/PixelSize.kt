@@ -16,5 +16,52 @@ data class PixelSize(val width: Int, val height: Int): Comparable<PixelSize> {
         return totalPixels - otherPixels
     }
 
+    fun times(factor: Int): PixelSize {
+        return PixelSize(
+            width * factor,
+            height * factor
+        )
+    }
 
+    operator fun times(factor: Float): PixelSize {
+        return PixelSize(
+            (width * factor).toInt(),
+            (height * factor).toInt()
+        )
+    }
+
+    operator fun div(divisor: Float): PixelSize {
+        return PixelSize(
+            (width / divisor).toInt(),
+            (height / divisor).toInt()
+        )
+    }
+
+    operator fun div(divisor: Int): PixelSize {
+        return PixelSize(
+            (width / divisor.toFloat()).toInt(),
+            (height / divisor.toFloat()).toInt()
+        )
+    }
+
+    operator fun plus(addend: Int): PixelSize {
+        return PixelSize(
+            width + addend,
+            height + addend
+        )
+    }
+
+    operator fun minus(subtrahend: Int): PixelSize {
+        return PixelSize(
+            width - subtrahend,
+            height - subtrahend
+        )
+    }
+
+    operator fun minus(subtrahend: PixelSize): PixelSize {
+        return PixelSize(
+            width - subtrahend.width,
+            height - subtrahend.height
+        )
+    }
 }

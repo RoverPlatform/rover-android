@@ -42,7 +42,7 @@ class BackgroundImageConfiguration(
      * complete control over the aspect ratio, sizing, and positioning.  Note that this parameter
      * cannot be used to specify any sort of scaling for tiling, since the bottom/right bounds are
      * effectively undefined as the pattern repeats forever.  In that case, consider using using
-     * [Bitmap.setDensity] to achieve a scale effect (although note that it is in terms of the
+     * [imageNativeDensity] to achieve a scale effect (although note that it is in terms of the
      * display DPI).
      *
      * (Note: we use this approach rather than just having a configurable gravity on the drawable
@@ -50,20 +50,16 @@ class BackgroundImageConfiguration(
      */
     val insets: Rect,
 
-//    /**
-//     * An optional pixel density the background should be rendered at.  Must be supplied in terms of the
-//     * display density of the screen (ie., multiply in [DisplayMetrics.densityDpi] value).  In many
-//     * cases, if the consumer wishes to  it is more appropriate to achieve a scale effect with the [insets parameter, ]
-//     *
-//     * Hint: this may be used to provide scale factor for tile modes, but it must be done in terms of the device's
-//     * current [DisplayMetrics.densityDpi].
-//     */
-//    val targetDensity: Int,
-
     /**
      * An Android tiling mode.  For no tiling, set as null.
      */
-    val tileMode: Shader.TileMode?
+    val tileMode: Shader.TileMode?,
+
+    /**
+     * This density value should be set on the bitmap with [Bitmap.setDensity] before drawing it
+     * on an Android canvas.
+     */
+    val imageNativeDensity: Int
 )
 
 /**
@@ -135,7 +131,7 @@ interface ImageViewModelInterface : Measurable {
      */
     fun requestImage(
         targetViewPixelSize: PixelSize,
-        displayDensity: Float,
+        displayMetrics: DisplayMetrics,
         callback: (Bitmap) -> Unit
     ): NetworkTask?
 }

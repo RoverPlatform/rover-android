@@ -18,6 +18,10 @@ class DecodeToBitmapStage(
         val stream = priorStage.request(input)
 
         log.v("Decoding bitmap.")
+        // Technically we should not be doing CPU-bound work in this context (which is being run on
+        // an Executor tuned for multiplexing I/O and not for CPU work); see
+        // SynchronousPipelineStage's documentation. If it proves problematic we can offload it to
+        // another worker.
         return BitmapFactory.decodeStream(stream)
     }
 }

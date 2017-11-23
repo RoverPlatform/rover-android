@@ -35,18 +35,14 @@ class InMemoryBitmapCacheStage(
     /**
      * The LRU cache itself, set up to use one eighth of the total memory allowed for this process,
      * as recommended by https://developer.android.com/topic/performance/graphics/cache-bitmap.html.
+     *
+     * Holds onto a reference to the bitmap, but lets the reference go once evicted.  Then it's up
+     * to the GC to free the bitmap and therefore recycle it.
      */
     private val lruCache = object : LruCache<URL, Bitmap>(maxMemory / 8) {
         override fun sizeOf(key: URL, value: Bitmap): Int {
             return value.byteCount / 1024
         }
-
-//        override fun entryRemoved(evicted: Boolean, key: URL?, oldValue: Bitmap, newValue: Bitmap?) {
-//            // release the heap memory containing the bitmap and also any video memory
-//            // TODO: this can break if the image is bigger than the total cache (which should *probably never happen?) because it will be evicted while still in use.  Maybe not strictly necessary to recycle on our own?
-//            log.v("Value getting recycled.")
-//            oldValue.recycle()
-//        }
 
         override fun create(key: URL): Bitmap {
             this@InMemoryBitmapCacheStage.log.v("Image not available in cache, faulting to next layer.")

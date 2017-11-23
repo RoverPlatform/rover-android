@@ -32,7 +32,7 @@ class ScreenViewModelSpec: Spek({
                     )
                 )
             )
-            val screenViewModel = ScreenViewModel(screen, ViewModelFactory(mock(), mock()))
+            val screenViewModel = ScreenViewModel(screen, ViewModelFactory(mock(), mock(), mock()))
 
             on("rendering") {
                 val rendered = screenViewModel.render(
@@ -70,7 +70,7 @@ class ScreenViewModelSpec: Spek({
                     )
                 )
             )
-            val screenViewModel = ScreenViewModel(screen, ViewModelFactory(mock(), mock()))
+            val screenViewModel = ScreenViewModel(screen, ViewModelFactory(mock(), mock(), mock()))
 
             on("rendering") {
                 val rendered = screenViewModel.render(
@@ -125,7 +125,7 @@ class ScreenViewModelSpec: Spek({
                     )
                 )
             )
-            val screenViewModel = ScreenViewModel(screen, ViewModelFactory(mock(), mock()))
+            val screenViewModel = ScreenViewModel(screen, ViewModelFactory(mock(), mock(), mock()))
 
             on("rendering") {
                 val rendered = screenViewModel.render(
@@ -156,7 +156,7 @@ class ScreenViewModelSpec: Spek({
                     )
                 )
             )
-            val screenViewModel = ScreenViewModel(screen, ViewModelFactory(mock(), mock()))
+            val screenViewModel = ScreenViewModel(screen, ViewModelFactory(mock(), mock(), mock()))
 
             on("rendering") {
                 val rendered = screenViewModel.render(

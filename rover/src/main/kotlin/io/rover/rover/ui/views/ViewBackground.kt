@@ -73,6 +73,10 @@ class ViewBackground(
                     ) { bitmap, backgroundImageConfiguration ->
                         // now construct/compose drawables for the given configuration and bitmap.
 
+                        // note that this will only have an effect in tiled mode (which is exactly
+                        // where we need it), since we always scale to the insets otherwise.
+                        bitmap.density = backgroundImageConfiguration.imageNativeDensity
+
                         val bitmapDrawable =
                             BitmapDrawable(
                                 view.resources,

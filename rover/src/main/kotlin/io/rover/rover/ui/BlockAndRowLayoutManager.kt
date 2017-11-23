@@ -51,6 +51,12 @@ class BlockAndRowLayoutManager(
 
     override fun canScrollVertically(): Boolean = true
 
+    private val prefetchPx = 300.dpAsPx(displayMetrics)
+
+    init {
+        isItemPrefetchEnabled = true
+    }
+
     override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams = RecyclerView.LayoutParams(
         RecyclerView.LayoutParams.WRAP_CONTENT,
         RecyclerView.LayoutParams.WRAP_CONTENT
@@ -136,6 +142,26 @@ class BlockAndRowLayoutManager(
         return deflection
     }
 
+    override fun collectAdjacentPrefetchPositions(
+        dx: Int, dy: Int,
+        state: RecyclerView.State,
+        layoutPrefetchRegistry: LayoutPrefetchRegistry
+    ) {
+        val layout = this.layout ?: return
+        val wouldBeScrollPosition = scrollPosition + dy
+        val verticalTopBound = wouldBeScrollPosition
+        val verticalBottomBound = wouldBeScrollPosition + height
+
+
+        layout.coordinatesAndViewModels.forEachIndexed { index, (viewPosition, clipBounds, _) ->
+            val displayPosition = viewPosition.dpAsPx(displayMetrics)
+            val warmOver = displayPosition.bottom > verticalTopBound - prefetchPx && displayPosition.top < verticalBottomBound + prefetchPx
+            if (warmOver) {
+                layoutPrefetchRegistry.addPosition(index, Math.abs(displayPosition.top - scrollPosition))
+            }
+        }
+    }
+
     /**
      * Ensure all views needed for the current [scrollPosition] are populated.
      */
@@ -161,11 +187,9 @@ class BlockAndRowLayoutManager(
         // z-order, and we process through our blocks-and-rows sequentially.
         layout.coordinatesAndViewModels.forEachIndexed { index, (viewPosition, clipBounds, _) ->
             val displayPosition = viewPosition.dpAsPx(displayMetrics)
-
             val visible = displayPosition.bottom > verticalTopBound && displayPosition.top < verticalBottomBound
             if (visible) {
                 // retrieve either a newly recycled view, or perhaps, get the exact same view back
-
                 val view = recycler.getViewForPosition(index)
 
                 // TODO: to avoid expensive re-clipping we may want to tag Views that are clipped

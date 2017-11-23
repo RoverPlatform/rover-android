@@ -111,7 +111,7 @@ class ViewBackground(
                             duration = shortAnimationDuration.toLong()
                             start()
                         }
-                        
+
                         view.background = backgroundDrawable
 
                     }.apply { this.whenNotNull { it.resume() } }

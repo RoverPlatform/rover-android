@@ -6,8 +6,8 @@ import android.widget.ImageView
 import io.rover.rover.core.logging.log
 import io.rover.rover.platform.whenNotNull
 import io.rover.rover.services.network.NetworkTask
-import io.rover.rover.ui.viewmodels.ImageBlockViewModelInterface
 import io.rover.rover.ui.types.PixelSize
+import io.rover.rover.ui.viewmodels.ImageBlockViewModelInterface
 
 /**
  * Mixin that binds an image block view model to the relevant parts of an [ImageView].
@@ -15,6 +15,10 @@ import io.rover.rover.ui.types.PixelSize
 class ViewImage(
     private val imageView: AppCompatImageView
 ) : ViewImageInterface {
+    private val shortAnimationDuration = imageView.resources.getInteger(
+        android.R.integer.config_shortAnimTime
+    )
+
     // State:
     private var runningTask: NetworkTask? = null
 
@@ -66,17 +70,20 @@ class ViewImage(
                 // and also clear any waiting layout callbacks
                 dimensionCallbacks.clear()
 
-                // we need to know the laid out dimensions of the view in order to ask the view
-                // model for an optimized version of the image suited to the view's size.  So, we'll
-                // install a View Tree Observer (VTO) to get notified that the layout has been
-                // completed.
+                imageView.alpha = 0f
 
+                // we need to know the laid out dimensions of the view in order to ask the view
+                // model for an optimized version of the image suited to the view's size.
                 whenDimensionsReady { width, height ->
                     runningTask = viewModel.requestImage(
                         PixelSize(width, height),
                         imageView.resources.displayMetrics
                     ) { bitmap ->
                         imageView.setImageBitmap(bitmap)
+                        imageView.animate()
+                            .alpha(1f)
+                            .setDuration(shortAnimationDuration.toLong())
+                            .start()
                     }.apply { this.whenNotNull { it.resume() } }
                 }
             }

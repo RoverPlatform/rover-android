@@ -2,8 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Rover Library/Rover Library.iml" filepath="$PROJECT_DIR$/Rover Library/Rover Library.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/rover/rover.iml" filepath="$PROJECT_DIR$/rover/rover.iml" />
       <module fileurl="file://$PROJECT_DIR$/rover-android.iml" filepath="$PROJECT_DIR$/rover-android.iml" />
     </modules>

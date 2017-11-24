@@ -1,1 +1,1 @@
-include ':app', ':Rover Library', ':rover'
+include ':rover'

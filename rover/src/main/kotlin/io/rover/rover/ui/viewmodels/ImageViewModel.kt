@@ -2,27 +2,40 @@ package io.rover.rover.ui.viewmodels
 
 import android.graphics.Bitmap
 import android.graphics.RectF
+import android.net.Uri
+import android.util.DisplayMetrics
 import io.rover.rover.core.domain.ImageBlock
 import io.rover.rover.core.logging.log
 import io.rover.rover.services.assets.AssetService
+import io.rover.rover.services.assets.ImageOptimizationServiceInterface
 import io.rover.rover.services.network.NetworkResult
 import io.rover.rover.services.network.NetworkTask
+import io.rover.rover.ui.types.PixelSize
+import io.rover.rover.ui.types.dpAsPx
+import java.net.URL
 
-/**
- * Created by andrewclunis on 2017-11-10.
- */
 class ImageViewModel(
     private val block: ImageBlock,
-    private val assetService: AssetService
+    private val assetService: AssetService,
+    private val imageOptimizationService: ImageOptimizationServiceInterface
 ) : ImageViewModelInterface {
-
-    override fun requestImage(callback: (Bitmap) -> Unit): NetworkTask? {
+    override fun requestImage(
+        targetViewPixelSize: PixelSize,
+        displayMetrics: DisplayMetrics,
+        callback: (Bitmap) -> Unit
+    ): NetworkTask? {
         val uri = block.image?.url
 
         return if (uri != null) {
             log.v("There is an image to retrieve.  Starting.")
-            // these are always URLs (HTTP/HTTPS), not open-ended URIs, so:
-            val url = uri.toURL()
+            val uriWithParameters = Uri.parse(uri.toString()).buildUpon().apply {
+                imageOptimizationService.optimizeImageBlock(
+                    block,
+                    targetViewPixelSize,
+                    displayMetrics
+                )
+            }.build()
+            val url = URL(uriWithParameters.toString())
 
             assetService.getImageByUrl(url) { result ->
                 val y = when (result) {
@@ -36,7 +49,7 @@ class ImageViewModel(
                 }
             }
         } else {
-            log.v("Null URI.  No image set.")
+            // log.v("Null URI.  No image set.")
             null
         }
     }

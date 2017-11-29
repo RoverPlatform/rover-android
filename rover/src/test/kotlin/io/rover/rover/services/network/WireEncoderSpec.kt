@@ -141,7 +141,6 @@ class WireEncoderSpec: Spek({
                                 id shouldEqual ID("SygAdkv-Ll")
                                 image shouldEqual Image(
                                     height = 154,
-                                    isURLOptimizationEnabled = true,
                                     name = "loweslogo.png",
                                     size = 9096,
                                     url = URI.create("https://images-rover-io.imgix.net/uploads/c81e728d9d4c2f636f067f89cc14862c/4dd2526b-1dc1-4c39-9541-8a091c85c621-loweslogo.png"),

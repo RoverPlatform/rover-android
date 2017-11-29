@@ -1,9 +1,11 @@
 package io.rover.rover.ui.views
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
 import android.widget.TextView
+import io.rover.rover.core.logging.log
 import io.rover.rover.ui.AndroidRichTextToSpannedTransformer
 import io.rover.rover.ui.viewmodels.TextBlockViewModelInterface
 
@@ -37,5 +39,14 @@ class TextBlockView : TextView, LayoutableView<TextBlockViewModelInterface> {
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         viewComposition.onSizeChanged(w, h, oldw, oldh)
+    }
+
+    @SuppressLint("MissingSuperCall")
+    override fun requestLayout() {
+        log.v("Tried to invalidate layout.  Inhibited.")
+    }
+
+    override fun forceLayout() {
+        log.v("Tried to forcefully invalidate layout.  Inhibited.")
     }
 }

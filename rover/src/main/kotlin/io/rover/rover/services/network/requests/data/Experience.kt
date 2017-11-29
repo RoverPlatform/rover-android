@@ -82,11 +82,10 @@ fun BarcodeFormat.Companion.decodeJson(value: String): BarcodeFormat =
 fun Image.Companion.optDecodeJSON(json: JSONObject?): Image? = when (json) {
     null -> null
     else -> Image(
+        json.getInt("width"),
         json.getInt("height"),
-        json.getBoolean("isURLOptimizationEnabled"),
         json.getString("name"),
         json.getInt("size"),
-        json.getInt("width"),
         URI.create(json.getString("url"))
     )
 }
@@ -96,7 +95,6 @@ fun Image?.optEncodeJson(): JSONObject? {
         JSONObject().apply {
             listOf(
                 Image::height,
-                Image::isURLOptimizationEnabled,
                 Image::name,
                 Image::size,
                 Image::width

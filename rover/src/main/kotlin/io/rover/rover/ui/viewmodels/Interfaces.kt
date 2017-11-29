@@ -3,6 +3,8 @@ package io.rover.rover.ui.viewmodels
 import android.graphics.Bitmap
 import android.graphics.Rect
 import android.graphics.RectF
+import android.graphics.Shader
+import android.util.DisplayMetrics
 import io.rover.rover.core.domain.Background
 import io.rover.rover.core.domain.Border
 import io.rover.rover.core.domain.Experience
@@ -15,6 +17,7 @@ import io.rover.rover.ui.types.Font
 import io.rover.rover.ui.types.FontAppearance
 import io.rover.rover.ui.types.Insets
 import io.rover.rover.ui.types.Layout
+import io.rover.rover.ui.types.PixelSize
 
 /**
  * Exposed by a view model that may need to contribute to the padding around the content.
@@ -24,11 +27,66 @@ interface LayoutPaddingDeflection {
 }
 
 /**
+ * Specifies how the view should properly display the given background image.
+ *
+ * The method these are specified is a bit idiosyncratic on account of Android implementation
+ * details and the combination of Drawables the view uses to achieve the effect.
+ */
+class BackgroundImageConfiguration(
+    /**
+     * Bounds in pixels, in *relative insets from their respective edges*.
+     *
+     * TODO: consider changing to not use Rect to better indicate that it is not a rectangle but an inset for each edge
+     *
+     * Our drawable is always set to FILL_XY, which means by specifying these insets you get
+     * complete control over the aspect ratio, sizing, and positioning.  Note that this parameter
+     * cannot be used to specify any sort of scaling for tiling, since the bottom/right bounds are
+     * effectively undefined as the pattern repeats forever.  In that case, consider using using
+     * [imageNativeDensity] to achieve a scale effect (although note that it is in terms of the
+     * display DPI).
+     *
+     * (Note: we use this approach rather than just having a configurable gravity on the drawable
+     * because that would not allow for aspect correct fit scaling.)
+     */
+    val insets: Rect,
+
+    /**
+     * An Android tiling mode.  For no tiling, set as null.
+     */
+    val tileMode: Shader.TileMode?,
+
+    /**
+     * This density value should be set on the bitmap with [Bitmap.setDensity] before drawing it
+     * on an Android canvas.
+     */
+    val imageNativeDensity: Int
+)
+
+/**
  * This interface is exposed by View Models that have support for a background.  Equivalent to
  * the [Background] domain model interface.
  */
 interface BackgroundViewModelInterface {
     val backgroundColor: Int
+
+    fun requestBackgroundImage(
+        targetViewPixelSize: PixelSize,
+        displayMetrics: DisplayMetrics,
+        callback: (
+            /**
+             * The bitmap to be drawn.  It is recommended that the consumer arrange to have it
+             * scaled to a roughly appropriate amount (need not be exact; that is the purpose of the
+             * view size and the [insets] given above) and also to be uploaded to GPU texture memory
+             * off thread ([Bitmap.prepareToDraw]) before setting it.
+             *
+             * Note: one can set the source density of the bitmap to control its scaling (which is
+             * particularly relevant for tile modes where
+             */
+            Bitmap,
+
+            BackgroundImageConfiguration
+        ) -> Unit
+    ): NetworkTask?
 }
 
 /**
@@ -38,8 +96,10 @@ interface BackgroundViewModelInterface {
 interface BorderViewModelInterface : LayoutPaddingDeflection {
     val borderColor: Int
 
+    // TODO: this should start returning Px instead of Dp
     val borderRadius: Int
 
+    // TODO: this should start returning Px instead of Dp
     val borderWidth: Int
 
     companion object
@@ -49,7 +109,7 @@ interface BorderViewModelInterface : LayoutPaddingDeflection {
  * View Model for a block that contains rich text content (decorated with strong, italic, and
  * underline HTML tags).
  */
-interface TextViewModelInterface : Measureable {
+interface TextViewModelInterface : Measurable {
     val text: String
 
     val fontAppearance: FontAppearance
@@ -57,23 +117,29 @@ interface TextViewModelInterface : Measureable {
     fun boldRelativeToBlockWeight(): Font
 }
 
-interface ImageViewModelInterface : Measureable {
+interface ImageViewModelInterface : Measurable {
     // TODO: I may elect to demote the Bitmap concern from the ViewModel into just the View (or a
     // helper of some kind) in order to avoid a thick Android object (Bitmap) being touched here
 
     /**
      * Get the needed image for display, hitting caches if possible and the network if necessary.
+     * You'll need to give a [PixelSize] of the target view the image will be landing in.  This will
+     * allow for optimizations to select, download, and cache the appropriate size of content.
      *
      * Remember to call [NetworkTask.resume] to start the retrieval, or your callback will never
      * be hit.
      */
-    fun requestImage(callback: (Bitmap) -> Unit): NetworkTask?
+    fun requestImage(
+        targetViewPixelSize: PixelSize,
+        displayMetrics: DisplayMetrics,
+        callback: (Bitmap) -> Unit
+    ): NetworkTask?
 }
 
 /**
  * Can vertically measure its content for stacked/autoheight purposes.
  */
-interface Measureable {
+interface Measurable {
     /**
      * Measure the "natural" height for the content contained in this block (for
      * example, a wrapped block of text will consume up to some height depending on content and

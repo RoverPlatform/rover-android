@@ -2,7 +2,8 @@ package io.rover.rover.ui.viewmodels
 
 import android.graphics.RectF
 import io.rover.rover.core.domain.Row
-import io.rover.rover.ui.BlockViewModelFactoryInterface
+import io.rover.rover.services.assets.AssetService
+import io.rover.rover.ui.ViewModelFactoryInterface
 import io.rover.rover.ui.measuredAgainst
 import io.rover.rover.ui.types.DisplayItem
 import io.rover.rover.ui.types.ViewType
@@ -10,12 +11,13 @@ import io.rover.rover.ui.types.ViewType
 
 class RowViewModel(
     private val row: Row,
-    private val blockViewModelFactory: BlockViewModelFactoryInterface
-) : RowViewModelInterface, BackgroundViewModelInterface by BackgroundViewModel(row) {
+    private val viewModelFactory: ViewModelFactoryInterface,
+    private val backgroundViewModel: BackgroundViewModelInterface
+) : RowViewModelInterface, BackgroundViewModelInterface by backgroundViewModel {
     override val viewType: ViewType = ViewType.Row
 
     override val blockViewModels: List<BlockViewModelInterface> by lazy {
-        row.blocks.map { blockViewModelFactory.viewModelForBlock(it) }
+        row.blocks.map { viewModelFactory.viewModelForBlock(it) }
     }
 
     /**

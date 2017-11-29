@@ -185,7 +185,6 @@ class FetchExperienceRequest(
             backgroundContentMode
             backgroundImage {
                 height
-                isURLOptimizationEnabled
                 name
                 size
                 width

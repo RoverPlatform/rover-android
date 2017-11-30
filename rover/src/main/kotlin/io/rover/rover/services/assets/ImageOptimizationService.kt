@@ -1,6 +1,5 @@
 package io.rover.rover.services.assets
 
-import android.graphics.Rect
 import android.graphics.Shader
 import android.util.DisplayMetrics
 import io.rover.rover.core.domain.Background
@@ -9,6 +8,7 @@ import io.rover.rover.core.domain.BackgroundScale
 import io.rover.rover.core.domain.ImageBlock
 import io.rover.rover.core.logging.log
 import io.rover.rover.ui.types.PixelSize
+import io.rover.rover.ui.types.Rect
 import io.rover.rover.ui.types.dpAsPx
 import io.rover.rover.ui.viewmodels.BackgroundImageConfiguration
 import java.net.URI

@@ -1,6 +1,6 @@
 package io.rover.rover.ui.viewmodels
 
-import android.graphics.RectF
+import com.natpryce.hamkrest.should.shouldMatch
 import io.rover.rover.ModelFactories
 import io.rover.rover.core.domain.HorizontalAlignment
 import io.rover.rover.core.domain.Length
@@ -8,6 +8,7 @@ import io.rover.rover.core.domain.Position
 import io.rover.rover.core.domain.UnitOfMeasure
 import io.rover.rover.core.domain.VerticalAlignment
 import io.rover.rover.ui.ViewModelFactory
+import io.rover.rover.ui.types.RectF
 import org.amshove.kluent.mock
 import org.amshove.kluent.shouldEqual
 import org.jetbrains.spek.api.Spek

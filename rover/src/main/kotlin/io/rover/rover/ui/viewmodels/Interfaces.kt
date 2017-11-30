@@ -1,8 +1,6 @@
 package io.rover.rover.ui.viewmodels
 
 import android.graphics.Bitmap
-import android.graphics.Rect
-import android.graphics.RectF
 import android.graphics.Shader
 import android.util.DisplayMetrics
 import io.rover.rover.core.domain.Background
@@ -18,6 +16,8 @@ import io.rover.rover.ui.types.FontAppearance
 import io.rover.rover.ui.types.Insets
 import io.rover.rover.ui.types.Layout
 import io.rover.rover.ui.types.PixelSize
+import io.rover.rover.ui.types.Rect
+import io.rover.rover.ui.types.RectF
 
 /**
  * Exposed by a view model that may need to contribute to the padding around the content.

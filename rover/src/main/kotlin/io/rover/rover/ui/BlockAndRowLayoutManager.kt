@@ -8,6 +8,7 @@ import io.rover.rover.core.domain.Row
 import io.rover.rover.core.domain.Screen
 import io.rover.rover.core.logging.log
 import io.rover.rover.ui.types.Layout
+import io.rover.rover.ui.types.asAndroidRect
 import io.rover.rover.ui.types.dpAsPx
 import io.rover.rover.ui.types.pxAsDp
 import io.rover.rover.ui.viewmodels.ScreenViewModelInterface
@@ -200,7 +201,7 @@ class BlockAndRowLayoutManager(
 
                 view.clipBounds = null
                 if (clipBounds != null) {
-                    view.clipBounds = clipBounds.dpAsPx(displayMetrics)
+                    view.clipBounds = clipBounds.dpAsPx(displayMetrics).asAndroidRect()
                 }
 
                 // TODO: when implementing the aforementioned additional future optimization, the natural

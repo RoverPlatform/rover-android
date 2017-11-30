@@ -19,7 +19,10 @@ import io.rover.rover.core.domain.UnitOfMeasure
 import io.rover.rover.core.domain.VerticalAlignment
 import io.rover.rover.junit4ReportingWorkaround
 import io.rover.rover.platform.DateFormattingInterface
-import io.rover.rover.services.network.requests.data.encodeJson
+import io.rover.rover.platform.decodeDeviceStateFromJsonStringForTests
+import io.rover.rover.platform.decodeExperienceFromStringForTests
+import io.rover.rover.platform.encodeEventsToStringJsonForTests
+import io.rover.rover.platform.encodeJsonToStringForTests
 import org.amshove.kluent.When
 import org.amshove.kluent.any
 import org.amshove.kluent.calling
@@ -53,7 +56,7 @@ class WireEncoderSpec: Spek({
 
             it("should match some pre-rendered JSON") {
                 val expectedJson = this.javaClass.classLoader.getResourceAsStream("outbound_events.json").bufferedReader(Charsets.UTF_8).readText()
-                val json = wireEncoder.encodeEventsForSending(events).toString(4)
+                val json = wireEncoder.encodeEventsToStringJsonForTests(events)
                 junit4ReportingWorkaround {
                     JSONAssert.assertEquals(expectedJson, json, true)
                 }
@@ -62,7 +65,7 @@ class WireEncoderSpec: Spek({
 
         on("decoding a device") {
             val expectedJson = this.javaClass.classLoader.getResourceAsStream("comprehensive_device.json").bufferedReader(Charsets.UTF_8).readText()
-            val decoded = wireEncoder.decodeDeviceState(JSONObject(expectedJson).getJSONObject("data").getJSONObject("device"))
+            val decoded = wireEncoder.decodeDeviceStateFromJsonStringForTests(JSONObject(expectedJson).getJSONObject("data").getJSONObject("device").toString(4))
 
             it("produces valid JSON that can be encoded back into equivalent JSON") {
                 // if we can roundtrip the comprehensive JSON Experience structure to the Rover
@@ -71,7 +74,7 @@ class WireEncoderSpec: Spek({
 
                 val reWrapped = JSONObject().apply {
                     put("data", JSONObject().apply {
-                        put("device", decoded.encodeJson())
+                        put("device", JSONObject(decoded.encodeJsonToStringForTests()))
                     })
                 }
 
@@ -84,7 +87,7 @@ class WireEncoderSpec: Spek({
 
         on("decoding an experience") {
             val expectedJson = this.javaClass.classLoader.getResourceAsStream("comprehensive_experience.json").bufferedReader(Charsets.UTF_8).readText()
-            val decoded = wireEncoder.decodeExperience(JSONObject(expectedJson).getJSONObject("data").getJSONObject("experience"))
+            val decoded = wireEncoder.decodeExperienceFromStringForTests(JSONObject(expectedJson).getJSONObject("data").getJSONObject("experience").toString(4))
 
             it("reads correct values from the payload") {
                 junit4ReportingWorkaround {
@@ -172,7 +175,7 @@ class WireEncoderSpec: Spek({
 
                 val reWrapped = JSONObject().apply {
                     put("data", JSONObject().apply {
-                        put("experience", decoded.encodeJson())
+                        put("experience", JSONObject(decoded.encodeJsonToStringForTests()))
                     })
                 }
 

@@ -1,7 +1,6 @@
 package io.rover.rover.ui.viewmodels
 
-import android.graphics.Rect
-import android.graphics.RectF
+import io.rover.rover.ui.types.RectF
 import io.rover.rover.ui.types.ViewType
 
 /**

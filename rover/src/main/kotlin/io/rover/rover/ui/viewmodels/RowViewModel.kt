@@ -1,11 +1,11 @@
 package io.rover.rover.ui.viewmodels
 
-import android.graphics.RectF
 import io.rover.rover.core.domain.Row
 import io.rover.rover.services.assets.AssetService
 import io.rover.rover.ui.ViewModelFactoryInterface
 import io.rover.rover.ui.measuredAgainst
 import io.rover.rover.ui.types.DisplayItem
+import io.rover.rover.ui.types.RectF
 import io.rover.rover.ui.types.ViewType
 
 
@@ -88,17 +88,10 @@ class RowViewModel(
 
         // if blockFrame exceeds the blockBounds, we need clip, and in terms relative to blockBounds
         val clip = if (!rowFrame.contains(blockFrame)) {
-            // RectF has the functionality we need but has an imperative/mutation-style of API.
-            RectF().apply {
-                // this just copies blockBounds because intersect() mutates the instance.
-                set(rowFrame)
+            // and find the intersection with blockFrame to find out what should be exposed and then
+            // transform into coord space with origin of blockframe' top left corner:
+            rowFrame.intersection(blockFrame)!!.offset(0 - blockFrame.left, 0 - blockFrame.top)
 
-                // and find the intersection with blockFrame to find out what should be exposed.
-                intersect(blockFrame)
-
-                // transform into coord space with origin of blockframe' top left corner
-                this.offset(0 - blockFrame.left, 0 - blockFrame.top)
-            }
         } else {
             // no clip is necessary because the blockFrame is contained entirely within the
             // surrounding block.

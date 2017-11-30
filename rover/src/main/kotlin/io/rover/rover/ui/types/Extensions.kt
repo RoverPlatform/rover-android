@@ -1,7 +1,5 @@
 package io.rover.rover.ui.types
 
-import android.graphics.Rect
-import android.graphics.RectF
 import android.util.DisplayMetrics
 
 /**

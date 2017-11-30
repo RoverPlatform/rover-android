@@ -1,7 +1,6 @@
 package io.rover.rover.ui.viewmodels
 
 import android.graphics.Paint
-import android.graphics.RectF
 import android.graphics.Typeface
 import io.rover.rover.core.domain.FontWeight
 import io.rover.rover.core.domain.TextAlignment
@@ -9,6 +8,7 @@ import io.rover.rover.core.domain.TextBlock
 import io.rover.rover.ui.MeasurementService
 import io.rover.rover.ui.types.Font
 import io.rover.rover.ui.types.FontAppearance
+import io.rover.rover.ui.types.RectF
 import io.rover.rover.ui.views.asAndroidColor
 
 /**

@@ -1,10 +1,10 @@
 package io.rover.rover.ui.viewmodels
 
-import android.graphics.RectF
 import io.rover.rover.core.domain.Screen
 import io.rover.rover.ui.ViewModelFactoryInterface
 import io.rover.rover.ui.types.DisplayItem
 import io.rover.rover.ui.types.Layout
+import io.rover.rover.ui.types.RectF
 
 class ScreenViewModel(
     private val screen: Screen,

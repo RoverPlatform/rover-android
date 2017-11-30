@@ -238,13 +238,11 @@ class ImageOptimizationService: ImageOptimizationServiceInterface {
             BackgroundContentMode.Stretch -> {
                 // Unlike the fit=min/max modes used above, for doing an aspect-incorrect scale
                 // imgix does not distinguish between aspect matching and scaling up.  Determine
-                // ourselves if it is worth it (ie., that we're not asking Imgix to scale the image
-                // up, the exact opposite of our goal)
-                val scaleDownTo = minOf(
-                    PixelSize(backgroundImage.width, backgroundImage.height),
-                    PixelSize(
-                        targetViewPixelSize.width, targetViewPixelSize.height
-                    )
+                // ourselves if it is worth it for either of the dimensions(ie., that we're not
+                // asking Imgix to scale the image up, the exact opposite of our goal)
+                val scaleDownTo = PixelSize(
+                    minOf(backgroundImage.width, targetViewPixelSize.width),
+                    minOf(backgroundImage.height, targetViewPixelSize.height)
                 )
 
                 Pair(
@@ -332,8 +330,6 @@ class ImageOptimizationService: ImageOptimizationServiceInterface {
         displayMetrics: DisplayMetrics
     ): URI? {
         return if(block.image != null) {
-            // TODO: should any of this Imgix scaling logic be pulled out into a separate concern?
-
             val imageSizePixels = PixelSize(
                 block.image.width,
                 block.image.height
@@ -346,20 +342,17 @@ class ImageOptimizationService: ImageOptimizationServiceInterface {
                 targetViewPixelSize.height - borderWidth
             )
 
-            // if the ultimate image to be rendered on the screen is going to smaller (in terms of
-            // pixel count) than the source, in terms of pixel count (relevant to data plan usage
-            // for users), then we'll ask Imgix to execute the scale operation for us instead.
-            // However, we will ask for an aspect-correct scale from Imgix because we'll end up
-            // scaling up the larger dimension on our end, saving even more bytes.  Note that we
-            // won't need to have View change the scaling mode from the FIT_XY mode we're already
-            // using because no crop operation is going on here.
-            val smallestSize = minOf(imageSizePixels, targetViewSizeWithoutBorderWidth)
+            val smallestSize = PixelSize(
+                minOf(imageSizePixels.width, targetViewSizeWithoutBorderWidth.width),
+                minOf(imageSizePixels.height, targetViewSizeWithoutBorderWidth.height)
+            )
 
             return setQueryParameters(
                 block.image.url,
                 mapOf(
                     Pair("w", smallestSize.width.toString()),
-                    Pair("h", smallestSize.height.toString())
+                    Pair("h", smallestSize.height.toString()),
+                    Pair("fit", "scale")
                 )
             )
         } else {

@@ -143,6 +143,14 @@ class BlockAndRowLayoutManager(
         return deflection
     }
 
+    /**
+     * In the midst of the scroll, if RecyclerView deems there's enough time remaining before
+     * the frame must complete, it may ask us if there are any rows it can ask be to be created
+     * and bound ahead of them coming on screen.
+     *
+     * Note that this does *not* handle prefetching rows that are merely some distance away:
+     * rather, this is about trying to lead loading rows for a fling that is currently in progress.
+     */
     override fun collectAdjacentPrefetchPositions(
         dx: Int, dy: Int,
         state: RecyclerView.State,
@@ -153,10 +161,12 @@ class BlockAndRowLayoutManager(
         val verticalTopBound = wouldBeScrollPosition
         val verticalBottomBound = wouldBeScrollPosition + height
 
-
+        // TODO: naturally this is a very slow method.  once we have a better data structure in use
+        // in fill() to query for items based on vertical position, then we'll start using it here,
+        // too.
         layout.coordinatesAndViewModels.forEachIndexed { index, (viewPosition, clipBounds, _) ->
             val displayPosition = viewPosition.dpAsPx(displayMetrics)
-            val warmOver = displayPosition.bottom > verticalTopBound - prefetchPx && displayPosition.top < verticalBottomBound + prefetchPx
+            val warmOver = displayPosition.bottom > (verticalTopBound - prefetchPx) && displayPosition.top < (verticalBottomBound + prefetchPx)
             if (warmOver) {
                 layoutPrefetchRegistry.addPosition(index, Math.abs(displayPosition.top - scrollPosition))
             }

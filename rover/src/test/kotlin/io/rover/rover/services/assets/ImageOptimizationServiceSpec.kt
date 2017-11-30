@@ -32,6 +32,96 @@ class ImageOptimizationServiceSpec: Spek({
 
     val imageOptimizationService = ImageOptimizationService()
 
+    given("a stretched background") {
+        val image = Image(
+            120,
+            100,
+            "interesting.jpg",
+            6000,
+            URI("https://rover.io/image.jpg")
+        )
+
+        val background = object : Background {
+            override val backgroundColor: Color = Color(0x7f, 0x7f, 0x7f, 0.0)
+
+            override val backgroundContentMode: BackgroundContentMode = BackgroundContentMode.Stretch
+
+            override val backgroundImage: Image? = image
+
+            override val backgroundScale: BackgroundScale = BackgroundScale.X3 // 480 dpi
+        }
+
+        on("optimized to display in exactly the same pixel-size block") {
+            val displayMetrics = createDisplayMetrics(480)
+
+            val (uri, optimizedConfiguration) = imageOptimizationService.optimizeImageBackground(
+                background,
+                PixelSize(120, 100),
+                displayMetrics
+            )!!
+
+            val decodedParams = decodeUriParams(uri)
+
+            it("it should ask imgix for a no-op scale") {
+                decodedParams["w"].shouldEqual("120")
+                decodedParams["h"].shouldEqual("100")
+            }
+        }
+
+        on("optimized to display in a block with smaller pixel-size but the same aspect ratio") {
+            val displayMetrics = createDisplayMetrics(480)
+
+            val (uri, optimizedConfiguration) = imageOptimizationService.optimizeImageBackground(
+                background,
+                PixelSize(60, 50),
+                displayMetrics
+            )!!
+
+            val decodedParams = decodeUriParams(uri)
+
+            it("it should ask imgix to scale down by half") {
+                decodedParams["w"].shouldEqual("60")
+                decodedParams["h"].shouldEqual("50")
+            }
+        }
+
+        on("optimized to display in smaller but same aspect ratio block") {
+            val displayMetrics = createDisplayMetrics(480)
+
+            val (uri, optimizedConfiguration) = imageOptimizationService.optimizeImageBackground(
+                background,
+                PixelSize(34, 29),
+                displayMetrics
+            )!!
+
+            val decodedParams = decodeUriParams(uri)
+
+            it("it should ask imgix to scale down") {
+                decodedParams["w"].shouldEqual("34")
+                decodedParams["h"].shouldEqual("29")
+            }
+        }
+
+        on("optimized to display in a block with a wider dimension and a narrower dimension") {
+            // TODO: should have same assertions as the same-pixel size case!
+
+            val displayMetrics = createDisplayMetrics(480)
+
+            val (uri, optimizedConfiguration) = imageOptimizationService.optimizeImageBackground(
+                background,
+                PixelSize(140, 90),
+                displayMetrics
+            )!!
+
+            val decodedParams = decodeUriParams(uri)
+
+            it("it should scale down the smaller dimension but not scale up the greater one") {
+                decodedParams["w"].shouldEqual("120")
+                decodedParams["h"].shouldEqual("90")
+            }
+        }
+    }
+
     given("an original size image block background at 3X (480 dpi) that must be cropped") {
         val image = Image(
             120,

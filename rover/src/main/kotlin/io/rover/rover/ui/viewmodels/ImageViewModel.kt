@@ -28,13 +28,13 @@ class ImageViewModel(
 
         return if (uri != null) {
             log.v("There is an image to retrieve.  Starting.")
-            val uriWithParameters = Uri.parse(uri.toString()).buildUpon().apply {
-                imageOptimizationService.optimizeImageBlock(
-                    block,
-                    targetViewPixelSize,
-                    displayMetrics
-                )
-            }.build()
+
+            val uriWithParameters = imageOptimizationService.optimizeImageBlock(
+                block,
+                targetViewPixelSize,
+                displayMetrics
+            )
+            
             val url = URL(uriWithParameters.toString())
 
             assetService.getImageByUrl(url) { result ->

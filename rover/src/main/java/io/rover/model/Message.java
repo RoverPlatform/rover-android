@@ -29,6 +29,7 @@ public class Message implements Parcelable {
     private Screen mLandingPage;
     private Map<String, String> mProperties;
     private String mExperienceId;
+    private boolean mSavedToInbox;
 
     public String getId() { return mId; }
 
@@ -66,12 +67,17 @@ public class Message implements Parcelable {
                 .appendPath(getExperienceId()).build();
     }
 
-    public Message(String title, String text, Date timestamp, String id) {
+    public boolean isSavedToInbox() { return mSavedToInbox; }
+
+    public void setSavedToInbox(boolean savedToInbox) { this.mSavedToInbox = savedToInbox; }
+
+    public Message(String title, String text, Date timestamp, String id, Boolean savedToInbox) {
         mId = id;
         mTimestamp = timestamp;
         mText = text;
         mTitle = title;
         mProperties = new HashMap<>();
+        mSavedToInbox = savedToInbox;
     }
 
     public Message(Parcel in) {
@@ -80,6 +86,7 @@ public class Message implements Parcelable {
         mText = in.readString();
         mTimestamp = new Date(in.readLong());
         mRead = in.readInt() == 1;
+        mSavedToInbox = in.readInt() == 1;
         mAction = Action.valueOf(in.readString());
 
         if (in.readByte() == (byte)(0x01)) {
@@ -127,6 +134,7 @@ public class Message implements Parcelable {
         dest.writeString(mText);
         dest.writeLong(mTimestamp.getTime());
         dest.writeInt(mRead ? 1 : 0);
+        dest.writeInt(mSavedToInbox ? 1 : 0);
         dest.writeString(mAction.name());
 
         if (mURI == null) {

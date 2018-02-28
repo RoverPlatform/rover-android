@@ -111,6 +111,7 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                 Date timestamp = null;
                 boolean read = attributes.getBoolean("read");
                 String contentType = attributes.getString("content-type");
+                Boolean isSavedToInbox = attributes.getBoolean("saved-to-inbox");
 
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.getDefault());
                 try {
@@ -121,7 +122,7 @@ public class ObjectMapper implements JsonApiResponseHandler.JsonApiObjectMapper 
                     return null;
                 }
 
-                Message message = new Message(title, text, timestamp, id);
+                Message message = new Message(title, text, timestamp, id, isSavedToInbox);
                 message.setRead(read);
 
                 switch (contentType) {

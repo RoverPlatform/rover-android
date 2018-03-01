@@ -25,8 +25,8 @@ ext {
 }
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+    compileSdkVersion 26
+    buildToolsVersion '25.0.0'
 
     defaultConfig {
         minSdkVersion 18
@@ -45,14 +45,21 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:23.4.0'
 
-    compile 'com.google.android.gms:play-services-location:[9.2.1,)'
-    compile 'com.google.android.gms:play-services-nearby:[9.2.1,)'
+    // We import here two support library modules appropriate to the Build SDK used for the Rover
+    // SDK itself.  However, user apps that wish to build against older Build SDKs (supported but not
+    // necessarily recommended), they will have to use a `{ exclude group: "com.android.support" }`
+    // directive
+    compile 'com.android.support:appcompat-v7:26.1.0'
+    compile 'com.android.support:recyclerview-v7:26.1.0'
 
-    compile 'com.google.firebase:firebase-messaging:[9.2.1,)'
-
-    compile 'com.android.support:recyclerview-v7:23.4.0'
+    // When users of the Rover SDK wish to use the Push and Location services, they must import
+    // them themselves.  This is necessary because the 'com.google.gms.google-services' Gradle
+    // plugin that must be used in apps that consume the Play Services feature assumes the
+    // responsibility of importing the appropriate Play Services dependencies.
+    provided 'com.google.android.gms:play-services-location:11.0.4'
+    provided 'com.google.android.gms:play-services-nearby:11.0.4'
+    provided 'com.google.firebase:firebase-messaging:11.0.4'
 }
 
 apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'

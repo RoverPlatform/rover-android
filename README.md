@@ -3,12 +3,18 @@
 ## Requirements
   - Android Studio 2.1.2 or higher
   - Min Android SDK 18
-  - GooglePlayServices 9.0.2 on device
-  - Firebase account
+  - Firebase account that is [configured for cloud messaging](https://github.com/RoverPlatform/rover-android/wiki/FCM-Setup)
+  - Firebase [integrated into your app](https://firebase.google.com/docs/android/setup).
+  - Two Google Play Services libraries [integrated into your app](https://developers.google.com/android/guides/setup), namely:
+    - play-services-location
+    - play-services-nearby
   
 ## Installing the Library
 
-Before continuing with the installation of the Rover SDK, please make sure you have setup you project and Android app in the [Firebase Console](https://console.firebase.google.com/).
+Before continuing with the installation of the Rover SDK, please make sure you
+have setup you project and Android app in the [Firebase
+Console](https://console.firebase.google.com/) as mentioned above in the
+Requirements.
 
 ### JCenter
 
@@ -21,6 +27,20 @@ compile 'io.rover.library:rover:1.15.6'
 ### Manual Installation
 
 // COMING SOON
+
+### Dealing with Support Library Conflicts
+
+The Rover SDK depends on a few of the Android support libraries.  Because of
+this, if your app is building against an older Android build SDK than 26, you
+may need to add an exclusion for `com.android.support` when importing the Rover SDK:
+
+```
+compile 'io.rover.library:rover:1.15.5' {
+    exclude group: 'com.android.support'
+}
+```
+
+See the example app's [app/build.gradle](app/build.gradle) for more details.
 
 ## Intializing the SDK
 

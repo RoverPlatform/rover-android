@@ -3,6 +3,7 @@ package io.rover;
 import android.Manifest;
 import android.app.Application;
 import android.app.IntentService;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -12,12 +13,14 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.HttpResponseCache;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
@@ -165,6 +168,19 @@ public class Rover implements EventSubmitTask.Callback {
             Log.i(TAG, "HTTP response cache installation failed:" + e);
         }
 
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel notificationChannel = new NotificationChannel(
+                CHANNEL_ID,
+                "Default",
+                NotificationManager.IMPORTANCE_DEFAULT
+            );
+
+            notificationChannel.setDescription("Default");
+
+            ((NotificationManager) application.getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(
+                notificationChannel
+            );
+        }
     }
 
     public static boolean isInitialized() {
@@ -1061,6 +1077,10 @@ public class Rover implements EventSubmitTask.Callback {
                 .setStyle(new NotificationCompat.BigTextStyle())
                 .setDeleteIntent(deleteIntent);
 
+        if(Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+            builder.setChannelId("rover");
+        }
+
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.notify(message.getId(), Rover.NOTIFICATION_ID, builder.build());
     }
@@ -1160,4 +1180,6 @@ public class Rover implements EventSubmitTask.Callback {
             Rover.handleRemoteMessage(remoteMessage);
         }
     }
+
+    private static String CHANNEL_ID = "rover";
 }

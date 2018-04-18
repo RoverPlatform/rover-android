@@ -373,7 +373,7 @@ public class Rover implements EventSubmitTask.Callback {
                                             @Override
                                             public void onResult(@NonNull Status status) {
                                                 if (status.isSuccess()) {
-                                                    Log.i("Nearby", "Unsubscribed successfuly.");
+                                                    Log.i("Nearby", "Unsubscribed successfully.");
                                                 } else {
                                                     Log.w("Nearby", "Could not unsubscribe");
                                                 }

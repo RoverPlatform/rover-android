@@ -8,39 +8,30 @@
     <!-- uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/ -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
 
-    <!--<permission-->
-        <!--android:name="${applicationId}.permission.C2D_MESSAGE"-->
-        <!--android:protectionLevel="signature" />-->
-
-    <!--<uses-permission android:name="${applicationId}.permission.C2D_MESSAGE" />-->
-
     <application
         android:allowBackup="true"
         android:supportsRtl="true">
 
-        <!-- Services -->
+        <!-- Intent Receivers for location information -->
+        <receiver
+            android:name=".Rover$NearbyMessageService" />
+        <receiver
+            android:name=".Rover$LocationUpdateService" />
+        <receiver
+            android:name=".Rover$GeofenceTransitionService" />
 
-        <service
-            android:name=".Rover$NearbyMessageService"
-            android:exported="false" />
-        <service
-            android:name=".Rover$LocationUpdateService"
-            android:exported="false" />
-        <service
-            android:name=".Rover$GeofenceTransitionService"
-            android:exported="false" />
-
+        <!-- All Rover notifications launch this service when tapped, which then in turn launches the appropriate component. -->
         <service
             android:name=".MessageInteractionService"
             android:exported="false" />
 
+        <!-- Services that receive the Firebase registration information -->
         <service
             android:name=".Rover$RoverFirebaseInstanceIdService">
             <intent-filter>
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
             </intent-filter>
         </service>
-
         <service
             android:name=".Rover$RoverFirebaseMessagingService">
             <intent-filter>

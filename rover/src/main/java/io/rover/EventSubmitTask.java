@@ -134,8 +134,8 @@ public class EventSubmitTask implements Runnable, JsonApiResponseHandler.JsonApi
 
         if (geofenceRegions.size() > 0) {
             mCallback.onReceivedGeofences(geofenceRegions);
+        } else {
+            Log.i(TAG, "No geofences in received device state, so not monitoring for them.");
         }
-
-
     }
 }

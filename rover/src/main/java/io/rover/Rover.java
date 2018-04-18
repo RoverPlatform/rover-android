@@ -5,6 +5,7 @@ import android.app.Application;
 import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -566,7 +567,7 @@ public class Rover implements EventSubmitTask.Callback {
 
         if (mLocationPendingIntent == null) {
             Intent intent = new Intent(mApplicationContext, LocationUpdateService.class);
-            mLocationPendingIntent = PendingIntent.getService(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            mLocationPendingIntent = PendingIntent.getBroadcast(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
 
         return mLocationPendingIntent;
@@ -581,7 +582,7 @@ public class Rover implements EventSubmitTask.Callback {
 
         if (mGeofencePendingIntent == null) {
             Intent intent = new Intent(mApplicationContext, GeofenceTransitionService.class);
-            mGeofencePendingIntent = PendingIntent.getService(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            mGeofencePendingIntent = PendingIntent.getBroadcast(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
         return mGeofencePendingIntent;
     }
@@ -595,7 +596,7 @@ public class Rover implements EventSubmitTask.Callback {
 
         if (mNearbyMessagesPendingIntent == null) {
             Intent intent = new Intent(mApplicationContext, NearbyMessageService.class);
-            mNearbyMessagesPendingIntent = PendingIntent.getService(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            mNearbyMessagesPendingIntent = PendingIntent.getBroadcast(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
         return mNearbyMessagesPendingIntent;
     }
@@ -679,6 +680,7 @@ public class Rover implements EventSubmitTask.Callback {
 
     @Override
     public void onReceivedGeofences(final List<GeofenceRegion> geofenceRegions) {
+        Log.v(TAG, "Geofence list received: contains " + geofenceRegions.size() + " fences.");
         if (!isInitialized()) {
             warnNotInitialized("onReceivedGeofences");
             return;
@@ -695,6 +697,7 @@ public class Rover implements EventSubmitTask.Callback {
                                 if (status.isSuccess()) {
                                     addGeofences(client);
                                 } else {
+                                    Log.w(TAG, "Unable to begin monitoring for geofences: " + status.getStatusMessage());
                                     client.disconnect();
                                 }
                             }
@@ -717,7 +720,7 @@ public class Rover implements EventSubmitTask.Callback {
                                     geofenceRegion.getLongitude(),
                                     (float)geofenceRegion.getRadius()
                             )
-                            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT )
+                            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
                             .setExpirationDuration(Geofence.NEVER_EXPIRE)
                             .build()
                     );
@@ -752,6 +755,7 @@ public class Rover implements EventSubmitTask.Callback {
             }
         });
         connection.connect();
+        Log.v(TAG, "Now monitoring for " + geofenceRegions.size() + " geofences.");
     }
 
     static public void simulateGeofenceEnter(String id) {
@@ -1068,15 +1072,13 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     /*
-     * Services
+     * Broadcast Receivers (actually they receive unicast messages from the Google location services)
      */
 
-    static public class LocationUpdateService extends IntentService {
-
-        public LocationUpdateService() { super("LocationUpdateService"); }
+    static public class LocationUpdateService extends BroadcastReceiver {
 
         @Override
-        protected void onHandleIntent(Intent intent) {
+        public void onReceive(Context context, Intent intent) {
             LocationResult result = LocationResult.extractResult(intent);
             if (result != null) {
                 Event event = new LocationUpdateEvent(result.getLastLocation(), new Date());
@@ -1085,12 +1087,9 @@ public class Rover implements EventSubmitTask.Callback {
         }
     }
 
-    static public class GeofenceTransitionService extends IntentService {
-
-        public GeofenceTransitionService() { super("GeofenceTransitionService"); }
-
+    static public class GeofenceTransitionService extends BroadcastReceiver {
         @Override
-        protected void onHandleIntent(Intent intent) {
+        public void onReceive(Context context, Intent intent) {
             GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
 
             if (geofencingEvent.hasError()) {
@@ -1114,12 +1113,9 @@ public class Rover implements EventSubmitTask.Callback {
         }
     }
 
-    static public class NearbyMessageService extends IntentService {
-
-        public NearbyMessageService() { super("NearbyMessageService"); }
-
+    static public class NearbyMessageService extends BroadcastReceiver {
         @Override
-        protected void onHandleIntent(Intent intent) {
+        public void onReceive(Context context, Intent intent) {
             Nearby.Messages.handleIntent(intent, new MessageListener() {
                 @Override
                 public void onFound(Message message) {

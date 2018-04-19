@@ -2,7 +2,6 @@ package io.rover;
 
 import android.Manifest;
 import android.app.Application;
-import android.app.IntentService;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -20,7 +19,6 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
@@ -586,7 +584,7 @@ public class Rover implements EventSubmitTask.Callback {
         }
 
         if (mLocationPendingIntent == null) {
-            Intent intent = new Intent(mApplicationContext, LocationUpdateService.class);
+            Intent intent = new Intent(mApplicationContext, LocationUpdateReceiver.class);
             mLocationPendingIntent = PendingIntent.getBroadcast(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
 
@@ -601,7 +599,7 @@ public class Rover implements EventSubmitTask.Callback {
         }
 
         if (mGeofencePendingIntent == null) {
-            Intent intent = new Intent(mApplicationContext, GeofenceTransitionService.class);
+            Intent intent = new Intent(mApplicationContext, GeofenceTransitionReceiver.class);
             mGeofencePendingIntent = PendingIntent.getBroadcast(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
         return mGeofencePendingIntent;
@@ -615,7 +613,7 @@ public class Rover implements EventSubmitTask.Callback {
         }
 
         if (mNearbyMessagesPendingIntent == null) {
-            Intent intent = new Intent(mApplicationContext, NearbyMessageService.class);
+            Intent intent = new Intent(mApplicationContext, NearbyMessageReceiver.class);
             mNearbyMessagesPendingIntent = PendingIntent.getBroadcast(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
         return mNearbyMessagesPendingIntent;
@@ -1101,7 +1099,7 @@ public class Rover implements EventSubmitTask.Callback {
      * Broadcast Receivers (actually they receive unicast messages from the Google location services)
      */
 
-    static public class LocationUpdateService extends BroadcastReceiver {
+    static public class LocationUpdateReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -1113,7 +1111,7 @@ public class Rover implements EventSubmitTask.Callback {
         }
     }
 
-    static public class GeofenceTransitionService extends BroadcastReceiver {
+    static public class GeofenceTransitionReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
@@ -1139,7 +1137,7 @@ public class Rover implements EventSubmitTask.Callback {
         }
     }
 
-    static public class NearbyMessageService extends BroadcastReceiver {
+    static public class NearbyMessageReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             Nearby.Messages.handleIntent(intent, new MessageListener() {

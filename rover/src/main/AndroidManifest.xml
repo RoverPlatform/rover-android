@@ -14,11 +14,11 @@
 
         <!-- Intent Receivers for location information -->
         <receiver
-            android:name=".Rover$NearbyMessageService" />
+            android:name=".Rover$NearbyMessageReceiver" />
         <receiver
-            android:name=".Rover$LocationUpdateService" />
+            android:name=".Rover$LocationUpdateReceiver" />
         <receiver
-            android:name=".Rover$GeofenceTransitionService" />
+            android:name=".Rover$GeofenceTransitionReceiver" />
 
         <!-- All Rover notifications launch this service when tapped, which then in turn launches the appropriate component. -->
         <service

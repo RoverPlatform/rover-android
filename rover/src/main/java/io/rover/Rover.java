@@ -144,7 +144,11 @@ public class Rover implements EventSubmitTask.Callback {
             mSharedInstance.mExperienceActivity = config.mExperienceActivity;
         }
         Router.setApiKey(config.mAppToken);
-        Router.setDeviceId(Device.getInstance().getIdentifier(mSharedInstance.mApplicationContext));
+
+        String deviceId = Device.getInstance().getIdentifier(mSharedInstance.mApplicationContext);
+        Router.setDeviceId(deviceId);
+
+        Log.i(TAG, "Rover device ID is " + deviceId);
 
         // Gimbal check
         try {
@@ -295,8 +299,8 @@ public class Rover implements EventSubmitTask.Callback {
         }
 
         final LocationRequest locationRequest = new LocationRequest()
-                .setInterval(900000)
-                .setFastestInterval(900000)
+                .setInterval(1)
+                .setFastestInterval(1)
                 .setSmallestDisplacement(0)
                 .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
@@ -310,15 +314,15 @@ public class Rover implements EventSubmitTask.Callback {
 
                 // Location Updates
                 if (ContextCompat.checkSelfPermission(mSharedInstance.mApplicationContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                    Log.i("LocationServices", "Requesting location updates");
+                    Log.i(TAG, "Attempting to subscribe to location updates from Google's Fused Location API.");
                     LocationServices.FusedLocationApi.requestLocationUpdates(client, locationRequest, mSharedInstance.getLocationPendingIntent())
                             .setResultCallback(new ResultCallback<Status>() {
                                 @Override
                                 public void onResult(@NonNull Status status) {
                                     if (status.isSuccess()) {
-                                        Log.i("LocationServices", "Successfully registered for updates");
+                                        Log.i(TAG, "Successfully registered for location updates.");
                                     } else {
-                                        Log.e("LocationServices", "Could not register for updates. " + status.getStatusMessage());
+                                        Log.e(TAG, "Could not register for location updates: " + status.getStatusMessage());
                                     }
 
                                     mDisconnectionTry--;
@@ -335,9 +339,9 @@ public class Rover implements EventSubmitTask.Callback {
                             @Override
                             public void onResult(Status status) {
                                 if (status.isSuccess()) {
-                                    Log.i("Nearby", "Subscribed successfully.");
+                                    Log.i(TAG, "Subscribed successfully to Nearby-powered beacon updates.");
                                 } else {
-                                    Log.e("Nearby", "Could not subscribe. " + status.getStatusMessage());
+                                    Log.e(TAG, "Could not subscribe to Nearby-powered beacon updates: " + status. getStatusMessage());
                                     //handleUnsuccessfulNearbyResult(status);
                                 }
 
@@ -380,9 +384,9 @@ public class Rover implements EventSubmitTask.Callback {
                             @Override
                             public void onResult(@NonNull Status status) {
                                 if (status.isSuccess()) {
-                                    Log.i("GeofenceService", "Successfully stopped monitoring for geofences");
+                                    Log.i(TAG, "Successfully stopped monitoring for geofences");
                                 } else {
-                                    Log.w("GeofenceService", "Failed to stop monitoring for geofences");
+                                    Log.w(TAG, "Failed to stop monitoring for geofences");
                                 }
 
                                 Nearby.Messages.unsubscribe(client, mSharedInstance.getNearbyMessagesPendingIntent())
@@ -390,26 +394,26 @@ public class Rover implements EventSubmitTask.Callback {
                                             @Override
                                             public void onResult(@NonNull Status status) {
                                                 if (status.isSuccess()) {
-                                                    Log.i("Nearby", "Unsubscribed successfully.");
+                                                    Log.i(TAG, "Unsubscribed from Nearby-powered beacon messages successfully.");
                                                 } else {
-                                                    Log.w("Nearby", "Could not unsubscribe");
+                                                    Log.w(TAG, "Could not unsubscribe from Nearby-powered beacon messages: " + status.getStatusMessage());
                                                 }
 
-                                                LocationServices.FusedLocationApi.removeLocationUpdates(client, mSharedInstance.getLocationPendingIntent())
-                                                        .setResultCallback(new ResultCallback<Status>() {
-                                                            @Override
-                                                            public void onResult(@NonNull Status status) {
-                                                                if (status.isSuccess()) {
-                                                                    Log.i("LocationServices", "Successfully unregistered for updates");
-                                                                } else {
-                                                                    Log.e("LocationServices", "Could not unregister for updates. " + status.getStatusMessage());
-                                                                }
+                                LocationServices.FusedLocationApi.removeLocationUpdates(client, mSharedInstance.getLocationPendingIntent())
+                                        .setResultCallback(new ResultCallback<Status>() {
+                                            @Override
+                                            public void onResult(@NonNull Status status) {
+                                                if (status.isSuccess()) {
+                                                    Log.i(TAG, "Successfully unregistered from location updates.");
+                                                } else {
+                                                    Log.e(TAG, "Could not unregister from location updates updates: " + status.getStatusMessage());
+                                                }
 
-                                                                client.disconnect();
-                                                            }
-                                                        });
+                                                client.disconnect();
                                             }
                                         });
+                                }
+                            });
                             }
                         });
                 return GoogleApiConnection.KEEP_ALIVE;
@@ -639,7 +643,7 @@ public class Rover implements EventSubmitTask.Callback {
                 .setCallback(new SubscribeCallback() {
                     @Override
                     public void onExpired() {
-                        Log.i("NearbySubscribe", "No longer subscribing.");
+                        Log.i(TAG, "Nearby-powered beacon messages subscription expired.");
                     }
                 })
                 .build();
@@ -755,12 +759,14 @@ public class Rover implements EventSubmitTask.Callback {
                                 public void onResult(@NonNull Status status) {
                                     if (status.isSuccess()) {
                                         // TODO: Clean up
-
+                                        Log.v(TAG, "Now monitoring for " + geofenceRegions.size() + " geofences.");
                                         for (RoverObserver observer : mObservers) {
                                             if (observer instanceof RoverObserver.GeofenceRegistrationObserver) {
                                                 ((RoverObserver.GeofenceRegistrationObserver) observer).onRegisteredGeofences(geofences);
                                             }
                                         }
+                                    } else {
+                                        Log.w(TAG, "Problem adding geofences: " + status.getStatusMessage());
                                     }
                                     client.disconnect();
                                 }
@@ -771,7 +777,7 @@ public class Rover implements EventSubmitTask.Callback {
             }
         });
         connection.connect();
-        Log.v(TAG, "Now monitoring for " + geofenceRegions.size() + " geofences.");
+
     }
 
     static public void simulateGeofenceEnter(String id) {
@@ -1113,7 +1119,7 @@ public class Rover implements EventSubmitTask.Callback {
             GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
 
             if (geofencingEvent.hasError()) {
-                Log.e("GeofenceService", "GeofencingEventError: " + geofencingEvent.getErrorCode());
+                Log.e(TAG, "GeofencingEventError: " + geofencingEvent.getErrorCode());
                 return;
             }
 
@@ -1155,7 +1161,7 @@ public class Rover implements EventSubmitTask.Callback {
 
                     String messageString = new String(message.getContent());
 
-                    Log.i("NearbyMessage", "Message namespaced type: " + message.getNamespace() + "/" + message.getType());
+                    Log.i(TAG, "Beacon message from Google Nearby: " + message.getNamespace() + "/" + message.getType());
                     Event event = new BeaconTransitionEvent(transition, messageString, new Date());
                     mSharedInstance.sendEvent(event);
                 }
@@ -1167,7 +1173,7 @@ public class Rover implements EventSubmitTask.Callback {
         @Override
         public void onTokenRefresh() {
             String token = FirebaseInstanceId.getInstance().getToken();
-            Log.i(TAG, "Refreshed token: " + token);
+            Log.i(TAG, "Refreshed Firebase token: " + token);
             Device.getInstance().setGcmToken(token);
             Event event = new DeviceUpdateEvent(new Date());
             mSharedInstance.sendEvent(event);

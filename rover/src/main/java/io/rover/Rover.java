@@ -297,8 +297,8 @@ public class Rover implements EventSubmitTask.Callback {
         }
 
         final LocationRequest locationRequest = new LocationRequest()
-                .setInterval(1)
-                .setFastestInterval(1)
+                .setInterval(900000)
+                .setFastestInterval(900000)
                 .setSmallestDisplacement(0)
                 .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 

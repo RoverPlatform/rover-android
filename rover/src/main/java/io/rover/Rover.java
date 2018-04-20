@@ -1082,7 +1082,7 @@ public class Rover implements EventSubmitTask.Callback {
                 .setDeleteIntent(deleteIntent);
 
         if(Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
-            builder.setChannelId("rover");
+            builder.setChannelId(CHANNEL_ID);
         }
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);

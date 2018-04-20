@@ -50,7 +50,6 @@ public class MessageInteractionService extends IntentService {
             } catch (PendingIntent.CanceledException e) {
                 e.printStackTrace();
             }
-
         }
     }
 }

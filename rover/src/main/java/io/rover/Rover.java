@@ -2,15 +2,17 @@ package io.rover;
 
 import android.Manifest;
 import android.app.Application;
-import android.app.IntentService;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.HttpResponseCache;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -76,7 +78,7 @@ import io.rover.util.Util;
  */
 public class Rover implements EventSubmitTask.Callback {
 
-    protected static String VERSION = "1.15.6";
+    protected static String VERSION = "1.16.0";
     protected static Rover mSharedInstance = new Rover();
     protected static int NOTIFICATION_ID = 12345;
 
@@ -140,7 +142,11 @@ public class Rover implements EventSubmitTask.Callback {
             mSharedInstance.mExperienceActivity = config.mExperienceActivity;
         }
         Router.setApiKey(config.mAppToken);
-        Router.setDeviceId(Device.getInstance().getIdentifier(mSharedInstance.mApplicationContext));
+
+        String deviceId = Device.getInstance().getIdentifier(mSharedInstance.mApplicationContext);
+        Router.setDeviceId(deviceId);
+
+        Log.i(TAG, "Rover device ID is " + deviceId);
 
         // Gimbal check
         try {
@@ -164,6 +170,19 @@ public class Rover implements EventSubmitTask.Callback {
             Log.i(TAG, "HTTP response cache installation failed:" + e);
         }
 
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel notificationChannel = new NotificationChannel(
+                CHANNEL_ID,
+                "Default",
+                NotificationManager.IMPORTANCE_DEFAULT
+            );
+
+            notificationChannel.setDescription("Default");
+
+            ((NotificationManager) application.getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(
+                notificationChannel
+            );
+        }
     }
 
     public static boolean isInitialized() {
@@ -293,15 +312,15 @@ public class Rover implements EventSubmitTask.Callback {
 
                 // Location Updates
                 if (ContextCompat.checkSelfPermission(mSharedInstance.mApplicationContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                    Log.i("LocationServices", "Requesting location updates");
+                    Log.i(TAG, "Attempting to subscribe to location updates from Google's Fused Location API.");
                     LocationServices.FusedLocationApi.requestLocationUpdates(client, locationRequest, mSharedInstance.getLocationPendingIntent())
                             .setResultCallback(new ResultCallback<Status>() {
                                 @Override
                                 public void onResult(@NonNull Status status) {
                                     if (status.isSuccess()) {
-                                        Log.i("LocationServices", "Successfully registered for updates");
+                                        Log.i(TAG, "Successfully registered for location updates.");
                                     } else {
-                                        Log.e("LocationServices", "Could not register for updates. " + status.getStatusMessage());
+                                        Log.e(TAG, "Could not register for location updates: " + status.getStatusMessage());
                                     }
 
                                     mDisconnectionTry--;
@@ -318,9 +337,9 @@ public class Rover implements EventSubmitTask.Callback {
                             @Override
                             public void onResult(Status status) {
                                 if (status.isSuccess()) {
-                                    Log.i("Nearby", "Subscribed successfully.");
+                                    Log.i(TAG, "Subscribed successfully to Nearby-powered beacon updates.");
                                 } else {
-                                    Log.e("Nearby", "Could not subscribe. " + status.getStatusMessage());
+                                    Log.e(TAG, "Could not subscribe to Nearby-powered beacon updates: " + status. getStatusMessage());
                                     //handleUnsuccessfulNearbyResult(status);
                                 }
 
@@ -363,9 +382,9 @@ public class Rover implements EventSubmitTask.Callback {
                             @Override
                             public void onResult(@NonNull Status status) {
                                 if (status.isSuccess()) {
-                                    Log.i("GeofenceService", "Successfully stopped monitoring for geofences");
+                                    Log.i(TAG, "Successfully stopped monitoring for geofences");
                                 } else {
-                                    Log.w("GeofenceService", "Failed to stop monitoring for geofences");
+                                    Log.w(TAG, "Failed to stop monitoring for geofences");
                                 }
 
                                 Nearby.Messages.unsubscribe(client, mSharedInstance.getNearbyMessagesPendingIntent())
@@ -373,26 +392,26 @@ public class Rover implements EventSubmitTask.Callback {
                                             @Override
                                             public void onResult(@NonNull Status status) {
                                                 if (status.isSuccess()) {
-                                                    Log.i("Nearby", "Unsubscribed successfuly.");
+                                                    Log.i(TAG, "Unsubscribed from Nearby-powered beacon messages successfully.");
                                                 } else {
-                                                    Log.w("Nearby", "Could not unsubscribe");
+                                                    Log.w(TAG, "Could not unsubscribe from Nearby-powered beacon messages: " + status.getStatusMessage());
                                                 }
 
-                                                LocationServices.FusedLocationApi.removeLocationUpdates(client, mSharedInstance.getLocationPendingIntent())
-                                                        .setResultCallback(new ResultCallback<Status>() {
-                                                            @Override
-                                                            public void onResult(@NonNull Status status) {
-                                                                if (status.isSuccess()) {
-                                                                    Log.i("LocationServices", "Successfully unregistered for updates");
-                                                                } else {
-                                                                    Log.e("LocationServices", "Could not unregister for updates. " + status.getStatusMessage());
-                                                                }
+                                LocationServices.FusedLocationApi.removeLocationUpdates(client, mSharedInstance.getLocationPendingIntent())
+                                        .setResultCallback(new ResultCallback<Status>() {
+                                            @Override
+                                            public void onResult(@NonNull Status status) {
+                                                if (status.isSuccess()) {
+                                                    Log.i(TAG, "Successfully unregistered from location updates.");
+                                                } else {
+                                                    Log.e(TAG, "Could not unregister from location updates updates: " + status.getStatusMessage());
+                                                }
 
-                                                                client.disconnect();
-                                                            }
-                                                        });
+                                                client.disconnect();
                                             }
                                         });
+                                }
+                            });
                             }
                         });
                 return GoogleApiConnection.KEEP_ALIVE;
@@ -565,8 +584,8 @@ public class Rover implements EventSubmitTask.Callback {
         }
 
         if (mLocationPendingIntent == null) {
-            Intent intent = new Intent(mApplicationContext, LocationUpdateService.class);
-            mLocationPendingIntent = PendingIntent.getService(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            Intent intent = new Intent(mApplicationContext, LocationUpdateReceiver.class);
+            mLocationPendingIntent = PendingIntent.getBroadcast(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
 
         return mLocationPendingIntent;
@@ -580,8 +599,8 @@ public class Rover implements EventSubmitTask.Callback {
         }
 
         if (mGeofencePendingIntent == null) {
-            Intent intent = new Intent(mApplicationContext, GeofenceTransitionService.class);
-            mGeofencePendingIntent = PendingIntent.getService(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            Intent intent = new Intent(mApplicationContext, GeofenceTransitionReceiver.class);
+            mGeofencePendingIntent = PendingIntent.getBroadcast(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
         return mGeofencePendingIntent;
     }
@@ -594,8 +613,8 @@ public class Rover implements EventSubmitTask.Callback {
         }
 
         if (mNearbyMessagesPendingIntent == null) {
-            Intent intent = new Intent(mApplicationContext, NearbyMessageService.class);
-            mNearbyMessagesPendingIntent = PendingIntent.getService(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            Intent intent = new Intent(mApplicationContext, NearbyMessageReceiver.class);
+            mNearbyMessagesPendingIntent = PendingIntent.getBroadcast(mApplicationContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
         return mNearbyMessagesPendingIntent;
     }
@@ -622,7 +641,7 @@ public class Rover implements EventSubmitTask.Callback {
                 .setCallback(new SubscribeCallback() {
                     @Override
                     public void onExpired() {
-                        Log.i("NearbySubscribe", "No longer subscribing.");
+                        Log.i(TAG, "Nearby-powered beacon messages subscription expired.");
                     }
                 })
                 .build();
@@ -679,6 +698,7 @@ public class Rover implements EventSubmitTask.Callback {
 
     @Override
     public void onReceivedGeofences(final List<GeofenceRegion> geofenceRegions) {
+        Log.v(TAG, "Geofence list received: contains " + geofenceRegions.size() + " fences.");
         if (!isInitialized()) {
             warnNotInitialized("onReceivedGeofences");
             return;
@@ -695,6 +715,7 @@ public class Rover implements EventSubmitTask.Callback {
                                 if (status.isSuccess()) {
                                     addGeofences(client);
                                 } else {
+                                    Log.w(TAG, "Unable to begin monitoring for geofences: " + status.getStatusMessage());
                                     client.disconnect();
                                 }
                             }
@@ -717,7 +738,7 @@ public class Rover implements EventSubmitTask.Callback {
                                     geofenceRegion.getLongitude(),
                                     (float)geofenceRegion.getRadius()
                             )
-                            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT )
+                            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
                             .setExpirationDuration(Geofence.NEVER_EXPIRE)
                             .build()
                     );
@@ -736,12 +757,14 @@ public class Rover implements EventSubmitTask.Callback {
                                 public void onResult(@NonNull Status status) {
                                     if (status.isSuccess()) {
                                         // TODO: Clean up
-
+                                        Log.v(TAG, "Now monitoring for " + geofenceRegions.size() + " geofences.");
                                         for (RoverObserver observer : mObservers) {
                                             if (observer instanceof RoverObserver.GeofenceRegistrationObserver) {
                                                 ((RoverObserver.GeofenceRegistrationObserver) observer).onRegisteredGeofences(geofences);
                                             }
                                         }
+                                    } else {
+                                        Log.w(TAG, "Problem adding geofences: " + status.getStatusMessage());
                                     }
                                     client.disconnect();
                                 }
@@ -752,6 +775,7 @@ public class Rover implements EventSubmitTask.Callback {
             }
         });
         connection.connect();
+
     }
 
     static public void simulateGeofenceEnter(String id) {
@@ -1057,6 +1081,10 @@ public class Rover implements EventSubmitTask.Callback {
                 .setStyle(new NotificationCompat.BigTextStyle())
                 .setDeleteIntent(deleteIntent);
 
+        if(Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+            builder.setChannelId(CHANNEL_ID);
+        }
+
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.notify(message.getId(), Rover.NOTIFICATION_ID, builder.build());
     }
@@ -1068,15 +1096,13 @@ public class Rover implements EventSubmitTask.Callback {
     }
 
     /*
-     * Services
+     * Broadcast Receivers (actually they receive unicast messages from the Google location services)
      */
 
-    static public class LocationUpdateService extends IntentService {
-
-        public LocationUpdateService() { super("LocationUpdateService"); }
+    static public class LocationUpdateReceiver extends BroadcastReceiver {
 
         @Override
-        protected void onHandleIntent(Intent intent) {
+        public void onReceive(Context context, Intent intent) {
             LocationResult result = LocationResult.extractResult(intent);
             if (result != null) {
                 Event event = new LocationUpdateEvent(result.getLastLocation(), new Date());
@@ -1085,16 +1111,13 @@ public class Rover implements EventSubmitTask.Callback {
         }
     }
 
-    static public class GeofenceTransitionService extends IntentService {
-
-        public GeofenceTransitionService() { super("GeofenceTransitionService"); }
-
+    static public class GeofenceTransitionReceiver extends BroadcastReceiver {
         @Override
-        protected void onHandleIntent(Intent intent) {
+        public void onReceive(Context context, Intent intent) {
             GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
 
             if (geofencingEvent.hasError()) {
-                Log.e("GeofenceService", "GeofencingEventError: " + geofencingEvent.getErrorCode());
+                Log.e(TAG, "GeofencingEventError: " + geofencingEvent.getErrorCode());
                 return;
             }
 
@@ -1114,12 +1137,9 @@ public class Rover implements EventSubmitTask.Callback {
         }
     }
 
-    static public class NearbyMessageService extends IntentService {
-
-        public NearbyMessageService() { super("NearbyMessageService"); }
-
+    static public class NearbyMessageReceiver extends BroadcastReceiver {
         @Override
-        protected void onHandleIntent(Intent intent) {
+        public void onReceive(Context context, Intent intent) {
             Nearby.Messages.handleIntent(intent, new MessageListener() {
                 @Override
                 public void onFound(Message message) {
@@ -1139,7 +1159,7 @@ public class Rover implements EventSubmitTask.Callback {
 
                     String messageString = new String(message.getContent());
 
-                    Log.i("NearbyMessage", "Message namespaced type: " + message.getNamespace() + "/" + message.getType());
+                    Log.i(TAG, "Beacon message from Google Nearby: " + message.getNamespace() + "/" + message.getType());
                     Event event = new BeaconTransitionEvent(transition, messageString, new Date());
                     mSharedInstance.sendEvent(event);
                 }
@@ -1151,7 +1171,7 @@ public class Rover implements EventSubmitTask.Callback {
         @Override
         public void onTokenRefresh() {
             String token = FirebaseInstanceId.getInstance().getToken();
-            Log.i(TAG, "Refreshed token: " + token);
+            Log.i(TAG, "Refreshed Firebase token: " + token);
             Device.getInstance().setGcmToken(token);
             Event event = new DeviceUpdateEvent(new Date());
             mSharedInstance.sendEvent(event);
@@ -1164,4 +1184,6 @@ public class Rover implements EventSubmitTask.Callback {
             Rover.handleRemoteMessage(remoteMessage);
         }
     }
+
+    private static String CHANNEL_ID = "rover";
 }

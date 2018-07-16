@@ -1,266 +1,166 @@
-# Android SDK Integration
+# Rover Android SDK
+
+SDK 2.0 is under development, and is not yet available.  Please continue with
+the [1.x series](https://github.com/RoverPlatform/rover-android/tree/master) for
+now.
+
+The in-development README for 2.x follows.
+
+<hr />
+
+## Plugins Overview
+
+1. Data Plugin
+2. Location Plugin
+3. Push Plugin
+4. User Experience Plugin
+5. Events Plugin
 
 ## Requirements
-  - Android Studio 2.1.2 or higher
-  - Min Android SDK 18
-  - GooglePlayServices 9.0.2 on device
-  - Firebase account
-  
-## Installing the Library
 
-Before continuing with the installation of the Rover SDK, please make sure you have setup you project and Android app in the [Firebase Console](https://console.firebase.google.com/).
 
-### JCenter
 
-The easiest way to get Rover into your Android project is to use the [JCenter](https://bintray.com/bintray/jcenter) Maven repository. Just add the following line to the `dependencies` section of your module's `build.gradle` file:
+## Setup and Usage
 
-```
-compile 'io.rover.library:rover:1.16.0'
-```
+1. adding to build
+2. intro Rover.initialize/assemblers
 
-### Manual Installation
+### Data Plugin
 
-// COMING SOON
+### User Experience Plugin
 
-## Intializing the SDK
+### Push Plugin
 
-The Rover SDK **MUST** be initialized inside the Application base class `onCreate` method. If your Android application doesn't already have an Application base class, follow [these](https://developer.android.com/reference/android/app/Application.html) instructions to create one.
+The Rover Push Plugin allows you to receive push notifications.  It has several
+dependencies, namely the Google Firebase Cloud Messaging push notifications
+platform and also a Notification-appropriate design asset from your app.
 
-Add the following snippet to your Application's `onCreate` method:
+If you need to integrate with the legacy GCM offering from Google in lieu of
+Firebase Cloud Messaging, please refer to
+[README.legacy-gcm.md](README.legacy-gcm.md).
 
-```java
-  RoverConfig config = new RoverConfig.Builder()
-          .setApplicationToken("YOUR APPLICATION TOKEN HERE")
-          .build();
+* discuss android notification icon design guidelines (multilayered drawable, etc.)
+* discuss channels
 
-  Rover.setup(this, config);
-```
+Add the assembler for it to Rover.initialize().  You will need to specify your
+small icon drawable resource id (which itself should be a LayeredDrawable as per
+the Material Design guidelines).
 
-## Monitoring for Beacons and Geofences
-
-Call the `startMonitoring()` method to begin monitoring for beacons and geofences. You may choose to do this step in any Activity of your choice. 
-
-__IMPORTANT__ 
-As of the Marshmallow release, the Android OS requries this to be wrapped in a permission check block. An example of a backwards compatible way to do this is shown below:
-
-```java
-public class MainActivity extends AppCompatActivity {
-  public void startRoverMonitoring() {
-        if (Build.VERSION.SDK_INT >= 23) {
-            // Marshmallow+
-            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
-            } else {
-                Rover.startMonitoring();
-            }
-        } else {
-            // Pre-Marshmallow
-            Rover.startMonitoring();
-        }
-  }
-  
-  @Override
-  public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-      if (requestCode == 0) {
-          if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-              Rover.startMonitoring();
-          }
-      } else {
-          super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-      }
-  }
-}
+```kotlin
+PushPluginAssembler(
+    applicationContext: this,
+    smallIconResId: R.drawable.ic_icon,
+    smallIconDrawableLevel: 1,
+    defaultChannelId: 0
+)
 ```
 
-### Proximity Events
+#### Add Firebase and Firebase Cloud Messaging to your App
 
-Rover uses the observer pattern to notify the developer of proximity events. The `Rover.addObserver();` method accepts any object implementing one or more of the [RoverObservers](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/RoverObserver.java).
+Google uses their Firebase platform for their Android push offering, Firebase
+Cloud Messaging.
 
-Here's an example of an `Activity` that adds itself as an observer and implements the `MessageDeliveryObserver` interface.
+Follow the directions at [Firebase -> Get Started ->
+Android](https://firebase.google.com/docs/android/setup) to add the base
+Firebase platform to your app and set up your account tokens.
 
-```java
-public class MyActivity extends AppCompatActivity implements RoverObserver.MessageDeliveryObserver {
-    @Override
-    protected void onCreate(bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        
-        Rover.addObserver(this);
-    }
-    
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        
-        Rover.removeObserver(this);
-    }
-    
-    @Override
-    public void onMessageReceived(Message message) {
-        Log.i("RoverMessage", "Received message: " + message.getText());
+#### Receive a Push Token from Firebase Cloud Messaging
+
+You need to follow all of the standard setup for receiving FCM push messages in
+your app.  You will need to follow the usual guidance from Google on integrating
+Firebase into your Android client app at [Firebase -> Cloud Messaging -> Android
+-> Set Up](https://firebase.google.com/docs/cloud-messaging/android/client).
+Rover has purposefully does none of these steps for you; the goal is to allow
+you to integrate push as you see fit.
+
+Examples are provided below, in Kotlin (although may be trivially adapted to
+Java).
+
+Those instructions will direct you to create your own implementation of
+`FirebaseInstanceIdService` receive the registered FCM push tokens.  You'll
+indeed want to do so, and then pass the received push token along to Rover:
+
+```kotlin
+class MyAppFirebaseInstanceIdReceiver: FirebaseInstanceIdService() {
+    override fun onTokenRefresh() {
+        Rover.sharedInstance.pushReceiver.onTokenRefresh(
+            FirebaseInstanceId.getInstance().token
+        )
     }
 }
 ```
 
-__IMPORTANT__ Notice that the example removes itself as an observer in the `onDestory` method. This is required in order for the class to properly deallocate itself. Any call to `Rover.addObserver();` _must_ be balanced with a corresponding call to `Rover.removeObserver();`.
+One that is done, you will then need to implement a receiver for push messages
+themselves.  Follow the guidance at [Firebase -> Cloud Messaging -> Android ->
+Receive
+Messages](https://firebase.google.com/docs/cloud-messaging/android/receive) to
+create your implementation of `FirebaseMessagingService` and add the
+`onMessageReceived` template callback method to it.
 
-### Beacons and Places
+Once you have your empty `onMessageReceived` method ready to go, this is the
+part where you delegate to the Rover SDK to create the notification in the
+user's Android notification area by calling `onMessageReceivedData` on the Rover
+push plugin:
 
-// Coming soon 
-
-## Messages
-
-Using the [Rover Messages App](https://app.rover.io/messages/) you can create messages that are delivered to your users when a proximity event is triggered or on a specific date and time. You can attach push notifications to your messages that will be delivered along with your messages. Additionally you can attach content to your messages. The content can be a landing page authored in the [Rover Messages App](https://app.rover.io/messages/) or it can simply link to a website. A message can also trigger functionality within your app through a deep link and can have custom data attached.
-
-### Notifications
-
-**IMPORTANT** Rover reserves the key `_rover` in the notification's data payload. Please ensure all notifications not originating from the Rover Platform do not specifiy this key.
-
-In order to have notification and messages working, Rover needs your FCM server key. Use [this guide](https://github.com/RoverPlatform/rover-android/wiki/FCM-Setup) to upload your configure Rover with your FCM setup.
-
-If you like fine-grained control over notifications, you must register a [NotificationProvider](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/NotificationProvider.java) during initialization.
-
-```java
-  RoverConfig config = new RoverConfig.Builder()
-          .setApplicationToken("YOUR APPLICATION TOKEN HERE")
-          .setNotificationProvider(new NotificationProvider() {
-            ...
-          })
-          .build();
-
-  Rover.setup(this, config);
-```
-
-Check the [Notification Provider](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/NotificationProvider.java) file for more documentation on methods to customize behavior.
-
-### Custom FirebaseMessagingService
-
-If your app is already currently using FCM and implements the `FirebaseMessagingService`, helper methods have been provided to handle Rover notifications. The following example demonstrates these methods
-
-```java
-import com.google.firebase.messaging.FirebaseMessagingService;
-import com.google.firebase.messaging.RemoteMessage;
-
-import io.rover.Rover;
-
-public class MyFirebaseMessagingService extends FirebaseMessagingService {
-    @Override
-    public void onMessageReceived(RemoteMessage remoteMessage) {
-        if (Rover.isRoverMessage(remoteMessage)) {
-            Rover.handleRemoteMessage(remoteMessage);
-            return;
-        }
-
-        // ...
-        // Parse the message as your own
+```kotlin
+class MyAppFirebaseMessageReceiver: FirebaseMessagingService() {
+    override fun onMessageReceived(remoteMessage: RemoteMessage) {
+        Rover.sharedInstance.pushReceiver.onMessageReceivedData(
+            remoteMessage.data
+        )
     }
 }
 ```
 
-### Default Back Button Behaviour
+Note that the `Receive Messages` Firebase documentation section you are looking
+at has a section that discusses notification appearance customization in the app
+manifest (eg. setting the icon and color with `<meta-data>` tags).  However,
+that only applies to so-called "Display Messages", where the notification is put
+in the Android tray for you by Firebase Cloud Messaging.  Rover push
+notifications never use this method, and instead the above `onMessageReceived()`
+regime is responsible for always creating the notifications by node, and as such
+the `<meta-data>` tags would not be used.  You will still need to pass your
+small icon drawable to `PushPluginAssembler` at `Rover.initialize()` time as
+discussed above.
 
-If you do not provide a [Notification Provider](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/NotificationProvider.java) to Rover the default back behaviour is to use the parent activity provided in your AndroidManifest file. This is only the case when a message will launch a LandingPage or an Experience. The following example demonstrates that when the back button is pressed after launching an Experience from a notification the MainActivity will run. 
+4. wire up location and beacons
+5. set up styles & brand colours
+6. explore avenues for customization
+7. 
 
-```xml
-...
- <activity android:name="io.rover.ExperienceActivity"
-    android:parentActivityName=".MainActivity">
-    <meta-data
-        android:name="android.support.PARENT_ACTIVITY"
-        android:value=".MainActivity"/>
-</activity>
-...
-```
+### Events Plugin
 
-### Inbox
+## Reference Documentation
 
-Most applications provide means for users to recall messages. You can use the `onMessageReceived(Message message)` callback on a [`MessageDeliveryObserver`](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/RoverObserver.java) to map and add Rover messages to your application's inbox as they are delivered. You may also rely solely on Rover for a simple implementation of such inbox if your application doesn't already have one:
+## Customization
 
-```java
-        Rover.reloadInbox(new Rover.OnInboxReloadListener() {
-            public void onSuccess(List<Message> messages) {
-                // Add to your adapter
-            }
+### Require Login
 
-            public void onFailure() {}
-        });
-```
+### Add a Custom app view into an Experience flow
 
-Note that the `reloadInbox` method will only return messages that have been marked to be saved in the Rover Messages app.
+### Dynamically Modify Experiences
 
-See the [MessageFragment](https://github.com/RoverPlatform/rover-android/blob/master/app/src/main/java/com/example/rover/MessageFragment.java) in the example app for a quick implementation.
+For example, if you put custom replacement directives or "variables" of your own
+design into text in Experience blocks.
 
-#### Deleting messages from the Rover inbox
+### Use a custom bundled font instead of Roboto
 
-Rover provides a simple method for deleting messages from the inbox, this can be accomplished with just the message id or the message object itself. Refer to the following snippet on how deletion works
+### Forgo the included Activity and Fragment, and use Rover embedded in your single-activity, fragmentless app.
 
-```java
-// message -> io.rover.model.Message
-Rover.deleteMessage(message, new Rover.OnDeleteMessageListener() {
-    @Override
-    public void onSuccess() {
-       // update your adapter here if presenting messages in a listview
-       Log.i("MyApp", "Message has been deleted");
-    }
+### Other customisations
 
-    @Override
-    public void onFailure() {
-        Log.e("MyApp", "Failed to delete message");
-    }
-});
-```
+Consider reading through the below in order to glean the general pattern of
+customisation.
 
-#### Updating read status of a message
+Are you customising the Rover SDK in other ways than we've discussed here? We'd
+love to hear about it!
 
-Every Rover message has a flag indicating if the message has been read or not. This can be useful in your application if you wish to display an indicator if the user has interacted with the message before. To accomplish this behaviour Rover provides a `patchMessage` method to update the flag. The following demonstrates how to set a message read status to true
+### Custom Handling for Push Notifications
 
-```java
-if (!message.isRead()) {
-    message.setRead(true);
-    Rover.patchMessage(message, new Rover.OnPatchMessageListener() {
-        @Override
-        public void onSuccess() {
-            Log.i("MyApp", "Message has now been read");
-        }
+## Migrating from SDK 1.x
 
-        @Override
-        public void onFailure() {
-            Log.e("MyApp", "Something failed while trying to update the status");
-        }
-    });
-}
-```
-### Screen Activity
+* changes to general design
+  * fdafdsaf
+* 
 
-If the message contains a landing page you probably want to present an activity for it. The `getLandingPage()` method of a [`Message`](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/model/Message.java) object is of type [`Screen`](https://github.com/RoverPlatform/rover-android/blob/master/rover/src/main/java/io/rover/model/Screen.java). You can launch the `ScreenActivity` using an Intent which has the `Screen` object in its extras under the key `ScreenActivity.INTENT_EXTRA_SCREEN`.
-
-```java
-Intent intent = new Intent(this, ScreenActivity.class);
-intent.putExtra(ScreenActivity.INTENT_EXTRA_SCREEN, message.getLandingPage());
-startActivity(intent);
-```
-
-
-## Customer Identity
-
-By default the Rover platform will assign a unique identifier to each customer who installs your application. However you may choose to assign your own identifiers. This is particularly useful for mapping data from the Rover Analytics app or if a customer is using your application on multiple platforms. To accomodate this Rover saves customer info to device storage so that it persists across sessions. The following snippet demonstrates assigning your own customer identifier:
-
-```java
-Rover.identify(new Traits().putIdentifier("hello123"));
-```
-
-In addition to identifiers, you may provide other user attributes for more personlized and segmented messaging via the Rover Messages app.
-
-```java
-Rover.identify(new Traits()
-        .putAge(44)
-        .putEmail("hello@example.com")
-        .addTags("a", "b", "c")
-        .putPhoneNumber("555-555-5555"));
-```
-
-Traits are persisted to and restored from disk. This insures once traits have been set they stay set until changed. However if your app has a login logout feature you will want to make sure to clear all the previous traits that have been stored. To do this simply call 
-```java 
-Rover.clearCustomer() 
-```
-
-
+## Further Documentation

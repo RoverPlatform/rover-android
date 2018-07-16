@@ -1,1 +1,1 @@
-include ':app', ':rover'
+include ':rover', ':location', ':experiences', ':debug'

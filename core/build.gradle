@@ -1,0 +1,253 @@
+import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'org.jetbrains.dokka-android'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: "de.mannodermaus.android-junit5"
+
+android {
+    compileSdkVersion 27
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 27
+        versionCode rover_sdk_version_code
+        versionName rover_sdk_version
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
+    }
+}
+
+androidExtensions {
+    // So we can use @Parcelize.  This does not expose risk to consumers; this is a build time-only
+    // consideration.
+    experimental = true
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+
+    // TODO: should these use 'api' instead of compile? Unclear on guidance on transitive AndroidX
+    // dependencies within libraries.
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support:support-v4:27.1.1'
+    implementation 'com.android.support:transition:27.1.1'
+    // Until java.util.concurrent.Flow appears in Android SDK, import:
+    api 'org.reactivestreams:reactive-streams:1.0.2'
+
+    api 'android.arch.lifecycle:extensions:1.1.1'
+
+    implementation 'com.android.support:customtabs:27.1.1'
+
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.jetbrains.spek:spek-api:1.1.5'
+    testImplementation 'org.jetbrains.spek:spek-junit-platform-engine:1.1.5'
+    testImplementation 'com.natpryce:hamkrest:1.4.2.0'
+    testImplementation 'org.amshove.kluent:kluent:1.30'
+    testImplementation 'org.amshove.kluent:kluent-android:1.30'
+    testImplementation 'org.skyscreamer:jsonassert:1.5.0'
+
+    // JUnit 5 support.  Needed for Spek.
+    testImplementation junit5.unitTests()
+    // (Optional) If you need "parameterized tests"
+    testImplementation junit5.parameterized()
+    // (Optional) For running tests inside Android Studio 3.x (needed as of at least beta 7)
+    testCompileOnly junit5.unitTestsRuntime()
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+//    implementation 'com.facebook.stetho:stetho:1.5.0'
+//    // so we can inject Stetho HTTP monitoring into the Rover SDK
+//    implementation 'com.facebook.stetho:stetho-urlconnection:1.5.0'
+//    // so we can inject Stetho HTTP monitoring into the Retrofit requests made by the Experiences app.
+//    implementation 'com.facebook.stetho:stetho-okhttp3:1.5.0'
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+
+// The following needed for ktlint:
+configurations {
+    ktlint
+}
+dependencies {
+    ktlint "com.github.shyiko:ktlint:0.15.0"
+    // additional 3rd party ruleset(s) can be specified here
+    // just add them to the classpath (e.g. ktlint 'groupId:artifactId:version') and
+    // ktlint will pick them up
+}
+task ktlint(type: JavaExec, group: "verification") {
+    description = "Check Kotlin code style."
+    classpath = configurations.ktlint
+    main = "com.github.shyiko.ktlint.Main"
+    args "src/**/*.kt"
+    // to generate report in checkstyle format prepend following args:
+    // "--reporter=plain", "--reporter=checkstyle,output=${buildDir}/ktlint.xml"
+    // see https://github.com/shyiko/ktlint#usage for more
+}
+check.dependsOn ktlint
+task ktlintFormat(type: JavaExec, group: "formatting") {
+    description = "Fix Kotlin code style deviations."
+    classpath = configurations.ktlint
+    main = "com.github.shyiko.ktlint.Main"
+    args "--android", "-F", "src/**/*.kt"
+}
+
+dokka {
+    outputFormat = 'html'
+    outputDirectory = "$buildDir/javadoc"
+}
+
+task webDocsDokka (type: org.jetbrains.dokka.gradle.DokkaTask, overwrite: true) {
+    outputFormat = 'jekyll'
+    outputDirectory = "$buildDir/jekylldoc"
+
+    // Suppress a package
+    packageOptions {
+        prefix = "io.rover.shaded"
+        suppress = true
+    }
+
+    // Suppress a package
+    packageOptions {
+        prefix = "android"
+        suppress = true
+    }
+}
+
+ext {
+    groupId = 'io.rover' // package name of the project
+    artifactId = "core" // module name of the library
+    libVersion = rover_sdk_version
+}
+
+//just copy paste the lines below
+if (project.hasProperty("kotlin")) { //Kotlin libraries
+    task sourcesJar(type: Jar) {
+        classifier = 'sources'
+        from android.sourceSets.main.java.srcDirs
+    }
+
+    task javadoc(type: Javadoc, dependsOn: dokka) {
+
+    }
+} else if (project.hasProperty("android")) {
+    task sourcesJar(type: Jar) {
+        classifier = 'sources'
+        from android.sourceSets.main.java.srcDirs
+    }
+
+    task javadoc(type: Javadoc) {
+        source = android.sourceSets.main.java.srcDirs
+        classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    }
+} else { // Java libraries
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        from sourceSets.main.allSource
+    }
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+    // options.encoding = 'UTF-8'
+}
+
+publishing {
+    repositories {
+        maven {
+            url System.getenv('DEPLOY_MAVEN_PATH')
+        }
+    }
+
+    publications {
+        production(MavenPublication) {
+            artifact("$buildDir/outputs/aar/$artifactId-release.aar")
+            groupId "io.rover"
+
+            version rover_sdk_version
+
+            //The publication doesn't know about our dependencies, so we have to manually add them to the pom
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+
+                def apiAndImplementationDeps = configurations.implementation.allDependencies + configurations.compile.allDependencies
+
+                // get all the api *and* implementation dependencies
+                apiAndImplementationDeps.each {
+                    if(it instanceof DefaultExternalModuleDependency) {
+                        println("ITERATING OVER DEPENDENCY: $it")
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                        dependencyNode.appendNode('scope', "compile")
+                    }
+                }
+
+                // notice that project scope dependencies are not handled. Instead, we must add them
+                // as external dependencies manually.
+
+            }
+
+            artifact sourcesJar {
+                classifier "sources"
+            }
+
+            artifact javadocJar {
+                classifier 'javadoc'
+            }
+        }
+    }
+}
+
+//take a look at https://github.com/bintray/gradle-bintray-plugin#buildgradle
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_API_KEY')
+
+    configurations = ['archives']
+    publish = false //[Default: false] Whether version should be auto published after an upload
+    override = false //[Default: false] Whether to override version artifacts already published
+    // Package configuration. The plugin will use the repo and name properties to check if the
+    // package already exists. In that case, there's no need to configure the other package
+    // properties (like userOrg, desc, etc).
+
+    pkg {
+        repo = 'android'
+        name = "$groupId.$artifactId"
+        licenses = ['Apache-2.0']
+        userOrg = 'rover'
+        vcsUrl = 'https://github.com/roverplatform/rover-android'
+        version {
+            name = libVersion
+        }
+    }
+
+    publications = ["production"]
+}

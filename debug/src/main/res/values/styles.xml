@@ -1,0 +1,9 @@
+<resources>
+    <style name="RoverDebugPreferencesActivityTheme" parent="@style/Theme.AppCompat">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+        <item name="android:colorBackground">@color/colorBackground</item>
+    </style>
+</resources>

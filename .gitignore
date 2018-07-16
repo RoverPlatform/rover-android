@@ -1,4 +1,3 @@
-*.iml
 .gradle
 .idea/
 .DS_Store
@@ -7,3 +6,6 @@
 local.properties
 gradle.xml
 gradle.properties
+shade
+*.bak
+*.iml

@@ -21,7 +21,7 @@ import android.view.Window
 import android.view.WindowManager
 import android.view.animation.LinearInterpolator
 import io.rover.experiences.R
-import io.rover.experiences.ui.containers.StandaloneExperienceHostActivity
+import io.rover.experiences.ui.containers.ExperienceActivity
 import io.rover.experiences.ui.navigation.ExperienceNavigationView
 import io.rover.experiences.ui.toolbar.ViewExperienceToolbar
 import io.rover.core.logging.log
@@ -36,7 +36,7 @@ import org.reactivestreams.Publisher
 /**
  * Embed this view to include a Rover Experience in a layout.
  *
- * Most applications will likely want to use [StandaloneExperienceHostActivity] and
+ * Most applications will likely want to use [ExperienceActivity] and
  * [ExperienceFragment] to display an Experience, but for more custom setups (say, tablet-enabled
  * single-activity apps that avoid fragments), you can embed [ExperienceView] directly.
  *
@@ -49,7 +49,7 @@ import org.reactivestreams.Publisher
  * [ExperienceViewModel] (grabbing the state Parcelable from the view model at save time and
  * restoring it by passing it to the view model factory at restart time).
  *
- * See [StandaloneExperienceHostActivity] for an example of how to integrate.
+ * See [ExperienceActivity] for an example of how to integrate.
  */
 class ExperienceView : CoordinatorLayout, BindableView<ExperienceViewModelInterface> {
     constructor(context: Context?) : super(context)

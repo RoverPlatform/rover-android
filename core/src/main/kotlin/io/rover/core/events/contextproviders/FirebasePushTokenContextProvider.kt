@@ -45,8 +45,8 @@ class FirebasePushTokenContextProvider(
                     else -> "Push Token Updated"
                 },
                 listOfNotNull(
-                    token.whenNotNull { token -> Pair("currentToken", AttributeValue.String(token)) },
-                    this.token.whenNotNull { previousToken -> Pair("previousToken", AttributeValue.String(previousToken)) }
+                    token.whenNotNull { token -> Pair("currentToken", AttributeValue.Scalar.String(token)) },
+                    this.token.whenNotNull { previousToken -> Pair("previousToken", AttributeValue.Scalar.String(previousToken)) }
                 ).associate { it }
             )
             this.token = token

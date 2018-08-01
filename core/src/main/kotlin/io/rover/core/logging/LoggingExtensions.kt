@@ -131,7 +131,7 @@ class EventQueueLogger(
             Event(
                 "Error",
                 hashMapOf(
-                    Pair("message", AttributeValue.String("$logTag: $message"))
+                    Pair("message", AttributeValue.Scalar.String("$logTag: $message"))
                 )
             )
         )

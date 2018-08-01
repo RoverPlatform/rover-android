@@ -2,6 +2,7 @@ package io.rover.core.events
 
 import io.rover.core.data.domain.Attributes
 import io.rover.core.data.domain.DeviceContext
+import io.rover.core.events.contextproviders.UserInfoContextProvider
 import io.rover.core.events.domain.Event
 
 /**
@@ -70,7 +71,7 @@ interface EventQueueServiceInterface {
     fun flushNow()
 }
 
-interface DeviceAttributesInterface {
+interface UserInfoInterface {
     /**
      * Call this to set custom attributes to be included along with the [DeviceContext] given alongside
      * outgoing events.
@@ -89,8 +90,8 @@ interface DeviceAttributesInterface {
     fun clear()
 
     /**
-     * Used by the [CustomAttributesContextProvider] to determine the current attributes to include
+     * Used by the [UserInfoContextProvider] to determine the current attributes to include
      * them in outgoing [Event]s.
      */
-    val currentAttributes: Attributes
+    val currentUserInfo: Attributes
 }

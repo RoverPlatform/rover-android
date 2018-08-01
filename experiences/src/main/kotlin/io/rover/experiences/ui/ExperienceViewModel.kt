@@ -223,8 +223,8 @@ class ExperienceViewModel(
 
     protected fun sessionEventAttributes(experience: Experience): Attributes {
         return hashMapOf(
-            Pair("experienceID", AttributeValue.String(experience.id.rawValue))
-        ) + if(experience.campaignId != null) { hashMapOf(Pair("campaignID", AttributeValue.String(experience.campaignId!!))) } else hashMapOf()
+            Pair("experienceID", AttributeValue.Scalar.String(experience.id.rawValue))
+        ) + if(experience.campaignId != null) { hashMapOf(Pair("campaignID", AttributeValue.Scalar.String(experience.campaignId!!))) } else hashMapOf()
     }
 
     enum class Action {

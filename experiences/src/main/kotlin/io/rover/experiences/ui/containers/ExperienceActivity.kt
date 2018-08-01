@@ -28,7 +28,7 @@ import io.rover.core.platform.whenNotNull
  * You may use this either as a subclass for your own Activity, or as a template for embedding
  * a Rover [ExperienceView] in your own Activities.
  */
-open class StandaloneExperienceHostActivity : AppCompatActivity() {
+open class ExperienceActivity : AppCompatActivity() {
     protected val experienceId: String? by lazy { this.intent.getStringExtra("EXPERIENCE_ID") }
 
     protected val experienceUrl: String? by lazy { this.intent.getStringExtra("EXPERIENCE_URL") }
@@ -69,7 +69,7 @@ open class StandaloneExperienceHostActivity : AppCompatActivity() {
                 )
             }
             is ExperienceExternalNavigationEvent.Custom -> {
-                log.w("You have emitted a Custom event: $externalNavigationEvent, but did not handle it in your subclass implementation of StandaloneExperienceHostActivity.dispatchExternalNavigationEvent()")
+                log.w("You have emitted a Custom event: $externalNavigationEvent, but did not handle it in your subclass implementation of ExperienceActivity.dispatchExternalNavigationEvent()")
             }
         }
     }
@@ -125,7 +125,7 @@ open class StandaloneExperienceHostActivity : AppCompatActivity() {
         ).getBoolean(0, false)
 
         if(displayNoCustomThemeWarningMessage) {
-            log.w("You have set no theme for StandaloneExperienceHostActivity (or your optional subclass thereof) in your AndroidManifest.xml.\n" +
+            log.w("You have set no theme for ExperienceActivity (or your optional subclass thereof) in your AndroidManifest.xml.\n" +
                 "In particular, this means the toolbar will not pick up your brand colours.")
         }
 
@@ -158,7 +158,7 @@ open class StandaloneExperienceHostActivity : AppCompatActivity() {
                 state
             )
             else -> throw RuntimeException(
-                "Please pass either one of CAMPAIGN_ID/EXPERIENCE_ID or EXPERIENCE_URL. Consider using StandaloneExperienceHostActivity.makeIntent()"
+                "Please pass either one of CAMPAIGN_ID/EXPERIENCE_ID or EXPERIENCE_URL. Consider using ExperienceActivity.makeIntent()"
             )
         }
     }
@@ -192,7 +192,7 @@ open class StandaloneExperienceHostActivity : AppCompatActivity() {
     companion object {
         @JvmStatic
         @JvmOverloads
-        fun makeIntent(packageContext: Context, experienceId: String?, campaignId: String?, activityClass: Class<out Activity> = StandaloneExperienceHostActivity::class.java): Intent {
+        fun makeIntent(packageContext: Context, experienceId: String?, campaignId: String?, activityClass: Class<out Activity> = ExperienceActivity::class.java): Intent {
             return Intent(packageContext, activityClass).apply {
                 putExtra("EXPERIENCE_ID", experienceId)
                 putExtra("CAMPAIGN_ID", campaignId)
@@ -201,7 +201,7 @@ open class StandaloneExperienceHostActivity : AppCompatActivity() {
 
         @JvmStatic
         @JvmOverloads
-        fun makeIntent(packageContext: Context, experienceUrl: String, activityClass: Class<out Activity> = StandaloneExperienceHostActivity::class.java): Intent {
+        fun makeIntent(packageContext: Context, experienceUrl: String, activityClass: Class<out Activity> = ExperienceActivity::class.java): Intent {
             return Intent(packageContext, activityClass).apply {
                 putExtra("EXPERIENCE_URL", experienceUrl)
             }

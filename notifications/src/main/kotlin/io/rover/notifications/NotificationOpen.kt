@@ -83,9 +83,9 @@ open class NotificationOpen(
             Event(
                 "Notification Opened",
                 hashMapOf(
-                    Pair("notificationID", AttributeValue.String(notificationId)),
-                    Pair("source", AttributeValue.String(source.wireValue)),
-                    Pair("campaignID", AttributeValue.String(campaignId))
+                    Pair("notificationID", AttributeValue.Scalar.String(notificationId)),
+                    Pair("source", AttributeValue.Scalar.String(source.wireValue)),
+                    Pair("campaignID", AttributeValue.Scalar.String(campaignId))
                 )
             ),
             EventQueueService.ROVER_NAMESPACE

@@ -3,6 +3,7 @@ package io.rover.core.data.graphql.operations.data
 import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
 import io.rover.core.data.graphql.getIterable
+import io.rover.core.platform.DateFormattingInterface
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URI
@@ -20,17 +21,17 @@ private fun Any.mapToAttributeValueFromJsonPrimitive(): AttributeValue =
         is String -> {
             // now we have to try URL first before just returning a String type
             try {
-                AttributeValue.URL(URI.create(this))
+                AttributeValue.Scalar.URL(URI.create(this))
             } catch (e: IllegalArgumentException) {
                 // not a valid URI, it's just a string!
-                AttributeValue.String(this)
+                AttributeValue.Scalar.String(this)
             }
         }
         is Int -> {
-            AttributeValue.Integer(this)
+            AttributeValue.Scalar.Integer(this)
         }
         is Double -> {
-            AttributeValue.Double(this)
+            AttributeValue.Scalar.Double(this)
         }
         is JSONObject -> {
             AttributeValue.Hash(this.toFlatAttributesHash())
@@ -57,22 +58,27 @@ fun JSONObject.toFlatAttributesHash(): Attributes {
  * Return type is [Object] because this will return any of [Int], [String], [Double], [JSONObject],
  * [JSONArray] (again, the JSON library will treat these appropriately at render time).
  */
-fun AttributeValue.encodeJson(): Any = when (this) {
-    is AttributeValue.Boolean -> this.value
-    is AttributeValue.Double -> this.value
-    is AttributeValue.Hash -> this.hash.encodeJson()
-    is AttributeValue.String -> this.value
-    is AttributeValue.Integer -> this.value
-    is AttributeValue.URL -> this.value.toString()
-    is AttributeValue.Array -> JSONArray(this.values.map { it.encodeJson() })
+fun AttributeValue.encodeJson(dateFormatting: DateFormattingInterface): Any = when (this) {
+    is AttributeValue.Scalar.Boolean -> this.value
+    is AttributeValue.Scalar.Double -> this.value
+    is AttributeValue.Hash -> this.hash.encodeJson(dateFormatting)
+    is AttributeValue.Scalar.String -> this.value
+    is AttributeValue.Scalar.Integer -> this.value
+    is AttributeValue.Scalar.URL -> this.value.toString()
+    is AttributeValue.Scalar.Date -> dateFormatting.dateAsIso8601(this.date, false)
+    is AttributeValue.Array -> JSONArray(this.values.map { it.encodeJson(dateFormatting) })
+    else -> throw RuntimeException("illegal scalar subtype")
 }
 
-fun Attributes.encodeJson(): JSONObject {
+fun Attributes.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
     return JSONObject().apply {
         this@encodeJson.entries.forEach { (key, value) ->
+            if(!key.matches(Regex("^[a-zA-Z_][a-zA-Z_0-9]*$"))) {
+                throw RuntimeException("Invalid Rover Attribute Key: '$key'")
+            }
             this.put(
                 key,
-                value.encodeJson()
+                value.encodeJson(dateFormatting)
             )
         }
     }

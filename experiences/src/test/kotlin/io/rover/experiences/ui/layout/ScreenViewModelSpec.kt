@@ -1,6 +1,7 @@
 package io.rover.experiences.ui.layout
 
 import android.content.Context
+import io.rover.core.UrlSchemes
 import io.rover.experiences.ExperiencesAssembler
 import io.rover.experiences.MeasurementService
 import io.rover.experiences.ui.blocks.concerns.background.BackgroundViewModelInterface
@@ -61,9 +62,8 @@ class ScreenViewModelSpec : Spek({
 
                         container.register(
                             Scope.Singleton,
-                            String::class.java,
-                            "deepLinkScheme"
-                        ) { _ -> "rv-inbox "}
+                            UrlSchemes::class.java
+                        ) { _ -> UrlSchemes(listOf("rv-inbox")) }
 
                         container.register(
                             Scope.Singleton,

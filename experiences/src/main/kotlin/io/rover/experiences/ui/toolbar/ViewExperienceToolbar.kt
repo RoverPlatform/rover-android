@@ -2,6 +2,7 @@ package io.rover.experiences.ui.toolbar
 
 import android.content.Context
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.support.v7.app.ActionBar
 import android.support.v7.appcompat.R.attr.borderlessButtonStyle
@@ -50,6 +51,8 @@ class ViewExperienceToolbar(
         toolbar.addView(closeButton)
         (closeButton.layoutParams as ActionBar.LayoutParams).gravity = Gravity.END
     }
+
+    private var cachedActionIcon: Drawable? = null
 
     override fun setViewModelAndReturnToolbar(
         toolbarViewModel: ExperienceToolbarViewModelInterface
@@ -113,11 +116,22 @@ class ViewExperienceToolbar(
                     }
                 }
 
+                showOrHideAction(configuration.upButton)
+
                 textButton.visibility = if (toolbarViewModel.configuration.closeButton) View.VISIBLE else View.GONE
             }, { error -> throw(error) }, { subscription ->
                 activeMenuSubscription = subscription
             })
 
         return toolbar
+    }
+
+    private fun showOrHideAction(visibility: Boolean) {
+        if(visibility) {
+            toolbar.navigationIcon = toolbar.navigationIcon ?: cachedActionIcon
+        } else {
+            cachedActionIcon = toolbar.navigationIcon ?: cachedActionIcon
+            toolbar.navigationIcon = null
+        }
     }
 }

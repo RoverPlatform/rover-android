@@ -6,13 +6,14 @@ import io.rover.core.data.graphql.safeGetString
 import io.rover.core.data.graphql.safeOptBoolean
 import io.rover.core.data.graphql.safeOptInt
 import io.rover.core.data.graphql.safeOptString
+import io.rover.core.platform.DateFormattingInterface
 import io.rover.core.platform.whenNotNull
 import org.json.JSONObject
 
 /**
  * Outgoing JSON DTO transformation for [DeviceContext]s, as submitted to the Rover GraphQL API.
  */
-internal fun DeviceContext.asJson(): JSONObject {
+internal fun DeviceContext.asJson(dateFormatting: DateFormattingInterface): JSONObject {
     return JSONObject().apply {
         val props = listOf(
             DeviceContext::appBuild,
@@ -45,7 +46,7 @@ internal fun DeviceContext.asJson(): JSONObject {
 
         props.forEach { putProp(this@asJson, it) }
 
-        putProp(this@asJson, DeviceContext::attributes, "attributes") { it.encodeJson() }
+        putProp(this@asJson, DeviceContext::userInfo, "userInfo") { it.encodeJson(dateFormatting) }
 
         putProp(this@asJson, DeviceContext::notificationAuthorization, "notificationAuthorization") { it?.encodeJson() ?: JSONObject.NULL }
     }
@@ -82,7 +83,7 @@ internal fun DeviceContext.Companion.decodeJson(json: JSONObject): DeviceContext
         sdkVersion = json.safeOptString("sdkVersion"),
         timeZone = json.safeOptString("timeZone"),
         isBluetoothEnabled = json.safeOptBoolean("isBluetoothEnabled"),
-        attributes = json.getJSONObject("attributes").toFlatAttributesHash(),
+        userInfo = json.getJSONObject("userInfo").toFlatAttributesHash(),
         isTestDevice = json.safeOptBoolean("isTestDevice")
     )
 }

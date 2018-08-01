@@ -11,7 +11,9 @@ import io.rover.core.routing.Router
 import io.rover.core.platform.DeviceIdentificationInterface
 
 /**
- * The Debug module adds certain useful bits of debug functionality to the Rover SDK.
+ * The Debug module adds certain useful bits of debug functionality to the Rover SDK, namely a
+ * new `isTestDevice` boolean to each event that is tracked through the EventQueue and a hidden
+ * activity for managing its value.
  *
  * Note that it may safely be used in production as well as dev builds of your app, but it is
  * optional should you want to be extra sure that debug functionality cannot be inadvertently

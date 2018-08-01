@@ -19,9 +19,9 @@ import io.rover.core.streams.Scheduler
  * Location Assembler contains the Rover SDK subsystems for Geofence, Beacon, and location tracking.
  *
  * It can automatically use the Google Location services, which you can opt out of by passing false
- * to the following boolean parameters (which you may wish to do if you want to use a Location SDK
+ * to the following boolean parameters.  You may wish to do this if you want to use a Location SDK
  * from a vendor other than Google, integrate with your own location implementation, or do not
- * require the functionality, then you may wish to consider passing false below.
+ * require the functionality.
  *
  * Note: if you use any of the below, then you must complete the Google Play Services setup as per
  * the SDK documentation (also needed for the Notifications module).

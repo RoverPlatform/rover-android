@@ -41,6 +41,7 @@ import io.rover.core.data.graphql.putProp
 import io.rover.core.data.graphql.safeGetString
 import io.rover.core.data.graphql.safeGetUri
 import io.rover.core.data.graphql.safeOptString
+import io.rover.core.platform.DateFormattingInterface
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -57,12 +58,12 @@ fun Experience.Companion.decodeJson(json: JSONObject): Experience {
     )
 }
 
-internal fun Experience.encodeJson(): JSONObject {
+internal fun Experience.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Experience::id) { it.rawValue }
         putProp(this@encodeJson, Experience::homeScreenId, "homeScreenID") { it.rawValue }
-        putProp(this@encodeJson, Experience::screens) { JSONArray(it.map { it.encodeJson() }) }
-        putProp(this@encodeJson, Experience::keys) { it.encodeJson() }
+        putProp(this@encodeJson, Experience::screens) { JSONArray(it.map { it.encodeJson(dateFormatting) }) }
+        putProp(this@encodeJson, Experience::keys) { it.encodeJson(dateFormatting) }
         putProp(this@encodeJson, Experience::campaignId, "campaignID")
     }
 }
@@ -447,7 +448,7 @@ internal fun Block.encodeJson(): JSONObject {
     }
 }
 
-internal fun Block.encodeSharedJson(): JSONObject {
+internal fun Block.encodeSharedJson(dateFormatting: DateFormattingInterface): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeSharedJson, Block::tapBehavior, "tapBehavior") { it?.optEncodeJson() ?: JSONObject.NULL }
         putProp(this@encodeSharedJson, Block::id, "id") { it.rawValue }
@@ -456,19 +457,19 @@ internal fun Block.encodeSharedJson(): JSONObject {
         putProp(this@encodeSharedJson, Block::position, "position") { it.encodeJson() }
         putProp(this@encodeSharedJson, Block::background, "background") { it.encodeJson() }
         putProp(this@encodeSharedJson, Block::border, "border") { it.encodeJson() }
-        putProp(this@encodeSharedJson, Block::keys, "keys") { it.encodeJson() }
+        putProp(this@encodeSharedJson, Block::keys, "keys") { it.encodeJson(dateFormatting) }
     }
 }
 
-internal fun BarcodeBlock.encodeJson(): JSONObject {
-    return encodeSharedJson().apply {
+internal fun BarcodeBlock.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
+    return encodeSharedJson(dateFormatting).apply {
         put("__typename", "BarcodeBlock")
         putProp(this@encodeJson, BarcodeBlock::barcode, "barcode") { it.encodeJson() }
     }
 }
 
-internal fun RectangleBlock.encodeJson(): JSONObject {
-    return encodeSharedJson().apply {
+internal fun RectangleBlock.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
+    return encodeSharedJson(dateFormatting).apply {
         put("__typename", "RectangleBlock")
     }
 }
@@ -480,22 +481,22 @@ internal fun WebView.encodeJson(): JSONObject {
     }
 }
 
-internal fun WebViewBlock.encodeJson(): JSONObject {
-    return encodeSharedJson().apply {
+internal fun WebViewBlock.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
+    return encodeSharedJson(dateFormatting).apply {
         put("__typename", "WebViewBlock")
         putProp(this@encodeJson, WebViewBlock::webView, "webView") { it.encodeJson() }
     }
 }
 
-internal fun TextBlock.encodeJson(): JSONObject {
-    return encodeSharedJson().apply {
+internal fun TextBlock.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
+    return encodeSharedJson(dateFormatting).apply {
         put("__typename", "TextBlock")
         putProp(this@encodeJson, TextBlock::text, "text") { it.encodeJson() }
     }
 }
 
-internal fun ImageBlock.encodeJson(): JSONObject {
-    return encodeSharedJson().apply {
+internal fun ImageBlock.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
+    return encodeSharedJson(dateFormatting).apply {
         put("__typename", "ImageBlock")
         putProp(this@encodeJson, ImageBlock::image, "image") { it?.encodeJson() ?: JSONObject.NULL }
     }
@@ -691,7 +692,7 @@ internal fun Screen.Companion.decodeJson(json: JSONObject): Screen {
     )
 }
 
-internal fun Screen.encodeJson(): JSONObject {
+internal fun Screen.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Screen::isStretchyHeaderEnabled, "isStretchyHeaderEnabled")
         putProp(this@encodeJson, Screen::background, "background") { it.encodeJson() }
@@ -699,7 +700,7 @@ internal fun Screen.encodeJson(): JSONObject {
         putProp(this@encodeJson, Screen::rows) { JSONArray(it.map { it.encodeJson() }) }
         putProp(this@encodeJson, Screen::statusBar, "statusBar") { it.encodeJson() }
         putProp(this@encodeJson, Screen::titleBar, "titleBar") { it.encodeJson() }
-        putProp(this@encodeJson, Screen::keys) { it.encodeJson() }
+        putProp(this@encodeJson, Screen::keys) { it.encodeJson(dateFormatting) }
     }
 }
 

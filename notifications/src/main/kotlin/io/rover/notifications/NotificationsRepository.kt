@@ -228,7 +228,7 @@ class NotificationsRepository(
                     Event(
                         "Notification Marked Deleted",
                         hashMapOf(
-                            Pair("NotificationID", AttributeValue.String(notification.id))
+                            Pair("NotificationID", AttributeValue.Scalar.String(notification.id))
                         )
                     ),
                     EventQueueService.ROVER_NAMESPACE
@@ -265,7 +265,7 @@ class NotificationsRepository(
                     Event(
                         "Notification Marked Read",
                         hashMapOf(
-                            Pair("notificationID", AttributeValue.String(notification.id))
+                            Pair("notificationID", AttributeValue.Scalar.String(notification.id))
                         )
                     ),
                     EventQueueService.ROVER_NAMESPACE

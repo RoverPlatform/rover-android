@@ -12,7 +12,7 @@ data class ToolbarConfiguration(
     val textColor: Int,
     var buttonColor: Int,
 
-    val backButton: Boolean,
+    val upButton: Boolean,
     val closeButton: Boolean,
 
     /**

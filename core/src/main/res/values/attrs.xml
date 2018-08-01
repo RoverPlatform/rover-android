@@ -1,5 +1,5 @@
 <resources>
-    <declare-styleable name="StandaloneExperienceHostActivity">
+    <declare-styleable name="ExperienceActivity">
         <attr name="displayNoCustomThemeWarningMessage" format="boolean"/>
     </declare-styleable>
 </resources>

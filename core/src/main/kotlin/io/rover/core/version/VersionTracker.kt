@@ -63,8 +63,8 @@ class VersionTracker(
                     "App Updated",
                     // the current app version is included as part of Context already thanks to ApplicationContextProvider.
                     hashMapOf(
-                        Pair("previousVersion", AttributeValue.String(previousVersionName)),
-                        Pair("previousBuild", AttributeValue.Integer(previousVersionCode))
+                        Pair("previousVersion", AttributeValue.Scalar.String(previousVersionName)),
+                        Pair("previousBuild", AttributeValue.Scalar.Integer(previousVersionCode))
                     )
                 )
             )

@@ -1,7 +1,7 @@
 package io.rover.experiences.ui.navigation
 
 import android.os.Parcelable
-import io.rover.experiences.ui.containers.StandaloneExperienceHostActivity
+import io.rover.experiences.ui.containers.ExperienceActivity
 import io.rover.experiences.ui.layout.screen.ScreenViewModelInterface
 import io.rover.experiences.ui.toolbar.ExperienceToolbarViewModelInterface
 import io.rover.experiences.ui.toolbar.ToolbarConfiguration
@@ -127,22 +127,22 @@ open class ExperienceNavigationViewModel(
                     val attributes = when(action.navigateTo) {
                         is NavigateTo.GoToScreenAction -> {
                             hashMapOf(
-                                Pair("action", AttributeValue.String("goToScreen")),
-                                Pair("destinationScreenID", AttributeValue.String(action.navigateTo.screenId)),
+                                Pair("action", AttributeValue.Scalar.String("goToScreen")),
+                                Pair("destinationScreenID", AttributeValue.Scalar.String(action.navigateTo.screenId)),
                                 // not possible to navigate to a screen in another experience as of yet:
-                                Pair("destinationExperienceID", AttributeValue.String(experience.id.rawValue))
+                                Pair("destinationExperienceID", AttributeValue.Scalar.String(experience.id.rawValue))
                             )
                         }
                         is NavigateTo.PresentWebsiteAction -> {
                             hashMapOf(
-                                Pair("action", AttributeValue.String("presentWebsite")),
+                                Pair("action", AttributeValue.Scalar.String("presentWebsite")),
                                 // not possible to navigate to a screen in another experience as of yet:
-                                Pair("url", AttributeValue.String(action.navigateTo.url.toString()))
+                                Pair("url", AttributeValue.Scalar.String(action.navigateTo.url.toString()))
                             )
                         }
                         is NavigateTo.External -> {
                             hashMapOf(
-                                Pair("action", AttributeValue.String("openURL"))
+                                Pair("action", AttributeValue.Scalar.String("openURL"))
                                 // TODO: figure out how to properly compose the event data contributed by the Action itself and the context.
                                 // Pair("url", AttributeValue.String(action.navigateTo.uri.toString()))
                             )
@@ -152,9 +152,9 @@ open class ExperienceNavigationViewModel(
                     val event = Event(
                         name = "Block Tapped",
                         attributes = hashMapOf(
-                            Pair("experienceID", AttributeValue.String(experience.id.rawValue)),
-                            Pair("screenID", AttributeValue.String(action.sourceScreenId)),
-                            Pair("blockID", AttributeValue.String(action.sourceBlockId))
+                            Pair("experienceID", AttributeValue.Scalar.String(experience.id.rawValue)),
+                            Pair("screenID", AttributeValue.Scalar.String(action.sourceScreenId)),
+                            Pair("blockID", AttributeValue.Scalar.String(action.sourceBlockId))
                         ).apply { putAll(attributes) } + attributeHashFragmentForCampaignId()
                     )
 
@@ -255,7 +255,7 @@ open class ExperienceNavigationViewModel(
      *
      * You can override this to emit a [ExperienceExternalNavigationEvent.Custom] event and thus
      * be able respond to it in your container (say, a subclass of
-     * [StandaloneExperienceHostActivity]), and perform your custom behaviour, such as launching an
+     * [ExperienceActivity]), and perform your custom behaviour, such as launching an
      * app login screen.
      *
      * TODO: anything I can do to make this particular method any more functional?
@@ -374,14 +374,14 @@ open class ExperienceNavigationViewModel(
 
     private fun sessionEventAttributes(screenId: String): Attributes {
         return hashMapOf(
-            Pair("experienceID", AttributeValue.String(experience.id.rawValue)),
-            Pair("screenID", AttributeValue.String(screenId))
-        ) + if(experience.campaignId != null) { hashMapOf(Pair("campaignID", AttributeValue.String(experience.campaignId!!))) } else hashMapOf()
+            Pair("experienceID", AttributeValue.Scalar.String(experience.id.rawValue)),
+            Pair("screenID", AttributeValue.Scalar.String(screenId))
+        ) + if(experience.campaignId != null) { hashMapOf(Pair("campaignID", AttributeValue.Scalar.String(experience.campaignId!!))) } else hashMapOf()
     }
 
-    private fun attributeHashFragmentForCampaignId(): HashMap<String, AttributeValue.String> {
+    private fun attributeHashFragmentForCampaignId(): HashMap<String, AttributeValue.Scalar.String> {
         return if(experience.campaignId != null) hashMapOf(
-            Pair("campaignID", AttributeValue.String(experience.campaignId.toString()))
+            Pair("campaignID", AttributeValue.Scalar.String(experience.campaignId.toString()))
         ) else hashMapOf()
     }
 

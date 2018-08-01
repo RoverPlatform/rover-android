@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.support.annotation.DrawableRes
+import io.rover.core.UrlSchemes
 import io.rover.core.assets.AssetService
 import io.rover.core.container.Assembler
 import io.rover.core.container.Container
@@ -24,17 +25,21 @@ import io.rover.notifications.routing.routes.PresentNotificationCenterRoute
 import io.rover.notifications.ui.NotificationCenterListViewModel
 import io.rover.notifications.ui.concerns.NotificationCenterListViewModelInterface
 import io.rover.notifications.ui.concerns.NotificationsRepositoryInterface
+import io.rover.notifications.ui.containers.NotificationCenterActivity
 import java.util.concurrent.Executor
 
 class NotificationsAssembler @JvmOverloads constructor(
     private val applicationContext: Context,
 
     /**
-     * A small icon is necessary for Android push notifications.  Pass a resid.
+     * A small icon is necessary for Android push notifications.  Pass a drawable res id here.
+     * Android will display it in the Android status bar when a notification from your app is
+     * waiting, as a monochromatic silhouette.
      *
-     * Android design guidelines suggest that you use a multi-level drawable for your application
-     * icon, such that you can specify one of its levels that is most appropriate as a single-colour
-     * silhouette that can be used in the Android notification drawer.
+     * Android design guidelines suggest that you use a multi-level drawable for your general
+     * application icon, such that if you want to use that same icon for your `smallIconResId` you
+     * can specify one of its levels (using `smallIconDrawableLevel`) that is most appropriate as a
+     * single-colour silhouette that can be used as a notification status bar small icon.
      */
     @param:DrawableRes
     private val smallIconResId: Int,
@@ -45,28 +50,46 @@ class NotificationsAssembler @JvmOverloads constructor(
      */
     private val smallIconDrawableLevel: Int = 0,
 
+    /**
+    * Since Android O, all notifications need to have a "channel" selected, the list of which is
+    * defined by the app the developer.  The channels are meant to discriminate between different
+    * categories of push notification (eg. "account updates", "marketing messages", etc.) to allow
+    * the user to configure which channels of message they want to see from your app right from the
+    * Android notifications area.
+    *
+    * You should consider registering a set of channels when When configuring your campaigns you
+    * should consider setting the channel ID.  If you do not, then the push notifications arriving
+    * in your app through that campaign will instead be published to the Android notification area
+    * with the default channel ID "Rover".
+    *
+    * If you give an unregistered channel, or leave it set as the default, "Rover", Rover will
+    * attempt to register and configure it with the Android OS for you.  However, the channel
+    * description and other metadata will be descriptive.
+    */
     private val defaultChannelId: String = "rover",
 
-
-    // TODO: default to a builtin intent a hosted notification center, possibly.
     /**
-     * Provide an intent for opening your Notification Center, if you have created one.
+     * Provide an [Intent] for opening your Notification Center.  While you can refrain from
+     * providing one, in that case the Rover SDK will use a very simple built-in version of the
+     * Notification Center which is probably not appropriate for the final version of your product.
      */
-    private val notificationCenterIntent: Intent? = null,
+    private val notificationCenterIntent: Intent = NotificationCenterActivity.makeIntent(applicationContext),
 
     /**
      * While normally your `FirebaseInstanceIdService` class will be responsible for being
      * informed of push token changes, from time to time (particularly on app upgrades or when
      * Rover 2.0 is first integrated in your app) Rover may need to force a reset of your Firebase
-     * push token.
+     * push token.   However, you have to bridge the gap between Rover and the Firebase library
+     * by providing a small bit of boilerplate.
      *
-     * This closure will be called on a background worker thread.  Please pass a block with
-     * the following contents:
+     * Please pass a block with the following contents:
      *
      * ```kotlin
      * FirebaseInstanceId.getInstance().deleteInstanceId()
      * FirebaseInstanceId.getInstance().token
      * ```
+     *
+     * Note: his closure will be called on a background worker thread.
      */
     private val resetPushToken: () -> Unit
 ) : Assembler {
@@ -188,7 +211,7 @@ class NotificationsAssembler @JvmOverloads constructor(
         resolver.resolveSingletonOrFail(Router::class.java).apply {
             registerRoute(
                 PresentNotificationCenterRoute(
-                    resolver.resolveSingletonOrFail(String::class.java, "deepLinkScheme"),
+                    resolver.resolveSingletonOrFail(UrlSchemes::class.java).schemes,
                     notificationCenterIntent
                 )
             )

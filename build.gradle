@@ -2,7 +2,7 @@
 
 buildscript {
     // all of the modules of the SDK will use this version number.
-    ext.rover_sdk_version = '2.0.0-beta.1-SNAPSHOT'
+    ext.rover_sdk_version = '2.0.0-beta.2-SNAPSHOT'
     ext.rover_sdk_version_code = 2
 
     ext.kotlin_version = '1.2.41'

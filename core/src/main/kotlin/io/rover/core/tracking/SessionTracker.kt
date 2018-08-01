@@ -11,6 +11,7 @@ import io.rover.core.data.graphql.safeOptInt
 import io.rover.core.events.EventQueueServiceInterface
 import io.rover.core.events.domain.Event
 import io.rover.core.logging.log
+import io.rover.core.platform.DateFormattingInterface
 import io.rover.core.platform.LocalStorage
 import io.rover.core.platform.whenNotNull
 import org.json.JSONObject
@@ -69,7 +70,7 @@ class SessionTracker(
                 Event(
                     expiredSession.eventName,
                     hashMapOf(
-                        Pair("duration", AttributeValue.Integer(expiredSession.durationSeconds))
+                        Pair("duration", AttributeValue.Scalar.Integer(expiredSession.durationSeconds))
                     )
                 )
             )
@@ -96,7 +97,8 @@ class SessionTracker(
 }
 
 class SessionStore(
-    localStorage: LocalStorage
+    localStorage: LocalStorage,
+    private val dateFormatting: DateFormattingInterface
 ): SessionStoreInterface {
     private val store = localStorage.getKeyValueStorageFor(STORAGE_IDENTIFIER)
 
@@ -137,7 +139,7 @@ class SessionStore(
     }
 
     private fun setEntry(sessionKey: Any, sessionEntry: SessionEntry) {
-        store[sessionKey.toString()] = sessionEntry.encodeJson().toString()
+        store[sessionKey.toString()] = sessionEntry.encodeJson(dateFormatting).toString()
     }
 
 
@@ -228,12 +230,12 @@ class SessionStore(
          */
         val closedAt: Date?
     ) {
-        fun encodeJson(): JSONObject {
+        fun encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
             return JSONObject().apply {
                 put("uuid", uuid.toString())
                 put("session-event-name", sessionEventName)
                 put("started-at", startedAt.time / 1000)
-                put("session-attributes", sessionAttributes.encodeJson())
+                put("session-attributes", sessionAttributes.encodeJson(dateFormatting))
                 if(closedAt != null) {
                     put("closed-at", closedAt.time / 1000)
                 }

@@ -13,10 +13,10 @@ class LocationReportingService(
             Event(
                 "Geofence Region Entered",
                 hashMapOf(
-                    Pair("identifier", AttributeValue.String(geofence.identifier)),
-                    Pair("latitude", AttributeValue.Double(geofence.latitude)),
-                    Pair("longitude", AttributeValue.Double(geofence.longitude)),
-                    Pair("radius", AttributeValue.Double(geofence.radius))
+                    Pair("identifier", AttributeValue.Scalar.String(geofence.identifier)),
+                    Pair("latitude", AttributeValue.Scalar.Double(geofence.latitude)),
+                    Pair("longitude", AttributeValue.Scalar.Double(geofence.longitude)),
+                    Pair("radius", AttributeValue.Scalar.Double(geofence.radius))
                 )
             )
         )
@@ -27,10 +27,10 @@ class LocationReportingService(
             Event(
                 "Geofence Region Exited",
                 hashMapOf(
-                    Pair("identifier", AttributeValue.String(geofence.identifier)),
-                    Pair("latitude", AttributeValue.Double(geofence.latitude)),
-                    Pair("longitude", AttributeValue.Double(geofence.longitude)),
-                    Pair("radius", AttributeValue.Double(geofence.radius))
+                    Pair("identifier", AttributeValue.Scalar.String(geofence.identifier)),
+                    Pair("latitude", AttributeValue.Scalar.Double(geofence.latitude)),
+                    Pair("longitude", AttributeValue.Scalar.Double(geofence.longitude)),
+                    Pair("radius", AttributeValue.Scalar.Double(geofence.radius))
                 )
             )
         )
@@ -41,10 +41,10 @@ class LocationReportingService(
             Event(
                 "Beacon Region Entered",
                 hashMapOf(
-                    Pair("identifier", AttributeValue.String(beaconRegion.identifier)),
-                    Pair("uuid", AttributeValue.String(beaconRegion.uuid.toString())),
-                    Pair("major", AttributeValue.String(beaconRegion.major.toString())),
-                    Pair("minor", AttributeValue.String(beaconRegion.minor.toString()))
+                    Pair("identifier", AttributeValue.Scalar.String(beaconRegion.identifier)),
+                    Pair("uuid", AttributeValue.Scalar.String(beaconRegion.uuid.toString())),
+                    Pair("major", AttributeValue.Scalar.String(beaconRegion.major.toString())),
+                    Pair("minor", AttributeValue.Scalar.String(beaconRegion.minor.toString()))
                 )
             )
         )
@@ -55,10 +55,10 @@ class LocationReportingService(
             Event(
                 "Beacon Region Exited",
                 hashMapOf(
-                    Pair("identifier", AttributeValue.String(beaconRegion.identifier)),
-                    Pair("uuid", AttributeValue.String(beaconRegion.uuid.toString())),
-                    Pair("major", AttributeValue.String(beaconRegion.major.toString())),
-                    Pair("minor", AttributeValue.String(beaconRegion.minor.toString()))
+                    Pair("identifier", AttributeValue.Scalar.String(beaconRegion.identifier)),
+                    Pair("uuid", AttributeValue.Scalar.String(beaconRegion.uuid.toString())),
+                    Pair("major", AttributeValue.Scalar.String(beaconRegion.major.toString())),
+                    Pair("minor", AttributeValue.Scalar.String(beaconRegion.minor.toString()))
                 )
             )
         )
@@ -69,13 +69,13 @@ class LocationReportingService(
             Event(
                 "Location Updated",
                 hashMapOf(
-                    Pair("latitude", AttributeValue.Double(location.latitude)),
-                    Pair("longitude", AttributeValue.Double(location.longitude)),
-                    Pair("altitude", AttributeValue.Double(location.altitude))
+                    Pair("latitude", AttributeValue.Scalar.Double(location.latitude)),
+                    Pair("longitude", AttributeValue.Scalar.Double(location.longitude)),
+                    Pair("altitude", AttributeValue.Scalar.Double(location.altitude))
                 ) + (if(location.horizontalAccurancy != null) {
-                    hashMapOf(Pair("horizontalAccuracy", AttributeValue.Double(location.horizontalAccurancy.toDouble())))
+                    hashMapOf(Pair("horizontalAccuracy", AttributeValue.Scalar.Double(location.horizontalAccurancy.toDouble())))
                 } else hashMapOf()) + if(location.verticalAccuracy != null) {
-                    hashMapOf(Pair("verticalAccuracy", AttributeValue.Double(location.verticalAccuracy.toDouble())))
+                    hashMapOf(Pair("verticalAccuracy", AttributeValue.Scalar.Double(location.verticalAccuracy.toDouble())))
                 } else hashMapOf()
             )
         )

@@ -25,13 +25,13 @@ import io.rover.core.data.http.NetworkClient
 import io.rover.core.data.state.StateManagerService
 import io.rover.core.data.state.StateManagerServiceInterface
 import io.rover.core.events.ContextProvider
-import io.rover.core.events.DeviceAttributes
-import io.rover.core.events.DeviceAttributesInterface
+import io.rover.core.events.UserInfo
+import io.rover.core.events.UserInfoInterface
 import io.rover.core.events.EventQueueService
 import io.rover.core.events.EventQueueServiceInterface
 import io.rover.core.events.contextproviders.ApplicationContextProvider
 import io.rover.core.events.contextproviders.BluetoothContextProvider
-import io.rover.core.events.contextproviders.DeviceAttributesContextProvider
+import io.rover.core.events.contextproviders.UserInfoContextProvider
 import io.rover.core.events.contextproviders.DeviceContextProvider
 import io.rover.core.events.contextproviders.DeviceIdentifierContextProvider
 import io.rover.core.events.contextproviders.LocaleContextProvider
@@ -91,13 +91,13 @@ class CoreAssembler @JvmOverloads constructor(
      * rv-myapp://...
      *
      * You must select an appropriate slug without spaces or special characters to be used in place
-     * of `myapp` above.  You must also configure this in your Rover settings TODO explain how
+     * of `myapp` above.  You must also configure this in your Rover settings.
      *
      * You should also consider adding the handler to the manifest.  While this is not needed for
      * any Rover functionality to work, it is required for clickable deep/universal links to work from
-     * anywhere else. TODO explain how once the stuff to do so is built
+     * anywhere else.
      */
-    private val deepLinkSchemeSlug: String,
+    private val urlSchemes: List<String>,
 
     /**
      * An ARGB int color (typical on Android) that is used when Rover is asked to present a website
@@ -133,8 +133,19 @@ class CoreAssembler @JvmOverloads constructor(
                 .packageManager.getLaunchIntentForPackage(application.packageName)
         }
 
-        container.register(Scope.Singleton, String::class.java, "deepLinkScheme") { _ ->
-            "rv-$deepLinkSchemeSlug"
+        container.register(Scope.Singleton, UrlSchemes::class.java) { _ ->
+
+            urlSchemes.forEach { urlScheme ->
+                when {
+                    urlScheme.isBlank() -> throw RuntimeException("Deep link URL scheme must not be blank.")
+                // TODO: invert this. require people to include the rv- part of the slug.
+                    !urlScheme.startsWith("rv-") -> throw RuntimeException("Rover URL schemes must start with `rv-`.  See the documentation for Deep Links.")
+                    urlScheme.contains(" ") -> throw RuntimeException("Deep link scheme slug must not contain spaces.")
+                // TODO: check for special characters.
+                }
+            }
+
+            UrlSchemes(urlSchemes)
         }
 
         container.register(Scope.Singleton, NetworkClient::class.java) { resolver ->
@@ -215,10 +226,11 @@ class CoreAssembler @JvmOverloads constructor(
             )
         }
 
-        container.register(Scope.Singleton, DeviceAttributesInterface::class.java) { resolver ->
-            DeviceAttributes(
+        container.register(Scope.Singleton, UserInfoInterface::class.java) { resolver ->
+            UserInfo(
                 resolver.resolveSingletonOrFail(LocalStorage::class.java),
-                resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java)
+                resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java),
+                resolver.resolveSingletonOrFail(DateFormattingInterface::class.java)
             )
         }
 
@@ -251,9 +263,9 @@ class CoreAssembler @JvmOverloads constructor(
         }
 
         container.register(Scope.Singleton, ContextProvider::class.java, "attributes") { resolver ->
-            DeviceAttributesContextProvider(
+            UserInfoContextProvider(
                 resolver.resolveSingletonOrFail(
-                    DeviceAttributesInterface::class.java
+                    UserInfoInterface::class.java
                 )
             )
         }
@@ -318,14 +330,14 @@ class CoreAssembler @JvmOverloads constructor(
             LinkOpenInterface::class.java
         ) { resolver ->
             LinkOpen(
-                resolver.resolveSingletonOrFail(Router::class.java),
-                deepLinkSchemeSlug
+                resolver.resolveSingletonOrFail(Router::class.java)
             )
         }
 
         container.register(Scope.Singleton, SessionStoreInterface::class.java) { resolver ->
             SessionStore(
-                resolver.resolveSingletonOrFail(LocalStorage::class.java)
+                resolver.resolveSingletonOrFail(LocalStorage::class.java),
+                resolver.resolveSingletonOrFail(DateFormattingInterface::class.java)
             )
         }
 
@@ -384,3 +396,7 @@ class CoreAssembler @JvmOverloads constructor(
         }
     }
 }
+
+data class UrlSchemes(
+    val schemes: List<String>
+)

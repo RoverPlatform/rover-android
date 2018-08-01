@@ -1,12 +1,12 @@
 package io.rover.core.data.graphql.operations.data
 
-import io.rover.core.platform.DateFormattingInterface
 import io.rover.core.data.domain.DeviceContext
 import io.rover.core.data.domain.EventSnapshot
 import io.rover.core.data.graphql.getDate
 import io.rover.core.data.graphql.putProp
 import io.rover.core.data.graphql.safeGetString
 import io.rover.core.data.graphql.safeOptString
+import io.rover.core.platform.DateFormattingInterface
 import org.json.JSONObject
 import java.util.UUID
 
@@ -28,9 +28,9 @@ internal fun EventSnapshot.asJson(
 
         props.forEach { putProp(this@asJson, it) }
 
-        putProp(this@asJson, EventSnapshot::attributes) { it.encodeJson() }
+        putProp(this@asJson, EventSnapshot::attributes) { it.encodeJson(dateFormatting) }
 
-        putProp(this@asJson, EventSnapshot::deviceContext, "device") { it.asJson() }
+        putProp(this@asJson, EventSnapshot::deviceContext, "device") { it.asJson(dateFormatting) }
     }
 }
 

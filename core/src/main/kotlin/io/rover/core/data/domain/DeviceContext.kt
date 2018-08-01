@@ -66,7 +66,7 @@ data class DeviceContext(
     /**
      * Device attributes.
      */
-    val attributes: Attributes
+    val userInfo: Attributes
 ) {
     companion object {
         internal fun blank(): DeviceContext {

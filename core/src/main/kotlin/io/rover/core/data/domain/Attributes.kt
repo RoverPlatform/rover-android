@@ -4,12 +4,16 @@ package io.rover.core.data.domain
  * The Rover API data model sometimes includes unstructured data.  See [Attributes].
  */
 sealed class AttributeValue {
-    data class Integer(val value: kotlin.Int) : AttributeValue()
-    data class String(val value: kotlin.String) : AttributeValue()
-    data class Double(val value: kotlin.Double) : AttributeValue()
-    data class Boolean(val value: kotlin.Boolean) : AttributeValue()
-    data class URL(val value: java.net.URI) : AttributeValue()
-    data class Hash(val hash: Map<kotlin.String, AttributeValue>) : AttributeValue()
+    abstract class Scalar: AttributeValue() {
+        data class Integer(val value: kotlin.Int) : Scalar()
+        data class String(val value: kotlin.String) : Scalar()
+        data class Double(val value: kotlin.Double) : Scalar()
+        data class Boolean(val value: kotlin.Boolean) : Scalar()
+        data class URL(val value: java.net.URI) : Scalar()
+        data class Date(val date: java.util.Date) : Scalar()
+    }
+
+    data class Hash(val hash: Attributes) : AttributeValue()
     data class Array(val values: List<AttributeValue>) : AttributeValue()
 }
 

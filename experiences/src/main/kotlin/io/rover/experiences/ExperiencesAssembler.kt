@@ -3,6 +3,7 @@ package io.rover.experiences
 import android.content.Context
 import android.os.Parcelable
 import android.util.DisplayMetrics
+import io.rover.core.UrlSchemes
 import io.rover.core.assets.AssetService
 import io.rover.core.assets.ImageOptimizationServiceInterface
 import io.rover.core.container.Assembler
@@ -413,7 +414,7 @@ class ExperiencesAssembler: Assembler {
         resolver.resolveSingletonOrFail(Router::class.java).apply {
             registerRoute(
                 PresentExperienceRoute(
-                    resolver.resolveSingletonOrFail(String::class.java, "deepLinkScheme"),
+                    resolver.resolveSingletonOrFail(UrlSchemes::class.java).schemes,
                     resolver.resolveSingletonOrFail(PresentExperienceIntents::class.java)
                 )
             )

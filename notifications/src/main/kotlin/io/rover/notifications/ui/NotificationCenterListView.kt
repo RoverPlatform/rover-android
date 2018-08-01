@@ -40,24 +40,21 @@ import io.rover.notifications.ui.concerns.NotificationItemViewModelInterface
  *
  * 1. Add [NotificationCenterListView] to your layout, either in XML or progammatically.
  *
- * 2. Set [notificationCenterHost] with your own implementation of [NotificationCenterHost].  This
- * is needed for navigation in response to tapping notifications to work correctly.
+ * 2. Set [activity] with the host Activity that contains the List View.  This is needed for
+ * navigation in response to tapping notifications to work correctly.
  *
- * 3. Then use the implementation of [ViewModelFactoryInterface.viewModelForNotificationCenterList]
- * (either the provided one or your own custom version) to create an instance of the needed
- * [NotificationCenterListViewModel] view model, and then bind it with [setViewModel].
+ * 3. Resolve an instance of [NotificationCenterListViewModelInterface] from the Rover DI container
+ * and set it as the [viewModel].
  *
- * You may specify the row item view by either setting xml property TODO or with TODO
- *
- * Also you must override [PushPlugin.notificationCenterIntent] to produce an Intent that will get
- * your app to the state where your usage of NotificationCenterView is being displayed.
+
  *
  * Note about Android state restoration: Rover SDK views handle state saving & restoration through
  * their view models, so you will need store a Parcelable on behalf of ExperienceView and
  * [NotificationCentreViewModel] (grabbing the state parcelable from the view model at save time and
  * restoring it by passing it to the view model factory at restart time).
  *
- * See [StandaloneNotificationCenterActivity] for an example of how to integrate.
+ * See the [Notification Center
+ * Documentation](https://www.rover.io/docs/android/notification-center/).
  */
 open class NotificationCenterListView : CoordinatorLayout {
     constructor(context: Context?) : super(context)

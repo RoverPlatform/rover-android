@@ -1,24 +1,24 @@
 package io.rover.location
 
-import io.rover.location.domain.Region
-import io.rover.core.data.domain.AttributeValue
+import io.rover.core.events.EventQueueService.Companion.ROVER_NAMESPACE
 import io.rover.core.events.EventQueueServiceInterface
 import io.rover.core.events.domain.Event
+import io.rover.location.domain.Location
+import io.rover.location.domain.Region
+import io.rover.location.domain.events.asAttributeValue
 
 class LocationReportingService(
     private val eventQueueService: EventQueueServiceInterface
-): LocationReportingServiceInterface {
+) : LocationReportingServiceInterface {
     override fun trackEnterGeofence(geofence: Region.GeofenceRegion) {
         eventQueueService.trackEvent(
             Event(
                 "Geofence Region Entered",
                 hashMapOf(
-                    Pair("identifier", AttributeValue.Scalar.String(geofence.identifier)),
-                    Pair("latitude", AttributeValue.Scalar.Double(geofence.latitude)),
-                    Pair("longitude", AttributeValue.Scalar.Double(geofence.longitude)),
-                    Pair("radius", AttributeValue.Scalar.Double(geofence.radius))
+                    Pair("region", geofence.asAttributeValue())
                 )
-            )
+            ),
+            ROVER_NAMESPACE
         )
     }
 
@@ -27,12 +27,10 @@ class LocationReportingService(
             Event(
                 "Geofence Region Exited",
                 hashMapOf(
-                    Pair("identifier", AttributeValue.Scalar.String(geofence.identifier)),
-                    Pair("latitude", AttributeValue.Scalar.Double(geofence.latitude)),
-                    Pair("longitude", AttributeValue.Scalar.Double(geofence.longitude)),
-                    Pair("radius", AttributeValue.Scalar.Double(geofence.radius))
+                    Pair("region", geofence.asAttributeValue())
                 )
-            )
+            ),
+            ROVER_NAMESPACE
         )
     }
 
@@ -41,12 +39,10 @@ class LocationReportingService(
             Event(
                 "Beacon Region Entered",
                 hashMapOf(
-                    Pair("identifier", AttributeValue.Scalar.String(beaconRegion.identifier)),
-                    Pair("uuid", AttributeValue.Scalar.String(beaconRegion.uuid.toString())),
-                    Pair("major", AttributeValue.Scalar.String(beaconRegion.major.toString())),
-                    Pair("minor", AttributeValue.Scalar.String(beaconRegion.minor.toString()))
+                    Pair("region", beaconRegion.asAttributeValue())
                 )
-            )
+            ),
+            ROVER_NAMESPACE
         )
     }
 
@@ -55,29 +51,22 @@ class LocationReportingService(
             Event(
                 "Beacon Region Exited",
                 hashMapOf(
-                    Pair("identifier", AttributeValue.Scalar.String(beaconRegion.identifier)),
-                    Pair("uuid", AttributeValue.Scalar.String(beaconRegion.uuid.toString())),
-                    Pair("major", AttributeValue.Scalar.String(beaconRegion.major.toString())),
-                    Pair("minor", AttributeValue.Scalar.String(beaconRegion.minor.toString()))
+                    Pair("region", beaconRegion.asAttributeValue())
                 )
-            )
+            ),
+            ROVER_NAMESPACE
         )
     }
 
-    override fun updateLocation(location: LocationReportingServiceInterface.Location) {
+    override fun updateLocation(location: Location) {
         eventQueueService.trackEvent(
             Event(
                 "Location Updated",
                 hashMapOf(
-                    Pair("latitude", AttributeValue.Scalar.Double(location.latitude)),
-                    Pair("longitude", AttributeValue.Scalar.Double(location.longitude)),
-                    Pair("altitude", AttributeValue.Scalar.Double(location.altitude))
-                ) + (if(location.horizontalAccurancy != null) {
-                    hashMapOf(Pair("horizontalAccuracy", AttributeValue.Scalar.Double(location.horizontalAccurancy.toDouble())))
-                } else hashMapOf()) + if(location.verticalAccuracy != null) {
-                    hashMapOf(Pair("verticalAccuracy", AttributeValue.Scalar.Double(location.verticalAccuracy.toDouble())))
-                } else hashMapOf()
-            )
+                    Pair("location", location.asAttributeValue())
+                )
+            ),
+            ROVER_NAMESPACE
         )
     }
 }

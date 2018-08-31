@@ -35,7 +35,7 @@ class NotificationsRepository(
     private val eventQueue: EventQueueServiceInterface,
     private val stateManagerService: StateManagerServiceInterface,
     localStorage: LocalStorage
-): NotificationsRepositoryInterface {
+) : NotificationsRepositoryInterface {
     // TODO: gate access to the localStorage via a single-thread executor pool.
 
     // TODO: break this object up into: Notifications Remote API, possibly make StateStore have a
@@ -134,7 +134,7 @@ class NotificationsRepository(
         queryFragment,
         listOf("notificationFields")
     ).flatMap { networkResult ->
-        when(networkResult) {
+        when (networkResult) {
             is NetworkResult.Error -> {
                 Publishers.concat(
                     Publishers.just(NotificationsRepositoryInterface.Emission.Event.Refreshing(false)),
@@ -210,7 +210,7 @@ class NotificationsRepository(
      */
     private fun doMarkAsDeleted(notification: Notification): Publisher<List<Notification>> {
         return currentNotificationsOnDisk().flatMap { onDisk ->
-            if(onDisk == null) {
+            if (onDisk == null) {
                 log.w("No notifications currently stored on disk.  Cannot mark notification as deleted.")
                 return@flatMap Publishers.empty<List<Notification>>()
             }
@@ -218,12 +218,12 @@ class NotificationsRepository(
             val alreadyDeleted = onDisk.find { it.id == notification.id }?.isDeleted ?: false
 
             val modified = onDisk.map { onDiskNotification ->
-                if(onDiskNotification.id == notification.id) {
+                if (onDiskNotification.id == notification.id) {
                     onDiskNotification.copy(isDeleted = true)
                 } else onDiskNotification
             }
 
-            if(!alreadyDeleted) {
+            if (!alreadyDeleted) {
                 eventQueue.trackEvent(
                     Event(
                         "Notification Marked Deleted",
@@ -247,7 +247,7 @@ class NotificationsRepository(
      */
     private fun doMarkAsRead(notification: Notification): Publisher<List<Notification>> {
         return currentNotificationsOnDisk().flatMap { onDisk ->
-            if(onDisk == null) {
+            if (onDisk == null) {
                 log.w("No notifications currently stored on disk.  Cannot mark notification as read.")
                 return@flatMap Publishers.empty<List<Notification>>()
             }
@@ -255,12 +255,12 @@ class NotificationsRepository(
             val alreadyRead = onDisk.find { it.id == notification.id }?.isRead ?: false
 
             val modified = onDisk.map { onDiskNotification ->
-                if(onDiskNotification.id == notification.id) {
+                if (onDiskNotification.id == notification.id) {
                     onDiskNotification.copy(isRead = true)
                 } else onDiskNotification
             }
 
-            if(!alreadyRead) {
+            if (!alreadyRead) {
                 eventQueue.trackEvent(
                     Event(
                         "Notification Marked Read",
@@ -296,26 +296,25 @@ class NotificationsRepository(
         private const val MAX_NOTIFICATIONS_LIMIT = 100
     }
 
-
     sealed class Action {
         /**
          * User has requested a refresh.
          */
-        class Refresh: Action()
+        class Refresh : Action()
 
         /**
          * User has requested a refresh.
          */
-        class MarkRead(val notification: Notification): Action()
+        class MarkRead(val notification: Notification) : Action()
 
         /**
          * User has requested a mark to be delete.
          */
-        class MarkDeleted(val notification: Notification): Action()
+        class MarkDeleted(val notification: Notification) : Action()
 
         /**
          * A notification arrived by push.  This will add it to the repository.
          */
-        class NotificationArrivedByPush(val notification: Notification): Action()
+        class NotificationArrivedByPush(val notification: Notification) : Action()
     }
 }

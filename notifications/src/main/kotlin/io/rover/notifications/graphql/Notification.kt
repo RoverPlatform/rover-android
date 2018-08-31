@@ -23,9 +23,9 @@ internal fun Notification.encodeJson(dateFormatting: DateFormattingInterface): J
         putProp(this@encodeJson, Notification::isNotificationCenterEnabled, "isNotificationCenterEnabled")
         putProp(this@encodeJson, Notification::isRead, "isRead")
         putProp(this@encodeJson, Notification::isDeleted, "isDeleted")
-        putProp(this@encodeJson, Notification::deliveredAt, "deliveredAt") { dateFormatting.dateAsIso8601(it)}
+        putProp(this@encodeJson, Notification::deliveredAt, "deliveredAt") { dateFormatting.dateAsIso8601(it) }
         putProp(this@encodeJson, Notification::expiresAt, "expiresAt") { it.whenNotNull { dateFormatting.dateAsIso8601(it) } }
-        putProp(this@encodeJson, Notification::attachment, "attachment") { it.whenNotNull { it.encodeJson() }}
+        putProp(this@encodeJson, Notification::attachment, "attachment") { it.whenNotNull { it.encodeJson() } }
         putProp(this@encodeJson, Notification::tapBehavior, "tapBehavior") { it.encodeJson() }
         putProp(this@encodeJson, Notification::campaignId, "campaignID")
     }
@@ -35,7 +35,7 @@ internal fun NotificationAttachment.Companion.decodeJson(json: JSONObject): Noti
     // all three types have URLs.
     val type = json.safeGetString("type")
     val url = URL(json.safeGetString("url"))
-    return when(type) {
+    return when (type) {
         "AUDIO" -> NotificationAttachment.Audio(url)
         "IMAGE" -> NotificationAttachment.Image(url)
         "VIDEO" -> NotificationAttachment.Video(url)
@@ -48,7 +48,7 @@ internal fun NotificationAttachment.encodeJson(): JSONObject {
         putProp(this@encodeJson, NotificationAttachment::url, "url")
         put(
             "type",
-            when(this@encodeJson) {
+            when (this@encodeJson) {
                 is NotificationAttachment.Video -> "VIDEO"
                 is NotificationAttachment.Audio -> "AUDIO"
                 is NotificationAttachment.Image -> "IMAGE"
@@ -75,11 +75,10 @@ internal fun Notification.Companion.decodeJson(json: JSONObject, dateFormatting:
     )
 }
 
-
 internal fun Notification.TapBehavior.Companion.decodeJson(json: JSONObject): Notification.TapBehavior {
     val typeName = json.safeGetString("__typename")
 
-    return when(typeName) {
+    return when (typeName) {
         "OpenURLNotificationTapBehavior" -> Notification.TapBehavior.OpenUri(
             uri = json.safeGetUri("url")
         )
@@ -93,7 +92,7 @@ internal fun Notification.TapBehavior.Companion.decodeJson(json: JSONObject): No
 
 internal fun Notification.TapBehavior.encodeJson(): JSONObject {
     return JSONObject().apply {
-        put("__typename", when(this@encodeJson) {
+        put("__typename", when (this@encodeJson) {
             is Notification.TapBehavior.OpenApp -> {
                 "OpenAppNotificationTapBehavior"
             }

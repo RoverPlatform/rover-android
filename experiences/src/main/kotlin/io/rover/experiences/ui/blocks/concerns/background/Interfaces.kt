@@ -2,9 +2,9 @@ package io.rover.experiences.ui.blocks.concerns.background
 
 import android.graphics.Bitmap
 import org.reactivestreams.Publisher
-import io.rover.core.data.domain.Background
-import io.rover.core.ui.BackgroundImageConfiguration
-import io.rover.core.ui.concerns.BindableView
+import io.rover.experiences.data.domain.Background
+import io.rover.experiences.ui.BackgroundImageConfiguration
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.BindableViewModel
 import io.rover.core.ui.concerns.MeasuredSize
 import io.rover.core.ui.concerns.PrefetchAfterMeasure
@@ -14,13 +14,13 @@ import io.rover.core.ui.concerns.PrefetchAfterMeasure
  *
  * Backgrounds can specify a background colour or image.
  */
-interface ViewBackgroundInterface: BindableView<BackgroundViewModelInterface>
+interface ViewBackgroundInterface : MeasuredBindableView<BackgroundViewModelInterface>
 
 /**
  * This interface is exposed by View Models that have support for a background.  Equivalent to
  * the [Background] domain model interface.
  */
-interface BackgroundViewModelInterface: BindableViewModel, PrefetchAfterMeasure {
+interface BackgroundViewModelInterface : BindableViewModel, PrefetchAfterMeasure {
     val backgroundColor: Int
 
     /**

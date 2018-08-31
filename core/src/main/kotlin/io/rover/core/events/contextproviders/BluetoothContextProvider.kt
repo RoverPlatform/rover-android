@@ -6,7 +6,7 @@ import io.rover.core.events.ContextProvider
 
 class BluetoothContextProvider(
     bluetoothAdapter: BluetoothAdapter
-): ContextProvider {
+) : ContextProvider {
     // cache the value at startup, since the context providers get used for each event.  It's fine
     // if we transmit the old value until the app gets restarted if the bluetooth state changes.
     private val bluetoothEnabled = bluetoothAdapter.isEnabled

@@ -8,7 +8,7 @@ import io.rover.core.events.ContextProvider
  */
 class ApplicationContextProvider(
     applicationContext: android.content.Context
-): ContextProvider {
+) : ContextProvider {
     private val packageInfo = applicationContext.packageManager.getPackageInfo(applicationContext.packageName, 0)!!
 
     override fun captureContext(deviceContext: DeviceContext): DeviceContext {

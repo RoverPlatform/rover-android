@@ -21,7 +21,7 @@ interface ContextProvider {
     fun captureContext(deviceContext: DeviceContext): DeviceContext
 
     /**
-     * Called when this Context Provider is registered with the events plugin.
+     * Called when this Context Provider is registered with the events queue.
      */
     fun registeredWithEventQueue(eventQueue: EventQueueServiceInterface) { }
 }

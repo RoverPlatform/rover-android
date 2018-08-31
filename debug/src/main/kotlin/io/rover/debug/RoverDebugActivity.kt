@@ -23,10 +23,8 @@ class RoverDebugActivity : AppCompatActivity() {
             .commit()
     }
 
-    class RoverDebugPreferenceFragment: PreferenceFragmentCompat() {
-        private val debugPreferences = Rover.sharedInstance.resolveSingletonOrFail(
-            DebugPreferences::class.java
-        )
+    class RoverDebugPreferenceFragment : PreferenceFragmentCompat() {
+        private val debugPreferences = Rover.sharedInstance.debugPreferences
 
         override fun onDestroy() {
             super.onDestroy()
@@ -35,7 +33,9 @@ class RoverDebugActivity : AppCompatActivity() {
             )
         }
 
+        @Suppress("UNUSED_PARAMETER")
         private fun sharedPreferenceChangeListener(sharedPreferences: SharedPreferences, key: String) {
+            // unused parameter suppressed because this method needs to match a signature.
             debugPreferences.notifyChange(key)
         }
 

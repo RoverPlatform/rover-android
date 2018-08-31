@@ -46,14 +46,14 @@ interface ExperienceViewModelInterface : BindableViewModel {
              * Do not display this message.
              */
             val engineeringReason: String
-        ): Event()
+        ) : Event()
 
         /**
          * The user should be navigated somewhere external to the experience.
          */
         data class NavigateTo(
             val externalNavigationEvent: ExperienceExternalNavigationEvent
-        ): Event()
+        ) : Event()
     }
 
     /**

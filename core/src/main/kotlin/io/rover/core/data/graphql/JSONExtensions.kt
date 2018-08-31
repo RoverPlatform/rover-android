@@ -46,7 +46,7 @@ fun JSONObject.optIntOrNull(name: String): Int? {
  * See [Android Bug #36924550](https://issuetracker.google.com/issues/36924550).
  */
 fun JSONObject.safeOptString(name: String): String? {
-    return if(isNull(name)) null else optString(name, null)
+    return if (isNull(name)) null else optString(name, null)
 }
 
 /**
@@ -59,7 +59,7 @@ fun JSONObject.safeOptString(name: String): String? {
  * See [Android Bug #36924550](https://issuetracker.google.com/issues/36924550).
  */
 fun JSONObject.safeGetString(name: String): String {
-    if(isNull(name)) {
+    if (isNull(name)) {
         throw JSONException("Field '$name' is null instead of string")
     }
     return getString(name)
@@ -85,14 +85,14 @@ fun JSONObject.safeGetUri(name: String): URI {
  * The stock [JSONObject.optBoolean] method cannot tell you if the value was unset or not present.
  */
 fun JSONObject.safeOptBoolean(name: String): Boolean? {
-    return if(isNull(name) || !this.has(name)) null else optBoolean(name)
+    return if (isNull(name) || !this.has(name)) null else optBoolean(name)
 }
 
 fun JSONObject.safeOptInt(name: String): Int? {
-    return if(isNull(name) || !this.has(name)) null else optInt(name)
+    return if (isNull(name) || !this.has(name)) null else optInt(name)
 }
 
-fun JSONObject.getDate(name: String, dateFormatting: DateFormattingInterface, localTime : Boolean = false): Date {
+fun JSONObject.getDate(name: String, dateFormatting: DateFormattingInterface, localTime: Boolean = false): Date {
     try {
         return dateFormatting.iso8601AsDate(getString(name), localTime)
     } catch (e: ParseException) {
@@ -104,7 +104,7 @@ fun JSONObject.getDate(name: String, dateFormatting: DateFormattingInterface, lo
     }
 }
 
-fun JSONObject.safeOptDate(name: String, dateFormatting: DateFormattingInterface, localTime : Boolean = false): Date? {
+fun JSONObject.safeOptDate(name: String, dateFormatting: DateFormattingInterface, localTime: Boolean = false): Date? {
     try {
         return if (isNull(name) || !this.has(name)) null else optString(name, null).whenNotNull { dateFormatting.iso8601AsDate(it, localTime) }
     } catch (e: ParseException) {
@@ -133,7 +133,7 @@ fun <T, R> JSONObject.putProp(obj: T, prop: KProperty1<T, R>, name: String, tran
 /**
  * Get an [Iterable] over a [JSONArray], assuming/coercing all within to be strings.
  */
-internal fun JSONArray.getStringIterable(): Iterable<String> = getIterable()
+fun JSONArray.getStringIterable(): Iterable<String> = getIterable()
 
 /**
  * Get an [Iterable] over a [JSONArray], assuming/coercing all within to be [JSONObject]s.

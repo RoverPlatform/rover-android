@@ -1,13 +1,11 @@
 package io.rover.core.ui.concerns
 
 import android.view.View
-import io.rover.core.ui.RectF
 
 /**
  * A ViewModel that an appropriate Rover view can be bound to.
  */
 interface BindableViewModel
-
 
 /**
  * View models that wish to be informed early (when they are present on the screen but out of view)
@@ -28,13 +26,29 @@ interface PrefetchAfterMeasure {
  * various different [View] subclasses.
  */
 interface BindableView<VM : BindableViewModel> {
-    // TODO rename to viewModelBinding
-    var viewModel: Binding<VM>?
+    var viewModel: VM?
+
+    val view: View
+        get() = this as View
+}
+
+/**
+ * Wraps a Rover Android [View] that can be bound to a [BindableViewModel].
+ *
+ * This is usually implemented by the views themselves, and [view] just returns `this`.  This is an
+ * interface rather than an abstract [View] subclass in order to allow implementers to inherit from
+ * various different [View] subclasses.
+ *
+ * This is a version of [BindableView] that is meant for use with Rover's internal layout system
+ * that is used independently of the Android layout system.
+ */
+interface MeasuredBindableView<VM : BindableViewModel> {
+    var viewModelBinding: Binding<VM>?
 
     val view: View
         get() = this as View
 
-    data class Binding<out VM: BindableViewModel>(
+    data class Binding<out VM : BindableViewModel>(
         /**
          * The view model which should be bound to the view, and its contents/behaviour thus
          * displayed.
@@ -65,11 +79,3 @@ data class MeasuredSize(
      */
     val density: Float
 )
-
-fun RectF.toMeasuredSize(density: Float): MeasuredSize {
-    return MeasuredSize(
-        width(),
-        height(),
-        density
-    )
-}

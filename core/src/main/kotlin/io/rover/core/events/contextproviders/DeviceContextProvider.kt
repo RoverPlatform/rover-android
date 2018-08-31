@@ -8,7 +8,7 @@ import io.rover.core.events.ContextProvider
  * Captures and adds details about the product details of the user's device and its running Android
  * version to [DeviceContext].
  */
-class DeviceContextProvider: ContextProvider {
+class DeviceContextProvider : ContextProvider {
     override fun captureContext(deviceContext: DeviceContext): DeviceContext {
         return deviceContext.copy(
             operatingSystemVersion = Build.VERSION.RELEASE,

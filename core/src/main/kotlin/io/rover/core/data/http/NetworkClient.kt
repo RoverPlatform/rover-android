@@ -33,7 +33,6 @@ class AndroidHttpsUrlConnectionNetworkClient(
         // Using the Android HttpsUrlConnection HTTP client inherited from Java, which
         // has a synchronous API.
 
-
         return Publishers.create<HttpClientResponse> { subscriber ->
             this@AndroidHttpsUrlConnectionNetworkClient.log.d("Starting request: $request")
             val connection = request.url
@@ -68,7 +67,7 @@ class AndroidHttpsUrlConnectionNetworkClient(
                 .apply {
                     // TODO: set read and connect timeouts.
                     // TODO: set a nice user agent.
-                    if(requestHasBody) {
+                    if (requestHasBody) {
                         setFixedLengthStreamingMode(requestBody?.size ?: 0)
                         setRequestProperty("Content-Encoding", "gzip")
                     }
@@ -144,7 +143,6 @@ class AndroidHttpsUrlConnectionNetworkClient(
                                 result
                             }
                         }
-
                     } catch (e: IOException) {
                         HttpClientResponse.ConnectionFailure(
                             e
@@ -157,7 +155,6 @@ class AndroidHttpsUrlConnectionNetworkClient(
             this@AndroidHttpsUrlConnectionNetworkClient.log.v("Cache hit count currently is: ${HttpResponseCache.getInstalled().hitCount}")
 
             subscriber.onNext(result)
-
         }.subscribeOn(ioScheduler)
     }
 

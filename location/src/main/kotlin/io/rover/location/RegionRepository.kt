@@ -18,7 +18,7 @@ import org.json.JSONObject
 class RegionRepository(
     stateManagerService: StateManagerServiceInterface,
     mainThreadScheduler: Scheduler
-): RegionRepositoryInterface {
+) : RegionRepositoryInterface {
     override fun registerObserver(regionObserver: RegionObserver) {
         updates.subscribe { regions ->
             regionObserver.regionsUpdated(regions)
@@ -39,7 +39,7 @@ class RegionRepository(
         listOf("regionFields")
     )
         .map { networkResult ->
-            when(networkResult) {
+            when (networkResult) {
                 is NetworkResult.Success -> decodeRegionsPayload(networkResult.response)
                 is NetworkResult.Error -> {
                     log.v("Regions not updated due to: ${networkResult.throwable.message}")

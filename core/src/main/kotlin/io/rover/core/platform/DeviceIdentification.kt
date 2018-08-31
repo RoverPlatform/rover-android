@@ -45,6 +45,6 @@ class DeviceIdentification(
     // but not as the device hostname.  So, we'll ignore the device hostname and use the Bluetooth
     // name, if available.
     override val deviceName: String? = Settings.Secure.getString(
-            applicationContext.contentResolver, "bluetooth_name"
-        )
+        applicationContext.contentResolver, "bluetooth_name"
+    )
 }

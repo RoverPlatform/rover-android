@@ -18,7 +18,7 @@ class StateManagerService(
     private val deviceIdentification: DeviceIdentificationInterface,
     private val graphQlApiService: GraphQlApiServiceInterface,
     autoFetch: Boolean = true
-): StateManagerServiceInterface {
+) : StateManagerServiceInterface {
     private val deviceIdentifer = deviceIdentification.installationIdentifier
 
     override fun updatesForQueryFragment(queryFragment: String, neededPersistedFragments: List<String>): Publisher<NetworkResult<JSONObject>> {
@@ -38,7 +38,7 @@ class StateManagerService(
     private val queryFragments: MutableSet<String> = mutableSetOf()
     private val neededPersistedFragments: MutableSet<String> = mutableSetOf()
 
-    private val actionSubject =  PublishSubject<Unit>()
+    private val actionSubject = PublishSubject<Unit>()
 
     private val updates = actionSubject.flatMap {
 
@@ -46,8 +46,8 @@ class StateManagerService(
             DeviceStateNetworkRequest(deviceIdentifer, queryFragments, neededPersistedFragments.toList())
         )
     }.doOnNext { update ->
-        if(update is NetworkResult.Error) {
-            log.w("Unable to update device state because: ${update}")
+        if (update is NetworkResult.Error) {
+            log.w("Unable to update device state because: $update")
         }
     }
     .share()
@@ -56,7 +56,7 @@ class StateManagerService(
         // trigger refresh for the next loop of the Android main looper.  This will happen
         // after all of the Rover DI has completed and thus all of the stores have been registered.
 
-        if(autoFetch) {
+        if (autoFetch) {
             Handler(Looper.getMainLooper()).post {
                 triggerRefresh()
             }
@@ -68,7 +68,7 @@ private class DeviceStateNetworkRequest(
     private val deviceIdentifier: String,
     private val queryFragments: Set<String>,
     override val fragments: List<String>
-): GraphQlRequest<JSONObject> {
+) : GraphQlRequest<JSONObject> {
     override val operationName: String? = "StateRefresh"
 
     override val mutation: Boolean = false

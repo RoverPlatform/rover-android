@@ -22,9 +22,9 @@ import io.rover.core.platform.DateFormattingInterface
  * So, this Activity will be responsible for emitting that that side-effect happens, although
  * it does so by delegating to [NotificationOpen].
  */
-class TransientNotificationLaunchActivity: AppCompatActivity() {
+class TransientNotificationLaunchActivity : AppCompatActivity() {
     private val notificationOpen by lazy {
-        Rover.sharedInstance.resolveSingletonOrFail(NotificationOpenInterface::class.java)
+        Rover.sharedInstance.notificationOpen
     }
 
     // TODO: make transparent/invisible somehow to avoid flicker
@@ -41,7 +41,7 @@ class TransientNotificationLaunchActivity: AppCompatActivity() {
         // is the whole reason for this activity existing.
         val intent = notificationOpen.intentForOpeningNotificationFromJson(notificationJson)
 
-        if(intent.resolveActivityInfo(this.packageManager, PackageManager.GET_SHARED_LIBRARY_FILES) == null) {
+        if (intent.resolveActivityInfo(this.packageManager, PackageManager.GET_SHARED_LIBRARY_FILES) == null) {
             log.e(
                 "No activity could be found to handle the Intent needed to start the notification.\n" +
                     "This could be because the deep link scheme slug you set on NotificationsAssembler does not match what is set in your Rover account, or that an Activity is missing from your manifest.\n\n" +

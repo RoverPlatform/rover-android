@@ -2,6 +2,7 @@ package io.rover.core.version
 
 import android.content.Context
 import io.rover.core.data.domain.AttributeValue
+import io.rover.core.events.EventQueueService.Companion.ROVER_NAMESPACE
 import io.rover.core.events.EventQueueServiceInterface
 import io.rover.core.events.domain.Event
 import io.rover.core.logging.log
@@ -11,7 +12,7 @@ class VersionTracker(
     private val applicationContext: Context,
     private val eventQueueService: EventQueueServiceInterface,
     localStorage: LocalStorage
-): VersionTrackerInterface {
+) : VersionTrackerInterface {
     override fun trackAppVersion() {
 
         // we want to get the version name/code of the app the SDK is installed in, not the SDK
@@ -26,7 +27,7 @@ class VersionTracker(
         val lastSeenName = store[LAST_SEEN_VERSION_NAME_KEY] ?: ""
 
         // emit event:
-        when(lastSeenCode) {
+        when (lastSeenCode) {
             // no change:
             versionCode -> Unit
             // fresh install, or at least first update to include the Rover SDK:
@@ -35,7 +36,6 @@ class VersionTracker(
             in 0 until versionCode -> trackAppVersionChange(false, lastSeenCode, lastSeenName, versionCode, versionName)
             // upgrade:
             else -> trackAppVersionChange(true, lastSeenCode, lastSeenName, versionCode, versionName)
-
         }
 
         // now update our stored values:
@@ -49,15 +49,16 @@ class VersionTracker(
             Event(
                 "App Installed",
                 hashMapOf()
-            )
+            ),
+            ROVER_NAMESPACE
         )
     }
 
     private fun trackAppVersionChange(upgrade: Boolean, previousVersionCode: Int, previousVersionName: String, versionCode: Int, versionName: String) {
-        val verb = if(upgrade) "updated" else "downgraded"
+        val verb = if (upgrade) "updated" else "downgraded"
         log.v("App has been $verb from $previousVersionName ($previousVersionCode) to $versionName ($versionCode).")
 
-        if(upgrade) {
+        if (upgrade) {
             eventQueueService.trackEvent(
                 Event(
                     "App Updated",
@@ -66,7 +67,8 @@ class VersionTracker(
                         Pair("previousVersion", AttributeValue.Scalar.String(previousVersionName)),
                         Pair("previousBuild", AttributeValue.Scalar.Integer(previousVersionCode))
                     )
-                )
+                ),
+                ROVER_NAMESPACE
             )
         }
     }

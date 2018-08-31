@@ -57,25 +57,24 @@ data class Notification(
 
     val campaignId: String
 ) {
-    companion object;
-
     sealed class TapBehavior {
-        data class PresentWebsite(val url: URI): TapBehavior()
-        data class OpenUri(val uri: URI): TapBehavior()
-        class OpenApp: TapBehavior()
+        data class PresentWebsite(val url: URI) : TapBehavior()
+        data class OpenUri(val uri: URI) : TapBehavior()
+        class OpenApp : TapBehavior()
 
         companion object
     }
-}
 
+    companion object
+}
 
 sealed class NotificationAttachment(
     val typeName: String,
     val url: URL
 ) {
-    class Audio(url: URL): NotificationAttachment("audio", url)
-    class Image(url: URL): NotificationAttachment("image", url)
-    class Video(url: URL): NotificationAttachment("video", url)
+    class Audio(url: URL) : NotificationAttachment("audio", url)
+    class Image(url: URL) : NotificationAttachment("image", url)
+    class Video(url: URL) : NotificationAttachment("video", url)
 
     override fun toString(): String {
         return "NotificationAttachment(typeName=$typeName, url=$url)"

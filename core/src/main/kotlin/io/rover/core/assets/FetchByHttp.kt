@@ -15,7 +15,7 @@ import java.util.concurrent.Executor
 /**
  * A simple HTTP downloader.
  */
-class ImageDownloader (
+class ImageDownloader(
     private val ioExecutor: Executor
 ) {
     /**
@@ -33,8 +33,8 @@ class ImageDownloader (
             var requested = false
             val subscription = object : Subscription {
                 override fun request(n: Long) {
-                    if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
-                    if(requested) return
+                    if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                    if (requested) return
                     requested = true
                     ioExecutor.execute {
                         val connection = url
@@ -125,7 +125,7 @@ class ImageDownloader (
                             }
                         }
 
-                        if(!cancelled) {
+                        if (!cancelled) {
                             subscriber.onNext(result)
                             subscriber.onComplete()
                         }

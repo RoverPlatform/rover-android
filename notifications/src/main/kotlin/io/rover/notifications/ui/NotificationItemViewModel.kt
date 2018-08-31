@@ -14,7 +14,7 @@ import io.rover.notifications.ui.concerns.NotificationItemViewModelInterface
 class NotificationItemViewModel(
     private val notificationItem: Notification,
     private val assetService: AssetService
-): NotificationItemViewModelInterface {
+) : NotificationItemViewModelInterface {
     override val showThumbnailArea: Boolean =
         notificationItem.attachment != null &&
             notificationItem.attachment is NotificationAttachment.Image
@@ -23,11 +23,11 @@ class NotificationItemViewModel(
         get() = notificationItem
 
     override fun requestThumbnailImage(): Publisher<Bitmap> {
-        return if(notificationItem.attachment == null || notificationItem.attachment !is NotificationAttachment.Image) {
+        return if (notificationItem.attachment == null || notificationItem.attachment !is NotificationAttachment.Image) {
             Publishers.empty()
         } else {
             assetService.getImageByUrl(notificationItem.attachment.url).flatMap { attachmentResult ->
-                when(attachmentResult) {
+                when (attachmentResult) {
                     is NetworkResult.Error -> {
                         log.w("Unable to fetch notification item image: ${attachmentResult.throwable.message}")
                         Publishers.empty()

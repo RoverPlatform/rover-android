@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import io.rover.core.Rover
+import io.rover.core.linkOpen
 import io.rover.core.logging.log
 import java.net.URI
 

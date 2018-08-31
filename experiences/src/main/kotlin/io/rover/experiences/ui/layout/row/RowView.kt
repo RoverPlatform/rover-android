@@ -9,7 +9,7 @@ import android.view.View
 import io.rover.experiences.ui.blocks.concerns.ViewComposition
 import io.rover.experiences.ui.blocks.concerns.background.ViewBackground
 import io.rover.experiences.ui.blocks.concerns.layout.LayoutableView
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.ViewModelBinding
 
 class RowView : View, LayoutableView<RowViewModelInterface> {
@@ -22,8 +22,8 @@ class RowView : View, LayoutableView<RowViewModelInterface> {
     private val viewComposition = ViewComposition()
     private val viewBackground = ViewBackground(this)
 
-    override var viewModel: BindableView.Binding<RowViewModelInterface>? by ViewModelBinding { binding, _ ->
-        viewBackground.viewModel = binding
+    override var viewModelBinding: MeasuredBindableView.Binding<RowViewModelInterface>? by ViewModelBinding { binding, _ ->
+        viewBackground.viewModelBinding = binding
     }
 
     override fun onDraw(canvas: Canvas) {

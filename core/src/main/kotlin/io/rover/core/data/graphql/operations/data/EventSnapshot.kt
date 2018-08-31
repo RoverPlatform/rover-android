@@ -36,7 +36,7 @@ internal fun EventSnapshot.asJson(
 
 internal fun EventSnapshot.Companion.decodeJson(json: JSONObject, dateFormatting: DateFormattingInterface): EventSnapshot {
     return EventSnapshot(
-        attributes = json.getJSONObject("attributes").toFlatAttributesHash(),
+        attributes = json.getJSONObject("attributes").toAttributesHash(),
         name = json.safeGetString("name"),
         timestamp = json.getDate("timestamp", dateFormatting, true),
         id = UUID.fromString(json.safeGetString("id")),

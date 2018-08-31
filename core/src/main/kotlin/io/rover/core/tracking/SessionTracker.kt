@@ -5,9 +5,10 @@ import android.os.Looper
 import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
 import io.rover.core.data.graphql.operations.data.encodeJson
-import io.rover.core.data.graphql.operations.data.toFlatAttributesHash
+import io.rover.core.data.graphql.operations.data.toAttributesHash
 import io.rover.core.data.graphql.safeGetString
 import io.rover.core.data.graphql.safeOptInt
+import io.rover.core.events.EventQueueService.Companion.ROVER_NAMESPACE
 import io.rover.core.events.EventQueueServiceInterface
 import io.rover.core.events.domain.Event
 import io.rover.core.logging.log
@@ -19,7 +20,6 @@ import java.util.Date
 import java.util.UUID
 import kotlin.math.max
 
-
 class SessionTracker(
     private val eventQueueService: EventQueueServiceInterface,
 
@@ -30,7 +30,7 @@ class SessionTracker(
      * temporarily.
      */
     private val keepAliveTime: Int
-): SessionTrackerInterface {
+) : SessionTrackerInterface {
     private val timerHandler = Handler(Looper.getMainLooper())
 
     override fun enterSession(
@@ -45,14 +45,15 @@ class SessionTracker(
             Event(
                 sessionStartEventName,
                 attributes
-            )
+            ),
+            ROVER_NAMESPACE
         )
     }
 
     private fun updateTimer() {
         timerHandler.removeCallbacksAndMessages(this::timerCallback)
         sessionStore.soonestExpiryInSeconds(keepAliveTime).whenNotNull { soonestExpiry ->
-            if(soonestExpiry == 0) {
+            if (soonestExpiry == 0) {
                 // execute the timer callback directly.
                 timerCallback()
             } else {
@@ -71,15 +72,17 @@ class SessionTracker(
                     expiredSession.eventName,
                     hashMapOf(
                         Pair("duration", AttributeValue.Scalar.Integer(expiredSession.durationSeconds))
-                    )
-                )
+                    ) + expiredSession.attributes
+                ),
+                ROVER_NAMESPACE
             )
         }
 
         updateTimer()
     }
 
-    override fun leaveSession(sessionKey: Any,
+    override fun leaveSession(
+        sessionKey: Any,
         sessionEndEventName: String,
         attributes: Attributes
     ) {
@@ -89,7 +92,8 @@ class SessionTracker(
             Event(
                 sessionEndEventName,
                 attributes
-            )
+            ),
+            ROVER_NAMESPACE
         )
 
         updateTimer()
@@ -99,7 +103,7 @@ class SessionTracker(
 class SessionStore(
     localStorage: LocalStorage,
     private val dateFormatting: DateFormattingInterface
-): SessionStoreInterface {
+) : SessionStoreInterface {
     private val store = localStorage.getKeyValueStorageFor(STORAGE_IDENTIFIER)
 
     override fun enterSession(sessionKey: Any, sessionEventName: String, attributes: Attributes) {
@@ -117,7 +121,7 @@ class SessionStore(
     override fun leaveSession(sessionKey: Any) {
         val existingEntry = getEntry(sessionKey)
 
-        if(existingEntry != null) {
+        if (existingEntry != null) {
             // there is indeed a session open for the given key, mark it as expiring.
             setEntry(sessionKey, existingEntry.copy(
                 closedAt = Date()
@@ -142,12 +146,11 @@ class SessionStore(
         store[sessionKey.toString()] = sessionEntry.encodeJson(dateFormatting).toString()
     }
 
-
     override fun soonestExpiryInSeconds(keepAliveSeconds: Int): Int? {
         // gather stale expiring session entries that have passed.
         val earliestExpiry = store.keys
             .mapNotNull { key -> getEntry(key) }
-            .mapNotNull { entry -> entry.closedAt?.time  }
+            .mapNotNull { entry -> entry.closedAt?.time }
             .map { closedAt -> closedAt + (keepAliveSeconds * 1000L) }
             // differential from current time in seconds, assuming expiry in the future.
             .map { expiryTimeMsEpoch ->
@@ -158,12 +161,13 @@ class SessionStore(
         // if there's a negative number, return 0 because there's already expired entries that need
         // to be dealt with now.
 
-       return earliestExpiry.whenNotNull {  earliest ->
-           max(earliest, 0) }
+       return earliestExpiry.whenNotNull { earliest ->
+           max(earliest, 0)
+       }
     }
 
     override fun collectExpiredSessions(keepAliveSeconds: Int): List<SessionStoreInterface.ExpiredSession> {
-        val expiringEntries =  store.keys
+        val expiringEntries = store.keys
             .mapNotNull { key ->
                 getEntry(key).whenNotNull { Pair(key, it) }
             }
@@ -197,15 +201,14 @@ class SessionStore(
         store.keys.forEach { key ->
             val entry = getEntry(key)
 
-            if(entry == null) {
+            if (entry == null) {
                 log.e("GC: '$key' was missing or invalid.  Deleting it.")
                 store[key] = null
                 return@forEach
             }
 
-            if(entry.startedAt.before(Date(Date().time - CLEANUP_TIME))) {
+            if (entry.startedAt.before(Date(Date().time - CLEANUP_TIME))) {
                 log.w("Cleaning up stale session store key: $key/$entry")
-
             }
         }
     }
@@ -236,7 +239,7 @@ class SessionStore(
                 put("session-event-name", sessionEventName)
                 put("started-at", startedAt.time / 1000)
                 put("session-attributes", sessionAttributes.encodeJson(dateFormatting))
-                if(closedAt != null) {
+                if (closedAt != null) {
                     put("closed-at", closedAt.time / 1000)
                 }
             }
@@ -248,7 +251,7 @@ class SessionStore(
                     UUID.fromString(jsonObject.safeGetString("uuid")),
                     jsonObject.safeGetString("session-event-name"),
                     Date(jsonObject.getInt("started-at") * 1000L),
-                    jsonObject.getJSONObject("session-attributes").toFlatAttributesHash(),
+                    jsonObject.getJSONObject("session-attributes").toAttributesHash(),
                     jsonObject.safeOptInt("closed-at").whenNotNull { Date(it * 1000L) }
                 )
             }

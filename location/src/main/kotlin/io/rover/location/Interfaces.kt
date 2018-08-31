@@ -3,6 +3,7 @@ package io.rover.location
 import android.content.Intent
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.LocationResult
+import io.rover.location.domain.Location
 import io.rover.location.domain.Region
 
 interface GoogleBackgroundLocationServiceInterface {
@@ -12,7 +13,7 @@ interface GoogleBackgroundLocationServiceInterface {
     fun newGoogleLocationResult(locationResult: LocationResult)
 }
 
-interface GoogleBeaconTrackerServiceInterface: RegionObserver {
+interface GoogleBeaconTrackerServiceInterface : RegionObserver {
     fun newGoogleBeaconMessage(intent: Intent)
 }
 
@@ -20,7 +21,7 @@ interface GoogleBeaconTrackerServiceInterface: RegionObserver {
  * Implementers can register themselves with [RegionRepositoryInterface] to be informed
  * of the most recent list of Geofences that should be monitored.
  */
-interface GoogleGeofenceServiceInterface: RegionObserver {
+interface GoogleGeofenceServiceInterface : RegionObserver {
     fun newGoogleGeofenceEvent(geofencingEvent: GeofencingEvent)
 }
 
@@ -54,11 +55,4 @@ interface LocationReportingServiceInterface {
         location: Location
     )
 
-    data class Location(
-        val latitude: Double,
-        val longitude: Double,
-        val altitude: Double,
-        val verticalAccuracy: Float?,
-        val horizontalAccurancy: Float?
-    )
 }

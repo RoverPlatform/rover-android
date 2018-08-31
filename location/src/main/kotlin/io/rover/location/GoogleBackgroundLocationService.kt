@@ -14,6 +14,7 @@ import io.rover.core.Rover
 import io.rover.core.logging.log
 import io.rover.core.permissions.PermissionsNotifierInterface
 import io.rover.core.streams.subscribe
+import io.rover.location.domain.Location
 
 /**
  * Subscribes to Location Updates from FusedLocationManager and emits location reporting events.
@@ -28,16 +29,16 @@ class GoogleBackgroundLocationService(
     private val applicationContext: Context,
     private val permissionsNotifier: PermissionsNotifierInterface,
     private val locationReportingService: LocationReportingServiceInterface
-): GoogleBackgroundLocationServiceInterface {
+) : GoogleBackgroundLocationServiceInterface {
     override fun newGoogleLocationResult(locationResult: LocationResult) {
         log.v("Received location result: $locationResult")
 
-        val location = LocationReportingServiceInterface.Location(
+        val location = Location(
             locationResult.lastLocation.latitude,
             locationResult.lastLocation.longitude,
             locationResult.lastLocation.altitude,
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && locationResult.lastLocation.hasVerticalAccuracy()) locationResult.lastLocation.verticalAccuracyMeters else null,
-            if(locationResult.lastLocation.hasAccuracy()) locationResult.lastLocation.accuracy else null
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && locationResult.lastLocation.hasVerticalAccuracy()) locationResult.lastLocation.verticalAccuracyMeters else null,
+            if (locationResult.lastLocation.hasAccuracy()) locationResult.lastLocation.accuracy else null
         )
 
         locationReportingService.updateLocation(location)
@@ -74,11 +75,11 @@ class GoogleBackgroundLocationService(
     }
 }
 
-class LocationBroadcastReceiver: BroadcastReceiver() {
+class LocationBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (LocationResult.hasResult(intent)) {
             val result = LocationResult.extractResult(intent)
-            Rover.sharedInstance.resolveSingletonOrFail(GoogleBackgroundLocationServiceInterface::class.java).newGoogleLocationResult(result)
+            Rover.sharedInstance.googleBackgroundLocationService.newGoogleLocationResult(result)
         } else {
             log.v("LocationReceiver received an intent, but it lacked a location result. Ignoring. Intent extras were ${intent.extras}")
         }

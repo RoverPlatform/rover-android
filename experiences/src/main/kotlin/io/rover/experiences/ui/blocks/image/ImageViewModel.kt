@@ -3,15 +3,15 @@ package io.rover.experiences.ui.blocks.image
 import io.rover.core.logging.log
 import org.reactivestreams.Publisher
 import io.rover.core.assets.AssetService
-import io.rover.core.assets.ImageOptimizationServiceInterface
-import io.rover.core.data.domain.Block
-import io.rover.core.data.domain.Image
+import io.rover.experiences.data.domain.Block
+import io.rover.experiences.data.domain.Image
 import io.rover.core.streams.*
 import io.rover.core.ui.PixelSize
-import io.rover.core.ui.RectF
+import io.rover.experiences.ui.RectF
 import io.rover.core.ui.concerns.MeasuredSize
-import io.rover.core.ui.dpAsPx
+import io.rover.experiences.ui.dpAsPx
 import java.util.concurrent.TimeUnit
+import io.rover.experiences.assets.ImageOptimizationServiceInterface
 
 class ImageViewModel(
     private val image: Image?,
@@ -58,7 +58,7 @@ class ImageViewModel(
 
     private fun Publisher<MeasuredSize>.imageFetchTransform(): Publisher<ImageViewModelInterface.ImageUpdate> {
         return flatMap { measuredSize ->
-            if(image == null) {
+            if (image == null) {
                 Publishers.empty()
             } else {
                 val uriWithParameters = imageOptimizationService.optimizeImageBlock(
@@ -78,7 +78,10 @@ class ImageViewModel(
                             bitmap,
                             fadeInNeeded
                         )
-                    }
+                    }.onErrorReturn { error ->
+                        log.w("Problem fetching image: $error, ignoring.")
+                        null
+                    }.filterNulls()
             }
         }
     }
@@ -86,7 +89,7 @@ class ImageViewModel(
     override fun intrinsicHeight(bounds: RectF): Float {
         // get aspect ratio of image and use it to calculate the height needed to accommodate
         // the image at its correct aspect ratio given the width
-        return if(image == null) {
+        return if (image == null) {
             0f
         } else {
             val heightToWidthRatio = image.height.toFloat() / image.width.toFloat()

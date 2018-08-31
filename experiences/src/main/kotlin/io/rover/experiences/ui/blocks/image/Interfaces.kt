@@ -7,7 +7,7 @@ import io.rover.experiences.ui.blocks.concerns.layout.BlockViewModelInterface
 import io.rover.experiences.ui.blocks.concerns.layout.CompositeBlockViewModelInterface
 import io.rover.experiences.ui.blocks.concerns.layout.LayoutableViewModel
 import io.rover.experiences.ui.blocks.concerns.layout.Measurable
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.BindableViewModel
 import io.rover.core.ui.concerns.MeasuredSize
 import io.rover.core.ui.concerns.PrefetchAfterMeasure
@@ -16,7 +16,7 @@ import org.reactivestreams.Publisher
 // ViewImage mixin is binding against ImageBlockViewModelInterface instead of
 // ImageViewModelInterface in order to discover the block's opacity for use in an animation.  This
 // is a hack and should be solved properly.
-interface ViewImageInterface: BindableView<ImageBlockViewModelInterface>
+interface ViewImageInterface : MeasuredBindableView<ImageBlockViewModelInterface>
 
 interface ImageViewModelInterface : Measurable, BindableViewModel, PrefetchAfterMeasure {
     /**

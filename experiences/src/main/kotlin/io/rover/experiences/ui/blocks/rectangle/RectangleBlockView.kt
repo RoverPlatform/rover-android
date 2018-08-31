@@ -8,12 +8,12 @@ import android.support.annotation.RequiresApi
 import android.util.AttributeSet
 import android.view.View
 import io.rover.core.logging.log
-import io.rover.experiences.ui.blocks.concerns.layout.LayoutableView
+import io.rover.core.ui.concerns.MeasuredBindableView
+import io.rover.core.ui.concerns.ViewModelBinding
+import io.rover.experiences.ui.blocks.concerns.ViewComposition
 import io.rover.experiences.ui.blocks.concerns.background.ViewBackground
 import io.rover.experiences.ui.blocks.concerns.border.ViewBorder
-import io.rover.experiences.ui.blocks.concerns.ViewComposition
-import io.rover.core.ui.concerns.BindableView
-import io.rover.core.ui.concerns.ViewModelBinding
+import io.rover.experiences.ui.blocks.concerns.layout.LayoutableView
 import io.rover.experiences.ui.blocks.concerns.layout.ViewBlock
 
 class RectangleBlockView : View, LayoutableView<RectangleBlockViewModelInterface> {
@@ -27,12 +27,12 @@ class RectangleBlockView : View, LayoutableView<RectangleBlockViewModelInterface
     private val viewComposition = ViewComposition()
     private val viewBackground = ViewBackground(this)
     private val viewBorder = ViewBorder(this, viewComposition)
-    private val viewBlock = ViewBlock(this, setOf(viewBorder))
+    private val viewBlock = ViewBlock(this)
 
-    override var viewModel: BindableView.Binding<RectangleBlockViewModelInterface>? by ViewModelBinding { binding, _ ->
-        viewBackground.viewModel = viewModel
-        viewBorder.viewModel = viewModel
-        viewBlock.viewModel = viewModel
+    override var viewModelBinding: MeasuredBindableView.Binding<RectangleBlockViewModelInterface>? by ViewModelBinding { binding, _ ->
+        viewBackground.viewModelBinding = binding
+        viewBorder.viewModelBinding = binding
+        viewBlock.viewModelBinding = binding
     }
 
     override val view: View

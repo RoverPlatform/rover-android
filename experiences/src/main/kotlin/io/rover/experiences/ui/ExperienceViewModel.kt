@@ -3,16 +3,9 @@ package io.rover.experiences.ui
 import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Parcelable
-import io.rover.experiences.ui.navigation.ExperienceExternalNavigationEvent
-import io.rover.experiences.ui.navigation.ExperienceNavigationViewModelInterface
-import io.rover.experiences.ui.toolbar.ExperienceToolbarViewModelInterface
-import io.rover.experiences.ui.toolbar.ToolbarConfiguration
 import io.rover.core.data.NetworkResult
-import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
-import io.rover.core.data.domain.Experience
-import io.rover.core.data.graphql.GraphQlApiServiceInterface
-import io.rover.core.data.graphql.operations.FetchExperienceRequest
+import io.rover.experiences.data.graphql.operations.FetchExperienceRequest
 import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.Publishers
 import io.rover.core.streams.Scheduler
@@ -24,12 +17,19 @@ import io.rover.core.streams.share
 import io.rover.core.streams.shareAndReplay
 import io.rover.core.streams.subscribe
 import io.rover.core.tracking.SessionTrackerInterface
+import io.rover.experiences.data.domain.Experience
+import io.rover.experiences.data.domain.events.asAttributeValue
+import io.rover.experiences.data.graphql.ExperiencesGraphqlApiClient
+import io.rover.experiences.ui.navigation.ExperienceExternalNavigationEvent
+import io.rover.experiences.ui.navigation.ExperienceNavigationViewModelInterface
+import io.rover.experiences.ui.toolbar.ExperienceToolbarViewModelInterface
+import io.rover.experiences.ui.toolbar.ToolbarConfiguration
 import kotlinx.android.parcel.Parcelize
 import org.reactivestreams.Publisher
 
 class ExperienceViewModel(
     private val experienceRequest: ExperienceRequest,
-    private val graphQlApiService: GraphQlApiServiceInterface,
+    private val graphQlApiClient: ExperiencesGraphqlApiClient,
     private val mainThreadScheduler: Scheduler,
     private val sessionTracker: SessionTrackerInterface,
     private val resolveNavigationViewModel: (experience: Experience, icicle: Parcelable?) -> ExperienceNavigationViewModelInterface,
@@ -73,8 +73,8 @@ class ExperienceViewModel(
     private val actions = actionSource.share()
 
     private fun fetchExperience(): Publisher<out NetworkResult<Experience>> =
-        graphQlApiService.fetchExperience(
-            when(experienceRequest) {
+        graphQlApiClient.fetchExperience(
+            when (experienceRequest) {
                 is ExperienceRequest.ByCampaignUrl -> FetchExperienceRequest.ExperienceQueryIdentifier.ByUniversalLink(experienceRequest.url)
                 is ExperienceRequest.ByCampaignId -> FetchExperienceRequest.ExperienceQueryIdentifier.ByCampaignId(experienceRequest.campaignId)
                 is ExperienceRequest.ById -> FetchExperienceRequest.ExperienceQueryIdentifier.ById(experienceRequest.experienceId)
@@ -95,7 +95,7 @@ class ExperienceViewModel(
         val eventsSubject = PublishSubject<ExperienceViewModelInterface.Event>()
 
         actions.subscribe { action ->
-            when(action!!) {
+            when (action!!) {
                 Action.BackPressedBeforeExperienceReady -> {
                     eventsSubject.onNext(ExperienceViewModelInterface.Event.NavigateTo(
                         ExperienceExternalNavigationEvent.Exit()
@@ -142,7 +142,7 @@ class ExperienceViewModel(
 
         fetchAttempts.subscribe { networkResult ->
            loadingSubject.onNext(false)
-           when(networkResult) {
+           when (networkResult) {
                is NetworkResult.Error -> {
                    eventsSubject.onNext(ExperienceViewModelInterface.Event.DisplayError(
                        networkResult.throwable.message ?: "Unknown"
@@ -223,8 +223,8 @@ class ExperienceViewModel(
 
     protected fun sessionEventAttributes(experience: Experience): Attributes {
         return hashMapOf(
-            Pair("experienceID", AttributeValue.Scalar.String(experience.id.rawValue))
-        ) + if(experience.campaignId != null) { hashMapOf(Pair("campaignID", AttributeValue.Scalar.String(experience.campaignId!!))) } else hashMapOf()
+            Pair("experience", experience.asAttributeValue())
+        )
     }
 
     enum class Action {
@@ -254,8 +254,8 @@ class ExperienceViewModel(
     )
 
     sealed class ExperienceRequest {
-        data class ByCampaignUrl(val url: String): ExperienceRequest()
-        data class ByCampaignId(val campaignId: String): ExperienceRequest()
-        data class ById(val experienceId: String): ExperienceRequest()
+        data class ByCampaignUrl(val url: String) : ExperienceRequest()
+        data class ByCampaignId(val campaignId: String) : ExperienceRequest()
+        data class ById(val experienceId: String) : ExperienceRequest()
     }
 }

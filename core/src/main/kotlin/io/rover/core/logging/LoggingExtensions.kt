@@ -3,6 +3,7 @@ package io.rover.core.logging
 import android.util.Log
 import io.rover.core.container.Resolver
 import io.rover.core.data.domain.AttributeValue
+import io.rover.core.events.EventQueueService.Companion.ROVER_NAMESPACE
 import io.rover.core.events.EventQueueServiceInterface
 import io.rover.core.events.domain.Event
 import io.rover.core.streams.filter
@@ -121,7 +122,7 @@ class JvmLogger : LogEmitter {
 class EventQueueLogger(
     resolver: Resolver,
     private val nextLogger: LogEmitter
-): LogEmitter by nextLogger {
+) : LogEmitter by nextLogger {
 
     private val serialExecutor = Executors.newSingleThreadExecutor()
 
@@ -155,9 +156,9 @@ class EventQueueLogger(
         serialExecutor.execute {
             if (eventQueueServiceInterface != null) {
                 bufferedMessages.forEach { queuedMessage ->
-                    eventQueueServiceInterface!!.trackEvent(queuedMessage)
+                    eventQueueServiceInterface!!.trackEvent(queuedMessage, ROVER_NAMESPACE)
                 }
-                eventQueueServiceInterface!!.trackEvent(event)
+                eventQueueServiceInterface!!.trackEvent(event, ROVER_NAMESPACE)
             } else {
                 bufferedMessages.add(event)
             }
@@ -173,7 +174,7 @@ class EventQueueLogger(
 class LogBuffer(
     private val nextLogger: LogEmitter,
     private val bufferLineSize: Int = 40
-): LogEmitter by nextLogger {
+) : LogEmitter by nextLogger {
 
     private val bufferAccessExecutor = Executors.newSingleThreadExecutor()
 
@@ -214,7 +215,7 @@ class LogBuffer(
     }
 
     fun getLogsAsText(): String {
-        return getLogs().map { entry -> "${entry.level.capitalize()}/ ${entry.tag}: ${entry.message}"}.joinToString("\n")
+        return getLogs().map { entry -> "${entry.level.capitalize()}/ ${entry.tag}: ${entry.message}" }.joinToString("\n")
     }
 
     private fun captureLog(level: String, tag: String, message: String) {
@@ -228,7 +229,6 @@ class LogBuffer(
             }
         }
     }
-
 
     data class BufferLogEntry(
         val level: String,

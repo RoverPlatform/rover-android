@@ -11,14 +11,14 @@ import java.util.Locale
  */
 class LocaleContextProvider(
     private val resources: Resources
-): ContextProvider {
+) : ContextProvider {
 
     private fun getLocale(): Locale {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
-            resources.configuration.locales.get(0);
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            resources.configuration.locales.get(0)
         } else {
             @Suppress("DEPRECATION")
-            resources.configuration.locale;
+            resources.configuration.locale
         }
     }
 

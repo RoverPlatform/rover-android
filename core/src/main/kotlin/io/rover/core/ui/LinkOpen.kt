@@ -7,7 +7,7 @@ import java.net.URI
 
 class LinkOpen(
     private val router: Router
-): LinkOpenInterface {
+) : LinkOpenInterface {
     override fun localIntentForReceived(receivedUri: URI): List<Intent> {
         return listOf(router.route(receivedUri, true))
     }

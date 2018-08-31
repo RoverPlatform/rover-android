@@ -9,7 +9,7 @@ import io.rover.core.events.ContextProvider
  */
 class TelephonyContextProvider(
     applicationContext: android.content.Context
-): ContextProvider {
+) : ContextProvider {
     private val telephonyManager = applicationContext.applicationContext.getSystemService(android.content.Context.TELEPHONY_SERVICE) as TelephonyManager
 
     /**

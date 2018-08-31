@@ -7,17 +7,15 @@ import io.rover.core.data.GraphQlRequest
 import io.rover.core.data.NetworkError
 import io.rover.core.data.NetworkResult
 import io.rover.core.data.domain.EventSnapshot
-import io.rover.core.data.domain.Experience
-import io.rover.core.data.graphql.operations.FetchExperienceRequest
 import io.rover.core.data.graphql.operations.SendEventsRequest
 import io.rover.core.data.http.HttpClientResponse
 import io.rover.core.data.http.HttpRequest
 import io.rover.core.data.http.HttpVerb
 import io.rover.core.data.http.NetworkClient
 import io.rover.core.logging.log
+import io.rover.core.platform.DateFormattingInterface
 import io.rover.core.streams.Publishers
 import io.rover.core.streams.map
-import io.rover.core.platform.DateFormattingInterface
 import org.json.JSONException
 import org.reactivestreams.Publisher
 import java.io.IOException
@@ -25,16 +23,13 @@ import java.net.URL
 
 /**
  * Responsible for providing access the Rover cloud API, powered by GraphQL.
- *
- * If you would like to override or augment any of the behaviour here, you may override it in
- * [DataPlugin].
  */
 class GraphQlApiService(
     private val endpoint: URL,
     private val authenticationContext: AuthenticationContext,
     private val networkClient: NetworkClient,
     private val dateFormatting: DateFormattingInterface
-): GraphQlApiServiceInterface {
+) : GraphQlApiServiceInterface {
     private fun urlRequest(mutation: Boolean, queryParams: Map<String, String>): HttpRequest {
         val uri = Uri.parse(endpoint.toString())
         val builder = uri.buildUpon()
@@ -43,7 +38,7 @@ class GraphQlApiService(
         return HttpRequest(
             URL(builder.toString()),
             hashMapOf<String, String>().apply {
-                if(mutation) {
+                if (mutation) {
                     this["Content-Type"] = "application/json"
                 }
 
@@ -137,7 +132,7 @@ class GraphQlApiService(
 
         log.v("going to make network request $urlRequest")
 
-        return if(authenticationContext.isAvailable()) {
+        return if (authenticationContext.isAvailable()) {
             networkClient.request(urlRequest, bodyData).map { httpClientResponse ->
                 httpResult(request, httpClientResponse)
             }
@@ -151,14 +146,8 @@ class GraphQlApiService(
         }
     }
 
-    override fun fetchExperience(query: FetchExperienceRequest.ExperienceQueryIdentifier): Publisher<NetworkResult<Experience>> {
-        return operation(
-            FetchExperienceRequest(query)
-        )
-    }
-
     override fun submitEvents(events: List<EventSnapshot>): Publisher<NetworkResult<String>> {
-        return if(!authenticationContext.isAvailable()) {
+        return if (!authenticationContext.isAvailable()) {
             log.w("Events may not be submitted without a Rover authentication context being configured.")
             Publishers.just(
                 NetworkResult.Error(

@@ -2,16 +2,17 @@ package io.rover.experiences.ui.blocks.concerns.layout
 
 import io.rover.experiences.ui.layout.ViewType
 import io.rover.experiences.ui.layout.screen.ScreenViewModel
-import io.rover.experiences.ui.navigation.NavigateTo
-import io.rover.core.data.domain.Block
-import io.rover.core.data.domain.Height
-import io.rover.core.data.domain.HorizontalAlignment
-import io.rover.core.data.domain.VerticalAlignment
+import io.rover.experiences.ui.navigation.NavigateToFromBlock
+import io.rover.experiences.data.domain.Block
+import io.rover.experiences.data.domain.Height
+import io.rover.experiences.data.domain.HorizontalAlignment
+import io.rover.experiences.data.domain.VerticalAlignment
 import io.rover.core.logging.log
 import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.share
-import io.rover.core.ui.RectF
+import io.rover.experiences.ui.RectF
 import io.rover.core.platform.whenNotNull
+import io.rover.experiences.data.domain.events.asAttributeValue
 
 /**
  * A mixin used by all blocks that contains the block layout and positioning concerns.
@@ -47,6 +48,14 @@ class BlockViewModel(
             block.insets.bottom,
             block.insets.right
         )
+
+    override val padding: Padding
+        get() = (listOf(Padding(
+            block.insets.left,
+            block.insets.top,
+            block.insets.right,
+            block.insets.bottom
+        )) + paddingDeflections.map { it.paddingDeflection }).reduce { acc, next -> acc + next }
 
     override val isStacked: Boolean
         get() = block.position.verticalAlignment is VerticalAlignment.Stacked
@@ -114,7 +123,6 @@ class BlockViewModel(
                         height.value.toFloat()
                     }
                 }
-
             }
         }
     }
@@ -138,7 +146,7 @@ class BlockViewModel(
     override val events = eventSource.share()
 
     override val isClickable: Boolean
-    get() = block.tapBehavior != null && block.tapBehavior !is Block.TapBehavior.None
+    get() = block.tapBehavior !is Block.TapBehavior.None
 
     override fun click() {
         // I don't have an epic (any other asynchronous behaviour to compose) here, just a single
@@ -146,10 +154,9 @@ class BlockViewModel(
         val tapBehavior = block.tapBehavior
 
         val navigateTo = when (tapBehavior) {
-            null -> null
-            is Block.TapBehavior.GoToScreen -> { NavigateTo.GoToScreenAction(tapBehavior.screenId.rawValue) }
-            is Block.TapBehavior.OpenUri -> { NavigateTo.External(tapBehavior.uri) }
-            is Block.TapBehavior.PresentWebsite -> { NavigateTo.PresentWebsiteAction(tapBehavior.url) }
+            is Block.TapBehavior.GoToScreen -> { NavigateToFromBlock.GoToScreenAction(tapBehavior.screenId.rawValue, block.asAttributeValue()) }
+            is Block.TapBehavior.OpenUri -> { NavigateToFromBlock.External(tapBehavior.uri, block.asAttributeValue()) }
+            is Block.TapBehavior.PresentWebsite -> { NavigateToFromBlock.PresentWebsiteAction(tapBehavior.url, block.asAttributeValue()) }
             is Block.TapBehavior.None -> return
         }
 

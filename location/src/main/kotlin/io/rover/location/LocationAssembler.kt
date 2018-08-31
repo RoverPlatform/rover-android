@@ -1,3 +1,5 @@
+@file:JvmName("Location")
+
 package io.rover.location
 
 import android.content.Context
@@ -6,6 +8,7 @@ import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.messages.MessagesClient
+import io.rover.core.Rover
 import io.rover.core.container.Assembler
 import io.rover.core.container.Container
 import io.rover.core.container.Resolver
@@ -83,7 +86,7 @@ class LocationAssembler(
         }
 
         // if automatic location/region tracking, then register our Google-powered services:
-        if(automaticLocationTracking) {
+        if (automaticLocationTracking) {
             container.register(
                 Scope.Singleton,
                 FusedLocationProviderClient::class.java
@@ -108,7 +111,7 @@ class LocationAssembler(
             }
         }
 
-        if(automaticGeofenceMonitoring) {
+        if (automaticGeofenceMonitoring) {
             container.register(
                 Scope.Singleton,
                 GeofencingClient::class.java
@@ -133,7 +136,7 @@ class LocationAssembler(
             }
         }
 
-        if(automaticBeaconMonitoring) {
+        if (automaticBeaconMonitoring) {
             container.register(
                 Scope.Singleton,
                 MessagesClient::class.java
@@ -158,7 +161,7 @@ class LocationAssembler(
     }
 
     override fun afterAssembly(resolver: Resolver) {
-        if(automaticGeofenceMonitoring) {
+        if (automaticGeofenceMonitoring) {
             // register our GoogleGeofenceService as an observer of the Rover regions (in this case,
             // for geofences), if the developer wants the automatic Google-powered solution.
             resolver.resolveSingletonOrFail(RegionRepositoryInterface::class.java).registerObserver(
@@ -166,13 +169,13 @@ class LocationAssembler(
             )
         }
 
-        if(automaticLocationTracking) {
+        if (automaticLocationTracking) {
             // greedily poke for GoogleBackgroundLocationService to force the DI to evaluate
             // it and therefore have it start monitoring.
             resolver.resolveSingletonOrFail(GoogleBackgroundLocationServiceInterface::class.java)
         }
 
-        if(automaticBeaconMonitoring) {
+        if (automaticBeaconMonitoring) {
             // register our GoogleBeaconTrackerService as an observer of the Rover regions (in this
             // case, for beacons), if the developer wants the automatic Google-powered solution.
             resolver.resolveSingletonOrFail(RegionRepositoryInterface::class.java).registerObserver(
@@ -180,4 +183,17 @@ class LocationAssembler(
             )
         }
     }
+}
+
+val Rover.googleBackgroundLocationService: GoogleBackgroundLocationServiceInterface
+    get() = this.resolve(GoogleBackgroundLocationServiceInterface::class.java) ?: throw missingDependencyError("GoogleBackgroundLocationServiceInterface")
+
+val Rover.googleBeaconTrackerService: GoogleBeaconTrackerServiceInterface
+    get() = this.resolve(GoogleBeaconTrackerServiceInterface::class.java) ?: throw missingDependencyError("GoogleBeaconTrackerServiceInterface")
+
+val Rover.googleGeofenceService: GoogleGeofenceServiceInterface
+    get() = this.resolve(GoogleGeofenceServiceInterface::class.java) ?: throw missingDependencyError("GoogleGeofenceServiceInterface")
+
+private fun missingDependencyError(name: String): Throwable {
+    throw RuntimeException("Dependency not registered: $name.  Did you include LocationAssembler() in the assembler list?")
 }

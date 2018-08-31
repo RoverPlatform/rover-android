@@ -49,11 +49,11 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:1.0.1'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     testImplementation 'org.jetbrains.spek:spek-api:1.1.5'
     testImplementation 'org.jetbrains.spek:spek-junit-platform-engine:1.1.5'
-    testImplementation 'com.natpryce:hamkrest:1.4.2.0'
+    testImplementation 'com.natpryce:hamkrest:1.6.0.0'
     testImplementation 'org.amshove.kluent:kluent:1.30'
     testImplementation 'org.amshove.kluent:kluent-android:1.30'
     testImplementation 'org.skyscreamer:jsonassert:1.5.0'
@@ -65,6 +65,35 @@ dependencies {
     implementation 'com.android.support:design:27.1.1'
     implementation 'com.android.support:support-vector-drawable:27.1.1'
     implementation 'com.android.support:customtabs:27.1.1'
+}
+
+configurations {
+    ktlint
+}
+
+dependencies {
+    ktlint "com.github.shyiko:ktlint:0.27.0"
+    // additional 3rd party ruleset(s) can be specified here
+    // just add them to the classpath (ktlint 'groupId:artifactId:version') and
+    // ktlint will pick them up
+}
+
+task ktlint(type: JavaExec, group: "verification") {
+    description = "Check Kotlin code style."
+    main = "com.github.shyiko.ktlint.Main"
+    classpath = configurations.ktlint
+    args "src/**/*.kt"
+    // to generate report in checkstyle format prepend following args:
+    // "--reporter=plain", "--reporter=checkstyle,output=${buildDir}/ktlint.xml"
+    // see https://github.com/shyiko/ktlint#usage for more
+}
+check.dependsOn ktlint
+
+task ktlintFormat(type: JavaExec, group: "formatting") {
+    description = "Fix Kotlin code style deviations."
+    main = "com.github.shyiko.ktlint.Main"
+    classpath = configurations.ktlint
+    args "-F", "src/**/*.kt"
 }
 
 dokka {

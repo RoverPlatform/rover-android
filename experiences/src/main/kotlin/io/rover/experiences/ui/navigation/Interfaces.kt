@@ -18,7 +18,6 @@ interface ExperienceNavigationViewModelInterface : BindableViewModel {
      */
     val externalNavigationEvents: Publisher<ExperienceExternalNavigationEvent>
 
-
     /**
      * Bind the toolbar display in the view to this publisher.
      *
@@ -97,7 +96,7 @@ sealed class ExperienceExternalNavigationEvent {
      */
     data class OpenUri(val uri: URI) : ExperienceExternalNavigationEvent()
 
-    data class PresentWebsite(val url: URI): ExperienceExternalNavigationEvent()
+    data class PresentWebsite(val url: URI) : ExperienceExternalNavigationEvent()
 
     /**
      * Containing view context (hosting the Experience) should pop itself ([Activity.finish], etc.)
@@ -109,7 +108,7 @@ sealed class ExperienceExternalNavigationEvent {
 
     /**
      * This is a custom navigation type.  It is not used in typical operation of the Rover SDK's
-     * Experiences plugin, however, to insert custom behaviour developers may override
+     * Experiences module, however, to insert custom behaviour developers may override
      * [ExperienceNavigationViewModel], [ScreenViewModel], or [BlockViewModel] to emit these Custom
      * events thus handle them in their [ExperienceView] container.  A common use case is to peek at
      * incoming screens that have some sort of "needs login" meta property within
@@ -118,5 +117,5 @@ sealed class ExperienceExternalNavigationEvent {
      *
      * See the documentation for further details.
      */
-    data class Custom(val uri: String): ExperienceExternalNavigationEvent()
+    data class Custom(val uri: String) : ExperienceExternalNavigationEvent()
 }

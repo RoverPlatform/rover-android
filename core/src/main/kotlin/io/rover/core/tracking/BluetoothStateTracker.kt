@@ -6,12 +6,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import io.rover.core.events.EventQueueService.Companion.ROVER_NAMESPACE
 import io.rover.core.events.EventQueueServiceInterface
 import io.rover.core.events.domain.Event
 
 class BluetoothStateTracker(
-   application: Application,
-   eventQueueService: EventQueueServiceInterface
+    application: Application,
+    eventQueueService: EventQueueServiceInterface
 ) {
     init {
         val intentFilter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
@@ -27,13 +28,15 @@ class BluetoothStateTracker(
                             Event(
                                 "Bluetooth Enabled",
                                 hashMapOf()
-                            )
+                            ),
+                            ROVER_NAMESPACE
                         )
                         BluetoothAdapter.STATE_OFF -> eventQueueService.trackEvent(
                             Event(
                                 "Bluetooth Disabled",
                                 hashMapOf()
-                            )
+                            ),
+                            ROVER_NAMESPACE
                         )
                     }
                 }

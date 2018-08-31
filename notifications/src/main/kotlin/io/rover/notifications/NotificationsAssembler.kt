@@ -1,9 +1,17 @@
+@file:JvmName("Notifications")
+
 package io.rover.notifications
 
 import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.support.annotation.DrawableRes
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.TextView
+import io.rover.core.R
+import io.rover.core.Rover
 import io.rover.core.UrlSchemes
 import io.rover.core.assets.AssetService
 import io.rover.core.container.Assembler
@@ -21,9 +29,14 @@ import io.rover.core.routing.Router
 import io.rover.core.routing.website.EmbeddedWebBrowserDisplayInterface
 import io.rover.core.streams.Scheduler
 import io.rover.core.tracking.SessionTrackerInterface
+import io.rover.core.ui.concerns.BindableView
+import io.rover.notifications.domain.Notification
 import io.rover.notifications.routing.routes.PresentNotificationCenterRoute
 import io.rover.notifications.ui.NotificationCenterListViewModel
+import io.rover.notifications.ui.NotificationItemView
+import io.rover.notifications.ui.NotificationItemViewModel
 import io.rover.notifications.ui.concerns.NotificationCenterListViewModelInterface
+import io.rover.notifications.ui.concerns.NotificationItemViewModelInterface
 import io.rover.notifications.ui.concerns.NotificationsRepositoryInterface
 import io.rover.notifications.ui.containers.NotificationCenterActivity
 import java.util.concurrent.Executor
@@ -134,6 +147,48 @@ class NotificationsAssembler @JvmOverloads constructor(
         }
 
         container.register(
+            Scope.Transient,
+            BindableView::class.java,
+            "notificationItemView"
+        ) { _, context: Context ->
+            NotificationItemView(context)
+        }
+
+        container.register(
+            Scope.Transient,
+            View::class.java,
+            "notificationItemSwipeToDeleteBackgroundView"
+        ) { _, context: Context ->
+            LayoutInflater.from(context).inflate(
+                R.layout.notification_center_default_item_delete_swipe_reveal,
+                null
+            )
+        }
+
+        container.register(
+            Scope.Transient,
+            View::class.java,
+            "notificationListEmptyArea"
+        ) { _, context: Context ->
+            TextView(context).apply {
+                text = "" // Set a copy string to display here.
+            }.apply {
+                // center it in the display.
+                gravity = Gravity.CENTER_VERTICAL or Gravity.CENTER_HORIZONTAL
+            }
+        }
+
+        container.register(
+            Scope.Transient,
+            NotificationItemViewModelInterface::class.java
+        ) { resolver, notification: Notification ->
+            NotificationItemViewModel(
+                notification,
+                resolver.resolveSingletonOrFail(AssetService::class.java)
+            )
+        }
+
+        container.register(
             Scope.Singleton,
             NotificationOpenInterface::class.java
         ) { resolver ->
@@ -154,6 +209,7 @@ class NotificationsAssembler @JvmOverloads constructor(
             InfluenceTrackerService(
                 resolver.resolveSingletonOrFail(Application::class.java),
                 resolver.resolveSingletonOrFail(LocalStorage::class.java),
+                resolver.resolveSingletonOrFail(DateFormattingInterface::class.java),
                 resolver.resolveSingletonOrFail(NotificationOpenInterface::class.java)
             )
         }
@@ -169,7 +225,7 @@ class NotificationsAssembler @JvmOverloads constructor(
             )
         }
 
-        container.register(Scope.Singleton, ContextProvider::class.java,"notification") { _ ->
+        container.register(Scope.Singleton, ContextProvider::class.java, "notification") { _ ->
             NotificationContextProvider(applicationContext)
         }
 
@@ -217,4 +273,14 @@ class NotificationsAssembler @JvmOverloads constructor(
             )
         }
     }
+}
+
+val Rover.pushReceiver: PushReceiverInterface
+    get() = this.resolve(PushReceiverInterface::class.java) ?: throw missingDependencyError("PushReceiverInterface")
+
+val Rover.notificationOpen: NotificationOpenInterface
+    get() = this.resolve(NotificationOpenInterface::class.java) ?: throw missingDependencyError("NotificationOpenInterface")
+
+private fun missingDependencyError(name: String): Throwable {
+    throw RuntimeException("Dependency not registered: $name.  Did you include NotificationsAssembler() in the assembler list?")
 }

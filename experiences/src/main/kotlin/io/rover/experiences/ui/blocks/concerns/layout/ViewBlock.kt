@@ -2,15 +2,14 @@ package io.rover.experiences.ui.blocks.concerns.layout
 
 import android.view.MotionEvent
 import android.view.View
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.ViewModelBinding
-import io.rover.core.ui.dpAsPx
+import io.rover.experiences.ui.dpAsPx
 
 class ViewBlock(
-    override val view: View,
-    private val paddingContributors: Set<PaddingContributor> = emptySet()
+    override val view: View
 ) : ViewBlockInterface {
-    override var viewModel: BindableView.Binding<BlockViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<BlockViewModelInterface>? by ViewModelBinding { binding, _ ->
         val viewModel = binding?.viewModel
 
         val displayMetrics = view.resources.displayMetrics
@@ -27,15 +26,11 @@ class ViewBlock(
         }
 
         if (viewModel != null) {
-            // TODO if I elect to implement `viewModel as LayoutPaddingDeflection` then I could
-            // perhaps remove PaddingContributor (if there isn't something I'm forgetting).
-            // Investigate this.
-            val contributedPaddings = paddingContributors.map { it.contributedPadding }
             view.setPaddingRelative(
-                (viewModel.insets.left + contributedPaddings.map { it.left }.sum()).dpAsPx(displayMetrics),
-                (viewModel.insets.top + contributedPaddings.map { it.top }.sum()).dpAsPx(displayMetrics),
-                (viewModel.insets.right + contributedPaddings.map { it.right }.sum()).dpAsPx(displayMetrics),
-                (viewModel.insets.bottom + contributedPaddings.map { it.bottom }.sum()).dpAsPx(displayMetrics)
+                (viewModel.padding.left).dpAsPx(displayMetrics),
+                (viewModel.padding.top ).dpAsPx(displayMetrics),
+                (viewModel.padding.right).dpAsPx(displayMetrics),
+                (viewModel.padding.bottom).dpAsPx(displayMetrics)
             )
 
             view.alpha = viewModel.opacity

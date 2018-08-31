@@ -9,7 +9,6 @@ import android.view.View
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscription
 
-
 sealed class ViewEvent {
     class Attach : ViewEvent()
     class Detach : ViewEvent()
@@ -37,8 +36,8 @@ fun View.attachEvents(): Publisher<ViewEvent> {
             }
 
             override fun request(n: Long) {
-                if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
-                if(requested) return
+                if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                if (requested) return
                 requested = true
                 addOnAttachStateChangeListener(listener)
             }
@@ -57,8 +56,8 @@ fun LifecycleOwner.asPublisher(): Publisher<Lifecycle.Event> {
             }
 
             override fun request(n: Long) {
-                if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
-                if(requested) return
+                if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                if (requested) return
                 requested = true
                 this@asPublisher.lifecycle.addObserver(observer)
             }

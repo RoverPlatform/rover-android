@@ -13,12 +13,9 @@ import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.helper.ItemTouchHelper
 import android.util.AttributeSet
-import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.TextView
 import io.rover.core.R
 import io.rover.core.Rover
 import io.rover.core.logging.log
@@ -26,8 +23,10 @@ import io.rover.core.streams.androidLifecycleDispose
 import io.rover.core.streams.subscribe
 import io.rover.core.ui.concerns.ViewModelBinding
 import io.rover.core.platform.whenNotNull
+import io.rover.core.ui.concerns.BindableView
 import io.rover.notifications.domain.Notification
 import io.rover.notifications.NotificationOpenInterface
+import io.rover.notifications.notificationOpen
 import io.rover.notifications.ui.concerns.NotificationCenterListViewModelInterface
 import io.rover.notifications.ui.concerns.NotificationItemViewModelInterface
 
@@ -46,13 +45,6 @@ import io.rover.notifications.ui.concerns.NotificationItemViewModelInterface
  * 3. Resolve an instance of [NotificationCenterListViewModelInterface] from the Rover DI container
  * and set it as the [viewModel].
  *
-
- *
- * Note about Android state restoration: Rover SDK views handle state saving & restoration through
- * their view models, so you will need store a Parcelable on behalf of ExperienceView and
- * [NotificationCentreViewModel] (grabbing the state parcelable from the view model at save time and
- * restoring it by passing it to the view model factory at restart time).
- *
  * See the [Notification Center
  * Documentation](https://www.rover.io/docs/android/notification-center/).
  */
@@ -69,11 +61,16 @@ open class NotificationCenterListView : CoordinatorLayout {
     /**
      * This method will generate a row view.
      *
-     * We bundle a basic row view, but if you would like to use your own row view, then you may
-     * override [NotificationItemView] with your own implementation and then override this method.
+     * We bundle a basic row view, but if you would like to use your own row view, consider
+     * overriding the factory for type [BindableView] named `notificationItemView` rather than
+     * overriding this method.  See the [Notification Center
+     * Documentation](https://www.rover.io/docs/android/notification-center/).
      */
-    open fun makeNotificationRowView(): NotificationItemView {
-        return NotificationItemView(context)
+    fun makeNotificationRowView(): BindableView<NotificationItemViewModelInterface> {
+        @Suppress("IMPLICIT_CAST_TO_ANY", "UNCHECKED_CAST")
+        return (Rover.sharedInstance.resolve(BindableView::class.java, "notificationItemView", context) ?: throw RuntimeException(
+            "Please be sure that NotificationsAssembler is added to Rover.init before using NotificationCenterListView."
+        )) as BindableView<NotificationItemViewModelInterface>
     }
 
     /**
@@ -82,15 +79,49 @@ open class NotificationCenterListView : CoordinatorLayout {
      *
      * Even if you are using a custom row view, you may leave this method untouched and keep
      * the default version of the reveal layout.
+     *
+     * However, if you would like to use your own reveal view, consider overriding the factory for
+     * type [View] named `notificationItemSwipeToDeleteBackgroundView` rather than overriding this
+     * method.  See the [Notification Center
+     * Documentation](https://www.rover.io/docs/android/notification-center/).
      */
     open fun makeSwipeToDeleteRevealBackgroundView(): View {
-        val inflater = LayoutInflater.from(context)
-        return inflater.inflate(R.layout.notification_center_default_item_delete_swipe_reveal, null)
+        return Rover.sharedInstance.resolve(
+            View::class.java,
+            "notificationItemSwipeToDeleteBackgroundView",
+            context
+        ) ?: throw RuntimeException(
+            "Please be sure that NotificationsAssembler is added to Rover.init before using NotificationCenterListView."
+        )
     }
 
+    /**
+     * Resolves a view model instance needed for binding a row view against the given
+     * [Notification].
+     */
     open fun makeNotificationItemViewModel(notification: Notification): NotificationItemViewModelInterface {
-        return NotificationItemViewModel(notification, Rover.sharedInstance.assetService)
+        return Rover.sharedInstance.resolve(
+            NotificationItemViewModelInterface::class.java,
+            null,
+            notification
+        ) ?: throw RuntimeException(
+            "Please be sure that NotificationsAssembler is added to Rover.init before using NotificationCenterListView."
+        )
     }
+
+    /**
+     * Override this method to customize what is displayed when the notification center list is
+     * empty.
+     *
+     * An example implementation is provided here.  Copy and modify it for use in your own
+     * implementation of this class.
+     */
+    open val emptyLayout
+        get() = Rover.sharedInstance.resolve(
+            View::class.java,
+            "notificationListEmptyArea",
+            context
+        ) ?: throw RuntimeException("Please be sure that NotificationsAssembler is added to Rover.init before using NotificationCenterListView.")
 
     private var viewModel: NotificationCenterListViewModelInterface? by ViewModelBinding { viewModel, subscriptionCallback ->
         swipeRefreshLayout.isRefreshing = false
@@ -145,7 +176,7 @@ open class NotificationCenterListView : CoordinatorLayout {
                 viewModel.requestRefresh()
             }
 
-            if(isAttachedToWindow) {
+            if (isAttachedToWindow) {
                 viewModel.becameVisible()
             }
         }
@@ -157,13 +188,9 @@ open class NotificationCenterListView : CoordinatorLayout {
 
     private val emptySwitcherLayout = FrameLayout(
         context
-    ).apply { swipeRefreshLayout.addView(this) }
-
-    private val emptyLayout = TextView(context).apply {
-        text = "None yet" // TODO
-    }.apply {
-        gravity = Gravity.CENTER_VERTICAL or Gravity.CENTER_HORIZONTAL
-        emptySwitcherLayout.addView(this)
+    ).apply {
+        swipeRefreshLayout.addView(this)
+        this.addView(emptyLayout)
     }
 
     private val itemsView = RecyclerView(
@@ -210,7 +237,7 @@ open class NotificationCenterListView : CoordinatorLayout {
     }
 
     private val notificationOpen: NotificationOpenInterface by lazy {
-        Rover.sharedInstance.resolveSingletonOrFail(NotificationOpenInterface::class.java)
+        Rover.sharedInstance.notificationOpen
     }
 
     init {
@@ -228,20 +255,20 @@ open class NotificationCenterListView : CoordinatorLayout {
             override fun onMove(recyclerView: RecyclerView?, viewHolder: RecyclerView.ViewHolder?, target: RecyclerView.ViewHolder?): Boolean = false
 
             override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
-                if(viewHolder != null) {
-                    ItemTouchHelper.Callback.getDefaultUIUtil().onSelected((viewHolder as NotificationViewHolder).rowItemView)
+                if (viewHolder != null) {
+                    ItemTouchHelper.Callback.getDefaultUIUtil().onSelected((viewHolder as NotificationViewHolder).rowItemView.view)
                 }
             }
 
             override fun onChildDrawOver(c: Canvas?, recyclerView: RecyclerView?, viewHolder: RecyclerView.ViewHolder?, dX: Float, dY: Float, actionState: Int, isCurrentlyActive: Boolean) {
-                if(viewHolder != null) {
-                    ItemTouchHelper.Callback.getDefaultUIUtil().onDrawOver(c, recyclerView, (viewHolder as NotificationViewHolder).rowItemView, dX, dY, actionState, isCurrentlyActive)
+                if (viewHolder != null) {
+                    ItemTouchHelper.Callback.getDefaultUIUtil().onDrawOver(c, recyclerView, (viewHolder as NotificationViewHolder).rowItemView.view, dX, dY, actionState, isCurrentlyActive)
                 }
             }
 
             override fun clearView(recyclerView: RecyclerView?, viewHolder: RecyclerView.ViewHolder?) {
-                if(viewHolder != null) {
-                    ItemTouchHelper.Callback.getDefaultUIUtil().clearView((viewHolder as NotificationViewHolder).rowItemView)
+                if (viewHolder != null) {
+                    ItemTouchHelper.Callback.getDefaultUIUtil().clearView((viewHolder as NotificationViewHolder).rowItemView.view)
                 }
             }
 
@@ -272,14 +299,12 @@ open class NotificationCenterListView : CoordinatorLayout {
                 ItemTouchHelper.Callback.getDefaultUIUtil().onDraw(
                     canvas,
                     recyclerView,
-                    (viewHolder as NotificationViewHolder).rowItemView,
+                    (viewHolder as NotificationViewHolder).rowItemView.view,
                     dX, dY,
                     actionState,
                     isCurrentlyActive
                 )
             }
-
-
         }).attachToRecyclerView(itemsView)
 
         viewModel = Rover.sharedInstance.resolve(NotificationCenterListViewModelInterface::class.java, null) ?: throw RuntimeException(
@@ -290,7 +315,7 @@ open class NotificationCenterListView : CoordinatorLayout {
         viewTreeObserver.addOnGlobalLayoutListener {
             val rect = Rect()
             val visible = getGlobalVisibleRect(rect)
-            if(visible && isShown) {
+            if (visible && isShown) {
                 viewModel?.becameVisible()
             } else {
                 viewModel?.becameInvisible()
@@ -300,7 +325,7 @@ open class NotificationCenterListView : CoordinatorLayout {
 
     override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
         super.onWindowFocusChanged(hasWindowFocus)
-        if(!hasWindowFocus) {
+        if (!hasWindowFocus) {
             viewModel?.becameInvisible()
         }
     }
@@ -315,13 +340,13 @@ open class NotificationCenterListView : CoordinatorLayout {
     private class NotificationViewHolder(
         private val context: Context,
         private val listView: NotificationCenterListView,
-        val rowItemView: NotificationItemView,
+        val rowItemView: BindableView<NotificationItemViewModelInterface>,
         swipeToDeleteRevealView: View,
         containerView: ViewGroup = FrameLayout(context)
-    ): RecyclerView.ViewHolder(containerView) {
+    ) : RecyclerView.ViewHolder(containerView) {
         init {
             containerView.addView(swipeToDeleteRevealView)
-            containerView.addView(rowItemView)
+            containerView.addView(rowItemView.view)
         }
 
         var notificationItemViewModel: NotificationItemViewModelInterface? by ViewModelBinding { viewModel, _ ->
@@ -329,8 +354,8 @@ open class NotificationCenterListView : CoordinatorLayout {
         }
 
         init {
-            rowItemView.isClickable = true
-            rowItemView.setOnClickListener {
+            rowItemView.view.isClickable = true
+            rowItemView.view.setOnClickListener {
                 notificationItemViewModel.whenNotNull { listView.notificationClicked(it.notificationForDisplay) }
             }
         }

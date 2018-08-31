@@ -9,37 +9,29 @@ import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.RectF
 import android.view.View
-import io.rover.core.platform.whenNotNull
-import io.rover.core.ui.dpAsPx
-import io.rover.experiences.ui.blocks.concerns.layout.PaddingContributor
-import io.rover.experiences.ui.blocks.concerns.ViewCompositionInterface
-import io.rover.experiences.ui.blocks.concerns.layout.Padding
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
+import io.rover.core.ui.concerns.MeasuredSize
 import io.rover.core.ui.concerns.ViewModelBinding
+import io.rover.experiences.ui.dpAsPx
+import io.rover.experiences.ui.blocks.concerns.ViewCompositionInterface
 
 class ViewBorder(
     override val view: View,
     viewComposition: ViewCompositionInterface
-) : ViewBorderInterface, PaddingContributor {
+) : ViewBorderInterface {
     // State:
     private var configuration: MaskConfiguration? = null
-    private var size: Pair<Int, Int>? = null
 
-    override var viewModel: BindableView.Binding<BorderViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
-        renderRoundedCornersMaskIfPossible(binding?.viewModel)
+    override var viewModelBinding: MeasuredBindableView.Binding<BorderViewModelInterface>? by ViewModelBinding { binding, _ ->
+        renderRoundedCornersMaskIfPossible(binding?.measuredSize, binding?.viewModel)
     }
 
     init {
         val displayMetrics = view.resources.displayMetrics
 
-        viewComposition.registerOnSizeChangedCallback { width, height, _, _ ->
-            size = Pair(width, height)
-            renderRoundedCornersMaskIfPossible(viewModel?.viewModel)
-        }
-
         // register callbacks with the View to get into the canvas rendering chain.
         viewComposition.registerAfterDraw { canvas ->
-            val viewModel = this.viewModel?.viewModel
+            val viewModel = this.viewModelBinding?.viewModel
             val configuration = this.configuration
 
             // canvas is potentially deflected because of a content scroll, particularly with web
@@ -69,8 +61,7 @@ class ViewBorder(
                         configuration.roundedCornersMask,
                         0f,
                         0f,
-                        Paint(
-                        ).apply {
+                        Paint().apply {
                             // as far as the Porter-Duff alpha transfer is concerned, the "destination"
                             // is the view contents rendered by the rest of the Block implementation,
                             // and the source is our Mask paint (this drawRoundRect() operation).
@@ -100,13 +91,13 @@ class ViewBorder(
      * Canvas.drawRoundRect would only touch those pixels the mask would directly apply to, thus
      * leaving the PorterDuff filter useless.
      */
-    private fun renderRoundedCornersMaskIfPossible(viewModel: BorderViewModelInterface?) {
-        val size = this.size
-
+    private fun renderRoundedCornersMaskIfPossible(size: MeasuredSize?, viewModel: BorderViewModelInterface?) {
         configuration = if (viewModel != null && size != null) {
             val displayMetrics = view.resources.displayMetrics
 
-            val (width, height) = size
+            val (widthDp, heightDp) = size
+            val width = widthDp.dpAsPx(displayMetrics)
+            val height = heightDp.dpAsPx(displayMetrics)
 
             val borderWidthPx = viewModel.borderWidth.dpAsPx(displayMetrics).toFloat()
             val borderInset = borderWidthPx / 2
@@ -174,20 +165,6 @@ class ViewBorder(
         // on prior renders is hereby invalidated).
         view.invalidate()
     }
-
-
-
-    override val contributedPadding: Padding
-        get() {
-            return viewModel?.viewModel.whenNotNull {
-                Padding(
-                    it.borderWidth,
-                    it.borderWidth,
-                    it.borderWidth,
-                    it.borderWidth
-                )
-            } ?: throw RuntimeException("ViewBorder must be bound to the view model before ViewBlock.") // not a great way to enforce this invariant, alas.
-        }
 
     data class MaskConfiguration(
         var roundedCornersMask: Bitmap? = null,

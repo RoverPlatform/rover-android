@@ -7,7 +7,7 @@ import java.net.URI
 
 class RouterService(
     private val openAppIntent: Intent
-): Router {
+) : Router {
     private val registeredRoutes: MutableSet<Route> = mutableSetOf()
 
     override fun route(uri: URI?, inbound: Boolean): Intent {
@@ -22,7 +22,7 @@ class RouterService(
 
         val handledByRover = mappedUris.firstOrNull()
 
-        return handledByRover ?: if(inbound || uri == null) {
+        return handledByRover ?: if (inbound || uri == null) {
             openAppIntent.apply {
                 log.w("No Route matched `$uri`, just opening the app.")
             }

@@ -1,18 +1,14 @@
 package io.rover.experiences.ui.navigation
 
 import android.os.Parcelable
-import io.rover.experiences.ui.containers.ExperienceActivity
-import io.rover.experiences.ui.layout.screen.ScreenViewModelInterface
-import io.rover.experiences.ui.toolbar.ExperienceToolbarViewModelInterface
-import io.rover.experiences.ui.toolbar.ToolbarConfiguration
-import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
-import io.rover.core.data.domain.Experience
-import io.rover.core.data.domain.Screen
+import io.rover.experiences.data.domain.Experience
+import io.rover.experiences.data.domain.Screen
 import io.rover.core.events.EventQueueService
 import io.rover.core.events.EventQueueServiceInterface
 import io.rover.core.events.domain.Event
 import io.rover.core.logging.log
+import io.rover.core.platform.whenNotNull
 import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.asPublisher
 import io.rover.core.streams.flatMap
@@ -20,7 +16,11 @@ import io.rover.core.streams.map
 import io.rover.core.streams.shareHotAndReplay
 import io.rover.core.streams.subscribe
 import io.rover.core.tracking.SessionTrackerInterface
-import io.rover.core.platform.whenNotNull
+import io.rover.experiences.data.domain.events.asAttributeValue
+import io.rover.experiences.ui.containers.ExperienceActivity
+import io.rover.experiences.ui.layout.screen.ScreenViewModelInterface
+import io.rover.experiences.ui.toolbar.ExperienceToolbarViewModelInterface
+import io.rover.experiences.ui.toolbar.ToolbarConfiguration
 import kotlinx.android.parcel.Parcelize
 import org.reactivestreams.Publisher
 
@@ -83,10 +83,8 @@ open class ExperienceNavigationViewModel(
          */
         class PressedClose : Action()
         class Navigate(
-            val navigateTo: NavigateTo,
-            val sourceScreenId: String,
-            val sourceRowId: String,
-            val sourceBlockId: String
+            val navigateTo: NavigateToFromBlock,
+            val sourceScreenViewModel: ScreenViewModelInterface
         ) : Action()
     }
 
@@ -110,52 +108,31 @@ open class ExperienceNavigationViewModel(
         screenViewModelsById
             .entries
             .asPublisher()
-            .flatMap { (id, screen) ->
-                screen.events.map { Triple(id, screen, it) }
+            .flatMap { (_, screen) ->
+                screen.events.map { Pair(screen, it) }
             }
-            .subscribe({ (screenId, screen, screenEvent) ->
+            .subscribe({ (screenViewModel, screenEvent) ->
                 // filter out the the events that are not meant for the currently active screen:
-                if (activeScreenViewModel() == screen) {
-                    actions.onNext(Action.Navigate(screenEvent.navigateTo, screenId, screenEvent.rowId, screenEvent.blockId))
+                if (activeScreenViewModel() == screenViewModel) {
+                    actions.onNext(Action.Navigate(screenEvent.navigateTo, screenViewModel))
                 }
             }, { error -> actions.onError(error) })
 
         // observe actions and emit analytics events
         actions.subscribe { action ->
-            when(action) {
+
+            when (action) {
                 is Action.Navigate -> {
-                    val attributes = when(action.navigateTo) {
-                        is NavigateTo.GoToScreenAction -> {
-                            hashMapOf(
-                                Pair("action", AttributeValue.Scalar.String("goToScreen")),
-                                Pair("destinationScreenID", AttributeValue.Scalar.String(action.navigateTo.screenId)),
-                                // not possible to navigate to a screen in another experience as of yet:
-                                Pair("destinationExperienceID", AttributeValue.Scalar.String(experience.id.rawValue))
-                            )
-                        }
-                        is NavigateTo.PresentWebsiteAction -> {
-                            hashMapOf(
-                                Pair("action", AttributeValue.Scalar.String("presentWebsite")),
-                                // not possible to navigate to a screen in another experience as of yet:
-                                Pair("url", AttributeValue.Scalar.String(action.navigateTo.url.toString()))
-                            )
-                        }
-                        is NavigateTo.External -> {
-                            hashMapOf(
-                                Pair("action", AttributeValue.Scalar.String("openURL"))
-                                // TODO: figure out how to properly compose the event data contributed by the Action itself and the context.
-                                // Pair("url", AttributeValue.String(action.navigateTo.uri.toString()))
-                            )
-                        }
-                    }
+                    val attributes = hashMapOf(
+                        Pair("experience", experience.asAttributeValue()),
+                        Pair("screen", action.sourceScreenViewModel.attributes),
+                        Pair("block", action.navigateTo.blockAttributes)
+                    )
+
 
                     val event = Event(
                         name = "Block Tapped",
-                        attributes = hashMapOf(
-                            Pair("experienceID", AttributeValue.Scalar.String(experience.id.rawValue)),
-                            Pair("screenID", AttributeValue.Scalar.String(action.sourceScreenId)),
-                            Pair("blockID", AttributeValue.Scalar.String(action.sourceBlockId))
-                        ).apply { putAll(attributes) } + attributeHashFragmentForCampaignId()
+                        attributes = attributes
                     )
 
                     eventQueueService.trackEvent(event, EventQueueService.ROVER_NAMESPACE)
@@ -165,30 +142,29 @@ open class ExperienceNavigationViewModel(
 
         // and dispatch the actions to the appropriate methods.
         actions.subscribe { action ->
-            when(action) {
+            when (action) {
                 is Action.PressedBack -> {
                     goBack()
                 }
                 is Action.Navigate -> {
                     when (action.navigateTo) {
-                        is NavigateTo.External -> {
+                        is NavigateToFromBlock.External -> {
                             externalNavigationEvents.onNext(
                                 ExperienceExternalNavigationEvent.OpenUri(action.navigateTo.uri)
                             )
                         }
-                        is NavigateTo.PresentWebsiteAction -> {
+                        is NavigateToFromBlock.PresentWebsiteAction -> {
                             externalNavigationEvents.onNext(
                                 ExperienceExternalNavigationEvent.PresentWebsite(action.navigateTo.url)
                             )
                         }
-                        is NavigateTo.GoToScreenAction -> {
+                        is NavigateToFromBlock.GoToScreenAction -> {
                             val screenViewModel = screenViewModelsById[action.navigateTo.screenId]
                             val screen = screensById[action.navigateTo.screenId]
 
                             when {
                                 screenViewModel == null || screen == null -> {
                                     log.w("Screen by id ${action.navigateTo.screenId} missing from Experience with id ${experience.id.rawValue}.")
-
                                 }
                                 else -> navigateToScreen(screen, screenViewModel, state.backStack, true)
                             }
@@ -199,9 +175,9 @@ open class ExperienceNavigationViewModel(
                     closeExperience(state.backStack)
                 }
                 is Action.Begin -> {
-                    if(state.backStack.isEmpty()) {
-                        // backstack is empty, so we're just starting out.  Navigate forward to the home screen
-                        // in the experience!
+                    if (state.backStack.isEmpty()) {
+                        // backstack is empty, so we're just starting out.  Navigate forward to the
+                        // home screen in the experience!
 
                         val homeScreen = screensById[experience.homeScreenId.rawValue] ?: throw RuntimeException("Home screen id is dangling.")
                         val screenViewModel = screenViewModelsById[experience.homeScreenId.rawValue] ?: throw RuntimeException("Home screen id is dangling.")
@@ -242,7 +218,7 @@ open class ExperienceNavigationViewModel(
         // session changes from moving between screens or leaving
         screenSubject.subscribe { screenUpdate ->
             trackLeaveScreen()
-            trackEnterScreen(screenUpdate.screenViewModel.screenId)
+            trackEnterScreen(screenUpdate.screenViewModel)
         }
         externalNavigationEvents.subscribe { _ ->
             trackLeaveScreen()
@@ -257,8 +233,6 @@ open class ExperienceNavigationViewModel(
      * be able respond to it in your container (say, a subclass of
      * [ExperienceActivity]), and perform your custom behaviour, such as launching an
      * app login screen.
-     *
-     * TODO: anything I can do to make this particular method any more functional?
      */
     protected open fun navigateToScreen(
         screen: Screen,
@@ -275,7 +249,7 @@ open class ExperienceNavigationViewModel(
         )
 
         state = State(
-            if(forwards) {
+            if (forwards) {
                 currentBackStack + listOf(BackStackFrame(screen.id.rawValue))
             } else {
                 currentBackStack.subList(0, currentBackStack.lastIndex)
@@ -307,14 +281,15 @@ open class ExperienceNavigationViewModel(
      * session.
      */
     protected fun trackLeaveScreen() {
-        // peek the state to get the current screen.
+        // peek the state to determine if a screen view model is active.
         val currentScreenId = state.backStack.lastOrNull()?.screenId
 
-        if(currentScreenId != null) {
+        if (currentScreenId != null) {
+            val screenViewModel = activeScreenViewModel()
             sessionTracker.leaveSession(
                 ExperienceScreenSessionKey(experience.id.rawValue, currentScreenId),
                 "Screen Dismissed",
-                sessionEventAttributes(currentScreenId)
+                sessionEventAttributes(screenViewModel)
             )
         }
     }
@@ -323,12 +298,12 @@ open class ExperienceNavigationViewModel(
      * Called when entering an Experience screen.  Add any side-effects here, such as tracking the
      * session.
      */
-    protected fun trackEnterScreen(screenId: String) {
+    protected fun trackEnterScreen(screenViewModel: ScreenViewModelInterface) {
         sessionTracker.enterSession(
-            ExperienceScreenSessionKey(experience.id.rawValue, screenId),
+            ExperienceScreenSessionKey(experience.id.rawValue, screenViewModel.screenId),
             "Screen Presented",
             "Screen Viewed",
-            sessionEventAttributes(screenId)
+            sessionEventAttributes(screenViewModel)
         )
     }
 
@@ -353,7 +328,6 @@ open class ExperienceNavigationViewModel(
         return screenViewModelsById[currentScreenId] ?: throw RuntimeException("Unexpectedly found a dangling screen id in the back stack.")
     }
 
-
     /**
      * In response to navigating between screens, we want to inject events for setting the backlight
      * boost and/or the toolbar.
@@ -372,17 +346,11 @@ open class ExperienceNavigationViewModel(
         )
     }
 
-    private fun sessionEventAttributes(screenId: String): Attributes {
+    private fun sessionEventAttributes(screenViewModel: ScreenViewModelInterface): Attributes {
         return hashMapOf(
-            Pair("experienceID", AttributeValue.Scalar.String(experience.id.rawValue)),
-            Pair("screenID", AttributeValue.Scalar.String(screenId))
-        ) + if(experience.campaignId != null) { hashMapOf(Pair("campaignID", AttributeValue.Scalar.String(experience.campaignId!!))) } else hashMapOf()
-    }
-
-    private fun attributeHashFragmentForCampaignId(): HashMap<String, AttributeValue.Scalar.String> {
-        return if(experience.campaignId != null) hashMapOf(
-            Pair("campaignID", AttributeValue.Scalar.String(experience.campaignId.toString()))
-        ) else hashMapOf()
+            Pair("experience", experience.asAttributeValue()),
+            Pair("screen", screenViewModel.attributes)
+        )
     }
 
     @Parcelize

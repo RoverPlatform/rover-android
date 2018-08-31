@@ -27,9 +27,9 @@ import io.rover.experiences.ui.toolbar.ViewExperienceToolbar
 import io.rover.core.logging.log
 import io.rover.core.streams.androidLifecycleDispose
 import io.rover.core.streams.subscribe
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.ViewModelBinding
-import io.rover.core.ui.dpAsPx
+import io.rover.experiences.ui.dpAsPx
 import io.rover.core.platform.whenNotNull
 import org.reactivestreams.Publisher
 
@@ -51,12 +51,12 @@ import org.reactivestreams.Publisher
  *
  * See [ExperienceActivity] for an example of how to integrate.
  */
-class ExperienceView : CoordinatorLayout, BindableView<ExperienceViewModelInterface> {
+class ExperienceView : CoordinatorLayout, MeasuredBindableView<ExperienceViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    override var viewModel: BindableView.Binding<ExperienceViewModelInterface>? by ViewModelBinding(false) { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<ExperienceViewModelInterface>? by ViewModelBinding(false) { binding, subscriptionCallback ->
         // sadly have to set rebindingAllowed to be false because of complexity dealing with the
         // toolbar; the toolbar may not be configured twice.
         val viewModel = binding?.viewModel
@@ -64,7 +64,7 @@ class ExperienceView : CoordinatorLayout, BindableView<ExperienceViewModelInterf
         val toolbarHost = toolbarHost
             ?: throw RuntimeException("You must set the ToolbarHost up on ExperienceView before binding the view to a view model.")
 
-        experienceNavigationView.viewModel = null
+        experienceNavigationView.viewModelBinding = null
 
         if (viewModel != null) {
             viewModel.events.androidLifecycleDispose(this).subscribe({ event ->
@@ -98,7 +98,7 @@ class ExperienceView : CoordinatorLayout, BindableView<ExperienceViewModelInterf
             window.attributes = (window.attributes ?: WindowManager.LayoutParams()).apply {
                 screenBrightness = startingBrightnessFraction
             }
-            var runningAnimator : Animator? = null
+            var runningAnimator: Animator? = null
             viewModel.extraBrightBacklight.androidLifecycleDispose(this).subscribe({ extraBright ->
                 runningAnimator?.cancel()
                 val animator = ObjectAnimator.ofObject(
@@ -127,15 +127,15 @@ class ExperienceView : CoordinatorLayout, BindableView<ExperienceViewModelInterf
                 runningAnimator = animator
             }, { throw(it) }, { subscriptionCallback(it) })
 
-            viewModel.experienceNavigation.androidLifecycleDispose(this).subscribe( { experienceNavigationViewModel ->
-                experienceNavigationView.viewModel = BindableView.Binding(
+            viewModel.experienceNavigation.androidLifecycleDispose(this).subscribe({ experienceNavigationViewModel ->
+                experienceNavigationView.viewModelBinding = MeasuredBindableView.Binding(
                     experienceNavigationViewModel
                 )
-                turnOffProgressIndicator ()
+                turnOffProgressIndicator()
             }, { throw(it) }, { subscriptionCallback(it) })
 
-            viewModel.loadingState.androidLifecycleDispose(this).subscribe( { loadingState ->
-                if(loadingState) {
+            viewModel.loadingState.androidLifecycleDispose(this).subscribe({ loadingState ->
+                if (loadingState) {
                     turnOnProgressIndicator()
                 } else {
                     turnOffProgressIndicator()
@@ -172,7 +172,6 @@ class ExperienceView : CoordinatorLayout, BindableView<ExperienceViewModelInterf
             height = 40.dpAsPx(context.resources.displayMetrics)
             gravity = Gravity.CENTER_HORIZONTAL or Gravity.CENTER_VERTICAL
         }
-
     }
 
     protected fun turnOnProgressIndicator() {
@@ -256,4 +255,3 @@ class ExperienceView : CoordinatorLayout, BindableView<ExperienceViewModelInterf
         )
     }
 }
-

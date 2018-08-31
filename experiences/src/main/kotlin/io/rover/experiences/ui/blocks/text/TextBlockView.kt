@@ -13,7 +13,7 @@ import io.rover.experiences.ui.blocks.concerns.border.ViewBorder
 import io.rover.experiences.ui.blocks.concerns.text.AndroidRichTextToSpannedTransformer
 import io.rover.experiences.ui.blocks.concerns.text.ViewText
 import io.rover.experiences.ui.blocks.concerns.ViewComposition
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.ViewModelBinding
 
 class TextBlockView : AppCompatTextView, LayoutableView<TextBlockViewModelInterface> {
@@ -25,14 +25,14 @@ class TextBlockView : AppCompatTextView, LayoutableView<TextBlockViewModelInterf
     private val viewComposition = ViewComposition()
     private val viewBackground = ViewBackground(this)
     private val viewBorder = ViewBorder(this, viewComposition)
-    private val viewBlock = ViewBlock(this, setOf(viewBorder))
+    private val viewBlock = ViewBlock(this)
     private val viewText = ViewText(this, AndroidRichTextToSpannedTransformer())
 
-    override var viewModel: BindableView.Binding<TextBlockViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
-        viewBorder.viewModel = binding
-        viewBlock.viewModel = binding
-        viewBackground.viewModel = binding
-        viewText.viewModel = binding
+    override var viewModelBinding: MeasuredBindableView.Binding<TextBlockViewModelInterface>? by ViewModelBinding { binding, _ ->
+        viewBorder.viewModelBinding = binding
+        viewBlock.viewModelBinding = binding
+        viewBackground.viewModelBinding = binding
+        viewText.viewModelBinding = binding
     }
 
     override fun onDraw(canvas: Canvas) {

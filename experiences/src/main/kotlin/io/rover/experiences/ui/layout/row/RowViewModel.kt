@@ -1,18 +1,18 @@
 package io.rover.experiences.ui.layout.row
 
-import io.rover.core.data.domain.Block
-import io.rover.core.data.domain.Row
+import io.rover.experiences.data.domain.Block
+import io.rover.experiences.data.domain.Row
 import io.rover.core.streams.filterNulls
 import io.rover.core.streams.map
 import io.rover.experiences.ui.blocks.concerns.layout.BlockViewModelInterface
 import io.rover.experiences.ui.blocks.barcode.BarcodeBlockViewModel
 import io.rover.experiences.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.experiences.ui.layout.DisplayItem
-import io.rover.core.ui.RectF
+import io.rover.experiences.ui.RectF
 import io.rover.experiences.ui.blocks.concerns.layout.CompositeBlockViewModelInterface
 import io.rover.experiences.ui.layout.ViewType
 import io.rover.experiences.ui.layout.screen.ScreenViewModel
-import io.rover.core.data.domain.Height
+import io.rover.experiences.data.domain.Height
 import io.rover.core.streams.asPublisher
 import io.rover.core.streams.flatMap
 import io.rover.core.streams.share
@@ -65,9 +65,9 @@ class RowViewModel(
     }
 
     private fun height(bounds: RectF): Float {
-        return when(row.height) {
+        return when (row.height) {
             is Height.Intrinsic -> blockViewModels.map { it.stackedHeight(bounds) }.sum()
-            is Height.Static -> (row.height as Height.Static).value.toFloat()
+            is Height.Static -> (row.height).value.toFloat()
         }
     }
 
@@ -110,7 +110,7 @@ class RowViewModel(
 
         val tail = remainingBlockViewModels.subList(1, remainingBlockViewModels.size)
 
-        // if blockFrame exceeds the blockBounds, we need clip, and in terms relative to blockBounds
+        // if blockFrame exceeds the rowFrame, we need clip, and in terms relative to blockBounds
         val clip = if (!rowFrame.contains(blockFrame)) {
             // and find the intersection with blockFrame to find out what should be exposed and then
             // transform into coordinate space with origin of the blockframe in the top left corner:
@@ -119,8 +119,8 @@ class RowViewModel(
             // translate the clip to return the intersection, but if there is none that means the
             // block is *entirely* outside of the bounds.  An unlikely but not impossible situation.
             // Clip it entirely:
-            intersection?.offset(0 - blockFrame.left, 0 - blockFrame.top) ?:
-                RectF(blockFrame.left, blockFrame.top, blockFrame.left, blockFrame.top)
+            intersection?.offset(0 - blockFrame.left, 0 - blockFrame.top)
+                ?: RectF(blockFrame.left, blockFrame.top, blockFrame.left, blockFrame.top)
         } else {
             // no clip is necessary because the blockFrame is contained entirely within the
             // surrounding block.

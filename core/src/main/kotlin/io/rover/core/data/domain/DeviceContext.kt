@@ -72,7 +72,7 @@ data class DeviceContext(
         internal fun blank(): DeviceContext {
             return DeviceContext(
                 null, null, null, null, null, null,
-                null, null,null, null, null,null, null, null,
+                null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null,
                 null, null, null, null, null, null, false, hashMapOf()
             )

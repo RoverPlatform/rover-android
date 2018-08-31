@@ -14,13 +14,13 @@ import io.rover.experiences.ui.ExperienceViewModelInterface
 import io.rover.experiences.ui.navigation.ExperienceExternalNavigationEvent
 import io.rover.core.R
 import io.rover.core.Rover
+import io.rover.core.embeddedWebBrowserDisplay
 import io.rover.core.logging.log
-import io.rover.core.routing.Router
-import io.rover.core.routing.website.EmbeddedWebBrowserDisplayInterface
 import io.rover.core.streams.androidLifecycleDispose
 import io.rover.core.streams.subscribe
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.platform.whenNotNull
+import io.rover.core.router
 
 /**
  * This can display a Rover experience in an Activity, self-contained.
@@ -55,14 +55,14 @@ open class ExperienceActivity : AppCompatActivity() {
             is ExperienceExternalNavigationEvent.OpenUri -> {
                 ContextCompat.startActivity(
                     this,
-                    Rover.sharedInstance.resolveSingletonOrFail(Router::class.java).route(externalNavigationEvent.uri, false),
+                    Rover.sharedInstance.router.route(externalNavigationEvent.uri, false),
                     null
                 )
             }
             is ExperienceExternalNavigationEvent.PresentWebsite -> {
                 ContextCompat.startActivity(
                     this,
-                    Rover.sharedInstance.resolveSingletonOrFail(EmbeddedWebBrowserDisplayInterface::class.java).intentForViewingWebsiteViaEmbeddedBrowser(
+                    Rover.sharedInstance.embeddedWebBrowserDisplay.intentForViewingWebsiteViaEmbeddedBrowser(
                         externalNavigationEvent.url.toString()
                     ),
                     null
@@ -80,7 +80,7 @@ open class ExperienceActivity : AppCompatActivity() {
         set(viewModel) {
             field = viewModel
 
-            experiencesView.viewModel = viewModel.whenNotNull { BindableView.Binding(it) }
+            experiencesView.viewModelBinding = viewModel.whenNotNull { MeasuredBindableView.Binding(it) }
 
             viewModel
                 ?.events
@@ -124,7 +124,7 @@ open class ExperienceActivity : AppCompatActivity() {
             intArrayOf(R.attr.displayNoCustomThemeWarningMessage)
         ).getBoolean(0, false)
 
-        if(displayNoCustomThemeWarningMessage) {
+        if (displayNoCustomThemeWarningMessage) {
             log.w("You have set no theme for ExperienceActivity (or your optional subclass thereof) in your AndroidManifest.xml.\n" +
                 "In particular, this means the toolbar will not pick up your brand colours.")
         }
@@ -208,4 +208,3 @@ open class ExperienceActivity : AppCompatActivity() {
         }
     }
 }
-

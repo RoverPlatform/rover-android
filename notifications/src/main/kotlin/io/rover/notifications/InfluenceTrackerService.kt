@@ -4,54 +4,49 @@ import android.app.Activity
 import android.app.Application
 import android.content.Intent
 import android.os.Bundle
-import io.rover.notifications.domain.Notification
 import io.rover.core.logging.log
+import io.rover.core.platform.DateFormattingInterface
 import io.rover.core.platform.LocalStorage
 import io.rover.core.platform.whenNotNull
+import io.rover.notifications.domain.Notification
+import io.rover.notifications.graphql.decodeJson
+import io.rover.notifications.graphql.encodeJson
+import org.json.JSONException
+import org.json.JSONObject
 
 class InfluenceTrackerService(
     private val application: Application,
     localStorage: LocalStorage,
+    private val dateFormatting: DateFormattingInterface,
     private val notificationOpen: NotificationOpenInterface,
     private val influenceThresholdSeconds: Int = 60
-): InfluenceTrackerServiceInterface {
+) : InfluenceTrackerServiceInterface {
     private val store = localStorage.getKeyValueStorageFor("influenced-opens")
 
     private var lastSeenNotificationAt: Long?
         get() = try { store["last-seen-notification-at"]?.toLong() } catch (numberFormatException: NumberFormatException) { null }
         set(value) {
-            if(value == null) {
+            if (value == null) {
                 store.unset("last-seen-notification-at")
             } else {
                 store["last-seen-notification-at"] = value.toString()
             }
         }
 
-    private var lastSeenNotificationId: String?
-        get() = store["last-seen-notification-id"]
+    private var lastSeenNotificationJson: String?
+        get() = store["last-seen-notification"]
         set(value) {
-            if(value == null) {
-                store.unset("last-seen-notification-id")
+            if (value == null) {
+                store.unset("last-seen-notification")
             } else {
-                store["last-seen-notification-id"] = value
-            }
-        }
-
-    private var lastSeenCampaignId: String?
-        get() = store["last-seen-campaign-id"]
-        set(value) {
-            if(value == null) {
-                store.unset("last-seen-campaign-id")
-            } else {
-                store["last-seen-campaign-id"] = value
+                store["last-seen-notification"] = value
             }
         }
 
     override fun notifyNotificationReceived(notification: Notification) {
-        // track current time
+        // store current time and the notification itself so they may be checked when app is opened.
         lastSeenNotificationAt = System.currentTimeMillis() / 1000L
-        lastSeenNotificationId = notification.id
-        lastSeenCampaignId = notification.campaignId
+        lastSeenNotificationJson = notification.encodeJson(dateFormatting).toString()
         log.v("Marked that a notification arrived.")
     }
 
@@ -71,7 +66,7 @@ class InfluenceTrackerService(
                 override fun onActivityStopped(activity: Activity?) { }
 
                 override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-                    if(savedInstanceState == null && activity.intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
+                    if (savedInstanceState == null && activity.intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
                         // app was started from the launcher by tapping the icon. contrasted with
                         // navigating within the app, state restore happening when returning to the
                         // app after process death, or app being opened by tapping on a
@@ -82,23 +77,32 @@ class InfluenceTrackerService(
                             System.currentTimeMillis() / 1000L - lastSeen < influenceThresholdSeconds
                         }
 
-                        val capturedLastSeenNotificationId = lastSeenNotificationId
-                        val capturedLastSeenCampaignId = lastSeenCampaignId
+                        val capturedLastSeenNotificationJson = lastSeenNotificationJson
 
-                        if(seenWithinThreshold == true && capturedLastSeenNotificationId != null && capturedLastSeenCampaignId != null) {
+                        if (seenWithinThreshold == true && capturedLastSeenNotificationJson != null) {
                             log.v("App open influenced by a notification detected.")
 
+                            // decode it
+                            val notification = try {
+                                Notification.decodeJson(
+                                    JSONObject(capturedLastSeenNotificationJson),
+                                    dateFormatting
+                                )
+                            } catch (e: JSONException) {
+                                log.w("Invalid JSON for a Notification appeared in storage for tracking influenced opens.  Dropping. Reason: ${e.message}")
+                                lastSeenNotificationAt = null
+                                lastSeenNotificationJson = null
+                                return
+                            }
+
                             notificationOpen.appOpenedAfterReceivingNotification(
-                                capturedLastSeenNotificationId,
-                                capturedLastSeenCampaignId
+                                notification
                             )
 
                             lastSeenNotificationAt = null
-                            lastSeenNotificationId = null
-                            lastSeenCampaignId = null
+                            lastSeenNotificationJson = null
                         }
                     }
-
                 }
             }
         )

@@ -5,7 +5,7 @@ import android.widget.ImageView
 import io.rover.core.streams.androidLifecycleDispose
 import io.rover.core.streams.subscribe
 import io.rover.core.ui.concerns.ViewModelBinding
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 
 /**
  * Mixin that binds an image block view model to the relevant parts of an [ImageView].
@@ -21,7 +21,7 @@ class ViewImage(
         imageView.scaleType = ImageView.ScaleType.FIT_XY
     }
 
-    override var viewModel: BindableView.Binding<ImageBlockViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<ImageBlockViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
         if (binding != null) {
             val measuredSize = binding.measuredSize ?: throw RuntimeException("ViewImage may only be used with a view model binding including a measured size (ie. used within a Rover screen layout).")
 
@@ -34,7 +34,7 @@ class ViewImage(
                 imageView
             ).subscribe({ imageUpdate ->
                 imageView.setImageBitmap(imageUpdate.bitmap)
-                if(imageUpdate.fadeIn) {
+                if (imageUpdate.fadeIn) {
                     imageView.animate()
                         // TODO: we should not have to peek the surrounding ImageBlockViewModel interface to discover opacity.
                         .alpha(binding.viewModel.opacity)

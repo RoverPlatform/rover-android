@@ -13,7 +13,7 @@ import io.rover.core.events.ContextProvider
  */
 class ReachabilityContextProvider(
     applicationContext: android.content.Context
-): ContextProvider {
+) : ContextProvider {
     private val connectionManager = applicationContext.applicationContext.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
     @Suppress("DEPRECATION") // Using deprecated API only on legacy Android.

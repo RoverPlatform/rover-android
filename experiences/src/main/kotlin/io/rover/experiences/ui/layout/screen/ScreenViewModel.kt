@@ -1,20 +1,22 @@
 package io.rover.experiences.ui.layout.screen
 
-import io.rover.core.data.domain.Screen
-import io.rover.core.data.domain.TitleBarButtons
-import io.rover.core.data.domain.Row
+import io.rover.core.data.domain.AttributeValue
+import io.rover.experiences.data.domain.Screen
+import io.rover.experiences.data.domain.TitleBarButtons
+import io.rover.experiences.data.domain.Row
 import io.rover.experiences.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.experiences.ui.blocks.concerns.layout.LayoutableViewModel
 import io.rover.experiences.ui.toolbar.ToolbarConfiguration
 import io.rover.experiences.ui.layout.DisplayItem
 import io.rover.experiences.ui.layout.Layout
-import io.rover.core.ui.RectF
-import io.rover.core.ui.asAndroidColor
+import io.rover.experiences.ui.RectF
+import io.rover.experiences.ui.asAndroidColor
 import io.rover.experiences.ui.layout.row.RowViewModelInterface
 import io.rover.core.logging.log
 import io.rover.core.streams.asPublisher
 import io.rover.core.streams.flatMap
 import io.rover.core.streams.map
+import io.rover.experiences.data.domain.events.asAttributeValue
 import org.reactivestreams.Publisher
 
 class ScreenViewModel(
@@ -25,8 +27,8 @@ class ScreenViewModel(
 
     // TODO: remember (State) scroll position
 
-    private val rowsById : Map<String, Row> = screen.rows.associateBy { it.id.rawValue }.let { rowsById ->
-        if(rowsById.size != screen.rows.size) {
+    private val rowsById: Map<String, Row> = screen.rows.associateBy { it.id.rawValue }.let { rowsById ->
+        if (rowsById.size != screen.rows.size) {
             log.w("Duplicate screen IDs appeared in screen $screenId.")
             emptyMap()
         } else rowsById
@@ -36,7 +38,7 @@ class ScreenViewModel(
      * Map of Row View models and the Row ids they own.  Map entry order is their order in the
      * Experience.
      */
-    private val rowViewModelsById : Map<String, RowViewModelInterface> by lazy {
+    private val rowViewModelsById: Map<String, RowViewModelInterface> by lazy {
         rowsById.mapValues { (_, row) ->
             // TODO: why on earth is this copy() here?
             resolveNavigationViewModel(row.copy(blocks = row.blocks))
@@ -82,6 +84,9 @@ class ScreenViewModel(
             screen.titleBar.buttons == TitleBarButtons.Both || screen.titleBar.buttons == TitleBarButtons.Close,
             screen.statusBar.color.asAndroidColor()
         )
+
+    override val attributes: AttributeValue
+        get() = screen.asAttributeValue()
 
     override fun render(
         widthDp: Float
@@ -132,4 +137,3 @@ class ScreenViewModel(
     override val screenId: String
         get() = screen.id.rawValue
 }
-

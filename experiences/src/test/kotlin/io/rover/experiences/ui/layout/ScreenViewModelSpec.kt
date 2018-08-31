@@ -9,20 +9,20 @@ import io.rover.experiences.ui.blocks.rectangle.RectangleBlockViewModel
 import io.rover.experiences.ui.layout.row.RowViewModel
 import io.rover.experiences.ui.layout.screen.ScreenViewModelInterface
 import io.rover.core.assets.AssetService
-import io.rover.core.assets.ImageOptimizationServiceInterface
+import io.rover.experiences.assets.ImageOptimizationServiceInterface
 import io.rover.core.container.Assembler
 import io.rover.core.container.Container
 import io.rover.core.container.InjectionContainer
 import io.rover.core.container.Resolver
 import io.rover.core.container.Scope
-import io.rover.core.data.domain.Background
-import io.rover.core.data.domain.Height
-import io.rover.core.data.domain.HorizontalAlignment
+import io.rover.experiences.data.domain.Background
+import io.rover.experiences.data.domain.Height
+import io.rover.experiences.data.domain.HorizontalAlignment
 import io.rover.core.data.domain.ID
-import io.rover.core.data.domain.Position
-import io.rover.core.data.domain.VerticalAlignment
+import io.rover.experiences.data.domain.Position
+import io.rover.experiences.data.domain.VerticalAlignment
 import io.rover.core.routing.Router
-import io.rover.core.ui.RectF
+import io.rover.experiences.ui.RectF
 import org.amshove.kluent.mock
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
@@ -83,7 +83,7 @@ class ScreenViewModelSpec : Spek({
                         blocks = listOf(
                             ModelFactories.emptyRectangleBlock().copy(
                                 position = Position(
-                                    HorizontalAlignment.Fill(0.0,0.0),
+                                    HorizontalAlignment.Fill(0.0, 0.0),
                                     VerticalAlignment.Top(0.0, Height.Static(10.0))
                                 )
                             )

@@ -12,7 +12,7 @@ import io.rover.core.streams.androidLifecycleDispose
 import io.rover.core.streams.subscribe
 import io.rover.core.platform.DrawableWrapper
 import io.rover.core.ui.concerns.ViewModelBinding
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 
 class ViewBackground(
     override val view: View
@@ -21,7 +21,7 @@ class ViewBackground(
         android.R.integer.config_shortAnimTime
     )
 
-    override var viewModel: BindableView.Binding<BackgroundViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<BackgroundViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
         view.background = null
         view.setBackgroundColor(Color.TRANSPARENT)
 
@@ -65,7 +65,7 @@ class ViewBackground(
                     )
                 )
 
-                if(fadeIn) {
+                if (fadeIn) {
                     ObjectAnimator.ofInt(
                         backgroundDrawable, "alpha", 0, 255
                     ).apply {
@@ -77,7 +77,7 @@ class ViewBackground(
                 }
 
                 view.background = backgroundDrawable
-            }, { error -> throw error}, { subscriptionCallback(it) })
+            }, { error -> throw error }, { subscriptionCallback(it) })
 
             binding.viewModel.informDimensions(binding.measuredSize ?: throw RuntimeException(
                 "ViewBackground may only be used with a view model binding including a measured size (ie. used within a Rover screen layout)."

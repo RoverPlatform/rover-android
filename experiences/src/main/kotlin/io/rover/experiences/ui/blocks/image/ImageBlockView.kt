@@ -11,7 +11,7 @@ import io.rover.experiences.ui.blocks.concerns.background.ViewBackground
 import io.rover.experiences.ui.blocks.concerns.layout.ViewBlock
 import io.rover.experiences.ui.blocks.concerns.border.ViewBorder
 import io.rover.experiences.ui.blocks.concerns.ViewComposition
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.ViewModelBinding
 
 class ImageBlockView : AppCompatImageView, LayoutableView<ImageBlockViewModelInterface> {
@@ -24,14 +24,14 @@ class ImageBlockView : AppCompatImageView, LayoutableView<ImageBlockViewModelInt
 
     private val viewBackground = ViewBackground(this)
     private val viewBorder = ViewBorder(this, viewComposition)
-    private val viewBlock = ViewBlock(this, setOf(viewBorder))
+    private val viewBlock = ViewBlock(this)
     private val viewImage = ViewImage(this)
 
-    override var viewModel: BindableView.Binding<ImageBlockViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
-        viewBorder.viewModel = binding
-        viewBlock.viewModel = binding
-        viewBackground.viewModel = binding
-        viewImage.viewModel = binding
+    override var viewModelBinding: MeasuredBindableView.Binding<ImageBlockViewModelInterface>? by ViewModelBinding { binding, _ ->
+        viewBorder.viewModelBinding = binding
+        viewBlock.viewModelBinding = binding
+        viewBackground.viewModelBinding = binding
+        viewImage.viewModelBinding = binding
     }
 
     override fun onDraw(canvas: Canvas) {

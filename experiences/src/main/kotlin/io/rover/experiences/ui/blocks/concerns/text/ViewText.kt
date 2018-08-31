@@ -6,7 +6,7 @@ import android.os.Build
 import android.text.Layout
 import android.view.Gravity
 import android.widget.TextView
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.ViewModelBinding
 
 /**
@@ -32,7 +32,7 @@ class ViewText(
         }
     }
 
-    override var viewModel: BindableView.Binding<TextViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<TextViewModelInterface>? by ViewModelBinding { binding, _ ->
         if (binding != null) {
             // TODO: this may be a fair bit of compute at bind-time.  But not sure where to put
             // memoized android-specific stuff (the Spanned below) because the ViewModel is

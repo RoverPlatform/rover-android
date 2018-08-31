@@ -3,10 +3,10 @@ package io.rover.experiences.ui.blocks.concerns.text
 import android.text.Spanned
 import io.rover.experiences.ui.blocks.concerns.layout.Measurable
 import io.rover.experiences.ui.blocks.text.TextBlockViewModel
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.BindableViewModel
 
-interface ViewTextInterface: BindableView<TextViewModelInterface>
+interface ViewTextInterface : MeasuredBindableView<TextViewModelInterface>
 
 /**
  * View Model for block content that contains rich text content (decorated with strong, italic, and

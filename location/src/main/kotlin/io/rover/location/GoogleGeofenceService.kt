@@ -11,11 +11,11 @@ import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.GeofencingRequest
-import io.rover.location.domain.Region
 import io.rover.core.Rover
 import io.rover.core.logging.log
 import io.rover.core.permissions.PermissionsNotifierInterface
 import io.rover.core.streams.subscribe
+import io.rover.location.domain.Region
 
 /**
  * Monitors for Geofence events using the Google Location Geofence API.
@@ -31,17 +31,17 @@ class GoogleGeofenceService(
     private val locationReportingService: LocationReportingServiceInterface,
     private val permissionsNotifier: PermissionsNotifierInterface
     // TODO: customizable geofence limit
-): GoogleGeofenceServiceInterface {
+) : GoogleGeofenceServiceInterface {
     override fun newGoogleGeofenceEvent(geofencingEvent: GeofencingEvent) {
         // have to do processing here because we need to know what the regions are.
-        if(!geofencingEvent.hasError()) {
-            val regions = geofencingEvent.triggeringGeofences.map {
+        if (!geofencingEvent.hasError()) {
+            val regions = geofencingEvent.triggeringGeofences.mapNotNull {
                 val fence = geofencingEvent.triggeringGeofences.first()
 
                 val region = currentFences.firstOrNull { it.identifier == fence.requestId }
 
-                if(region == null) {
-                    val verb = when(geofencingEvent.geofenceTransition) {
+                if (region == null) {
+                    val verb = when (geofencingEvent.geofenceTransition) {
                         Geofence.GEOFENCE_TRANSITION_ENTER -> "enter"
                         Geofence.GEOFENCE_TRANSITION_EXIT -> "exit"
                         else -> "unknown (${geofencingEvent.geofenceTransition})"
@@ -49,7 +49,7 @@ class GoogleGeofenceService(
                     log.w("Received an $verb event for Geofence with request-id/identifier '${fence.requestId}', but not currently tracking that one. Ignoring.")
                 }
                 region
-            }.filterNotNull()
+            }
 
             regions.forEach { region ->
                 when (geofencingEvent.geofenceTransition) {
@@ -82,7 +82,7 @@ class GoogleGeofenceService(
 
     @SuppressLint("MissingPermission")
     private fun startMonitoringGeofencesIfPossible() {
-        if(permissionObtained && currentFences.isNotEmpty()) {
+        if (permissionObtained && currentFences.isNotEmpty()) {
             log.v("Updating geofences.")
             // This will remove any existing Rover geofences, because will all be registered with the
             // same pending intent pointing to the receiver intent service.
@@ -113,7 +113,6 @@ class GoogleGeofenceService(
             }.addOnSuccessListener {
                 log.v("Now monitoring ${geofences.count()} Rover geofences.")
             }
-
         }
     }
 
@@ -126,7 +125,7 @@ class GoogleGeofenceService(
         return PendingIntent.getBroadcast(
             applicationContext,
             0,
-            Intent(applicationContext,  GeofenceBroadcastReceiver::class.java),
+            Intent(applicationContext, GeofenceBroadcastReceiver::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT
         )
     }
@@ -134,27 +133,7 @@ class GoogleGeofenceService(
     /**
      * State: the current subset of fences we're monitoring for.
      */
-    private var currentFences: List<Region.GeofenceRegion> = // listOf()
-        listOf(
-            // vistek
-            Region.GeofenceRegion(
-                43.656768,
-                -79.3619847,
-                300.0
-            ),
-            // home
-            Region.GeofenceRegion(
-                43.6857362,
-                -79.4170394,
-                300.0
-            ),
-            // Rover office
-            Region.GeofenceRegion(
-                43.6506783,
-                -79.3780025,
-                300.0
-            )
-        )
+    private var currentFences: List<Region.GeofenceRegion> = listOf()
 
     /**
      * State: have we been granted permission to use location services yet?
@@ -169,9 +148,9 @@ class GoogleGeofenceService(
     }
 }
 
-class GeofenceBroadcastReceiver: BroadcastReceiver() {
+class GeofenceBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        Rover.sharedInstance.resolveSingletonOrFail(GoogleGeofenceServiceInterface::class.java).newGoogleGeofenceEvent(
+        Rover.sharedInstance.googleGeofenceService.newGoogleGeofenceEvent(
             GeofencingEvent.fromIntent(intent)
         )
     }

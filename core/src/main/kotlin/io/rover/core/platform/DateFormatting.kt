@@ -22,16 +22,15 @@ class DateFormatting : DateFormattingInterface {
     private fun format8601WithTimeZone() = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US)
 
     override fun dateAsIso8601(date: Date, localTime: Boolean): String =
-        if(localTime) format8601WithTimeZone().format(date) else format8601().format(date)
-
+        if (localTime) format8601WithTimeZone().format(date) else format8601().format(date)
 
     override fun iso8601AsDate(iso8601Date: String, localTime: Boolean): Date = try {
-        if(localTime) format8601WithTimeZone().parse(iso8601Date) else format8601().parse(iso8601Date)
+        if (localTime) format8601WithTimeZone().parse(iso8601Date) else format8601().parse(iso8601Date)
     } catch (throwable: Throwable) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            throw JSONException("Could not parse date '$iso8601Date' as ${if(localTime) "local" else "utc"}", throwable)
+            throw JSONException("Could not parse date '$iso8601Date' as ${if (localTime) "local" else "utc"}", throwable)
         } else {
-            throw JSONException("Could not parse date '$iso8601Date' as ${if(localTime) "local" else "utc"}, because ${throwable.message}")
+            throw JSONException("Could not parse date '$iso8601Date' as ${if (localTime) "local" else "utc"}, because ${throwable.message}")
         }
     }
 }

@@ -1,8 +1,8 @@
 package io.rover.experiences.ui.blocks.concerns.border
 
-import io.rover.core.data.domain.Border
+import io.rover.experiences.data.domain.Border
 import io.rover.experiences.ui.blocks.concerns.layout.LayoutPaddingDeflection
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.BindableViewModel
 
 /**
@@ -10,13 +10,13 @@ import io.rover.core.ui.concerns.BindableViewModel
  *
  * Borders can specify a border of arbitrary width, with optional rounded corners.
  */
-interface ViewBorderInterface: BindableView<BorderViewModelInterface>
+interface ViewBorderInterface : MeasuredBindableView<BorderViewModelInterface>
 
 /**
  * This interface is exposed by View Models that have support for a border (of arbitrary width and
  * possibly rounded with a radius).  Equivalent to the [Border] domain model interface.
  */
-interface BorderViewModelInterface : LayoutPaddingDeflection, BindableViewModel {
+interface BorderViewModelInterface : BindableViewModel {
     /**
      * An Android color ARGB int of the border color.
      */

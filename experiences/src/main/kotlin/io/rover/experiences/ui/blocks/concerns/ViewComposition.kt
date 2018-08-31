@@ -29,10 +29,6 @@ class ViewComposition : ViewCompositionInterface {
         afterDraws.add(stage)
     }
 
-    override fun registerOnSizeChangedCallback(callback: (width: Int, height: Int, oldWidth: Int, oldHeight: Int) -> Unit) {
-        onSizeChangedCallbacks.add(callback)
-    }
-
     override fun beforeOnDraw(canvas: Canvas) {
         // allow to inject behaviour before main view draw (here)
         beforeDraws.forEach { it(canvas) }
@@ -62,9 +58,6 @@ interface ViewCompositionInterface {
      * pass has occurred.
      */
     fun registerAfterDraw(stage: (Canvas) -> Unit)
-
-    @Deprecated("Use MeasuredSize passed in with View Model binding instead.")
-    fun registerOnSizeChangedCallback(callback: (width: Int, height: Int, oldWidth: Int, oldHeight: Int) -> Unit)
 
     // The following methods MUST be wired up!  If they are not, functionality in certain mixins
     // will fail to work properly.

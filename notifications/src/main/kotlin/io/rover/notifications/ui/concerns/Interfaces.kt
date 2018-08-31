@@ -60,17 +60,16 @@ interface NotificationsRepositoryInterface {
     fun delete(notification: Notification)
 
     sealed class Emission {
-        sealed class Event: Emission() {
-            data class Refreshing(val refreshing: Boolean): Event()
-            data class FetchFailure(val reason: String): Event()
+        sealed class Event : Emission() {
+            data class Refreshing(val refreshing: Boolean) : Event()
+            data class FetchFailure(val reason: String) : Event()
         }
 
-        data class Update(val notifications: List<Notification>): Emission()
+        data class Update(val notifications: List<Notification>) : Emission()
     }
 }
 
-
-interface NotificationCenterListViewModelInterface: BindableViewModel {
+interface NotificationCenterListViewModelInterface : BindableViewModel {
     /**
      * Subscribe to this event stream to be informed of when a user performs an action that needs
      * to be handled.
@@ -94,17 +93,17 @@ interface NotificationCenterListViewModelInterface: BindableViewModel {
          * This is to better suit View implementations that may display any arbitrary detail of the
          * Notification.  Notification itself is a value object.
         */
-        data class ListUpdated(val notifications: List<Notification>, val stableIds: Map<String, Int>): Event()
+        data class ListUpdated(val notifications: List<Notification>, val stableIds: Map<String, Int>) : Event()
 
-        data class Navigate(val notification: Notification): Event()
+        data class Navigate(val notification: Notification) : Event()
 
         /**
          * The backing data store is in the process of starting or stopping a refresh operation. The
          * consumer may use this event to indicate that a refresh is running.
          */
-        data class Refreshing(val refreshing: Boolean): Event()
+        data class Refreshing(val refreshing: Boolean) : Event()
 
-        class DisplayProblemMessage: Event()
+        class DisplayProblemMessage : Event()
     }
 
     /**
@@ -131,7 +130,7 @@ interface NotificationCenterListViewModelInterface: BindableViewModel {
 /**
  * View model for notification list items in the notification center.
  */
-interface NotificationItemViewModelInterface: BindableViewModel {
+interface NotificationItemViewModelInterface : BindableViewModel {
     /**
      * Indicates whether the view should should show an image thumbnail area.
      */

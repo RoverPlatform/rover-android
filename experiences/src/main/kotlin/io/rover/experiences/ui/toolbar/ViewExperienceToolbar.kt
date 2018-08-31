@@ -127,7 +127,7 @@ class ViewExperienceToolbar(
     }
 
     private fun showOrHideAction(visibility: Boolean) {
-        if(visibility) {
+        if (visibility) {
             toolbar.navigationIcon = toolbar.navigationIcon ?: cachedActionIcon
         } else {
             cachedActionIcon = toolbar.navigationIcon ?: cachedActionIcon

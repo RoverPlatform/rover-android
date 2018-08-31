@@ -1,3 +1,3 @@
 package io.rover.core.container
 
-interface ContainerResolver: Container, Resolver
+interface ContainerResolver : Container, Resolver

@@ -14,7 +14,7 @@ open class PushReceiver(
     private val pushTokenTransmissionChannel: PushTokenTransmissionChannel,
     private val notificationDispatcher: NotificationDispatcher,
     private val dateFormatting: DateFormattingInterface
-): PushReceiverInterface {
+) : PushReceiverInterface {
 
     override fun onTokenRefresh(token: String?) {
         pushTokenTransmissionChannel.setPushToken(token)
@@ -32,7 +32,7 @@ open class PushReceiver(
 
         log.v("Received a push notification. Raw parameters: $parameters")
 
-        if(!parameters.containsKey("rover")) {
+        if (!parameters.containsKey("rover")) {
             log.w("Invalid push notification received: `rover` data parameter not present. Possibly was a Display-only push notification, or otherwise not intended for the Rover SDK. Ignoring.")
         }
 
@@ -44,7 +44,6 @@ open class PushReceiver(
         val rover = parameters.getString("rover") ?: return
         handleRoverNotificationObject(rover)
     }
-
 
     private fun handleRoverNotificationObject(roverJson: String) {
         val notification = try {

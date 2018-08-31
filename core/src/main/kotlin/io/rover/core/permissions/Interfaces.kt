@@ -2,7 +2,6 @@ package io.rover.core.permissions
 
 import org.reactivestreams.Publisher
 
-
 interface PermissionsNotifierInterface {
     /**
      * Indicate that a permission has just been granted by the user.  The UI code that handled the

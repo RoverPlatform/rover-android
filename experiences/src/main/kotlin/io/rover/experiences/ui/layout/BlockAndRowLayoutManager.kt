@@ -3,12 +3,12 @@ package io.rover.experiences.ui.layout
 import android.support.v7.widget.RecyclerView
 import android.util.DisplayMetrics
 import android.view.View
-import io.rover.core.data.domain.Block
-import io.rover.core.data.domain.Row
-import io.rover.core.data.domain.Screen
+import io.rover.experiences.data.domain.Block
+import io.rover.experiences.data.domain.Row
+import io.rover.experiences.data.domain.Screen
 import io.rover.core.logging.log
-import io.rover.core.ui.dpAsPx
-import io.rover.core.ui.pxAsDp
+import io.rover.experiences.ui.dpAsPx
+import io.rover.experiences.ui.pxAsDp
 import io.rover.experiences.ui.layout.screen.ScreenViewModelInterface
 
 /**
@@ -59,7 +59,7 @@ class BlockAndRowLayoutManager(
 
         val widthDp = this.width.pxAsDp(displayMetrics)
 
-        if(layout.width != widthDp) {
+        if (layout.width != widthDp) {
             log.w("onLayoutChildren() noticed that current rendered layout is meant for view of width of ${layout.width} dp, but current view width is $widthDp dp.")
         }
         fill(recycler, layout)
@@ -68,8 +68,6 @@ class BlockAndRowLayoutManager(
     override fun scrollVerticallyBy(dy: Int, recycler: RecyclerView.Recycler, state: RecyclerView.State): Int {
         // now we need to figure out how much we can scroll by, and if indeed dy would bring
         // us out-of-bounds and cap it.
-
-        val layout = (this.layout ?: throw RuntimeException("RecyclerView scrolling occurred before layout?"))
 
         val layoutDisplayHeight = layout.height.dpAsPx(displayMetrics)
 
@@ -124,11 +122,11 @@ class BlockAndRowLayoutManager(
      * rather, this is about trying to lead loading rows for a fling that is currently in progress.
      */
     override fun collectAdjacentPrefetchPositions(
-        dx: Int, dy: Int,
+        dx: Int,
+        dy: Int,
         state: RecyclerView.State,
         layoutPrefetchRegistry: LayoutPrefetchRegistry
     ) {
-        val layout = this.layout ?: return
         val wouldBeScrollPosition = scrollPosition + dy
         val verticalTopBound = wouldBeScrollPosition
         val verticalBottomBound = wouldBeScrollPosition + height

@@ -83,7 +83,7 @@ fun <T, R> Publisher<T>.map(transform: (T) -> R): Publisher<R> {
                     val consumerSubscription = object : Subscription {
                         override fun cancel() { subscription.cancel() }
                         override fun request(n: Long) {
-                            if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                            if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
                             subscription.request(Long.MAX_VALUE)
                         }
                     }
@@ -117,7 +117,7 @@ fun <T> Publisher<T>.filter(predicate: (T) -> Boolean): Publisher<T> {
                     }
 
                     override fun request(n: Long) {
-                        if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                        if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
                         subscription.request(Long.MAX_VALUE)
                     }
                 }
@@ -137,10 +137,9 @@ fun <T> Publisher<T>.filter(predicate: (T) -> Boolean): Publisher<T> {
  * that will be ignored.
  */
 @Suppress("UNCHECKED_CAST") // Suppression because of variance issues.
-inline fun <reified TSub: T, reified T: Any> Publisher<T>.filterForSubtype(): Publisher<TSub> {
+inline fun <reified TSub : T, reified T : Any> Publisher<T>.filterForSubtype(): Publisher<TSub> {
     return this.filter { TSub::class.java.isAssignableFrom(it::class.java) } as Publisher<TSub>
 }
-
 
 fun <T, R> Publisher<T>.flatMap(transform: (T) -> Publisher<out R>): Publisher<R> {
     val prior = this
@@ -167,7 +166,7 @@ fun <T, R> Publisher<T>.flatMap(transform: (T) -> Publisher<out R>): Publisher<R
             override fun onNext(item: T) {
                 val transformPublisher = try {
                     transform(item)
-                } catch ( error: Throwable) {
+                } catch (error: Throwable) {
                     subscriber.onError(Exception("Transform failed in Publisher.flatMap().", error))
                     return
                 }
@@ -202,7 +201,7 @@ fun <T, R> Publisher<T>.flatMap(transform: (T) -> Publisher<out R>): Publisher<R
                 val subscriberSubscription = object : Subscription {
                     override fun cancel() { subscription.cancel() }
                     override fun request(n: Long) {
-                        if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                        if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
                         subscription.request(Long.MAX_VALUE)
                     }
                 }
@@ -218,8 +217,6 @@ fun <T, R> Publisher<T>.flatMap(transform: (T) -> Publisher<out R>): Publisher<R
         prior.subscribe(sourceSubscriber)
     }
 }
-
-
 
 /**
  * Subscribe to the [Publisher] once, and multicast yielded signals to multiple subscribers.
@@ -238,7 +235,7 @@ fun <T> Publisher<T>.share(): Publisher<T> {
     return Publisher { subscriber ->
         val consumerSubscription = object : Subscription {
             override fun request(n: Long) {
-                if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
 
                 multicastTo.add(subscriber)
 
@@ -322,7 +319,7 @@ fun <T> Publisher<T>.shareHotAndReplay(count: Int): Publisher<T> {
     return Publisher { subscriber ->
         val subscription = object : Subscription {
             override fun request(n: Long) {
-                if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
                 multicastTo.add(subscriber)
                 // catch up the new subscriber on the `count` number of last events.
                 buffer.forEach { event -> subscriber.onNext(event) }
@@ -355,22 +352,22 @@ fun <T> Publisher<T>.shareAndReplay(count: Int): Publisher<T> {
 
     // this set is of subscribers that subscribed before we ourselves managed to complete
     // to the prior publisher.
-     val subscribeTo: MutableSet<Subscriber<in T>> = mutableSetOf()
+    val subscribeTo: MutableSet<Subscriber<in T>> = mutableSetOf()
 
     val multicastTo: MutableSet<Subscriber<in T>> = mutableSetOf()
 
     var subscribing = false
     var requested = false
-    var sourceSubscription : Subscription? = null
+    var sourceSubscription: Subscription? = null
 
-    fun subscribeSubscriber(subscriber : Subscriber<in T>) {
+    fun subscribeSubscriber(subscriber: Subscriber<in T>) {
         subscriber.onSubscribe(
             object : Subscription {
                 override fun request(n: Long) {
-                    if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                    if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
                     multicastTo.add(subscriber)
                     buffer.forEach { subscriber.onNext(it) } // bring subscriber up to date with prior items
-                    if(requested) return
+                    if (requested) return
                     requested = true
                     sourceSubscription!!.request(Long.MAX_VALUE)
                 }
@@ -379,7 +376,7 @@ fun <T> Publisher<T>.shareAndReplay(count: Int): Publisher<T> {
                     // he wants out
                     multicastTo.remove(subscriber)
 
-                    if(multicastTo.isEmpty()) {
+                    if (multicastTo.isEmpty()) {
                         sourceSubscription?.cancel()
                         subscribing = false
                     }
@@ -405,7 +402,7 @@ fun <T> Publisher<T>.shareAndReplay(count: Int): Publisher<T> {
                     multicastTo.forEach { it.onNext(item) }
                     buffer.addLast(item)
                     // emulate a ring buffer by removing any older entries than `count`
-                    if(count != 0) {
+                    if (count != 0) {
                         for (i in 1..buffer.size - count) {
                             buffer.removeFirst()
                         }
@@ -428,7 +425,7 @@ fun <T> Publisher<T>.shareAndReplay(count: Int): Publisher<T> {
         if (sourceSubscription == null && !subscribing) {
             subscribeTo.add(subscriber)
             subscribeToSource()
-        } else if(sourceSubscription == null) {
+        } else if (sourceSubscription == null) {
             // we're waiting on the source to subscribe.  this will add it to the multicast list and
             // wait.
             subscribeTo.add(subscriber)
@@ -440,7 +437,7 @@ fun <T> Publisher<T>.shareAndReplay(count: Int): Publisher<T> {
 }
 
 @Suppress("UNCHECKED_CAST") // Suppression because of variance issues.
-fun <T: Any> Publisher<T>.first(): Publisher<T> {
+fun <T : Any> Publisher<T>.first(): Publisher<T> {
     return Publisher { subscriber ->
         var sourceSubscription: Subscription? = null
 
@@ -460,14 +457,14 @@ fun <T: Any> Publisher<T>.first(): Publisher<T> {
                 }
 
                 override fun onSubscribe(subscription: Subscription) {
-                    if(sourceSubscription != null) {
+                    if (sourceSubscription != null) {
                         throw RuntimeException("first() already subscribed to.")
                     }
                     sourceSubscription = subscription
                     subscriber.onSubscribe(
                         object : Subscription {
                             override fun request(n: Long) {
-                                if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                                if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
                                 subscription.request(Long.MAX_VALUE)
                             }
 
@@ -486,10 +483,10 @@ fun <T: Any> Publisher<T>.first(): Publisher<T> {
  * Will filter out sequences of identitical (by comparison) items.  An item will not be
  * emitted if it is the same as the prior.
  */
-fun <T: Any> Publisher<T>.distinctUntilChanged(): Publisher<T> {
+fun <T : Any> Publisher<T>.distinctUntilChanged(): Publisher<T> {
     return Publisher { subscriber ->
 
-        var lastSeen : LastSeen<T> = LastSeen.NoneYet()
+        var lastSeen: LastSeen<T> = LastSeen.NoneYet()
         var sourceSubscriber: Subscriber<T>?
 
         subscriber.onSubscribe(
@@ -505,12 +502,12 @@ fun <T: Any> Publisher<T>.distinctUntilChanged(): Publisher<T> {
                         override fun onNext(item: T) {
                             // atomically copy lastSeen so smart cast below can work.
                             val lastSeenCaptured = lastSeen
-                            when(lastSeenCaptured) {
+                            when (lastSeenCaptured) {
                                 is LastSeen.NoneYet -> {
                                     subscriber.onNext(item)
                                 }
                                 is LastSeen.Seen<T> -> {
-                                    if(lastSeenCaptured.value != item) {
+                                    if (lastSeenCaptured.value != item) {
                                         subscriber.onNext(item)
                                     }
                                 }
@@ -526,16 +523,14 @@ fun <T: Any> Publisher<T>.distinctUntilChanged(): Publisher<T> {
             }
         )
     }
-
-
 }
 
 /**
  * A maybe type just because our maybe value itself could be null.
  */
-sealed class LastSeen<T: Any> {
-    class NoneYet<T: Any>: LastSeen<T>()
-    class Seen<T: Any>(val value: T): LastSeen<T>()
+sealed class LastSeen<T : Any> {
+    class NoneYet<T : Any> : LastSeen<T>()
+    class Seen<T : Any>(val value: T) : LastSeen<T>()
 }
 
 /**
@@ -584,8 +579,8 @@ fun <T : Any> Publisher<out T>.shareAndReplayTypesOnResubscribe(vararg types: Cl
                         }
 
                         override fun request(n: Long) {
-                            if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
-                            if(requested) return
+                            if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                            if (requested) return
                             requested = true
                             subscription.request(Long.MAX_VALUE)
                             lastSeen.values.filterNotNull().forEach {
@@ -647,7 +642,7 @@ fun <T> Publisher<T>.doOnUnsubscribe(behaviour: () -> Unit): Publisher<T> {
             override fun onSubscribe(subscription: Subscription) {
                 val wrappedSubscription = object : Subscription {
                     override fun request(n: Long) {
-                        if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                        if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
                         subscription.request(n)
                     }
 
@@ -684,7 +679,7 @@ class PublishSubject<T> : Subject<T> {
     override fun subscribe(subscriber: Subscriber<in T>) {
         val subscription = object : Subscription {
             override fun request(n: Long) {
-                if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
                 // wire up the subscriber now that it has requested items.
                 subscribers.add(subscriber)
             }
@@ -725,7 +720,7 @@ class PublishSubject<T> : Subject<T> {
 @Suppress("UNCHECKED_CAST") // Suppression because of variance issues.
 fun <T> Publisher<T>.timeout(interval: Long, unit: TimeUnit): Publisher<T> {
 
-    class TimeoutPublisher: Publisher<T> {
+    class TimeoutPublisher : Publisher<T> {
         @Volatile
         var stillWaiting = true
         @Volatile
@@ -753,7 +748,7 @@ fun <T> Publisher<T>.timeout(interval: Long, unit: TimeUnit): Publisher<T> {
                     override fun onSubscribe(subscription: Subscription) {
                         val handler = Handler(Looper.getMainLooper())
                         val timeoutHandler = {
-                            if(stillWaiting) {
+                            if (stillWaiting) {
                                 // timeout has run out!
                                 onError(Throwable("$interval ${unit.name.toLowerCase()} timeout has expired."))
                                 subscription.cancel()
@@ -775,9 +770,8 @@ fun <T> Publisher<T>.timeout(interval: Long, unit: TimeUnit): Publisher<T> {
                             override fun request(n: Long) {
                                 subscription.request(n)
 
-                                if(requested) return
+                                if (requested) return
                                 requested = true
-
 
                                 handler.postDelayed(timeoutHandler, unit.toMillis(interval))
                             }
@@ -798,8 +792,8 @@ fun <T> Collection<T>.asPublisher(): Publisher<T> {
         var requested = false
         val subscription = object : Subscription {
             override fun request(n: Long) {
-                if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
-                if(requested) return
+                if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                if (requested) return
                 requested = true
                 this@asPublisher.forEach { item -> subscriber.onNext(item) }
                 subscriber.onComplete()
@@ -884,7 +878,7 @@ fun <T> Publisher<T>.doOnComplete(callback: () -> Unit): Publisher<T> {
  * Transform any emitted errors into in-band values.
  */
 @Suppress("UNCHECKED_CAST") // Suppression because of variance issues.
-fun <T> Publisher<T>.onErrorReturn(callback: (throwable: Throwable) -> T): Publisher<T> {
+fun <T, R> Publisher<T>.onErrorReturn(callback: (throwable: Throwable) -> R): Publisher<R> {
     val prior = this
     return Publisher { subscriber ->
         prior.subscribe(object : Subscriber<T> by subscriber as Subscriber<T> {
@@ -906,13 +900,20 @@ fun <T> Publisher<T?>.filterNulls(): Publisher<T> = filter { it != null }.map { 
  */
 fun <T, S> Publisher<T>.takeUntil(stopper: Publisher<S>): Publisher<T> {
     return Publisher { subscriber ->
+
+        var stopperSubscription: Subscription? = null
+
         this@takeUntil.subscribe(object : Subscriber<T> {
             override fun onComplete() {
                 subscriber.onComplete()
+                stopperSubscription?.cancel()
+                stopperSubscription = null
             }
 
             override fun onError(error: Throwable) {
                 subscriber.onError(error)
+                stopperSubscription?.cancel()
+                stopperSubscription = null
             }
 
             override fun onNext(item: T) {
@@ -926,30 +927,36 @@ fun <T, S> Publisher<T>.takeUntil(stopper: Publisher<S>): Publisher<T> {
                     override fun onComplete() {
                         subscriber.onComplete()
                         subscription.cancel()
+                        stopperSubscription = null
                     }
 
                     override fun onError(error: Throwable) {
                         subscriber.onError(error)
                         subscription.cancel()
+                        stopperSubscription = null
                     }
 
                     override fun onNext(item: S) {
                         subscription.cancel()
+                        stopperSubscription?.cancel()
+                        stopperSubscription = null
                     }
 
-                    override fun onSubscribe(stopperSubscription: Subscription) {
+                    override fun onSubscribe(receivedStopperSubscription: Subscription) {
                         // now that both the upstream and the stopper are subscribed we can let
                         // downstream know.
+                        stopperSubscription = receivedStopperSubscription
                         subscriber.onSubscribe(object : Subscription {
                             override fun cancel() {
                                 // downstream has cancelled, stop the stopper:
-                                stopperSubscription.cancel()
+                                receivedStopperSubscription.cancel()
+                                stopperSubscription = null
                                 subscription.cancel()
                             }
 
                             override fun request(n: Long) {
-                                if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
-                                stopperSubscription.request(Long.MAX_VALUE)
+                                if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                                receivedStopperSubscription.request(Long.MAX_VALUE)
                                 subscription.request(Long.MAX_VALUE)
                             }
                         })
@@ -973,6 +980,7 @@ fun <T> Publisher<T>.subscribeOn(executor: Executor): Publisher<T> {
             // however, rather than subscribing it right through to the parent publisher, we need to
             // intercede to wrap the subscription.
 
+            @Suppress("IMPLICIT_CAST_TO_ANY", "UNCHECKED_CAST")
             this@subscribeOn.subscribe(
                 object : Subscriber<T> by subscriber as Subscriber<T> {
                     override fun onSubscribe(subscription: Subscription) {
@@ -1006,13 +1014,14 @@ fun <T> Publisher<T>.subscribeOn(executor: Executor): Publisher<T> {
 fun <T> Publisher<T>.subscribeOn(scheduler: Scheduler): Publisher<T> {
     return Publisher { subscriber ->
         scheduler.execute {
-            // TODO: should we run unsubsriptions on the executor as well?
+            // TODO: should we run unsubscriptions on the executor as well?
 
             // subscriber is the downstream/client subscriber.  it's waiting for a subscription.
             // however, rather than subscribing it right through to the parent publisher, we need to
             // intercede to wrap the subscription.
 
             this@subscribeOn.subscribe(
+                @Suppress("IMPLICIT_CAST_TO_ANY", "UNCHECKED_CAST")
                 object : Subscriber<T> by subscriber as Subscriber<T> {
                     override fun onSubscribe(subscription: Subscription) {
                         subscriber.onSubscribe(
@@ -1037,7 +1046,6 @@ fun <T> Publisher<T>.subscribeOn(scheduler: Scheduler): Publisher<T> {
     }
 }
 
-
 /**
  * This will subscribe to Publisher `this` when it is subscribed to itself.  It will deliver all
  * callbacks to the subscribing Publisher on the given [executor].
@@ -1047,7 +1055,7 @@ fun <T> Publisher<T>.subscribeOn(scheduler: Scheduler): Publisher<T> {
  */
 fun <T> Publisher<T>.observeOn(executor: Executor): Publisher<T> {
     return Publisher { subscriber ->
-        this@observeOn.subscribe(object: Subscriber<T> {
+        this@observeOn.subscribe(object : Subscriber<T> {
             override fun onComplete() {
                 executor.execute {
                     subscriber.onComplete()
@@ -1075,7 +1083,6 @@ fun <T> Publisher<T>.observeOn(executor: Executor): Publisher<T> {
     }
 }
 
-
 /**
  * Block the thread waiting for the publisher to complete.
  *
@@ -1084,7 +1091,7 @@ fun <T> Publisher<T>.observeOn(executor: Executor): Publisher<T> {
 fun <T> Publisher<T>.blockForResult(afterSubscribe: () -> Unit = {}): List<T> {
     val latch = CountDownLatch(1)
     var receivedError: Throwable? = null
-    val results : MutableList<T> = mutableListOf()
+    val results: MutableList<T> = mutableListOf()
 
     this.subscribe(object : Subscriber<T> {
         override fun onComplete() {
@@ -1106,11 +1113,11 @@ fun <T> Publisher<T>.blockForResult(afterSubscribe: () -> Unit = {}): List<T> {
         }
     })
 
-    if(!latch.await(10, TimeUnit.SECONDS)) {
+    if (!latch.await(10, TimeUnit.SECONDS)) {
         throw Exception("Reached timeout while blocking for publisher! Items received: ${results.count()}")
     }
 
-    if(receivedError != null) {
+    if (receivedError != null) {
         throw Exception("Error while blocking on Publisher.  Items received: ${results.count()}", receivedError)
     }
 

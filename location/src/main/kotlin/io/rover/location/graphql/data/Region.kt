@@ -7,7 +7,6 @@ import io.rover.core.data.graphql.safeGetString
 import org.json.JSONObject
 import java.util.UUID
 
-
 val Region.BeaconRegion.Companion.resourceName get() = "BeaconRegion"
 val Region.GeofenceRegion.Companion.resourceName get() = "GeofenceRegion"
 

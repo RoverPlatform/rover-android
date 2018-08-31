@@ -15,14 +15,14 @@ import io.rover.core.streams.androidLifecycleDispose
 import io.rover.core.streams.subscribe
 import io.rover.core.platform.whenNotNull
 import io.rover.core.ui.concerns.ViewModelBinding
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.experiences.ui.layout.screen.ScreenView
 import io.rover.experiences.ui.layout.screen.ScreenViewModelInterface
 
 /**
  * Navigation behaviour between screens of an Experience.
  */
-class ExperienceNavigationView : FrameLayout, BindableView<ExperienceNavigationViewModelInterface> {
+class ExperienceNavigationView : FrameLayout, MeasuredBindableView<ExperienceNavigationViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
@@ -50,11 +50,11 @@ class ExperienceNavigationView : FrameLayout, BindableView<ExperienceNavigationV
             this@ExperienceNavigationView.addView(this)
             this.visibility = View.GONE
             viewCache.put(screenViewModel, this)
-            this.viewModel = BindableView.Binding(screenViewModel)
+            this.viewModelBinding = MeasuredBindableView.Binding(screenViewModel)
         }
     }
 
-    override var viewModel: BindableView.Binding<ExperienceNavigationViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<ExperienceNavigationViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
         val viewModel = binding?.viewModel
         viewModel?.screen?.androidLifecycleDispose(this)?.subscribe({ screenUpdate ->
             if (!screenUpdate.animate) {

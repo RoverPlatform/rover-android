@@ -111,7 +111,7 @@ interface GraphQlRequest<out TInput> {
      * POST and thus does not use a request body.
      */
     fun encodeBody(): String? {
-        return if(mutation) {
+        return if (mutation) {
             JSONObject().apply {
                 put("variables", variables)
                 put("fragments", fragments)
@@ -127,7 +127,7 @@ interface GraphQlRequest<out TInput> {
      * Implements the standard outgoing query request envelope format, if a mutation.
      */
     fun encodeQueryParameters(): Map<String, String> {
-        return if(!mutation) {
+        return if (!mutation) {
             hashMapOf(
                 Pair("variables", variables.toString()),
                 Pair("fragments", JSONArray(fragments).toString()),

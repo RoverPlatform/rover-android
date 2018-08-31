@@ -1,8 +1,7 @@
 package io.rover.experiences.ui.blocks.concerns.border
 
-import io.rover.experiences.ui.blocks.concerns.layout.Padding
-import io.rover.core.data.domain.Border
-import io.rover.core.ui.asAndroidColor
+import io.rover.experiences.data.domain.Border
+import io.rover.experiences.ui.asAndroidColor
 
 class BorderViewModel(
     val border: Border
@@ -15,12 +14,4 @@ class BorderViewModel(
 
     override val borderWidth: Int
         get() = border.width
-
-    override val paddingDeflection: Padding
-        get() = Padding(
-            border.width,
-            border.width,
-            border.width,
-            border.width
-        )
 }

@@ -1,10 +1,9 @@
 package io.rover.experiences.ui.blocks.barcode
 
-import io.rover.core.data.domain.Barcode
-import io.rover.core.data.domain.BarcodeFormat
+import io.rover.experiences.data.domain.Barcode
+import io.rover.experiences.data.domain.BarcodeFormat
+import io.rover.experiences.ui.RectF
 import io.rover.experiences.MeasurementService
-import io.rover.experiences.ui.blocks.concerns.layout.Padding
-import io.rover.core.ui.RectF
 
 /**
  * Barcode display view model.
@@ -31,10 +30,4 @@ class BarcodeViewModel(
             bounds.width()
         )
     }
-
-    override val paddingDeflection: Padding
-        get() = when (barcode.format) {
-            BarcodeFormat.Pdf417 -> Padding(5, 5, 5, 5)
-            else -> Padding(20, 20, 20, 20)
-        }
 }

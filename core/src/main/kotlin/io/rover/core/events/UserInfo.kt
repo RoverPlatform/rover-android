@@ -2,7 +2,8 @@ package io.rover.core.events
 
 import io.rover.core.data.domain.Attributes
 import io.rover.core.data.graphql.operations.data.encodeJson
-import io.rover.core.data.graphql.operations.data.toFlatAttributesHash
+import io.rover.core.data.graphql.operations.data.toAttributesHash
+import io.rover.core.events.EventQueueService.Companion.ROVER_NAMESPACE
 import io.rover.core.events.domain.Event
 import io.rover.core.logging.log
 import io.rover.core.platform.DateFormattingInterface
@@ -13,7 +14,7 @@ class UserInfo(
     localStorage: LocalStorage,
     private val eventQueueService: EventQueueServiceInterface,
     private val dateFormatting: DateFormattingInterface
-): UserInfoInterface {
+) : UserInfoInterface {
     private val store = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
     override fun update(builder: (attributes: Attributes) -> Unit) {
         currentUserInfo.apply {
@@ -27,7 +28,8 @@ class UserInfo(
             Event(
                 "User Info Updated",
                 hashMapOf()
-            )
+            ),
+            ROVER_NAMESPACE
         )
     }
 
@@ -37,11 +39,11 @@ class UserInfo(
 
     override var currentUserInfo: Attributes = try {
         val currentAttributesJson = store[USER_INFO_KEY]
-        when(currentAttributesJson) {
+        when (currentAttributesJson) {
             null -> hashMapOf()
-            else -> JSONObject(store[USER_INFO_KEY]).toFlatAttributesHash()
+            else -> JSONObject(store[USER_INFO_KEY]).toAttributesHash()
         }
-    } catch(throwable: Throwable) {
+    } catch (throwable: Throwable) {
         log.w("Corrupted local user info, ignoring and starting fresh.  Cause: ${throwable.message}")
         hashMapOf()
     }

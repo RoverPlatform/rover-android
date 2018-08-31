@@ -34,11 +34,11 @@ block.
 ```groovy
 dependencies {
     // ...
-    implementation "io.rover:core:2.0.0-beta.2-SNAPSHOT"
-    implementation "io.rover:notifications:2.0.0-beta.2-SNAPSHOT"
-    implementation "io.rover:experiences:2.0.0-beta.2-SNAPSHOT"
-    implementation "io.rover:location:2.0.0-beta.2-SNAPSHOT"
-    implementation "io.rover:debug:2.0.0-beta.2-SNAPSHOT"
+    implementation "io.rover:core:2.0.0-beta.3-SNAPSHOT"
+    implementation "io.rover:notifications:2.0.0-beta.3-SNAPSHOT"
+    implementation "io.rover:experiences:2.0.0-beta.3-SNAPSHOT"
+    implementation "io.rover:location:2.0.0-beta.3-SNAPSHOT"
+    implementation "io.rover:debug:2.0.0-beta.3-SNAPSHOT"
 }
 ```
 

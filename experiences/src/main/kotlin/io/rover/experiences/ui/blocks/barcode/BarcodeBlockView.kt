@@ -2,15 +2,16 @@ package io.rover.experiences.ui.blocks.barcode
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.support.v7.widget.AppCompatImageView
 import android.util.AttributeSet
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.ViewModelBinding
-import io.rover.experiences.ui.blocks.concerns.layout.LayoutableView
-import io.rover.experiences.ui.blocks.concerns.background.ViewBackground
-import io.rover.experiences.ui.blocks.concerns.layout.ViewBlock
-import io.rover.experiences.ui.blocks.concerns.border.ViewBorder
 import io.rover.experiences.ui.blocks.concerns.ViewComposition
-import io.rover.core.ui.concerns.BindableView
+import io.rover.experiences.ui.blocks.concerns.background.ViewBackground
+import io.rover.experiences.ui.blocks.concerns.border.ViewBorder
+import io.rover.experiences.ui.blocks.concerns.layout.LayoutableView
+import io.rover.experiences.ui.blocks.concerns.layout.ViewBlock
 
 class BarcodeBlockView : AppCompatImageView, LayoutableView<BarcodeBlockViewModelInterface> {
     constructor(context: Context?) : super(context)
@@ -18,16 +19,17 @@ class BarcodeBlockView : AppCompatImageView, LayoutableView<BarcodeBlockViewMode
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
     private val viewComposition = ViewComposition()
-    private val viewBackground = ViewBackground(this)
-    private val viewBorder = ViewBorder(this, viewComposition)
     private val viewBarcode = ViewBarcode(this)
-    private val viewBlock = ViewBlock(this, setOf(viewBorder, viewBarcode))
+    private val viewBlock = ViewBlock(this)
 
-    override var viewModel: BindableView.Binding<BarcodeBlockViewModelInterface>? by ViewModelBinding { binding, _ ->
-        viewBorder.viewModel = binding
-        viewBarcode.viewModel = binding
-        viewBlock.viewModel = binding
-        viewBackground.viewModel = binding
+    init {
+        // Barcodes must always be on a solid white background.
+        this.setBackgroundColor(Color.WHITE)
+    }
+
+    override var viewModelBinding: MeasuredBindableView.Binding<BarcodeBlockViewModelInterface>? by ViewModelBinding { binding, _ ->
+        viewBarcode.viewModelBinding = binding
+        viewBlock.viewModelBinding = binding
     }
 
     override fun onDraw(canvas: Canvas) {

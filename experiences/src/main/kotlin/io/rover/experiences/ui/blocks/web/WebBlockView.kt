@@ -14,7 +14,7 @@ import io.rover.experiences.ui.blocks.concerns.layout.LayoutableView
 import io.rover.experiences.ui.blocks.concerns.background.ViewBackground
 import io.rover.experiences.ui.blocks.concerns.layout.ViewBlock
 import io.rover.experiences.ui.blocks.concerns.ViewComposition
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.ViewModelBinding
 
 class WebBlockView : WebView, LayoutableView<WebViewBlockViewModelInterface> {
@@ -32,11 +32,11 @@ class WebBlockView : WebView, LayoutableView<WebViewBlockViewModelInterface> {
     private val viewBlock = ViewBlock(this)
     private val viewWeb = ViewWeb(this)
 
-    override var viewModel: BindableView.Binding<WebViewBlockViewModelInterface>? by ViewModelBinding { binding, _ ->
-        viewBorder.viewModel = binding
-        viewBlock.viewModel = binding
-        viewBackground.viewModel = binding
-        viewWeb.viewModel = binding
+    override var viewModelBinding: MeasuredBindableView.Binding<WebViewBlockViewModelInterface>? by ViewModelBinding { binding, _ ->
+        viewBorder.viewModelBinding = binding
+        viewBlock.viewModelBinding = binding
+        viewBackground.viewModelBinding = binding
+        viewWeb.viewModelBinding = binding
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -72,7 +72,7 @@ class WebBlockView : WebView, LayoutableView<WebViewBlockViewModelInterface> {
         // override, so we'll ask the view model from here.  While I could teach ViewComposition
         // about TouchEvent, because handlers can consume events it is unclear
 
-        requestDisallowInterceptTouchEvent((viewModel?.viewModel?.scrollingEnabled) ?: true)
+        requestDisallowInterceptTouchEvent((viewModelBinding?.viewModel?.scrollingEnabled) ?: true)
         return super.onTouchEvent(event)
     }
 }

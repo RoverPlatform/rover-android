@@ -1,11 +1,11 @@
 package io.rover.experiences.ui.layout.row
 
+import io.rover.experiences.ui.RectF
 import io.rover.experiences.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.experiences.ui.blocks.concerns.layout.BlockViewModelInterface
 import io.rover.experiences.ui.blocks.concerns.layout.LayoutableViewModel
 import io.rover.experiences.ui.layout.DisplayItem
-import io.rover.experiences.ui.navigation.NavigateTo
-import io.rover.core.ui.RectF
+import io.rover.experiences.ui.navigation.NavigateToFromBlock
 import org.reactivestreams.Publisher
 
 /**
@@ -35,6 +35,6 @@ interface RowViewModelInterface : LayoutableViewModel, BackgroundViewModelInterf
 
     data class Event(
         val blockId: String,
-        val navigateTo: NavigateTo
+        val navigateTo: NavigateToFromBlock
     )
 }

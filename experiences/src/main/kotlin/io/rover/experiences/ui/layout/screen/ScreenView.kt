@@ -4,25 +4,26 @@ import android.content.Context
 import android.graphics.Canvas
 import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
-import io.rover.experiences.ui.layout.BlockAndRowLayoutManager
-import io.rover.experiences.ui.layout.BlockAndRowRecyclerAdapter
-import io.rover.experiences.ui.blocks.concerns.ViewComposition
-import io.rover.experiences.ui.blocks.concerns.background.ViewBackground
 import io.rover.core.Rover
 import io.rover.core.logging.log
 import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.Publishers
+import io.rover.core.streams.androidLifecycleDispose
 import io.rover.core.streams.distinctUntilChanged
 import io.rover.core.streams.subscribe
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.MeasuredSize
 import io.rover.core.ui.concerns.PrefetchAfterMeasure
 import io.rover.core.ui.concerns.ViewModelBinding
-import io.rover.core.ui.concerns.toMeasuredSize
-import io.rover.core.ui.pxAsDp
+import io.rover.experiences.ui.blocks.concerns.ViewComposition
+import io.rover.experiences.ui.blocks.concerns.background.ViewBackground
+import io.rover.experiences.ui.layout.BlockAndRowLayoutManager
+import io.rover.experiences.ui.layout.BlockAndRowRecyclerAdapter
+import io.rover.experiences.ui.pxAsDp
+import io.rover.experiences.ui.toMeasuredSize
 import org.reactivestreams.Publisher
 
-class ScreenView : RecyclerView, BindableView<ScreenViewModelInterface> {
+class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle)
@@ -30,7 +31,7 @@ class ScreenView : RecyclerView, BindableView<ScreenViewModelInterface> {
     private val viewComposition = ViewComposition()
     private val viewBackground = ViewBackground(this)
 
-    private val viewModelSubject = PublishSubject<BindableView.Binding<ScreenViewModelInterface>>()
+    private val viewModelSubject = PublishSubject<MeasuredBindableView.Binding<ScreenViewModelInterface>>()
     private val vtoMeasuredSizeSubject = PublishSubject<MeasuredSize>()
 
     init {
@@ -44,16 +45,18 @@ class ScreenView : RecyclerView, BindableView<ScreenViewModelInterface> {
             )
         }
 
-        val combined: Publisher<Pair<BindableView.Binding<ScreenViewModelInterface>, MeasuredSize>> = Publishers.combineLatest(
+        val combined: Publisher<Pair<MeasuredBindableView.Binding<ScreenViewModelInterface>, MeasuredSize>> = Publishers.combineLatest(
             viewModelSubject,
             vtoMeasuredSizeSubject.distinctUntilChanged()
-        ) { viewModelBinding: BindableView.Binding<ScreenViewModelInterface>, measured: MeasuredSize ->
+        ) { viewModelBinding: MeasuredBindableView.Binding<ScreenViewModelInterface>, measured: MeasuredSize ->
             Pair(viewModelBinding, measured)
         }
 
-        combined.subscribe { (viewModelBinding: BindableView.Binding<ScreenViewModelInterface>, measuredSize: MeasuredSize) ->
+        combined
+            .androidLifecycleDispose(this)
+            .subscribe { (viewModelBinding: MeasuredBindableView.Binding<ScreenViewModelInterface>, measuredSize: MeasuredSize) ->
             log.v("View model and view measurements now both ready: $viewModelBinding and $measuredSize")
-            viewBackground.viewModel = BindableView.Binding(
+            viewBackground.viewModelBinding = MeasuredBindableView.Binding(
                 viewModelBinding.viewModel,
                 measuredSize
             )
@@ -90,10 +93,10 @@ class ScreenView : RecyclerView, BindableView<ScreenViewModelInterface> {
         }
     }
 
-    override var viewModel: BindableView.Binding<ScreenViewModelInterface>? by ViewModelBinding { binding, _ ->
+    override var viewModelBinding: MeasuredBindableView.Binding<ScreenViewModelInterface>? by ViewModelBinding { binding, _ ->
         // The binding lacks a measured size because ScreenView is embedded in a standard Android
         // layout (and not a Rover layout), and so we establish our own VTO above to discover it.
-        if(binding != null) {
+        if (binding != null) {
             viewModelSubject.onNext(binding)
         }
     }
@@ -107,5 +110,11 @@ class ScreenView : RecyclerView, BindableView<ScreenViewModelInterface> {
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         viewComposition.onSizeChanged(w, h, oldw, oldh)
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        viewModelBinding = null
+        adapter = null
     }
 }

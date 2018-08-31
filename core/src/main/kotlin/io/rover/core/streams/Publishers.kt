@@ -15,10 +15,10 @@ object Publishers {
             subscriber.onSubscribe(
                 object : Subscription {
                     override fun request(n: Long) {
-                        if(n != Long.MAX_VALUE) {
+                        if (n != Long.MAX_VALUE) {
                             throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
                         }
-                        if(completed) return
+                        if (completed) return
                         subscriber.onNext(item)
                         subscriber.onComplete()
                         completed = true
@@ -37,7 +37,7 @@ object Publishers {
                     override fun cancel() { /* this yields immediately, cancel can have no effect */ }
 
                     override fun request(n: Long) {
-                        if(n != Long.MAX_VALUE) {
+                        if (n != Long.MAX_VALUE) {
                             throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
                         }
                         subscriber.onError(error)
@@ -76,9 +76,9 @@ object Publishers {
                 }
 
                 override fun request(n: Long) {
-                    if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                    if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
 
-                    if(requested) return
+                    if (requested) return
                     requested = true
                     // subscribe to first thing, wait for it to complete, then subscribe to second thing, wait for it to complete, etc.
                     fun recursiveSubscribe(remainingSources: List<Publisher<out T>>) {
@@ -142,9 +142,9 @@ object Publishers {
                 }
 
                 override fun request(n: Long) {
-                    if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                    if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
 
-                    if(requested) return
+                    if (requested) return
                     requested = true
                     val remainingSources = sources.toMutableSet()
 
@@ -208,7 +208,7 @@ object Publishers {
                     }
 
                     override fun request(n: Long) {
-                        if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                        if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
 
                         callable(subscriber)
                     }
@@ -234,9 +234,9 @@ object Publishers {
                     }
 
                     override fun request(n: Long) {
-                        if(n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                        if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
 
-                        if(requested) return
+                        if (requested) return
                         requested = true
                         val remainingSources = sources.toMutableSet()
 
@@ -258,7 +258,7 @@ object Publishers {
                                         latest[index] = item
                                         // if we have a value for all the sources, run combiner and
                                         // then emit!
-                                        if(latest.count() == sources.count()) {
+                                        if (latest.count() == sources.count()) {
                                             subscriber.onNext(
                                                 combiner(
                                                     latest.keys.sorted().map { latest[it]!! }
@@ -311,5 +311,4 @@ object Publishers {
 //            combiner(item1 as T1, item2 as T2, item3 as T3)
 //        }
 //    }
-
 }

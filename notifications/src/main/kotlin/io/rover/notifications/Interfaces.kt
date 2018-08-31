@@ -15,7 +15,7 @@ interface PushReceiverInterface {
      *
      * Then, retrieve `data` from the `RemoteMessage` object it received and pass it here.
      *
-     * In response, the Push Plugin will build an appropriate notification and add it to the Android
+     * In response, the Push Receiver will build an appropriate notification and add it to the Android
      * notification area (although note this will not be called for every notification sent to users
      * on behalf of your application; if the Rover Cloud determined that a Firebase Display Message
      * was sufficient to display the push, then this callback may not happen at all unless the app
@@ -92,7 +92,7 @@ interface NotificationOpenInterface {
     /**
      * Should be called when the application is opened soon after a notification is received.
      */
-    fun appOpenedAfterReceivingNotification(notificationId: String, campaignId: String)
+    fun appOpenedAfterReceivingNotification(notification: Notification)
 }
 
 interface InfluenceTrackerServiceInterface {

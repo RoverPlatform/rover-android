@@ -36,7 +36,7 @@ class GoogleBeaconTrackerService(
     private val nearbyMessagesClient: MessagesClient,
     private val locationReportingService: LocationReportingServiceInterface,
     permissionsNotifier: PermissionsNotifierInterface
-): GoogleBeaconTrackerServiceInterface {
+) : GoogleBeaconTrackerServiceInterface {
     override fun newGoogleBeaconMessage(intent: Intent) {
         nearbyMessagesClient.handleIntent(intent, object : MessageListener() {
             override fun onFound(message: Message) {
@@ -63,7 +63,7 @@ class GoogleBeaconTrackerService(
     }
 
     private fun messageToBeacon(message: Message): Region.BeaconRegion? {
-        return when(message.type) {
+        return when (message.type) {
             Message.MESSAGE_TYPE_I_BEACON_ID -> {
                 IBeaconId.from(message).toRoverBeaconRegion()
             }
@@ -81,7 +81,7 @@ class GoogleBeaconTrackerService(
 
     @SuppressLint("MissingPermission")
     private fun startMonitoringBeaconsIfPossible() {
-        if(permissionObtained && currentBeacons.isNotEmpty()) {
+        if (permissionObtained && currentBeacons.isNotEmpty()) {
             log.v("Starting up beacon tracking.")
             val messagesClient = Nearby.getMessagesClient(applicationContext, MessagesOptions.Builder()
                 .setPermissions(NearbyPermissions.BLE)
@@ -141,16 +141,16 @@ class GoogleBeaconTrackerService(
     }
 }
 
-class BeaconBroadcastReceiver: BroadcastReceiver() {
+class BeaconBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        Rover.sharedInstance.resolveSingletonOrFail(GoogleBeaconTrackerServiceInterface::class.java).newGoogleBeaconMessage(
+        Rover.sharedInstance.googleBeaconTrackerService.newGoogleBeaconMessage(
             intent
         )
     }
 }
 
 /**
- * Map a received iBeacon back to a Rover.BeaconRegion value object.
+ * Map a received iBeacon back to a [Region.BeaconRegion] value object.
  */
 fun IBeaconId.toRoverBeaconRegion(): Region.BeaconRegion {
     return Region.BeaconRegion(

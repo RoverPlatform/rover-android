@@ -22,7 +22,6 @@ import java.util.Deque
 import java.util.LinkedList
 import java.util.concurrent.Executors
 
-
 class EventQueueService(
     private val graphQlApiService: GraphQlApiServiceInterface,
     localStorage: LocalStorage,
@@ -62,7 +61,7 @@ class EventQueueService(
 
     private fun enqueueEvent(event: Event, namespace: String?) {
         serialQueueExecutor.execute {
-            if(eventQueue.count() == maxQueueSize) {
+            if (eventQueue.count() == maxQueueSize) {
                 log.w("Event queue is at capacity ($maxQueueSize) -- removing oldest event.")
                 eventQueue.removeFirst()
             }
@@ -87,13 +86,11 @@ class EventQueueService(
     private fun restoreEvents() {
         // load the current events from key value storage.
 
-        // I will borrow the JSON serialization extension methods from the Data Plugin.  Not exactly
-        // optimal, but it will do for now.
         eventQueue.clear()
 
         val storedJson = keyValueStorage.get(Companion.QUEUE_KEY)
 
-        if(storedJson != null) {
+        if (storedJson != null) {
             val decoded = try {
                 JSONArray(storedJson).getObjectIterable().map { jsonObject ->
                     EventSnapshot.decodeJson(jsonObject, dateFormatting)
@@ -107,7 +104,7 @@ class EventQueueService(
                 decoded ?: emptyList()
             )
 
-            if(eventQueue.isNotEmpty()) {
+            if (eventQueue.isNotEmpty()) {
                 log.v("Events queue with ${eventQueue.count()} events waiting has been restored.")
             }
         }
@@ -115,15 +112,15 @@ class EventQueueService(
 
     private fun flushEvents(minBatchSize: Int) {
         serialQueueExecutor.execute {
-            if(isFlushingEvents) {
+            if (isFlushingEvents) {
                 log.v("Skipping flush, already in progress")
                 return@execute
             }
-            if(eventQueue.isEmpty()) {
+            if (eventQueue.isEmpty()) {
                 log.v("Skipping flush -- no events in the queue.")
                 return@execute
             }
-            if(eventQueue.count() < minBatchSize) {
+            if (eventQueue.count() < minBatchSize) {
                 log.v("Skipping flush -- less than $minBatchSize events in the queue.")
                 return@execute
             }
@@ -134,11 +131,11 @@ class EventQueueService(
             isFlushingEvents = true
 
             graphQlApiService.submitEvents(events).subscribe { networkResult ->
-                when(networkResult) {
+                when (networkResult) {
                     is NetworkResult.Error -> {
                         log.i("Error delivering ${events.count()} events to the Rover API: ${networkResult.throwable.message}")
 
-                        if(networkResult.shouldRetry) {
+                        if (networkResult.shouldRetry) {
                             log.i("... will leave them enqueued for a future retry.")
                         } else {
                             removeEvents(events)
@@ -180,7 +177,7 @@ class EventQueueService(
 
     init {
         log.v("Starting up.")
-        if(singletonStartedGuard) {
+        if (singletonStartedGuard) {
             throw RuntimeException("EventQueueService started twice.")
         }
         singletonStartedGuard = true
@@ -209,7 +206,7 @@ class EventQueueService(
 
                 override fun onActivityResumed(activity: Activity?) { }
 
-                override fun onActivityStarted(activity: Activity?) {  }
+                override fun onActivityStarted(activity: Activity?) { }
 
                 override fun onActivityDestroyed(activity: Activity?) { }
 

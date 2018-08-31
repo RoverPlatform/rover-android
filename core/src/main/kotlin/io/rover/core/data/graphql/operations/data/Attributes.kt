@@ -34,23 +34,55 @@ private fun Any.mapToAttributeValueFromJsonPrimitive(): AttributeValue =
             AttributeValue.Scalar.Double(this)
         }
         is JSONObject -> {
-            AttributeValue.Hash(this.toFlatAttributesHash())
+            AttributeValue.Object(this.toFlatAttributesHash())
         }
         is JSONArray -> {
-            AttributeValue.Array(this.getIterable<Any>().map { it.mapToAttributeValueFromJsonPrimitive() })
+            AttributeValue.Array(this.getIterable<Any>().map { it.mapToScalarAttributeValueFromJsonPrimitive() })
         }
         else -> throw RuntimeException("Unsupported data type appeared in an attributes hash: ${javaClass.simpleName}")
     }
+
+private fun Any.mapToScalarAttributeValueFromJsonPrimitive(): AttributeValue.Scalar {
+    // org.json will return a best-effort coercion to either a system type
+    // or one of its own internal types.
+    return when (this) {
+        is String -> {
+            // now we have to try URL first before just returning a String type
+            try {
+                AttributeValue.Scalar.URL(URI.create(this))
+            } catch (e: IllegalArgumentException) {
+                // not a valid URI, it's just a string!
+                AttributeValue.Scalar.String(this)
+            }
+        }
+        is Int -> {
+            AttributeValue.Scalar.Integer(this)
+        }
+        is Double -> {
+            AttributeValue.Scalar.Double(this)
+        }
+        else -> throw RuntimeException("Unsupported data type appeared for scalar value in attributes hash: ${javaClass.simpleName}")
+    }
+}
 
 /**
  * If we receive an arbitrary hash of values as JSON that does not map statically to
  * any sort of type, then [Attributes] is an appropriate choice.
  */
-fun JSONObject.toFlatAttributesHash(): Attributes {
+fun JSONObject.toAttributesHash(): Attributes {
     return this.keys().asSequence().map { key ->
-        val uncoercedValue = this@toFlatAttributesHash.get(key)
+        val uncoercedValue = this@toAttributesHash.get(key)
         Pair(key, uncoercedValue.mapToAttributeValueFromJsonPrimitive())
     }.associate { it }
+}
+
+/**
+ * There may be nested arrays or JSON objects within Attributes, but they must only contain scalar
+ * values.
+ */
+fun JSONObject.toFlatAttributesHash(): Map<String, AttributeValue.Scalar> {
+    @Suppress("IMPLICIT_CAST_TO_ANY", "UNCHECKED_CAST")
+    return toAttributesHash().filterValues { it is AttributeValue.Scalar } as Map<String, AttributeValue.Scalar>
 }
 
 /**
@@ -61,7 +93,7 @@ fun JSONObject.toFlatAttributesHash(): Attributes {
 fun AttributeValue.encodeJson(dateFormatting: DateFormattingInterface): Any = when (this) {
     is AttributeValue.Scalar.Boolean -> this.value
     is AttributeValue.Scalar.Double -> this.value
-    is AttributeValue.Hash -> this.hash.encodeJson(dateFormatting)
+    is AttributeValue.Object -> this.hash.encodeJson(dateFormatting)
     is AttributeValue.Scalar.String -> this.value
     is AttributeValue.Scalar.Integer -> this.value
     is AttributeValue.Scalar.URL -> this.value.toString()
@@ -73,7 +105,7 @@ fun AttributeValue.encodeJson(dateFormatting: DateFormattingInterface): Any = wh
 fun Attributes.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
     return JSONObject().apply {
         this@encodeJson.entries.forEach { (key, value) ->
-            if(!key.matches(Regex("^[a-zA-Z_][a-zA-Z_0-9]*$"))) {
+            if (!key.matches(Regex("^[a-zA-Z_][a-zA-Z_0-9]*$"))) {
                 throw RuntimeException("Invalid Rover Attribute Key: '$key'")
             }
             this.put(

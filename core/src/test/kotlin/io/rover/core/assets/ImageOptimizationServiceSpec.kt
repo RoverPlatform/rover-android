@@ -1,10 +1,10 @@
 package io.rover.core.assets
 
-import io.rover.core.data.domain.Background
-import io.rover.core.data.domain.BackgroundContentMode
-import io.rover.core.data.domain.BackgroundScale
-import io.rover.core.data.domain.Color
-import io.rover.core.data.domain.Image
+import io.rover.experiences.data.domain.Background
+import io.rover.experiences.data.domain.BackgroundContentMode
+import io.rover.experiences.data.domain.BackgroundScale
+import io.rover.experiences.data.domain.Color
+import io.rover.experiences.data.domain.Image
 import io.rover.core.ui.PixelSize
 import org.amshove.kluent.shouldEqual
 import org.jetbrains.spek.api.Spek
@@ -39,7 +39,6 @@ class ImageOptimizationServiceSpec : Spek({
         )
 
         on("optimized to display in exactly the same pixel-size block") {
-
 
             val (uri, _) = imageOptimizationService.optimizeImageBackground(
                 background,

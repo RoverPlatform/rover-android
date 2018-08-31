@@ -1,7 +1,7 @@
 package io.rover.experiences.ui.blocks.concerns.layout
 
 import android.view.View
-import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.MeasuredBindableView
 
 /**
  * Wraps a Rover Android [View] that can be laid out along with a possible view model that is bound
@@ -11,4 +11,4 @@ import io.rover.core.ui.concerns.BindableView
  * interface rather than an abstract [View] subclass in order to allow implementers to inherit from
  * various different [View] subclasses.
  */
-interface LayoutableView<VM : LayoutableViewModel> : BindableView<VM>
+interface LayoutableView<VM : LayoutableViewModel> : MeasuredBindableView<VM>

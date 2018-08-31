@@ -6,13 +6,13 @@ import io.rover.experiences.ExperiencesAssembler
 import io.rover.experiences.MeasurementService
 import io.rover.experiences.ui.layout.screen.ScreenViewModelInterface
 import io.rover.core.assets.AssetService
-import io.rover.core.assets.ImageOptimizationServiceInterface
+import io.rover.experiences.assets.ImageOptimizationServiceInterface
 import io.rover.core.container.Assembler
 import io.rover.core.container.Container
 import io.rover.core.container.InjectionContainer
 import io.rover.core.container.Resolver
 import io.rover.core.container.Scope
-import io.rover.core.data.domain.Experience
+import io.rover.experiences.data.domain.Experience
 import io.rover.core.data.graphql.operations.data.decodeJson
 import io.rover.core.logging.GlobalStaticLogHolder
 import io.rover.core.logging.JvmLogger
@@ -94,7 +94,6 @@ class RenderingIntegrationTest : Spek({
                         )
                     )
                 }
-
             }
             val renderTimeMs = renderTimeNs / 1000000
             log.v("Took $renderTimeMs ms to render all ${experience.screens.count()} screens.")

@@ -1,14 +1,14 @@
 package io.rover.experiences.ui.blocks.concerns.background
 
 import io.rover.core.assets.AssetService
-import io.rover.core.assets.ImageOptimizationServiceInterface
-import io.rover.core.data.domain.Background
+import io.rover.experiences.assets.ImageOptimizationServiceInterface
+import io.rover.experiences.data.domain.Background
 import io.rover.core.logging.log
 import io.rover.core.streams.*
 import io.rover.core.ui.PixelSize
-import io.rover.core.ui.asAndroidColor
+import io.rover.experiences.ui.asAndroidColor
 import io.rover.core.ui.concerns.MeasuredSize
-import io.rover.core.ui.dpAsPx
+import io.rover.experiences.ui.dpAsPx
 import org.reactivestreams.Publisher
 import java.util.concurrent.TimeUnit
 
@@ -43,7 +43,7 @@ class BackgroundViewModel(
                         // as a side-effect, register a subscriber right away that will monitor for timeouts
                         // (but only on asset requests being emitted for view dimensions not for prefetch
                         // dimensions)
-                        if(background.image != null) {
+                        if (background.image != null) {
                             timeout(50, TimeUnit.MILLISECONDS)
                                 .subscribe(
                                     {},

@@ -1,3 +1,5 @@
+@file:JvmName("Core")
+
 package io.rover.core
 
 import android.app.Application
@@ -10,8 +12,6 @@ import android.support.annotation.ColorInt
 import io.rover.core.assets.AndroidAssetService
 import io.rover.core.assets.AssetService
 import io.rover.core.assets.ImageDownloader
-import io.rover.core.assets.ImageOptimizationService
-import io.rover.core.assets.ImageOptimizationServiceInterface
 import io.rover.core.container.Assembler
 import io.rover.core.container.Container
 import io.rover.core.container.Resolver
@@ -25,13 +25,12 @@ import io.rover.core.data.http.NetworkClient
 import io.rover.core.data.state.StateManagerService
 import io.rover.core.data.state.StateManagerServiceInterface
 import io.rover.core.events.ContextProvider
-import io.rover.core.events.UserInfo
-import io.rover.core.events.UserInfoInterface
 import io.rover.core.events.EventQueueService
 import io.rover.core.events.EventQueueServiceInterface
+import io.rover.core.events.UserInfo
+import io.rover.core.events.UserInfoInterface
 import io.rover.core.events.contextproviders.ApplicationContextProvider
 import io.rover.core.events.contextproviders.BluetoothContextProvider
-import io.rover.core.events.contextproviders.UserInfoContextProvider
 import io.rover.core.events.contextproviders.DeviceContextProvider
 import io.rover.core.events.contextproviders.DeviceIdentifierContextProvider
 import io.rover.core.events.contextproviders.LocaleContextProvider
@@ -40,6 +39,7 @@ import io.rover.core.events.contextproviders.ScreenContextProvider
 import io.rover.core.events.contextproviders.SdkVersionContextProvider
 import io.rover.core.events.contextproviders.TelephonyContextProvider
 import io.rover.core.events.contextproviders.TimeZoneContextProvider
+import io.rover.core.events.contextproviders.UserInfoContextProvider
 import io.rover.core.permissions.PermissionsNotifier
 import io.rover.core.permissions.PermissionsNotifierInterface
 import io.rover.core.platform.DateFormatting
@@ -118,7 +118,7 @@ class CoreAssembler @JvmOverloads constructor(
      * The location of the Rover API.  You should never need to change this.
      */
     private val endpoint: String = "https://api.rover.io/graphql"
-): Assembler {
+) : Assembler {
     override fun assemble(container: Container) {
         container.register(Scope.Singleton, Context::class.java) { _ ->
             application
@@ -212,10 +212,6 @@ class CoreAssembler @JvmOverloads constructor(
                 resolver.resolveSingletonOrFail(Scheduler::class.java, "io"),
                 resolver.resolveSingletonOrFail(Scheduler::class.java, "main")
             )
-        }
-
-        container.register(Scope.Singleton, ImageOptimizationServiceInterface::class.java) { _ ->
-            ImageOptimizationService()
         }
 
         container.register(Scope.Singleton, VersionTrackerInterface::class.java) { resolver ->
@@ -400,3 +396,28 @@ class CoreAssembler @JvmOverloads constructor(
 data class UrlSchemes(
     val schemes: List<String>
 )
+
+val Rover.eventQueue: EventQueueServiceInterface
+    get() = this.resolve(EventQueueServiceInterface::class.java) ?: throw missingDependencyError("EventQueueService")
+
+val Rover.permissionsNotifier: PermissionsNotifierInterface
+    get() = this.resolve(PermissionsNotifierInterface::class.java) ?: throw missingDependencyError("PermissionsNotifier")
+
+val Rover.linkOpen: LinkOpenInterface
+    get() = this.resolve(LinkOpenInterface::class.java) ?: throw missingDependencyError("LinkOpen")
+
+val Rover.assetService: AssetService
+    get() = this.resolve(AssetService::class.java) ?: throw missingDependencyError("AssetService")
+
+val Rover.router: Router
+    get() = this.resolve(Router::class.java) ?: throw missingDependencyError("Router")
+
+val Rover.embeddedWebBrowserDisplay
+    get() = this.resolve(EmbeddedWebBrowserDisplayInterface::class.java) ?: throw missingDependencyError("EmbeddedWebBrowserDisplayInterface")
+
+val Rover.deviceIdentification
+    get() = this.resolve(DeviceIdentificationInterface::class.java) ?: throw missingDependencyError("DeviceIdentificationInterface")
+
+private fun missingDependencyError(name: String): Throwable {
+    throw RuntimeException("Dependency not registered: $name.  Did you include CoreAssembler() in the assembler list?")
+}

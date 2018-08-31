@@ -11,11 +11,12 @@ import io.rover.core.platform.DateFormattingInterface
 import io.rover.core.routing.Router
 import io.rover.core.routing.website.EmbeddedWebBrowserDisplayInterface
 import io.rover.notifications.domain.Notification
+import io.rover.notifications.domain.events.asAttributeValue
 import io.rover.notifications.graphql.decodeJson
 import org.json.JSONObject
 
 /**
- * Open a notification by executing its [PushNotificationAction].
+ * Open a notification by executing its [Notification.TapBehavior].
  */
 open class NotificationOpen(
     private val applicationContext: Context,
@@ -24,7 +25,7 @@ open class NotificationOpen(
     private val router: Router,
     private val openAppIntent: Intent,
     private val embeddedWebBrowserDisplay: EmbeddedWebBrowserDisplayInterface
-): NotificationOpenInterface {
+) : NotificationOpenInterface {
     override fun pendingIntentForAndroidNotification(notification: Notification): PendingIntent {
         return TransientNotificationLaunchActivity.generateLaunchIntent(
             applicationContext,
@@ -33,8 +34,7 @@ open class NotificationOpen(
     }
 
     private fun intentForNotification(notification: Notification): Intent {
-        return when(notification.tapBehavior) {
-            // TODO: will inject this an Intent with a name!
+        return when (notification.tapBehavior) {
             is Notification.TapBehavior.OpenApp -> openAppIntent
             is Notification.TapBehavior.OpenUri -> router.route(
                 notification.tapBehavior.uri,
@@ -51,8 +51,7 @@ open class NotificationOpen(
         val notification = Notification.decodeJson(JSONObject(notificationJson), dateFormatting)
 
         issueNotificationOpenedEvent(
-            notification.id,
-            notification.campaignId,
+            notification,
             NotificationSource.Push
         )
 
@@ -63,29 +62,28 @@ open class NotificationOpen(
         // we only want to open the given notification's action in the case where it would
         // navigate somewhere useful, not just re-open the app.
 
-        // Not appropriate to re-open the app when opening notification directly, do nothing.
-
         issueNotificationOpenedEvent(
-            notification.id,
-            notification.campaignId,
+            notification,
             NotificationSource.NotificationCenter
         )
 
-        return intentForNotification(notification)
+        return when(notification.tapBehavior) {
+            // Not appropriate to re-open the app when opening notification directly, do nothing.
+            is Notification.TapBehavior.OpenApp -> null
+            else -> intentForNotification(notification)
+        }
     }
 
-    protected fun issueNotificationOpenedEvent(
-        notificationId: String,
-        campaignId: String,
+    protected open fun issueNotificationOpenedEvent(
+        notification: Notification,
         source: NotificationSource
     ) {
         eventsService.trackEvent(
             Event(
                 "Notification Opened",
                 hashMapOf(
-                    Pair("notificationID", AttributeValue.Scalar.String(notificationId)),
-                    Pair("source", AttributeValue.Scalar.String(source.wireValue)),
-                    Pair("campaignID", AttributeValue.Scalar.String(campaignId))
+                    Pair("notification", notification.asAttributeValue()),
+                    Pair("source", AttributeValue.Scalar.String(source.wireValue))
                 )
             ),
             EventQueueService.ROVER_NAMESPACE
@@ -93,12 +91,10 @@ open class NotificationOpen(
     }
 
     override fun appOpenedAfterReceivingNotification(
-        notificationId: String,
-        campaignId: String
+        notification: Notification
     ) {
         issueNotificationOpenedEvent(
-            notificationId,
-            campaignId,
+            notification,
             NotificationSource.InfluencedOpen
         )
     }

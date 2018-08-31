@@ -14,28 +14,28 @@ interface Container {
      * The Factory is a simple closure that, given only a [Resolver] (an interface by which it can
      * acquire its dependencies), will instantiate the item of the supplied type.
      */
-    fun <T: Any> register(scope: Scope, type: Class<T>, name: String? = null, factory: (Resolver) -> T)
+    fun <T : Any> register(scope: Scope, type: Class<T>, name: String? = null, factory: (Resolver) -> T)
 
     /**
      * Register a [factory] with this Container that will instantiate objects for the given [type].
      * The Factory is a simple closure that, given only a [Resolver] (an interface by which it can
      * acquire its dependencies), will instantiate the item of the supplied type.
      */
-    fun <T: Any, Arg1> register(scope: Scope, type: Class<T>, name: String? = null, factory: (Resolver, Arg1) -> T)
+    fun <T : Any, Arg1> register(scope: Scope, type: Class<T>, name: String? = null, factory: (Resolver, Arg1) -> T)
 
     /**
      * Register a [factory] with this Container that will instantiate objects for the given [type].
      * The Factory is a simple closure that, given only a [Resolver] (an interface by which it can
      * acquire its dependencies), will instantiate the item of the supplied type.
      */
-    fun <T: Any, Arg1, Arg2> register(scope: Scope, type: Class<T>, name: String? = null, factory: (Resolver, Arg1, Arg2) -> T)
+    fun <T : Any, Arg1, Arg2> register(scope: Scope, type: Class<T>, name: String? = null, factory: (Resolver, Arg1, Arg2) -> T)
 
     /**
      * Register a [factory] with this Container that will instantiate objects for the given [type].
      * The Factory is a simple closure that, given only a [Resolver] (an interface by which it can
      * acquire its dependencies), will instantiate the item of the supplied type.
      */
-    fun <T: Any, Arg1, Arg2, Arg3> register(scope: Scope, type: Class<T>, name: String? = null, factory: (Resolver, Arg1, Arg2, Arg3) -> T)
+    fun <T : Any, Arg1, Arg2, Arg3> register(scope: Scope, type: Class<T>, name: String? = null, factory: (Resolver, Arg1, Arg2, Arg3) -> T)
 }
 
 enum class Scope {

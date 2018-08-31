@@ -8,19 +8,17 @@ import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.DisplayMetrics
-import io.rover.experiences.ui.blocks.concerns.text.RichTextToSpannedTransformer
+import io.rover.experiences.ui.dpAsPx
+import io.rover.experiences.ui.blocks.barcode.BarcodeViewModelInterface
 import io.rover.experiences.ui.blocks.concerns.text.Font
 import io.rover.experiences.ui.blocks.concerns.text.FontAppearance
-import io.rover.core.ui.dpAsPx
-import io.rover.core.ui.pxAsDp
-import io.rover.experiences.ui.blocks.barcode.BarcodeViewModelInterface
-import io.rover.shaded.zxing.com.google.zxing.BarcodeFormat
-import io.rover.shaded.zxing.com.google.zxing.EncodeHintType
-import io.rover.shaded.zxing.com.google.zxing.MultiFormatWriter
+import io.rover.experiences.ui.blocks.concerns.text.RichTextToSpannedTransformer
+import io.rover.experiences.ui.pxAsDp
 
 class AndroidMeasurementService(
     private val displayMetrics: DisplayMetrics,
-    private val richTextToSpannedTransformer: RichTextToSpannedTransformer
+    private val richTextToSpannedTransformer: RichTextToSpannedTransformer,
+    private val barcodeRenderingService: BarcodeRenderingServiceInterface
 ) : MeasurementService {
     @SuppressLint("NewApi")
     override fun measureHeightNeededForRichText(
@@ -87,34 +85,15 @@ class AndroidMeasurementService(
         type: BarcodeViewModelInterface.BarcodeType,
         width: Float
     ): Float {
-        // sadly I think I just have to compute the entire barcode and measure the resulting bitmap.
-
-        val renderedBitmap = MultiFormatWriter().encode(
+        return barcodeRenderingService.measureHeightNeededForBarcode(
             text,
-            when (type) {
-                BarcodeViewModelInterface.BarcodeType.PDF417 -> BarcodeFormat.PDF_417
-                // this one will happily collapse to a minimum height of 1.  That ain't going to do
-                BarcodeViewModelInterface.BarcodeType.Code128 -> BarcodeFormat.CODE_128
-                BarcodeViewModelInterface.BarcodeType.Aztec -> BarcodeFormat.AZTEC
-                BarcodeViewModelInterface.BarcodeType.QrCode -> BarcodeFormat.QR_CODE
+            when(type) {
+                BarcodeViewModelInterface.BarcodeType.Aztec -> BarcodeRenderingServiceInterface.Format.Aztec
+                BarcodeViewModelInterface.BarcodeType.Code128 -> BarcodeRenderingServiceInterface.Format.Code128
+                BarcodeViewModelInterface.BarcodeType.PDF417 -> BarcodeRenderingServiceInterface.Format.Pdf417
+                BarcodeViewModelInterface.BarcodeType.QrCode -> BarcodeRenderingServiceInterface.Format.QrCode
             },
-            // we want the minimum size.
-            0,
-            0,
-            hashMapOf(
-                // I furnish my own margin (see contributedPadding).  Some -- but not all --
-                // of the barcode types look for this margin parameter and if they don't
-                // find it include their own (pretty massive) margin.
-                Pair(EncodeHintType.MARGIN, 0)
-            )
+            width
         )
-
-        val aspectRatio = if (type == BarcodeViewModelInterface.BarcodeType.Code128) {
-            // Code 128 is our only 1 dimensional barcode type, but naturally it ultimately renders
-            // into 2D space, so we want to define an appropriate hard-coded aspect ratio for it.
-            2.26086956521739f
-        } else renderedBitmap.width / renderedBitmap.height.toFloat()
-
-        return width / aspectRatio
     }
 }

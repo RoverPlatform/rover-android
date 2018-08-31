@@ -13,7 +13,7 @@ import io.rover.core.events.domain.Event
  */
 class UserInfoContextProvider(
     private val userInfo: UserInfoInterface
-): ContextProvider {
+) : ContextProvider {
     override fun captureContext(deviceContext: DeviceContext): DeviceContext {
         return deviceContext.copy(
             userInfo = userInfo.currentUserInfo

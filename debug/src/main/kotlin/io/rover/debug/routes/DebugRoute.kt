@@ -11,8 +11,8 @@ class DebugRoute(
     private val context: Context
 ) : Route {
     override fun resolveUri(uri: URI?): Intent? {
-        return uri.whenNotNull { uri ->
-            if(uri.authority == "presentSettings") {
+        return uri.whenNotNull {
+            if (it.authority == "presentSettings") {
                 Intent(
                     context,
                     RoverDebugActivity::class.java

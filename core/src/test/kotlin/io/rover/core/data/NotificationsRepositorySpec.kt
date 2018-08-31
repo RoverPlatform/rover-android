@@ -1,36 +1,36 @@
-//package io.rover.rover.core.data
+// package io.rover.rover.core.data
 //
-//import io.rover.notifications.domain.Notification
-//import io.rover.rover.core.data.state.StateManagerServiceInterface
-//import io.rover.rover.core.events.EventQueueServiceInterface
-//import io.rover.rover.core.logging.GlobalStaticLogHolder
-//import io.rover.rover.core.logging.JvmLogger
-//import io.rover.rover.core.streams.Publisher
-//import io.rover.rover.core.streams.Scheduler
-//import io.rover.rover.core.streams.subscribe
-//import io.rover.notifications.NotificationsRepository
-//import io.rover.notifications.graphql.encodeJson
-//import io.rover.notifications.ui.concerns.NotificationsRepositoryInterface
-//import io.rover.rover.platform.DateFormatting
-//import io.rover.rover.platform.KeyValueStorage
-//import io.rover.rover.platform.LocalStorage
-//import org.amshove.kluent.mock
-//import org.amshove.kluent.shouldEqual
-//import org.jetbrains.spek.api.Spek
-//import org.jetbrains.spek.api.dsl.given
-//import org.jetbrains.spek.api.dsl.it
-//import org.jetbrains.spek.api.dsl.on
-//import org.json.JSONArray
-//import org.json.JSONObject
-//import java.net.URI
-//import java.util.Date
-//import java.util.concurrent.Executor
+// import io.rover.notifications.domain.Notification
+// import io.rover.rover.core.data.state.StateManagerServiceInterface
+// import io.rover.rover.core.events.EventQueueServiceInterface
+// import io.rover.rover.core.logging.GlobalStaticLogHolder
+// import io.rover.rover.core.logging.JvmLogger
+// import io.rover.rover.core.streams.Publisher
+// import io.rover.rover.core.streams.Scheduler
+// import io.rover.rover.core.streams.subscribe
+// import io.rover.notifications.NotificationsRepository
+// import io.rover.notifications.graphql.encodeJson
+// import io.rover.notifications.ui.concerns.NotificationsRepositoryInterface
+// import io.rover.rover.platform.DateFormatting
+// import io.rover.rover.platform.KeyValueStorage
+// import io.rover.rover.platform.LocalStorage
+// import org.amshove.kluent.mock
+// import org.amshove.kluent.shouldEqual
+// import org.jetbrains.spek.api.Spek
+// import org.jetbrains.spek.api.dsl.given
+// import org.jetbrains.spek.api.dsl.it
+// import org.jetbrains.spek.api.dsl.on
+// import org.json.JSONArray
+// import org.json.JSONObject
+// import java.net.URI
+// import java.util.Date
+// import java.util.concurrent.Executor
 //
 //
-//// Important notes about spek.  SpekBodies are executed at setup time, so everything by default is
-//// shared between all tests.  Or so it seems.
+// // Important notes about spek.  SpekBodies are executed at setup time, so everything by default is
+// // shared between all tests.  Or so it seems.
 //
-//class NotificationsRepositorySpec: Spek({
+// class NotificationsRepositorySpec: Spek({
 //    given("a notifications repository") {
 //        // set up a minimal Rover instance just to get logging working.
 //
@@ -132,4 +132,4 @@
 //
 //        }
 //    }
-//})
+// })

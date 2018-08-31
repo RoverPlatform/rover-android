@@ -1,23 +1,23 @@
 package io.rover.experiences.ui.layout
 
-import io.rover.core.data.domain.Background
-import io.rover.core.data.domain.BackgroundContentMode
-import io.rover.core.data.domain.BackgroundScale
-import io.rover.core.data.domain.Border
-import io.rover.core.data.domain.Color
-import io.rover.core.data.domain.Height
-import io.rover.core.data.domain.HorizontalAlignment
+import io.rover.experiences.data.domain.Background
+import io.rover.experiences.data.domain.BackgroundContentMode
+import io.rover.experiences.data.domain.BackgroundScale
+import io.rover.experiences.data.domain.Border
+import io.rover.experiences.data.domain.Color
+import io.rover.experiences.data.domain.Height
+import io.rover.experiences.data.domain.HorizontalAlignment
 import io.rover.core.data.domain.ID
-import io.rover.core.data.domain.Insets
-import io.rover.core.data.domain.Position
-import io.rover.core.data.domain.RectangleBlock
-import io.rover.core.data.domain.Row
-import io.rover.core.data.domain.Screen
-import io.rover.core.data.domain.StatusBar
-import io.rover.core.data.domain.StatusBarStyle
-import io.rover.core.data.domain.TitleBar
-import io.rover.core.data.domain.TitleBarButtons
-import io.rover.core.data.domain.VerticalAlignment
+import io.rover.experiences.data.domain.Insets
+import io.rover.experiences.data.domain.Position
+import io.rover.experiences.data.domain.RectangleBlock
+import io.rover.experiences.data.domain.Row
+import io.rover.experiences.data.domain.Screen
+import io.rover.experiences.data.domain.StatusBar
+import io.rover.experiences.data.domain.StatusBarStyle
+import io.rover.experiences.data.domain.TitleBar
+import io.rover.experiences.data.domain.TitleBarButtons
+import io.rover.experiences.data.domain.VerticalAlignment
 
 class ModelFactories {
     companion object {

@@ -26,7 +26,6 @@ import android.view.View
  * limitations under the License.
  */
 
-
 /**
  * Drawable which delegates all calls to its wrapped [Drawable].
  *

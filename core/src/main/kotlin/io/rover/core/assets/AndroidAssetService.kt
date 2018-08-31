@@ -51,8 +51,6 @@ internal class AndroidAssetService(
         requests.onNext(url)
     }
 
-
-
     override fun getImageByUrl(url: URL): Publisher<NetworkResult<Bitmap>> {
         return Publishers.defer {
             Publishers.just(
@@ -78,7 +76,7 @@ internal class AndroidAssetService(
                 }
             }
         }.onErrorReturn { error ->
-            NetworkResult.Error(error, false)
+            NetworkResult.Error<Bitmap>(error, false) as NetworkResult<Bitmap>
         }.observeOn(
             mainThreadScheduler
         )
@@ -104,13 +102,13 @@ internal class AndroidAssetService(
                 getImageByUrl(url)
                     .timeout(10, TimeUnit.SECONDS)
                     .onErrorReturn {
-                        NetworkResult.Error(it, false)
+                        NetworkResult.Error<Bitmap>(it, false) as NetworkResult<Bitmap>
                     }
                     .map { Pair(url, it) }
             }
             .subscribe({ (url, result) ->
                 synchronized(outstanding) { outstanding.remove(url) }
-                when(result) {
+                when (result) {
                     is NetworkResult.Success -> receivedImages.onNext(
                         ImageReadyEvent(url, result.response)
                     )

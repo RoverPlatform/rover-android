@@ -7,6 +7,6 @@ package io.rover.core.data
  */
 data class ServerKey(
     override val sdkToken: String?
-): AuthenticationContext {
+) : AuthenticationContext {
     override val bearerToken: String? = ""
 }

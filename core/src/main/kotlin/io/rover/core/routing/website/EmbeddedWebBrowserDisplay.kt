@@ -5,7 +5,6 @@ import android.graphics.Color
 import android.net.Uri
 import android.support.customtabs.CustomTabsIntent
 
-
 class EmbeddedWebBrowserDisplay(
     /**
      * Set the background colour for the Chrome Custom tab's title bar.
@@ -13,7 +12,7 @@ class EmbeddedWebBrowserDisplay(
      * Consider using your theme's primary or accent colour.
      */
     private val backgroundColor: Int = Color.BLACK
-): EmbeddedWebBrowserDisplayInterface {
+) : EmbeddedWebBrowserDisplayInterface {
     override fun intentForViewingWebsiteViaEmbeddedBrowser(url: String): Intent {
         val builder = CustomTabsIntent.Builder()
 

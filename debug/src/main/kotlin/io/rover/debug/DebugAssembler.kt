@@ -1,6 +1,9 @@
+@file:JvmName("Debug")
+
 package io.rover.debug
 
 import android.content.Context
+import io.rover.core.Rover
 import io.rover.debug.routes.DebugRoute
 import io.rover.core.container.Assembler
 import io.rover.core.container.Container
@@ -49,4 +52,11 @@ class DebugAssembler : Assembler {
                 )
             )
     }
+}
+
+val Rover.debugPreferences: DebugPreferences
+    get() = this.resolve(DebugPreferences::class.java) ?: throw missingDependencyError("DebugPreferences")
+
+private fun missingDependencyError(name: String): Throwable {
+    throw RuntimeException("Dependency not registered: $name.  Did you include DebugAssembler() in the assembler list?")
 }

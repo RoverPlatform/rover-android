@@ -11,7 +11,7 @@ import java.net.URI
 class PresentExperienceRoute(
     private val urlSchemes: List<String>,
     private val presentExperienceIntents: PresentExperienceIntents
-): Route {
+) : Route {
     override fun resolveUri(uri: URI?): Intent? {
         // Experiences can be opened either by a deep link or a universal link.
         return when {

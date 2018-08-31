@@ -5,6 +5,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.graphics.Bitmap
 import android.os.Build
 import android.support.annotation.DrawableRes
 import android.support.annotation.RequiresApi
@@ -100,7 +101,6 @@ class NotificationDispatcher(
         notificationManager.createNotificationChannel(mChannel)
     }
 
-
     private fun processNotification(notification: io.rover.notifications.domain.Notification): Publisher<Unit> {
         // notify the influenced opens tracker that a notification is being executed.
         influenceTrackerService.notifyNotificationReceived(notification)
@@ -129,13 +129,13 @@ class NotificationDispatcher(
         // Set large icon and Big Picture as needed by Rich Media values.  Enforce a timeout
         // so we don't fail to create the notification in the allotted 10s if network doesn't
         // cooperate.
-        val attachmentBitmapPublisher = when(notification.attachment) {
+        val attachmentBitmapPublisher = when (notification.attachment) {
             is NotificationAttachment.Image -> {
                 assetService.getImageByUrl(notification.attachment.url)
                     .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
                     .onErrorReturn { error ->
                         // log.w("Timed out fetching notification image.  Will create image without the rich media.")
-                        NetworkResult.Error(error, false)
+                        NetworkResult.Error<NetworkResult<Bitmap>>(error, false)
                     }
             }
             null -> Publishers.just(null)
@@ -147,12 +147,12 @@ class NotificationDispatcher(
 
         return attachmentBitmapPublisher
             .doOnNext { attachmentBitmapResult ->
-                when(attachmentBitmapResult) {
-                    is NetworkResult.Success -> {
-                        builder.setLargeIcon(attachmentBitmapResult.response)
+                when (attachmentBitmapResult) {
+                    is NetworkResult.Success<*> -> {
+                        builder.setLargeIcon(attachmentBitmapResult.response as Bitmap)
                         builder.setStyle(
                             NotificationCompat.BigPictureStyle()
-                                .bigPicture(attachmentBitmapResult.response)
+                                .bigPicture(attachmentBitmapResult.response as Bitmap)
                         )
                     }
                     is NetworkResult.Error -> {
@@ -160,8 +160,15 @@ class NotificationDispatcher(
                         log.w("Will create image without the rich media.")
                     }
                 }
-                // TODO: don't use '123'.
-                notificationManager.notify(notification.id, 123, builder.build().apply { this.flags = this.flags or Notification.FLAG_AUTO_CANCEL })
+
+                notificationManager.notify(
+                    notification.id,
+                    // "ROVR" in ascii.  just to further avoid collision with any non-Rover notifications.
+                    0x524F5652,
+                    builder.build().apply {
+                        this.flags = this.flags or Notification.FLAG_AUTO_CANCEL
+                    }
+                )
             }.map { Unit }
     }
 
@@ -179,7 +186,7 @@ class NotificationDispatcher(
             return
         }
 
-        if(existingChannel == null) registerDefaultChannelId()
+        if (existingChannel == null) registerDefaultChannelId()
     }
 
     companion object {

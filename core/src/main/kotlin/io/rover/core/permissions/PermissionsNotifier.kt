@@ -15,7 +15,7 @@ import io.rover.core.streams.share
 
 class PermissionsNotifier(
     private val applicationContext: Context
-): PermissionsNotifierInterface {
+) : PermissionsNotifierInterface {
     override fun permissionGranted(permissionId: String) {
         grantedPermissions.onNext(permissionId)
     }
@@ -23,7 +23,7 @@ class PermissionsNotifier(
     override fun notifyForPermission(permissionId: String): Publisher<String> {
         return Publishers.concat(
             Publishers.just(
-                if(ContextCompat.checkSelfPermission(
+                if (ContextCompat.checkSelfPermission(
                     applicationContext,
                     permissionId
                 ) == PackageManager.PERMISSION_GRANTED) {

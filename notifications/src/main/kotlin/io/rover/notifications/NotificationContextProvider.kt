@@ -11,12 +11,12 @@ import io.rover.core.events.ContextProvider
  */
 class NotificationContextProvider(
     private val applicationContext: android.content.Context
-): ContextProvider {
+) : ContextProvider {
     override fun captureContext(deviceContext: DeviceContext): DeviceContext {
         val notificationManager = NotificationManagerCompat.from(applicationContext)
 
         return deviceContext.copy(
-            notificationAuthorization = when(notificationManager.areNotificationsEnabled()) {
+            notificationAuthorization = when (notificationManager.areNotificationsEnabled()) {
                 true -> DeviceContext.NotificationAuthorization.Authorized
                 false -> DeviceContext.NotificationAuthorization.Denied
             }

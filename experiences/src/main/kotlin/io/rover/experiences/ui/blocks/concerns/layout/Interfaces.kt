@@ -1,9 +1,9 @@
 package io.rover.experiences.ui.blocks.concerns.layout
 
+import io.rover.experiences.ui.RectF
+import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.experiences.ui.blocks.concerns.border.BorderViewModel
-import io.rover.experiences.ui.navigation.NavigateTo
-import io.rover.core.ui.RectF
-import io.rover.core.ui.concerns.BindableView
+import io.rover.experiences.ui.navigation.NavigateToFromBlock
 import org.reactivestreams.Publisher
 
 /**
@@ -11,26 +11,18 @@ import org.reactivestreams.Publisher
  *
  * This is responsible for setting padding and anything else relating to block layout.
  */
-interface ViewBlockInterface: BindableView<BlockViewModelInterface>
+interface ViewBlockInterface : MeasuredBindableView<BlockViewModelInterface>
 
 /**
- * The View-side equivalent to [LayoutPaddingDeflection].  This View-side parallel structure needs
- * to exist because the View mixins must not set the padding directly on the Android view (lest
- * they clobber one another), and moreover , so they must delegate that responsibility to [ViewBlock] which will
- * gather up all contributed padding and ultimately apply it to the view.
- */
-interface PaddingContributor {
-    val contributedPadding: Padding
-}
-
-/**
- * Exposed by a view model that may need to contribute to the padding around the content.  For
- * instance, the [BorderViewModel] exposes this so that content-bearing view models can ensure their
- * content is not occluded by the border.
+ * Exposed by a view model that may need to contribute to the Android view padding around the
+ * content, which insets.
  *
- * Note that the View mixins will likely need to implement the [PaddingContributor] interface and
- * ensure that they are passed to the [ViewBlock].  Please see the documentation there for more
- * details and the rationale.
+ * It should be then passed into [BlockViewModel] as a Padding Contributor, because it is the
+ * [BlockViewModel] and associated [ViewBlock] that are responsible for managing the Android padding
+ * values.
+ *
+ * Note that this should not be added to a view model's interface; it that is done it will be mixed
+ * into any surrounding view block, where it is not used and will be misleading.
  */
 interface LayoutPaddingDeflection {
     val paddingDeflection: Padding
@@ -44,7 +36,16 @@ data class Padding(
     val top: Int,
     val right: Int,
     val bottom: Int
-)
+) {
+    operator fun plus(increment: Padding): Padding {
+        return Padding(
+            left + increment.left,
+            top + increment.top,
+            right + increment.right,
+            bottom + increment.bottom
+        )
+    }
+}
 
 /**
  * Can vertically measure its content for stacked/autoheight purposes.
@@ -83,6 +84,8 @@ interface BlockViewModelInterface : LayoutableViewModel {
 
     val insets: Insets
 
+    val padding: Padding
+
     val isStacked: Boolean
 
     /**
@@ -91,8 +94,6 @@ interface BlockViewModelInterface : LayoutableViewModel {
      * Between 0 (transparent) and 1 (fully opaque).
      */
     val opacity: Float
-
-    // val verticalAlignment: Alignment
 
     fun width(bounds: RectF): Float
 
@@ -126,7 +127,7 @@ interface BlockViewModelInterface : LayoutableViewModel {
          * Block has been clicked, requesting that we [navigateTo] something.
          */
         data class Clicked(
-            val navigateTo: NavigateTo,
+            val navigateTo: NavigateToFromBlock,
             override val blockId: String
         ) : Event(blockId)
 

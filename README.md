@@ -1,9 +1,7 @@
 # Rover Android SDK
 
-SDK 2.0 is available only as a beta release, and is not yet generally available.
-Please continue with the [1.x
-series](https://github.com/RoverPlatform/rover-android/tree/master) for now
-unless you have spoken with your CSM.
+If you are currently using Rover SDK 1.x, please see the latest [1.x release
+README](https://github.com/RoverPlatform/rover-android/tree/7c7649a1c69c64927db36d84d4b6d666341b1393).
 
 <hr />
 
@@ -34,11 +32,11 @@ block.
 ```groovy
 dependencies {
     // ...
-    implementation "io.rover:core:2.0.0-beta.3-SNAPSHOT"
-    implementation "io.rover:notifications:2.0.0-beta.3-SNAPSHOT"
-    implementation "io.rover:experiences:2.0.0-beta.3-SNAPSHOT"
-    implementation "io.rover:location:2.0.0-beta.3-SNAPSHOT"
-    implementation "io.rover:debug:2.0.0-beta.3-SNAPSHOT"
+    implementation "io.rover:core:2.0.0"
+    implementation "io.rover:notifications:2.0.0"
+    implementation "io.rover:experiences:2.0.0"
+    implementation "io.rover:location:2.0.0"
+    implementation "io.rover:debug:2.0.0"
 }
 ```
 

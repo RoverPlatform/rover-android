@@ -2,6 +2,17 @@
 
 package io.rover.experiences.data.graphql.operations.data
 
+import io.rover.core.data.domain.ID
+import io.rover.core.data.graphql.getObjectIterable
+import io.rover.core.data.graphql.getStringIterable
+import io.rover.core.data.graphql.operations.data.encodeJson
+import io.rover.core.data.graphql.operations.data.toAttributesHash
+import io.rover.core.data.graphql.operations.data.toStringHash
+import io.rover.core.data.graphql.putProp
+import io.rover.core.data.graphql.safeGetString
+import io.rover.core.data.graphql.safeGetUri
+import io.rover.core.data.graphql.safeOptString
+import io.rover.core.platform.DateFormattingInterface
 import io.rover.experiences.data.domain.Background
 import io.rover.experiences.data.domain.BackgroundContentMode
 import io.rover.experiences.data.domain.BackgroundScale
@@ -17,7 +28,6 @@ import io.rover.experiences.data.domain.Font
 import io.rover.experiences.data.domain.FontWeight
 import io.rover.experiences.data.domain.Height
 import io.rover.experiences.data.domain.HorizontalAlignment
-import io.rover.core.data.domain.ID
 import io.rover.experiences.data.domain.Image
 import io.rover.experiences.data.domain.ImageBlock
 import io.rover.experiences.data.domain.Insets
@@ -36,15 +46,6 @@ import io.rover.experiences.data.domain.UnitOfMeasure
 import io.rover.experiences.data.domain.VerticalAlignment
 import io.rover.experiences.data.domain.WebView
 import io.rover.experiences.data.domain.WebViewBlock
-import io.rover.core.data.graphql.getObjectIterable
-import io.rover.core.data.graphql.getStringIterable
-import io.rover.core.data.graphql.operations.data.encodeJson
-import io.rover.core.data.graphql.operations.data.toAttributesHash
-import io.rover.core.data.graphql.putProp
-import io.rover.core.data.graphql.safeGetString
-import io.rover.core.data.graphql.safeGetUri
-import io.rover.core.data.graphql.safeOptString
-import io.rover.core.platform.DateFormattingInterface
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -56,20 +57,22 @@ fun Experience.Companion.decodeJson(json: JSONObject): Experience {
         screens = json.getJSONArray("screens").getObjectIterable().map {
             Screen.decodeJson(it)
         },
-        keys = json.getJSONObject("keys").toAttributesHash(),
+        keys = json.getJSONObject("keys").toStringHash(),
         campaignId = json.safeOptString("campaignID"),
-        tags = json.getJSONArray("tags").getStringIterable().toList()
+        tags = json.getJSONArray("tags").getStringIterable().toList(),
+        name = json.safeGetString("name")
     )
 }
 
-internal fun Experience.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
+internal fun Experience.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Experience::id) { it.rawValue }
         putProp(this@encodeJson, Experience::homeScreenId, "homeScreenID") { it.rawValue }
-        putProp(this@encodeJson, Experience::screens) { JSONArray(it.map { it.encodeJson(dateFormatting) }) }
-        putProp(this@encodeJson, Experience::keys) { it.encodeJson(dateFormatting) }
+        putProp(this@encodeJson, Experience::screens) { JSONArray(it.map { it.encodeJson() }) }
+        putProp(this@encodeJson, Experience::keys) { JSONObject(it) }
         putProp(this@encodeJson, Experience::campaignId, "campaignID")
         putProp(this@encodeJson, Experience::tags, "tags") { JSONArray(it) }
+        putProp(this@encodeJson, Experience::name, "name") { it }
     }
 }
 
@@ -369,8 +372,10 @@ internal fun BarcodeBlock.Companion.decodeJson(json: JSONObject): BarcodeBlock {
         insets = Insets.decodeJson(json.getJSONObject("insets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getJSONObject("position")),
-        keys = json.getJSONObject("keys").toAttributesHash(),
-        barcode = Barcode.decodeJson(json.getJSONObject("barcode"))
+        keys = json.getJSONObject("keys").toStringHash(),
+        barcode = Barcode.decodeJson(json.getJSONObject("barcode")),
+        name = json.safeGetString("name"),
+        tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
 
@@ -449,7 +454,7 @@ internal fun Block.encodeJson(): JSONObject {
     }
 }
 
-internal fun Block.encodeSharedJson(dateFormatting: DateFormattingInterface): JSONObject {
+internal fun Block.encodeSharedJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeSharedJson, Block::tapBehavior, "tapBehavior") { it.encodeJson() }
         putProp(this@encodeSharedJson, Block::id, "id") { it.rawValue }
@@ -458,19 +463,21 @@ internal fun Block.encodeSharedJson(dateFormatting: DateFormattingInterface): JS
         putProp(this@encodeSharedJson, Block::position, "position") { it.encodeJson() }
         putProp(this@encodeSharedJson, Block::background, "background") { it.encodeJson() }
         putProp(this@encodeSharedJson, Block::border, "border") { it.encodeJson() }
-        putProp(this@encodeSharedJson, Block::keys, "keys") { it.encodeJson(dateFormatting) }
+        putProp(this@encodeSharedJson, Block::keys, "keys") { JSONObject(it) }
+        putProp(this@encodeSharedJson, Block::name, "name") { it }
+        putProp(this@encodeSharedJson, Block::tags) { JSONArray(it) }
     }
 }
 
-internal fun BarcodeBlock.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
-    return encodeSharedJson(dateFormatting).apply {
+internal fun BarcodeBlock.encodeJson(): JSONObject {
+    return encodeSharedJson().apply {
         put("__typename", "BarcodeBlock")
         putProp(this@encodeJson, BarcodeBlock::barcode, "barcode") { it.encodeJson() }
     }
 }
 
-internal fun RectangleBlock.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
-    return encodeSharedJson(dateFormatting).apply {
+internal fun RectangleBlock.encodeJson(): JSONObject {
+    return encodeSharedJson().apply {
         put("__typename", "RectangleBlock")
     }
 }
@@ -482,22 +489,22 @@ internal fun WebView.encodeJson(): JSONObject {
     }
 }
 
-internal fun WebViewBlock.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
-    return encodeSharedJson(dateFormatting).apply {
+internal fun WebViewBlock.encodeJson(): JSONObject {
+    return encodeSharedJson().apply {
         put("__typename", "WebViewBlock")
         putProp(this@encodeJson, WebViewBlock::webView, "webView") { it.encodeJson() }
     }
 }
 
-internal fun TextBlock.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
-    return encodeSharedJson(dateFormatting).apply {
+internal fun TextBlock.encodeJson(): JSONObject {
+    return encodeSharedJson().apply {
         put("__typename", "TextBlock")
         putProp(this@encodeJson, TextBlock::text, "text") { it.encodeJson() }
     }
 }
 
-internal fun ImageBlock.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
-    return encodeSharedJson(dateFormatting).apply {
+internal fun ImageBlock.encodeJson(): JSONObject {
+    return encodeSharedJson().apply {
         put("__typename", "ImageBlock")
         putProp(this@encodeJson, ImageBlock::image, "image") { it?.encodeJson() ?: JSONObject.NULL }
     }
@@ -512,8 +519,10 @@ internal fun ButtonBlock.Companion.decodeJson(json: JSONObject): ButtonBlock {
         insets = Insets.decodeJson(json.getJSONObject("insets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getJSONObject("position")),
-        keys = json.getJSONObject("keys").toAttributesHash(),
-        text = Text.decodeJson(json.getJSONObject("text"))
+        keys = json.getJSONObject("keys").toStringHash(),
+        text = Text.decodeJson(json.getJSONObject("text")),
+        name = json.safeGetString("name"),
+        tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
 
@@ -526,7 +535,9 @@ internal fun RectangleBlock.Companion.decodeJson(json: JSONObject): RectangleBlo
         insets = Insets.decodeJson(json.getJSONObject("insets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getJSONObject("position")),
-        keys = json.getJSONObject("keys").toAttributesHash()
+        keys = json.getJSONObject("keys").toStringHash(),
+        name = json.safeGetString("name"),
+        tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
 
@@ -539,8 +550,10 @@ internal fun WebViewBlock.Companion.decodeJson(json: JSONObject): WebViewBlock {
         insets = Insets.decodeJson(json.getJSONObject("insets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getJSONObject("position")),
-        keys = json.getJSONObject("keys").toAttributesHash(),
-        webView = WebView.decodeJson(json.getJSONObject("webView"))
+        keys = json.getJSONObject("keys").toStringHash(),
+        webView = WebView.decodeJson(json.getJSONObject("webView")),
+        name = json.safeGetString("name"),
+        tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
 
@@ -560,8 +573,10 @@ internal fun TextBlock.Companion.decodeJson(json: JSONObject): TextBlock {
         insets = Insets.decodeJson(json.getJSONObject("insets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getJSONObject("position")),
-        keys = json.getJSONObject("keys").toAttributesHash(),
-        text = Text.decodeJson(json.getJSONObject("text"))
+        keys = json.getJSONObject("keys").toStringHash(),
+        text = Text.decodeJson(json.getJSONObject("text")),
+        name = json.safeGetString("name"),
+        tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
 
@@ -574,8 +589,10 @@ internal fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
         insets = Insets.decodeJson(json.getJSONObject("insets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getJSONObject("position")),
-        keys = json.getJSONObject("keys").toAttributesHash(),
-        image = Image.optDecodeJSON(json.optJSONObject("image"))
+        keys = json.getJSONObject("keys").toStringHash(),
+        image = Image.optDecodeJSON(json.optJSONObject("image")),
+        name = json.safeGetString("name"),
+        tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
 
@@ -647,7 +664,10 @@ internal fun Row.Companion.decodeJSON(json: JSONObject): Row {
         background = Background.decodeJson(json.getJSONObject("background")),
         blocks = json.getJSONArray("blocks").getObjectIterable().map { Block.decodeJson(it) },
         height = Height.decodeJson(json.getJSONObject("height")),
-        id = ID(json.safeGetString("id"))
+        keys = json.getJSONObject("keys").toStringHash(),
+        id = ID(json.safeGetString("id")),
+        name = json.safeGetString("name"),
+        tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
 
@@ -657,6 +677,9 @@ internal fun Row.encodeJson(): JSONObject {
         putProp(this@encodeJson, Row::blocks, "blocks") { JSONArray(it.map { it.encodeJson() }) }
         putProp(this@encodeJson, Row::height, "height") { it.encodeJson() }
         putProp(this@encodeJson, Row::id, "id") { it.rawValue }
+        putProp(this@encodeJson, Row::keys) { JSONObject(it) }
+        putProp(this@encodeJson, Row::name, "name") { it }
+        putProp(this@encodeJson, Row::tags) { JSONArray(it) }
     }
 }
 
@@ -688,12 +711,13 @@ internal fun Screen.Companion.decodeJson(json: JSONObject): Screen {
         },
         statusBar = StatusBar.decodeJson(json.getJSONObject("statusBar")),
         titleBar = TitleBar.decodeJson(json.getJSONObject("titleBar")),
-        keys = json.getJSONObject("keys").toAttributesHash(),
+        keys = json.getJSONObject("keys").toStringHash(),
+        name = json.safeGetString("name"),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
 
-internal fun Screen.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
+internal fun Screen.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Screen::isStretchyHeaderEnabled, "isStretchyHeaderEnabled")
         putProp(this@encodeJson, Screen::background, "background") { it.encodeJson() }
@@ -701,7 +725,8 @@ internal fun Screen.encodeJson(dateFormatting: DateFormattingInterface): JSONObj
         putProp(this@encodeJson, Screen::rows) { JSONArray(it.map { it.encodeJson() }) }
         putProp(this@encodeJson, Screen::statusBar, "statusBar") { it.encodeJson() }
         putProp(this@encodeJson, Screen::titleBar, "titleBar") { it.encodeJson() }
-        putProp(this@encodeJson, Screen::keys) { it.encodeJson(dateFormatting) }
+        putProp(this@encodeJson, Screen::keys) { JSONObject(it) }
         putProp(this@encodeJson, Screen::tags) { JSONArray(it) }
+        putProp(this@encodeJson, Screen::name) { it }
     }
 }

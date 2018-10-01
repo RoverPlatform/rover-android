@@ -92,7 +92,6 @@ class GraphQlApiService(
                         else -> {
                             try {
                                 NetworkResult.Success(
-                                    // TODO This could emit, say, a JSON decode exception!  Need a story.
                                     httpRequest.decode(body)
                                 )
                             } catch (e: APIException) {

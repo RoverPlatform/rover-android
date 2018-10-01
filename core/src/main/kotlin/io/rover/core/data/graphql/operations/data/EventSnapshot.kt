@@ -40,7 +40,7 @@ internal fun EventSnapshot.Companion.decodeJson(json: JSONObject, dateFormatting
         name = json.safeGetString("name"),
         timestamp = json.getDate("timestamp", dateFormatting, true),
         id = UUID.fromString(json.safeGetString("id")),
-        deviceContext = DeviceContext.decodeJson(json.getJSONObject("device")),
+        deviceContext = DeviceContext.decodeJson(json.getJSONObject("device"), dateFormatting),
         namespace = json.safeOptString("namespace")
     )
 }

@@ -186,10 +186,13 @@ fun <T, R> Publisher<T>.flatMap(transform: (T) -> Publisher<out R>): Publisher<R
                     }
 
                     override fun onSubscribe(subscription: Subscription) {
-                        outstanding[this] = true
-                        subscription.request(Long.MAX_VALUE)
+                        if(outstanding[this] == true) {
+                            // only pass through subscription if not yet onComplete'd.
+                            subscription.request(Long.MAX_VALUE)
+                        }
                     }
                 }
+                outstanding[transformSubscriber] = true
                 transformPublisher.subscribe(transformSubscriber)
             }
 
@@ -492,7 +495,7 @@ fun <T : Any> Publisher<T>.distinctUntilChanged(): Publisher<T> {
         subscriber.onSubscribe(
             object : Subscription {
                 override fun cancel() {
-                    // TODO gotta pass subscription througu
+                    // TODO gotta pass subscription through
                 }
 
                 override fun request(n: Long) {
@@ -1088,7 +1091,10 @@ fun <T> Publisher<T>.observeOn(executor: Executor): Publisher<T> {
  *
  * All emitted items are buffered into a list that is then returned.
  */
-fun <T> Publisher<T>.blockForResult(afterSubscribe: () -> Unit = {}): List<T> {
+fun <T> Publisher<T>.blockForResult(
+    timeoutSeconds: Int = 10,
+    afterSubscribe: () -> Unit = {}
+): List<T> {
     val latch = CountDownLatch(1)
     var receivedError: Throwable? = null
     val results: MutableList<T> = mutableListOf()
@@ -1113,7 +1119,7 @@ fun <T> Publisher<T>.blockForResult(afterSubscribe: () -> Unit = {}): List<T> {
         }
     })
 
-    if (!latch.await(10, TimeUnit.SECONDS)) {
+    if (!latch.await(timeoutSeconds.toLong(), TimeUnit.SECONDS)) {
         throw Exception("Reached timeout while blocking for publisher! Items received: ${results.count()}")
     }
 

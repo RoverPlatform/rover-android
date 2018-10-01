@@ -14,8 +14,18 @@ import com.google.android.gms.location.GeofencingRequest
 import io.rover.core.Rover
 import io.rover.core.logging.log
 import io.rover.core.permissions.PermissionsNotifierInterface
+import io.rover.core.streams.Publishers
+import io.rover.core.streams.Scheduler
+import io.rover.core.streams.doOnNext
+import io.rover.core.streams.map
+import io.rover.core.streams.observeOn
 import io.rover.core.streams.subscribe
-import io.rover.location.domain.Region
+import io.rover.core.data.domain.Location
+import io.rover.core.streams.PublishSubject
+import io.rover.core.streams.share
+import io.rover.location.domain.asLocation
+import io.rover.location.sync.GeofencesRepository
+import org.reactivestreams.Publisher
 
 /**
  * Monitors for Geofence events using the Google Location Geofence API.
@@ -28,17 +38,29 @@ import io.rover.location.domain.Region
 class GoogleGeofenceService(
     private val applicationContext: Context,
     private val geofencingClient: GeofencingClient,
+    mainScheduler: Scheduler,
+    ioScheduler: Scheduler,
     private val locationReportingService: LocationReportingServiceInterface,
-    private val permissionsNotifier: PermissionsNotifierInterface
+    permissionsNotifier: PermissionsNotifierInterface,
+    geofencesRepository: GeofencesRepository,
+    googleBackgroundLocationService: GoogleBackgroundLocationServiceInterface,
+    private val geofenceMonitorLimit: Int = 50
     // TODO: customizable geofence limit
 ) : GoogleGeofenceServiceInterface {
+    private val geofenceSubject = PublishSubject<GeofenceServiceInterface.GeofenceEvent>()
+    override val geofenceEvents: Publisher<GeofenceServiceInterface.GeofenceEvent> = geofenceSubject
+        .observeOn(mainScheduler)
+        .share()
+
+    override val currentGeofences: MutableList<io.rover.location.domain.Geofence> = mutableListOf()
+
     override fun newGoogleGeofenceEvent(geofencingEvent: GeofencingEvent) {
         // have to do processing here because we need to know what the regions are.
         if (!geofencingEvent.hasError()) {
-            val regions = geofencingEvent.triggeringGeofences.mapNotNull {
+            val transitioningGeofences = geofencingEvent.triggeringGeofences.mapNotNull {
                 val fence = geofencingEvent.triggeringGeofences.first()
 
-                val region = currentFences.firstOrNull { it.identifier == fence.requestId }
+                val region = currentlyMonitoredFences.firstOrNull { it.identifier == fence.requestId }
 
                 if (region == null) {
                     val verb = when (geofencingEvent.geofenceTransition) {
@@ -51,16 +73,34 @@ class GoogleGeofenceService(
                 region
             }
 
-            regions.forEach { region ->
+            transitioningGeofences.forEach { geofence ->
                 when (geofencingEvent.geofenceTransition) {
                     Geofence.GEOFENCE_TRANSITION_ENTER -> {
                         locationReportingService.trackEnterGeofence(
-                            region
+                            geofence
                         )
+                        currentGeofences.add(geofence)
+
+                        geofenceSubject.onNext(
+                            GeofenceServiceInterface.GeofenceEvent(
+                                false,
+                                geofence
+                            )
+                        )
+
                     }
                     Geofence.GEOFENCE_TRANSITION_EXIT -> {
                         locationReportingService.trackExitGeofence(
-                            region
+                            geofence
+                        )
+
+                        currentGeofences.remove(geofence)
+
+                        geofenceSubject.onNext(
+                            GeofenceServiceInterface.GeofenceEvent(
+                                true,
+                                geofence
+                            )
                         )
                     }
                 }
@@ -74,29 +114,23 @@ class GoogleGeofenceService(
         }
     }
 
-    override fun regionsUpdated(regions: List<Region>) {
-        currentFences = regions.filterIsInstance(Region.GeofenceRegion::class.java)
-
-        startMonitoringGeofencesIfPossible()
-    }
-
     @SuppressLint("MissingPermission")
-    private fun startMonitoringGeofencesIfPossible() {
-        if (permissionObtained && currentFences.isNotEmpty()) {
-            log.v("Updating geofences.")
-            // This will remove any existing Rover geofences, because will all be registered with the
-            // same pending intent pointing to the receiver intent service.
-            geofencingClient.removeGeofences(
-                pendingIntentForReceiverService()
-            )
+    private fun startMonitoringGeofences() {
+        log.v("Updating geofences.")
+        // This will remove any existing Rover geofences, because will all be registered with the
+        // same pending intent pointing to the receiver intent service.
+        geofencingClient.removeGeofences(
+            pendingIntentForReceiverService()
+        )
 
-            val geofences = currentFences.map { region ->
+        if(currentlyMonitoredFences.isNotEmpty()) {
+            val geofences = currentlyMonitoredFences.map { geofence ->
                 Geofence.Builder()
-                    .setRequestId(region.identifier)
+                    .setRequestId(geofence.identifier)
                     .setCircularRegion(
-                        region.latitude,
-                        region.longitude,
-                        region.radius.toFloat()
+                        geofence.center.latitude,
+                        geofence.center.longitude,
+                        geofence.radius.toFloat()
                     )
                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
@@ -113,13 +147,13 @@ class GoogleGeofenceService(
             }.addOnSuccessListener {
                 log.v("Now monitoring ${geofences.count()} Rover geofences.")
             }
+        } else {
+            log.v("No geofences, so not setting up monitoring.")
         }
     }
 
     /**
      * A Pending Intent for activating the receiver service, [GeofenceBroadcastReceiver].
-     *
-     * The
      */
     private fun pendingIntentForReceiverService(): PendingIntent {
         return PendingIntent.getBroadcast(
@@ -133,17 +167,22 @@ class GoogleGeofenceService(
     /**
      * State: the current subset of fences we're monitoring for.
      */
-    private var currentFences: List<Region.GeofenceRegion> = listOf()
-
-    /**
-     * State: have we been granted permission to use location services yet?
-     */
-    private var permissionObtained = false
+    private var currentlyMonitoredFences: List<io.rover.location.domain.Geofence> = listOf()
 
     init {
-        permissionsNotifier.notifyForPermission(Manifest.permission.ACCESS_FINE_LOCATION).subscribe {
-            permissionObtained = true
-            startMonitoringGeofencesIfPossible()
+        Publishers.combineLatest(
+            permissionsNotifier.notifyForPermission(Manifest.permission.ACCESS_FINE_LOCATION).doOnNext { log.v("Permission obtained.") },
+            geofencesRepository.allGeofences().doOnNext { log.v("Full geofences list obtained from sync.") },
+            googleBackgroundLocationService.locationUpdates.doOnNext { log.v("Location update obtained so that distant geofences can be filtered out.") }
+        ) { permission, fences, location ->
+            Triple(permission, fences, location)
+        }.observeOn(ioScheduler).map { (_, fences, location) ->
+            log.v("Determining $geofenceMonitorLimit closest geofences for monitoring.")
+            fences.use { it.sortedBy { it.center.asLocation().distanceTo(location) }.take(geofenceMonitorLimit).toList() }
+        }.observeOn(mainScheduler).subscribe { fences ->
+            log.v("Got location permission, geofences, and current location.  Ready to start monitoring.")
+            currentlyMonitoredFences = fences
+            startMonitoringGeofences()
         }
     }
 }
@@ -154,4 +193,36 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             GeofencingEvent.fromIntent(intent)
         )
     }
+}
+
+/**
+ * Returns distance in meters.
+ *
+ * Assumes coordinates on Planet Earth.
+ */
+fun Location.distanceTo(other: Location): Double {
+    val earthRadius = 6371000
+
+    val lat1 = degreesToRadians(coordinate.latitude)
+    val lon1 = degreesToRadians(coordinate.longitude)
+    val lat2 = degreesToRadians(other.coordinate.latitude)
+    val lon2 = degreesToRadians(other.coordinate.longitude)
+
+    return earthRadius * ahaversine(
+        haversine(lat2 - lat1) + Math.cos(lat1) * Math.cos(lat2) * haversine(lon2 - lon1)
+    )
+}
+
+private fun haversine(value: Double): Double {
+    return (1 - Math.cos(value)) / 2
+}
+
+
+private fun ahaversine(value: Double): Double {
+    return 2 * Math.asin(Math.sqrt(value))
+}
+
+
+private fun degreesToRadians(degrees: Double): Double {
+    return (degrees / 360.0) * 2 * Math.PI
 }

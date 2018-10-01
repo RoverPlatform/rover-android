@@ -59,6 +59,8 @@ interface NotificationsRepositoryInterface {
      */
     fun delete(notification: Notification)
 
+    fun mergeRetrievedNotifications(notifications: List<Notification>)
+
     sealed class Emission {
         sealed class Event : Emission() {
             data class Refreshing(val refreshing: Boolean) : Event()

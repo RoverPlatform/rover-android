@@ -1,5 +1,6 @@
 package io.rover.core.events
 
+import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
 import io.rover.core.data.domain.DeviceContext
 import io.rover.core.events.contextproviders.UserInfoContextProvider
@@ -77,12 +78,12 @@ interface UserInfoInterface {
      * outgoing events.
      *
      * This will allow you to track any parameters you like set from device-side in Rover Audience
-     * or BigQuery, or use them for segmentation in Campaigns, or for personali
+     * or BigQuery, or use them for segmentation in Campaigns, or for personalization.
      *
      * Note that you may not use these attributes to address Campaigns to specific users with
      * personalization, because the threat model does not allow these values to be trusted.
      */
-    fun update(builder: (attributes: Attributes) -> Unit)
+    fun update(builder: (attributes: HashMap<kotlin.String, AttributeValue>) -> Unit)
 
     /**
      * Clear all the custom attributes.

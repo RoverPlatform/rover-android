@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.location.Geocoder
 import android.os.Build
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
@@ -13,14 +14,24 @@ import com.google.android.gms.location.LocationResult
 import io.rover.core.Rover
 import io.rover.core.logging.log
 import io.rover.core.permissions.PermissionsNotifierInterface
+import io.rover.core.platform.whenNotNull
+import io.rover.core.streams.PublishSubject
+import io.rover.core.streams.Scheduler
+import io.rover.core.streams.doOnNext
+import io.rover.core.streams.map
+import io.rover.core.streams.observeOn
+import io.rover.core.streams.shareHotAndReplay
 import io.rover.core.streams.subscribe
-import io.rover.location.domain.Location
+import io.rover.core.data.domain.Location
+import org.reactivestreams.Publisher
+import java.io.IOException
+import java.util.Date
 
 /**
  * Subscribes to Location Updates from FusedLocationManager and emits location reporting events.
  *
- * This allows you to see up to date location data for your users in the Audience app.
- * If left out, the other location functionality (Beacons and Geofences) will continue to work.
+ * This will allow you to see up to date location data for your users in the Rover Audience app if
+ * [trackLocation] is enabled.
  *
  * Google documentation: https://developer.android.com/training/location/receive-location-updates.html
  */
@@ -28,21 +39,75 @@ class GoogleBackgroundLocationService(
     private val fusedLocationProviderClient: FusedLocationProviderClient,
     private val applicationContext: Context,
     private val permissionsNotifier: PermissionsNotifierInterface,
-    private val locationReportingService: LocationReportingServiceInterface
+    private val locationReportingService: LocationReportingServiceInterface,
+    private val geocoder: Geocoder,
+    ioScheduler: Scheduler,
+    mainScheduler: Scheduler,
+    private val trackLocation: Boolean = false,
+    /**
+     * The minimum displacement in meters that will trigger a location update (and geofence/beacon
+     * rebinding).
+     */
+    private val minimumDisplacement: Float = 500f
 ) : GoogleBackgroundLocationServiceInterface {
     override fun newGoogleLocationResult(locationResult: LocationResult) {
         log.v("Received location result: $locationResult")
-
-        val location = Location(
-            locationResult.lastLocation.latitude,
-            locationResult.lastLocation.longitude,
-            locationResult.lastLocation.altitude,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && locationResult.lastLocation.hasVerticalAccuracy()) locationResult.lastLocation.verticalAccuracyMeters else null,
-            if (locationResult.lastLocation.hasAccuracy()) locationResult.lastLocation.accuracy else null
-        )
-
-        locationReportingService.updateLocation(location)
+        subject.onNext(locationResult)
     }
+
+    private val subject = PublishSubject<LocationResult>()
+
+    override val locationUpdates: Publisher<Location> = subject
+        .observeOn(ioScheduler)
+        .map { locationResult ->
+            // attempt to use Android's synchronous built-in geocoder api:
+            val androidGeocoderAddress = try {
+                geocoder.getFromLocation(
+                    locationResult.lastLocation.latitude,
+                    locationResult.lastLocation.longitude,
+                    1
+                ).firstOrNull()
+            } catch (ioException: IOException) {
+                log.w("Unable to use Android Geocoder API: $ioException")
+                null
+            }
+
+            val address = androidGeocoderAddress.whenNotNull { address ->
+                Location.Address(
+                    street = "${address.subThoroughfare} ${address.thoroughfare}",
+                    city = address.locality,
+                    state = address.adminArea,
+                    country = address.countryName,
+                    postalCode = address.postalCode,
+                    isoCountryCode = address.countryCode,
+                    subAdministrativeArea = address.subAdminArea,
+                    subLocality = address.subLocality
+                )
+            }
+
+            if(address == null) {
+                log.w("Unable to geocode address for current coordinates.")
+            }
+
+            Location(
+                address = address,
+                coordinate = Location.Coordinate(
+                    locationResult.lastLocation.latitude,
+                    locationResult.lastLocation.longitude
+                ),
+                altitude = locationResult.lastLocation.altitude,
+                verticalAccuracy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && locationResult.lastLocation.hasVerticalAccuracy()) locationResult.lastLocation.verticalAccuracyMeters.toDouble() else -1.0,
+                horizontalAccuracy = if (locationResult.lastLocation.hasAccuracy()) locationResult.lastLocation.accuracy.toDouble() else -1.0,
+                timestamp = Date()
+            )
+        }
+        .observeOn(mainScheduler)
+        .doOnNext { location ->
+            if(trackLocation) {
+                locationReportingService.updateLocation(location)
+            }
+        }
+        .shareHotAndReplay(1)
 
     init {
         startMonitoring()
@@ -58,7 +123,7 @@ class GoogleBackgroundLocationService(
                         .create()
                         .setInterval(1)
                         .setFastestInterval(1)
-                        .setSmallestDisplacement(0f)
+                        .setSmallestDisplacement(minimumDisplacement)
                         .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY),
                     PendingIntent.getBroadcast(
                         applicationContext,
@@ -68,7 +133,7 @@ class GoogleBackgroundLocationService(
                     )
                 ).addOnFailureListener { error ->
                     log.w("Unable to configure Rover location updates receiver because: $error")
-                }.addOnSuccessListener {
+                }.addOnSuccessListener { _ ->
                     log.v("Now monitoring location updates.")
                 }
         }

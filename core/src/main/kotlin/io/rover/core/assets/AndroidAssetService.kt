@@ -106,13 +106,13 @@ internal class AndroidAssetService(
                     }
                     .map { Pair(url, it) }
             }
-            .subscribe({ (url, result) ->
+            .subscribe { (url, result) ->
                 synchronized(outstanding) { outstanding.remove(url) }
                 when (result) {
                     is NetworkResult.Success -> receivedImages.onNext(
                         ImageReadyEvent(url, result.response)
                     )
                 }
-            })
+            }
     }
 }

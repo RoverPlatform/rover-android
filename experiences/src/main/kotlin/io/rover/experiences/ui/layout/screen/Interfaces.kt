@@ -66,6 +66,7 @@ interface ScreenViewModelInterface : BindableViewModel, BackgroundViewModelInter
     data class Event(
         val rowId: String,
         val blockId: String,
-        val navigateTo: NavigateToFromBlock
+        val navigateTo: NavigateToFromBlock,
+        val rowAttributes: AttributeValue
     )
 }

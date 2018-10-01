@@ -59,11 +59,13 @@ class ScreenViewModel(
 
     override val events: Publisher<ScreenViewModelInterface.Event> by lazy {
         rowViewModelsById.entries.asPublisher().flatMap { (rowId, rowViewModel) ->
+            val row = rowsById[rowId]!!
             rowViewModel.eventSource.map { rowEvent ->
                 ScreenViewModelInterface.Event(
                     rowId,
                     rowEvent.blockId,
-                    rowEvent.navigateTo
+                    rowEvent.navigateTo,
+                    row.asAttributeValue()
                 )
             }
         }

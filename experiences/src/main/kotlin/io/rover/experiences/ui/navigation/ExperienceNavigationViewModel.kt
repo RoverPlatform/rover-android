@@ -1,6 +1,7 @@
 package io.rover.experiences.ui.navigation
 
 import android.os.Parcelable
+import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
 import io.rover.experiences.data.domain.Experience
 import io.rover.experiences.data.domain.Screen
@@ -84,6 +85,7 @@ open class ExperienceNavigationViewModel(
         class PressedClose : Action()
         class Navigate(
             val navigateTo: NavigateToFromBlock,
+            val rowAttributes: AttributeValue,
             val sourceScreenViewModel: ScreenViewModelInterface
         ) : Action()
     }
@@ -114,7 +116,7 @@ open class ExperienceNavigationViewModel(
             .subscribe({ (screenViewModel, screenEvent) ->
                 // filter out the the events that are not meant for the currently active screen:
                 if (activeScreenViewModel() == screenViewModel) {
-                    actions.onNext(Action.Navigate(screenEvent.navigateTo, screenViewModel))
+                    actions.onNext(Action.Navigate(screenEvent.navigateTo, screenEvent.rowAttributes, screenViewModel))
                 }
             }, { error -> actions.onError(error) })
 
@@ -126,9 +128,9 @@ open class ExperienceNavigationViewModel(
                     val attributes = hashMapOf(
                         Pair("experience", experience.asAttributeValue()),
                         Pair("screen", action.sourceScreenViewModel.attributes),
-                        Pair("block", action.navigateTo.blockAttributes)
+                        Pair("block", action.navigateTo.blockAttributes),
+                        Pair("row", action.rowAttributes)
                     )
-
 
                     val event = Event(
                         name = "Block Tapped",

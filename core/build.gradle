@@ -55,6 +55,7 @@ dependencies {
     api 'org.reactivestreams:reactive-streams:1.0.2'
 
     api 'android.arch.lifecycle:extensions:1.1.1'
+    api "android.arch.work:work-runtime-ktx:1.0.0-alpha09" // use -ktx for Kotlin
 
     implementation 'com.android.support:customtabs:27.1.1'
 

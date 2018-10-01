@@ -6,14 +6,10 @@ import android.support.v7.preference.EditTextPreference
 import android.support.v7.preference.PreferenceManager
 import android.support.v7.preference.PreferenceScreen
 import android.support.v7.preference.SwitchPreferenceCompat
-import io.rover.core.events.EventQueueService.Companion.ROVER_NAMESPACE
-import io.rover.core.events.EventQueueServiceInterface
-import io.rover.core.events.domain.Event
 import io.rover.core.platform.DeviceIdentificationInterface
 
 class DebugPreferences(
     context: Context,
-    private val eventQueueService: EventQueueServiceInterface,
     private val deviceIdentification: DeviceIdentificationInterface
 ) {
     val sharedPreferencesName = "io.rover.debug.settings"
@@ -58,22 +54,6 @@ class DebugPreferences(
 
     fun currentTestDeviceState(): Boolean {
         return sharedPreferences.getBoolean(testDevicePreferencesKey, false)
-    }
-
-    fun notifyChange(changedKey: String) {
-        if (changedKey == testDevicePreferencesKey) {
-            eventQueueService.trackEvent(
-                Event(
-                    if (currentTestDeviceState())
-                        "Testing Enabled"
-                    else
-                        "Testing Disabled",
-                    hashMapOf()
-                ),
-                ROVER_NAMESPACE
-            )
-            eventQueueService.flushNow()
-        }
     }
 
     private val testDevicePreferencesKey = "test-device"

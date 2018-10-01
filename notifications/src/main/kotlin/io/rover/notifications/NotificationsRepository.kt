@@ -1,22 +1,40 @@
 package io.rover.notifications
 
-import io.rover.core.data.NetworkResult
 import io.rover.core.data.domain.AttributeValue
-import io.rover.core.logging.log
-import io.rover.core.streams.*
-import io.rover.core.platform.DateFormattingInterface
-import io.rover.core.platform.LocalStorage
-import io.rover.core.platform.whenNotNull
-import io.rover.notifications.domain.Notification
 import io.rover.core.data.graphql.getObjectIterable
-import io.rover.notifications.graphql.decodeJson
-import io.rover.notifications.graphql.encodeJson
-import io.rover.core.data.state.StateManagerServiceInterface
+import io.rover.core.data.sync.GraphQLResponse
+import io.rover.core.data.sync.SyncCoordinatorInterface
+import io.rover.core.data.sync.SyncDecoder
+import io.rover.core.data.sync.SyncQuery
+import io.rover.core.data.sync.SyncRequest
+import io.rover.core.data.sync.SyncResource
+import io.rover.core.data.sync.last
 import io.rover.core.events.EventQueueService
-import io.rover.notifications.ui.concerns.NotificationsRepositoryInterface
 import io.rover.core.events.EventQueueServiceInterface
 import io.rover.core.events.domain.Event
+import io.rover.core.logging.log
+import io.rover.core.platform.DateFormattingInterface
+import io.rover.core.platform.DeviceIdentificationInterface
+import io.rover.core.platform.LocalStorage
 import io.rover.core.platform.merge
+import io.rover.core.platform.whenNotNull
+import io.rover.core.streams.PublishSubject
+import io.rover.core.streams.Publishers
+import io.rover.core.streams.Scheduler
+import io.rover.core.streams.asPublisher
+import io.rover.core.streams.doOnComplete
+import io.rover.core.streams.doOnNext
+import io.rover.core.streams.filterForSubtype
+import io.rover.core.streams.filterNulls
+import io.rover.core.streams.flatMap
+import io.rover.core.streams.map
+import io.rover.core.streams.observeOn
+import io.rover.core.streams.shareHotAndReplay
+import io.rover.core.streams.subscribeOn
+import io.rover.notifications.domain.Notification
+import io.rover.notifications.graphql.decodeJson
+import io.rover.notifications.graphql.encodeJson
+import io.rover.notifications.ui.concerns.NotificationsRepositoryInterface
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -33,14 +51,10 @@ class NotificationsRepository(
     private val ioExecutor: Executor,
     private val mainThreadScheduler: Scheduler,
     private val eventQueue: EventQueueServiceInterface,
-    private val stateManagerService: StateManagerServiceInterface,
+    private val syncCoordinator: SyncCoordinatorInterface,
     localStorage: LocalStorage
 ) : NotificationsRepositoryInterface {
     // TODO: gate access to the localStorage via a single-thread executor pool.
-
-    // TODO: break this object up into: Notifications Remote API, possibly make StateStore have a
-    // subscriber model after all, in which consumers would provide their query fragment at
-    // registration time, removing the afterAssembly() callback wire-up.
 
     override fun updates(): Publisher<NotificationsRepositoryInterface.Emission.Update> = Publishers.concat(
         currentNotificationsOnDisk().filterNulls().map { existingNotifications ->
@@ -64,7 +78,11 @@ class NotificationsRepository(
     }
 
     override fun notificationArrivedByPush(notification: Notification) {
-        actions.onNext(Action.NotificationArrivedByPush(notification))
+        actions.onNext(Action.NotificationsFetchedOrArrived(listOf(notification)))
+    }
+
+    override fun mergeRetrievedNotifications(notifications: List<Notification>) {
+        actions.onNext(Action.NotificationsFetchedOrArrived(notifications))
     }
 
     private val keyValueStorage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
@@ -120,52 +138,19 @@ class NotificationsRepository(
         }.subscribeOn(ioExecutor)
     }
 
-    private val queryFragment: String = """
-        notifications {
-          ...notificationFields
-        }
-    """
-
     /**
      * This chain of behaviour maps incoming updates from the [StateManagerServiceInterface] to
      * notifications updates, along with the side-effect of updating local state.
      */
-    private val stateStoreObserverChain = stateManagerService.updatesForQueryFragment(
-        queryFragment,
-        listOf("notificationFields")
-    ).flatMap { networkResult ->
-        when (networkResult) {
-            is NetworkResult.Error -> {
-                Publishers.concat(
-                    Publishers.just(NotificationsRepositoryInterface.Emission.Event.Refreshing(false)),
-                    Publishers.just(NotificationsRepositoryInterface.Emission.Event.FetchFailure(networkResult.throwable.message ?: "Unknown")),
-                    this.currentNotificationsOnDisk().map {
-                        // just yield the current notifications on disk, if any.
-                        NotificationsRepositoryInterface.Emission.Update(it ?: emptyList())
-                    }
-                )
-            }
-            is NetworkResult.Success -> {
-                try {
-                    val newNotifications = decodeNotificationsPayload(networkResult.response)
-                    Publishers.concat(
-                        Publishers.just(
-                            NotificationsRepositoryInterface.Emission.Event.Refreshing(false)
-                        ),
-                        mergeWithLocalStorage(newNotifications)
-                            .flatMap { notifications ->
-                                // side-effect: update local storage!
-                                replaceLocalStorage(notifications).map {
-                                    NotificationsRepositoryInterface.Emission.Update(it)
-                                }
-                            }
-                    )
-                } catch (jsonError: JSONException) {
-                    Publishers.concat(
-                        Publishers.just(NotificationsRepositoryInterface.Emission.Event.Refreshing(false)),
-                        Publishers.just(NotificationsRepositoryInterface.Emission.Event.FetchFailure(jsonError.message ?: "Unknown"))
-                    )
-                }
+    private val stateStoreObserverChain = syncCoordinator.sync().flatMap { syncResult ->
+        log.v("Received sync completed notification.")
+        when(syncResult) {
+            SyncCoordinatorInterface.Result.Succeeded -> Publishers.just(NotificationsRepositoryInterface.Emission.Event.Refreshing(false))
+            else -> {
+                listOf(
+                    NotificationsRepositoryInterface.Emission.Event.Refreshing(false),
+                    NotificationsRepositoryInterface.Emission.Event.FetchFailure("Sync failed.")
+                ).asPublisher()
             }
         }
     }
@@ -179,10 +164,10 @@ class NotificationsRepository(
                             Publishers.just(NotificationsRepositoryInterface.Emission.Event.Refreshing(true))
                                 .doOnComplete {
                                     log.v("Triggering Device State Manager refresh.")
-                                    stateManagerService.triggerRefresh()
 
                                     // this will result in an emission being received by the state
                                     // manager updates observer.
+                                    syncCoordinator.triggerSync()
                                 }
                         )
                     }
@@ -192,8 +177,8 @@ class NotificationsRepository(
                     is Action.MarkRead -> {
                         doMarkAsRead(action.notification).map { NotificationsRepositoryInterface.Emission.Update(it) }
                     }
-                    is Action.NotificationArrivedByPush -> {
-                        mergeWithLocalStorage(listOf(action.notification)).flatMap { merged -> replaceLocalStorage(merged) }.map {
+                    is Action.NotificationsFetchedOrArrived -> {
+                        mergeWithLocalStorage(action.notifications).flatMap { merged -> replaceLocalStorage(merged) }.map {
                             NotificationsRepositoryInterface.Emission.Update(it)
                         }
                     }
@@ -283,12 +268,6 @@ class NotificationsRepository(
             .sortedByDescending { it.deliveredAt }
     }
 
-    @Throws(JSONException::class)
-    private fun decodeNotificationsPayload(data: JSONObject): List<Notification> =
-        data.getJSONArray("notifications").getObjectIterable().map {
-            notificationJson -> Notification.decodeJson(notificationJson, dateFormatting)
-        }
-
     companion object {
         private const val STORAGE_CONTEXT_IDENTIFIER = "io.rover.rover.notification-storage"
         private const val STORE_KEY = "local-notifications-cache"
@@ -313,8 +292,84 @@ class NotificationsRepository(
         class MarkDeleted(val notification: Notification) : Action()
 
         /**
-         * A notification arrived by push.  This will add it to the repository.
+         * Notifications arrived or fetched, and need to be merged in.
          */
-        class NotificationArrivedByPush(val notification: Notification) : Action()
+        class NotificationsFetchedOrArrived(val notifications: List<Notification>) : Action()
     }
 }
+
+class NotificationsSyncResource(
+    private val deviceIdentification: DeviceIdentificationInterface,
+    private val notificationsRepository: NotificationsRepositoryInterface
+): SyncResource<Notification> {
+    override fun upsertObjects(nodes: List<Notification>) {
+        notificationsRepository.mergeRetrievedNotifications(nodes)
+    }
+
+    override fun nextRequest(cursor: String?): SyncRequest {
+        // Notifications don't use cursors.  The GraphQL API just gives us a fixed amount.
+        log.v("Being asked for next sync request.")
+
+        val values: HashMap<String, AttributeValue> = hashMapOf(
+            Pair(SyncQuery.Argument.last.name, AttributeValue.Scalar.Integer(500)),
+            Pair(SyncQuery.Argument.deviceIdentifier.name, AttributeValue.Scalar.String(deviceIdentification.installationIdentifier))
+        )
+
+        return SyncRequest(
+            SyncQuery.notifications,
+            values
+        )
+    }
+}
+
+class NotificationSyncDecoder(
+    private val dateFormatting: DateFormattingInterface
+): SyncDecoder<Notification> {
+    override fun decode(json: JSONObject): GraphQLResponse<Notification> {
+        return NotificationsSyncResponseData.decodeJson(
+            json.getJSONObject("data"),
+            dateFormatting
+        ).notifications
+    }
+}
+
+data class NotificationsSyncResponseData(
+    val notifications: GraphQLResponse<Notification>
+) {
+    companion object
+}
+
+fun NotificationsSyncResponseData.Companion.decodeJson(json: JSONObject, dateFormatting: DateFormattingInterface): NotificationsSyncResponseData {
+    return NotificationsSyncResponseData(
+        notifications = GraphQLResponse.decodeNotificationsPageJson(
+            json.getJSONObject("notifications"),
+            dateFormatting
+        )
+    )
+}
+
+fun GraphQLResponse.Companion.decodeNotificationsPageJson(json: JSONObject, dateFormatting: DateFormattingInterface): GraphQLResponse<Notification> {
+    return GraphQLResponse(
+        nodes = json.getJSONArray("nodes").getObjectIterable().map { nodeJson ->
+            Notification.decodeJson(nodeJson, dateFormatting)
+        },
+        pageInfo = null // paging not supported.
+    )
+}
+
+val SyncQuery.Companion.notifications: SyncQuery
+    get() = SyncQuery(
+        "notifications",
+        """
+            nodes {
+                ...notificationFields
+            }
+        """.trimIndent(),
+        arguments = listOf(
+            SyncQuery.Argument.last, SyncQuery.Argument.deviceIdentifier
+        ),
+        fragments = listOf("notificationFields")
+    )
+
+val SyncQuery.Argument.Companion.deviceIdentifier
+    get() = SyncQuery.Argument("deviceIdentifier", SyncQuery.Type.String, isRequired = true)

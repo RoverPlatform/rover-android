@@ -1,11 +1,11 @@
 package io.rover.experiences.data.domain
 
 import android.util.DisplayMetrics
+import io.rover.core.data.domain.ID
 import io.rover.core.routing.Router
+import io.rover.experiences.data.domain.BackgroundScale.X3
 import java.net.URI
 import java.net.URL
-import io.rover.core.data.domain.ID
-import io.rover.core.data.domain.Attributes
 
 /**
  * A Rover experience.
@@ -14,9 +14,10 @@ data class Experience(
     val id: ID,
     val homeScreenId: ID,
     val screens: List<Screen>,
-    val keys: Attributes,
+    val keys: Map<String, String>,
     val campaignId: String?,
-    val tags: List<String>
+    val tags: List<String>,
+    val name: String
 ) {
     companion object
 }
@@ -90,7 +91,9 @@ interface Block {
     val insets: Insets
     val opacity: Double
     val position: Position
-    val keys: Attributes
+    val keys: Map<String, String>
+    val tags: List<String>
+    val name: String
 
     sealed class TapBehavior {
         /**
@@ -121,11 +124,13 @@ data class BarcodeBlock(
     override val insets: Insets,
     override val opacity: Double,
     override val position: Position,
-    override val keys: Attributes,
+    override val keys: Map<String, String>,
     @Deprecated("BarcodeBlock does not have a background.")
     override val background: Background,
     @Deprecated("BarcodeBlock does not have a border.")
     override val border: Border,
+    override val name: String,
+    override val tags: List<String>,
     val barcode: Barcode
 ) : Block {
     companion object
@@ -136,10 +141,12 @@ data class ButtonBlock(
     override val insets: Insets,
     override val opacity: Double,
     override val position: Position,
-    override val keys: Attributes,
+    override val keys: Map<String, String>,
     override val tapBehavior: Block.TapBehavior,
     override val background: Background,
     override val border: Border,
+    override val name: String,
+    override val tags: List<String>,
     val text: Text
 ) : Block {
     companion object
@@ -151,9 +158,11 @@ data class ImageBlock(
     override val insets: Insets,
     override val opacity: Double,
     override val position: Position,
-    override val keys: Attributes,
+    override val keys: Map<String, String>,
     override val background: Background,
     override val border: Border,
+    override val name: String,
+    override val tags: List<String>,
     val image: Image?
 ) : Block {
     companion object
@@ -165,9 +174,11 @@ data class RectangleBlock(
     override val insets: Insets,
     override val opacity: Double,
     override val position: Position,
-    override val keys: Attributes,
+    override val keys: Map<String, String>,
     override val background: Background,
-    override val border: Border
+    override val border: Border,
+    override val name: String,
+    override val tags: List<String>
 ) : Block {
     companion object
 }
@@ -178,9 +189,11 @@ data class TextBlock(
     override val insets: Insets,
     override val opacity: Double,
     override val position: Position,
-    override val keys: Attributes,
+    override val keys: Map<String, String>,
     override val background: Background,
     override val border: Border,
+    override val name: String,
+    override val tags: List<String>,
     val text: Text
 ) : Block {
     companion object
@@ -192,9 +205,11 @@ data class WebViewBlock(
     override val insets: Insets,
     override val opacity: Double,
     override val position: Position,
-    override val keys: Attributes,
+    override val keys: Map<String, String>,
     override val background: Background,
     override val border: Border,
+    override val name: String,
+    override val tags: List<String>,
     val webView: WebView
 ) : Block {
     companion object
@@ -342,7 +357,10 @@ data class Row(
     val background: Background,
     val blocks: List<Block>,
     val height: Height,
-    val id: ID
+    val keys: Map<String, String>,
+    val id: ID,
+    val name: String,
+    val tags: List<String>
 ) {
     companion object
 }
@@ -372,8 +390,9 @@ data class Screen(
     val background: Background,
     val titleBar: TitleBar,
     val statusBar: StatusBar,
-    val keys: Attributes,
-    val tags: List<String>
+    val keys: Map<String, String>,
+    val tags: List<String>,
+    val name: String
 ) {
     companion object
 }

@@ -299,16 +299,17 @@ object Publishers {
         }
     }
 
-//    fun <T1: Any, T2: Any, T3: Any, R: Any> combineLatest(
-//        source1: Publisher<T1>,
-//        source2: Publisher<T2>,
-//        source3: Publisher<T3>,
-//        combiner: (T1, T2, T3) -> R
-//    ): Publisher<out R> {
-//        return combineLatest(listOf(source1, source2, source3)) { (item1, item2,item3) ->
-//            // Suppression due to erasure.
-//            @Suppress("UNCHECKED_CAST")
-//            combiner(item1 as T1, item2 as T2, item3 as T3)
-//        }
-//    }
+    fun <T1, T2, T3, R> combineLatest(
+        source1: Publisher<T1>,
+        source2: Publisher<T2>,
+        source3: Publisher<T3>,
+        combiner: (T1, T2, T3) -> R
+    ): Publisher<R> {
+        @Suppress("UNCHECKED_CAST") // Suppression due to erasure/variance issues.
+        return combineLatest(listOf(source1, source2, source3) as List<Publisher<Any>>) { list: List<Any> ->
+            // Suppression due to erasure.
+            @Suppress("UNCHECKED_CAST")
+            combiner(list[0] as T1, list[1] as T2, list[2] as T3)
+        }
+    }
 }

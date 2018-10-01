@@ -3,55 +3,56 @@ package io.rover.location
 import io.rover.core.events.EventQueueService.Companion.ROVER_NAMESPACE
 import io.rover.core.events.EventQueueServiceInterface
 import io.rover.core.events.domain.Event
-import io.rover.location.domain.Location
-import io.rover.location.domain.Region
+import io.rover.location.domain.Beacon
+import io.rover.location.domain.Geofence
+import io.rover.core.data.domain.Location
 import io.rover.location.domain.events.asAttributeValue
 
 class LocationReportingService(
     private val eventQueueService: EventQueueServiceInterface
 ) : LocationReportingServiceInterface {
-    override fun trackEnterGeofence(geofence: Region.GeofenceRegion) {
+    override fun trackEnterGeofence(geofence: Geofence) {
         eventQueueService.trackEvent(
             Event(
-                "Geofence Region Entered",
+                "Geofence Entered",
                 hashMapOf(
-                    Pair("region", geofence.asAttributeValue())
+                    Pair("geofence", geofence.asAttributeValue())
                 )
             ),
             ROVER_NAMESPACE
         )
     }
 
-    override fun trackExitGeofence(geofence: Region.GeofenceRegion) {
+    override fun trackExitGeofence(geofence: Geofence) {
         eventQueueService.trackEvent(
             Event(
-                "Geofence Region Exited",
+                "Geofence Exited",
                 hashMapOf(
-                    Pair("region", geofence.asAttributeValue())
+                    Pair("geofence", geofence.asAttributeValue())
                 )
             ),
             ROVER_NAMESPACE
         )
     }
 
-    override fun trackEnterBeacon(beaconRegion: Region.BeaconRegion) {
+    override fun trackEnterBeacon(beacon: Beacon) {
         eventQueueService.trackEvent(
             Event(
-                "Beacon Region Entered",
+                "Beacon Entered",
                 hashMapOf(
-                    Pair("region", beaconRegion.asAttributeValue())
+                    Pair("beacon", beacon.asAttributeValue())
                 )
             ),
             ROVER_NAMESPACE
         )
     }
 
-    override fun trackExitBeacon(beaconRegion: Region.BeaconRegion) {
+    override fun trackExitBeacon(beacon: Beacon) {
         eventQueueService.trackEvent(
             Event(
-                "Beacon Region Exited",
+                "Beacon Exited",
                 hashMapOf(
-                    Pair("region", beaconRegion.asAttributeValue())
+                    Pair("beacon", beacon.asAttributeValue())
                 )
             ),
             ROVER_NAMESPACE
@@ -62,9 +63,7 @@ class LocationReportingService(
         eventQueueService.trackEvent(
             Event(
                 "Location Updated",
-                hashMapOf(
-                    Pair("location", location.asAttributeValue())
-                )
+                hashMapOf()
             ),
             ROVER_NAMESPACE
         )

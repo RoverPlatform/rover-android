@@ -1,10 +1,9 @@
 package io.rover.core.events
 
+import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
 import io.rover.core.data.graphql.operations.data.encodeJson
 import io.rover.core.data.graphql.operations.data.toAttributesHash
-import io.rover.core.events.EventQueueService.Companion.ROVER_NAMESPACE
-import io.rover.core.events.domain.Event
 import io.rover.core.logging.log
 import io.rover.core.platform.DateFormattingInterface
 import io.rover.core.platform.LocalStorage
@@ -12,25 +11,13 @@ import org.json.JSONObject
 
 class UserInfo(
     localStorage: LocalStorage,
-    private val eventQueueService: EventQueueServiceInterface,
     private val dateFormatting: DateFormattingInterface
 ) : UserInfoInterface {
     private val store = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
-    override fun update(builder: (attributes: Attributes) -> Unit) {
-        currentUserInfo.apply {
-            builder(this)
-            currentUserInfo = this
-        }
-
-        // emit an event.  Note that we do not include the device attributes directly as an event:
-        // instead the UserInfoContextProvider will include them for us.
-        eventQueueService.trackEvent(
-            Event(
-                "User Info Updated",
-                hashMapOf()
-            ),
-            ROVER_NAMESPACE
-        )
+    override fun update(builder: (attributes: HashMap<kotlin.String, AttributeValue>) -> Unit) {
+        val mutableDraft = HashMap(currentUserInfo)
+        builder(mutableDraft)
+        currentUserInfo = mutableDraft
     }
 
     override fun clear() {

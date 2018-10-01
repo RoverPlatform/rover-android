@@ -1,6 +1,8 @@
 package io.rover.core.data.graphql.operations.data
 
 import io.rover.core.data.domain.DeviceContext
+import io.rover.core.data.domain.Location
+import io.rover.core.data.graphql.getDate
 import io.rover.core.data.graphql.putProp
 import io.rover.core.data.graphql.safeGetString
 import io.rover.core.data.graphql.safeOptBoolean
@@ -34,7 +36,6 @@ internal fun DeviceContext.asJson(dateFormatting: DateFormattingInterface): JSON
             DeviceContext::operatingSystemName,
             DeviceContext::operatingSystemVersion,
             DeviceContext::pushEnvironment,
-            DeviceContext::pushToken,
             DeviceContext::radio,
             DeviceContext::screenWidth,
             DeviceContext::screenHeight,
@@ -49,13 +50,18 @@ internal fun DeviceContext.asJson(dateFormatting: DateFormattingInterface): JSON
         putProp(this@asJson, DeviceContext::userInfo, "userInfo") { it.encodeJson(dateFormatting) }
 
         putProp(this@asJson, DeviceContext::notificationAuthorization, "notificationAuthorization") { it?.encodeJson() ?: JSONObject.NULL }
+
+        putProp(this@asJson, DeviceContext::pushToken, "pushToken") { it?.encodeJson(dateFormatting) ?: JSONObject.NULL }
+
+        putProp(this@asJson, DeviceContext::location, "location") { it?.encodeJson(dateFormatting) ?: JSONObject.NULL }
     }
 }
+
 
 /**
  * Incoming JSON DTO transformation for [DeviceContext]s, as received from the Rover GraphQL API.
  */
-internal fun DeviceContext.Companion.decodeJson(json: JSONObject): DeviceContext {
+internal fun DeviceContext.Companion.decodeJson(json: JSONObject, dateFormatting: DateFormattingInterface): DeviceContext {
     return DeviceContext(
         appBuild = json.safeOptString("appBuild"),
         appIdentifier = json.safeOptString("appIdentifier"),
@@ -76,7 +82,9 @@ internal fun DeviceContext.Companion.decodeJson(json: JSONObject): DeviceContext
         operatingSystemName = json.safeOptString("operatingSystemName"),
         operatingSystemVersion = json.safeOptString("operatingSystemVersion"),
         pushEnvironment = json.safeOptString("pushEnvironment"),
-        pushToken = json.safeOptString("pushToken"),
+        pushToken = json.optJSONObject("pushToken").whenNotNull { pushTokenJson ->
+            DeviceContext.PushToken.decodeJson(pushTokenJson, dateFormatting)
+        },
         radio = json.safeOptString("radio"),
         screenWidth = json.safeOptInt("screenWidth"),
         screenHeight = json.safeOptInt("screenHeight"),
@@ -84,8 +92,25 @@ internal fun DeviceContext.Companion.decodeJson(json: JSONObject): DeviceContext
         timeZone = json.safeOptString("timeZone"),
         isBluetoothEnabled = json.safeOptBoolean("isBluetoothEnabled"),
         userInfo = json.getJSONObject("userInfo").toAttributesHash(),
-        isTestDevice = json.safeOptBoolean("isTestDevice")
+        isTestDevice = json.safeOptBoolean("isTestDevice"),
+        location = json.getJSONObject("location").whenNotNull { locationJson ->
+            Location.decodeJson(locationJson, dateFormatting)
+        }
     )
+}
+
+internal fun DeviceContext.PushToken.Companion.decodeJson(json: JSONObject, dateFormatting: DateFormattingInterface): DeviceContext.PushToken {
+    return DeviceContext.PushToken(
+        json.safeGetString("value"),
+        json.getDate("timestamp", dateFormatting)
+    )
+}
+
+internal fun DeviceContext.PushToken.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
+    return JSONObject().apply {
+        put("value", value)
+        put("timestamp", dateFormatting.dateAsIso8601(timestamp))
+    }
 }
 
 internal fun DeviceContext.NotificationAuthorization.Companion.decodeJson(value: String): DeviceContext.NotificationAuthorization {

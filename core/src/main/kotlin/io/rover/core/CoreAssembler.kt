@@ -22,8 +22,10 @@ import io.rover.core.data.graphql.GraphQlApiService
 import io.rover.core.data.graphql.GraphQlApiServiceInterface
 import io.rover.core.data.http.AndroidHttpsUrlConnectionNetworkClient
 import io.rover.core.data.http.NetworkClient
-import io.rover.core.data.state.StateManagerService
-import io.rover.core.data.state.StateManagerServiceInterface
+import io.rover.core.data.sync.SyncClient
+import io.rover.core.data.sync.SyncClientInterface
+import io.rover.core.data.sync.SyncCoordinator
+import io.rover.core.data.sync.SyncCoordinatorInterface
 import io.rover.core.events.ContextProvider
 import io.rover.core.events.EventQueueService
 import io.rover.core.events.EventQueueServiceInterface
@@ -60,7 +62,6 @@ import io.rover.core.streams.Scheduler
 import io.rover.core.streams.forAndroidMainThread
 import io.rover.core.streams.forExecutor
 import io.rover.core.tracking.ApplicationSessionEmitter
-import io.rover.core.tracking.BluetoothStateTracker
 import io.rover.core.tracking.SessionStore
 import io.rover.core.tracking.SessionStoreInterface
 import io.rover.core.tracking.SessionTracker
@@ -138,7 +139,6 @@ class CoreAssembler @JvmOverloads constructor(
             urlSchemes.forEach { urlScheme ->
                 when {
                     urlScheme.isBlank() -> throw RuntimeException("Deep link URL scheme must not be blank.")
-                // TODO: invert this. require people to include the rv- part of the slug.
                     !urlScheme.startsWith("rv-") -> throw RuntimeException("Rover URL schemes must start with `rv-`.  See the documentation for Deep Links.")
                     urlScheme.contains(" ") -> throw RuntimeException("Deep link scheme slug must not contain spaces.")
                 // TODO: check for special characters.
@@ -225,7 +225,6 @@ class CoreAssembler @JvmOverloads constructor(
         container.register(Scope.Singleton, UserInfoInterface::class.java) { resolver ->
             UserInfo(
                 resolver.resolveSingletonOrFail(LocalStorage::class.java),
-                resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java),
                 resolver.resolveSingletonOrFail(DateFormattingInterface::class.java)
             )
         }
@@ -305,10 +304,20 @@ class CoreAssembler @JvmOverloads constructor(
             )
         }
 
-        container.register(Scope.Singleton, StateManagerServiceInterface::class.java) { resolver ->
-            StateManagerService(
-                resolver.resolveSingletonOrFail(DeviceIdentificationInterface::class.java),
-                resolver.resolveSingletonOrFail(GraphQlApiServiceInterface::class.java)
+        container.register(Scope.Singleton, SyncClientInterface::class.java) { resolver ->
+            SyncClient(
+                URL(endpoint),
+                resolver.resolveSingletonOrFail(AuthenticationContext::class.java),
+                resolver.resolveSingletonOrFail(DateFormattingInterface::class.java),
+                resolver.resolveSingletonOrFail(NetworkClient::class.java)
+            )
+        }
+
+        container.register(Scope.Singleton, SyncCoordinatorInterface::class.java) { resolver ->
+            SyncCoordinator(
+                resolver.resolveSingletonOrFail(Scheduler::class.java, "io"),
+                resolver.resolveSingletonOrFail(Scheduler::class.java, "main"),
+                resolver.resolveSingletonOrFail(SyncClientInterface::class.java)
             )
         }
 
@@ -383,13 +392,13 @@ class CoreAssembler @JvmOverloads constructor(
             eventQueue.addContextProvider(BluetoothContextProvider(bluetoothAdapter))
         }
 
-        BluetoothStateTracker(application, resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java))
-
         resolver.resolveSingletonOrFail(Router::class.java).apply {
             registerRoute(
                 OpenAppRoute(resolver.resolveSingletonOrFail(Intent::class.java, "openApp"))
             )
         }
+
+        resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java).ensureBackgroundSyncScheduled()
     }
 }
 

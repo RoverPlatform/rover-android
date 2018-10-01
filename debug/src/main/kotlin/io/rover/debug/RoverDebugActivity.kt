@@ -36,7 +36,6 @@ class RoverDebugActivity : AppCompatActivity() {
         @Suppress("UNUSED_PARAMETER")
         private fun sharedPreferenceChangeListener(sharedPreferences: SharedPreferences, key: String) {
             // unused parameter suppressed because this method needs to match a signature.
-            debugPreferences.notifyChange(key)
         }
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {

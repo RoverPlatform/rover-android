@@ -3,13 +3,18 @@ package io.rover.experiences.data.domain.events
 import io.rover.core.data.domain.AttributeValue
 import io.rover.experiences.data.domain.Block
 import io.rover.experiences.data.domain.Experience
+import io.rover.experiences.data.domain.Row
 import io.rover.experiences.data.domain.Screen
 
 fun Experience.asAttributeValue(): AttributeValue {
     return AttributeValue.Object(
         hashMapOf(
             Pair("id", AttributeValue.Scalar.String(id.rawValue)),
-            Pair("tags", AttributeValue.Array(tags.map { AttributeValue.Scalar.String(it) }))
+            Pair("tags", AttributeValue.Array(tags.map { AttributeValue.Scalar.String(it) })),
+            Pair("keys", AttributeValue.Object(keys.mapValues { (_, value) ->
+                AttributeValue.Scalar.String(value)
+            })),
+            Pair("name", AttributeValue.Scalar.String(name))
         ) + if (campaignId != null) { hashMapOf(Pair("campaignID", AttributeValue.Scalar.String(campaignId))) } else hashMapOf()
     )
 }
@@ -17,7 +22,11 @@ fun Experience.asAttributeValue(): AttributeValue {
 fun Screen.asAttributeValue(): AttributeValue {
     return AttributeValue.Object(
         Pair("id", AttributeValue.Scalar.String(id.rawValue)),
-        Pair("tags", AttributeValue.Array(tags.map { AttributeValue.Scalar.String(it) }))
+        Pair("tags", AttributeValue.Array(tags.map { AttributeValue.Scalar.String(it) })),
+        Pair("keys", AttributeValue.Object(keys.mapValues { (_, value) ->
+            AttributeValue.Scalar.String(value)
+        })),
+        Pair("name", AttributeValue.Scalar.String(name))
     )
 }
 
@@ -46,6 +55,22 @@ fun Block.TapBehavior.asAttributeValue(): AttributeValue {
 fun Block.asAttributeValue(): AttributeValue {
     return AttributeValue.Object(
         Pair("id", AttributeValue.Scalar.String(id.rawValue)),
-        Pair("tapBehavior", tapBehavior.asAttributeValue())
+        Pair("tapBehavior", tapBehavior.asAttributeValue()),
+        Pair("keys", AttributeValue.Object(keys.mapValues { (_, value) ->
+            AttributeValue.Scalar.String(value)
+        })),
+        Pair("name", AttributeValue.Scalar.String(name)),
+        Pair("tags", AttributeValue.Array(tags.map { AttributeValue.Scalar.String(it) }))
+    )
+}
+
+fun Row.asAttributeValue(): AttributeValue {
+    return AttributeValue.Object(
+        Pair("id", AttributeValue.Scalar.String(this.id.rawValue)),
+        Pair("name", AttributeValue.Scalar.String(this.name)),
+        Pair("keys", AttributeValue.Object(keys.mapValues { (_, value) ->
+            AttributeValue.Scalar.String(value)
+        })),
+        Pair("tags", AttributeValue.Array(tags.map { AttributeValue.Scalar.String(it) }))
     )
 }

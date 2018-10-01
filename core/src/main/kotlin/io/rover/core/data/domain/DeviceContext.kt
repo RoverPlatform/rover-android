@@ -1,5 +1,7 @@
 package io.rover.core.data.domain
 
+import java.util.Date
+
 /**
  * A Rover context: describes the device and general situation when an [Event] is generated.
  */
@@ -36,7 +38,7 @@ data class DeviceContext(
     val operatingSystemName: String?,
     val operatingSystemVersion: String?,
     val pushEnvironment: String?,
-    val pushToken: String?,
+    val pushToken: PushToken?,
     val radio: String?,
 
     /**
@@ -64,6 +66,13 @@ data class DeviceContext(
     val isTestDevice: Boolean?,
 
     /**
+     * Device location.
+     *
+     * Only populated if the Rover Location module is installed.
+     */
+    val location: Location?,
+
+    /**
      * Device attributes.
      */
     val userInfo: Attributes
@@ -74,7 +83,7 @@ data class DeviceContext(
                 null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null,
-                null, null, null, null, null, null, false, hashMapOf()
+                null, null, null, null, null, null, false, null, hashMapOf()
             )
         }
     }
@@ -85,6 +94,13 @@ data class DeviceContext(
         Authorized("authorized"),
         Denied("denied");
 
+        companion object
+    }
+
+    data class PushToken(
+        val value: String,
+        val timestamp: Date
+    ) {
         companion object
     }
 }

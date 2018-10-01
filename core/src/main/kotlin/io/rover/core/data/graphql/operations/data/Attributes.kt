@@ -3,6 +3,7 @@ package io.rover.core.data.graphql.operations.data
 import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
 import io.rover.core.data.graphql.getIterable
+import io.rover.core.data.graphql.safeGetString
 import io.rover.core.platform.DateFormattingInterface
 import org.json.JSONArray
 import org.json.JSONObject
@@ -83,6 +84,12 @@ fun JSONObject.toAttributesHash(): Attributes {
 fun JSONObject.toFlatAttributesHash(): Map<String, AttributeValue.Scalar> {
     @Suppress("IMPLICIT_CAST_TO_ANY", "UNCHECKED_CAST")
     return toAttributesHash().filterValues { it is AttributeValue.Scalar } as Map<String, AttributeValue.Scalar>
+}
+
+fun JSONObject.toStringHash(): Map<String, String> {
+    return this.keys().asSequence().associate { key ->
+        Pair(key, this.safeGetString(key))
+    }
 }
 
 /**

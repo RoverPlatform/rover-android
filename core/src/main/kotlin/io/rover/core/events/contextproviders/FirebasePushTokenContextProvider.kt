@@ -1,15 +1,11 @@
 package io.rover.core.events.contextproviders
 
 import android.os.Handler
-import io.rover.core.data.domain.AttributeValue
-import io.rover.core.logging.log
-import io.rover.core.platform.LocalStorage
 import io.rover.core.data.domain.DeviceContext
 import io.rover.core.events.ContextProvider
-import io.rover.core.events.EventQueueService
-import io.rover.core.events.EventQueueServiceInterface
 import io.rover.core.events.PushTokenTransmissionChannel
-import io.rover.core.events.domain.Event
+import io.rover.core.logging.log
+import io.rover.core.platform.LocalStorage
 import io.rover.core.platform.whenNotNull
 import java.util.Date
 import java.util.concurrent.Executors
@@ -22,45 +18,47 @@ class FirebasePushTokenContextProvider(
     localStorage: LocalStorage,
     private val resetPushToken: () -> Unit
 ) : ContextProvider, PushTokenTransmissionChannel {
-
-    override fun registeredWithEventQueue(eventQueue: EventQueueServiceInterface) {
-        this.eventQueue = eventQueue
-    }
-
     override fun captureContext(deviceContext: DeviceContext): DeviceContext {
-        return deviceContext.copy(
-            pushToken = token
-        )
+        return deviceContext.copy(pushToken = token.whenNotNull {
+            DeviceContext.PushToken(
+                it,
+                timestampAsNeeded()
+            )
+        })
     }
 
     override fun setPushToken(token: String?) {
         if (this.token != token) {
-            val event = Event(
-                when {
-                    this.token == null -> "Push Token Added"
-                    token == null -> "Push Token Removed"
-                    else -> "Push Token Updated"
-                },
-                listOfNotNull(
-                    token.whenNotNull { currentToken -> Pair("currentToken", AttributeValue.Scalar.String(currentToken)) },
-                    this.token.whenNotNull { previousToken -> Pair("previousToken", AttributeValue.Scalar.String(previousToken)) }
-                ).associate { it }
-            )
             this.token = token
-            val queue = eventQueue ?: throw RuntimeException("registeredWithEventQueue() not called on FirebasePushTokenContextProvider during setup.")
-            queue.trackEvent(event, EventQueueService.ROVER_NAMESPACE)
+            this.timestamp = null
+            timestampAsNeeded()
             val elapsed = (Date().time - launchTime.time) / 1000
             log.v("Push token set after $elapsed seconds.")
         }
     }
 
     private val launchTime = Date()
-    private var eventQueue: EventQueueServiceInterface? = null
     private val keyValueStorage = localStorage.getKeyValueStorageFor(Companion.STORAGE_CONTEXT_IDENTIFIER)
 
     private var token: String?
-        get() = keyValueStorage[Companion.TOKEN_KEY]
-        set(token) { keyValueStorage[Companion.TOKEN_KEY] = token }
+        get() = keyValueStorage[TOKEN_KEY]
+        set(token) { keyValueStorage[TOKEN_KEY] = token }
+
+    private var timestamp: String?
+        get() = keyValueStorage[TIMESTAMP_KEY]
+        set(token) { keyValueStorage[TIMESTAMP_KEY] = token }
+
+    private fun timestampAsNeeded(): Date {
+        // retrieves the current timestamp value, setting it to now if it's missing (say, if running
+        // on an early 2.0 beta install where timestamp was not set).
+
+        if(timestamp == null) {
+            timestamp = (System.currentTimeMillis() / 1000L).toString()
+        }
+
+        return Date(timestamp!!.toLong() * 1000)
+    }
+
 
     init {
         if (token == null) {
@@ -84,6 +82,7 @@ class FirebasePushTokenContextProvider(
     companion object {
         private const val STORAGE_CONTEXT_IDENTIFIER = "io.rover.rover.fcm-push-context-provider"
         private const val TOKEN_KEY = "push-token"
+        private const val TIMESTAMP_KEY = "timestamp"
         private const val TOKEN_RESET_TIMEOUT = 4 * 1000L
     }
 }

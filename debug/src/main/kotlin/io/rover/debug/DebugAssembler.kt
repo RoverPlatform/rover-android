@@ -4,14 +4,14 @@ package io.rover.debug
 
 import android.content.Context
 import io.rover.core.Rover
-import io.rover.debug.routes.DebugRoute
 import io.rover.core.container.Assembler
 import io.rover.core.container.Container
 import io.rover.core.container.Resolver
 import io.rover.core.container.Scope
 import io.rover.core.events.EventQueueServiceInterface
-import io.rover.core.routing.Router
 import io.rover.core.platform.DeviceIdentificationInterface
+import io.rover.core.routing.Router
+import io.rover.debug.routes.DebugRoute
 
 /**
  * The Debug module adds certain useful bits of debug functionality to the Rover SDK, namely a
@@ -30,7 +30,6 @@ class DebugAssembler : Assembler {
         ) { resolver ->
             DebugPreferences(
                 resolver.resolveSingletonOrFail(Context::class.java),
-                resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java),
                 resolver.resolveSingletonOrFail(DeviceIdentificationInterface::class.java)
             )
         }

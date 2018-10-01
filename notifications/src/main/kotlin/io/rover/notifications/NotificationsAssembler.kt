@@ -18,12 +18,16 @@ import io.rover.core.container.Assembler
 import io.rover.core.container.Container
 import io.rover.core.container.Resolver
 import io.rover.core.container.Scope
-import io.rover.core.data.state.StateManagerServiceInterface
+import io.rover.core.data.sync.RealPagedSyncParticipant
+import io.rover.core.data.sync.SyncCoordinatorInterface
+import io.rover.core.data.sync.SyncDecoder
+import io.rover.core.data.sync.SyncParticipant
 import io.rover.core.events.ContextProvider
 import io.rover.core.events.EventQueueServiceInterface
 import io.rover.core.events.PushTokenTransmissionChannel
 import io.rover.core.events.contextproviders.FirebasePushTokenContextProvider
 import io.rover.core.platform.DateFormattingInterface
+import io.rover.core.platform.DeviceIdentificationInterface
 import io.rover.core.platform.LocalStorage
 import io.rover.core.routing.Router
 import io.rover.core.routing.website.EmbeddedWebBrowserDisplayInterface
@@ -116,8 +120,37 @@ class NotificationsAssembler @JvmOverloads constructor(
                 resolver.resolveSingletonOrFail(Executor::class.java, "io"),
                 resolver.resolveSingletonOrFail(Scheduler::class.java, "main"),
                 resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java),
-                resolver.resolveSingletonOrFail(StateManagerServiceInterface::class.java),
+                resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java),
                 resolver.resolveSingletonOrFail(LocalStorage::class.java)
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            NotificationsSyncResource::class.java
+        ) { resolver ->
+            NotificationsSyncResource(
+                resolver.resolveSingletonOrFail(DeviceIdentificationInterface::class.java),
+                resolver.resolveSingletonOrFail(NotificationsRepositoryInterface::class.java)
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            SyncDecoder::class.java,
+            "notifications"
+        ) { resolver ->
+            NotificationSyncDecoder(resolver.resolveSingletonOrFail(DateFormattingInterface::class.java))
+        }
+
+        container.register(
+            Scope.Singleton,
+            SyncParticipant::class.java,
+            "notifications"
+        ) { resolver ->
+            RealPagedSyncParticipant(
+                resolver.resolveSingletonOrFail(NotificationsSyncResource::class.java),
+                resolver.resolveSingletonOrFail(SyncDecoder::class.java, "notifications") as SyncDecoder<Notification>
             )
         }
 
@@ -272,6 +305,10 @@ class NotificationsAssembler @JvmOverloads constructor(
                 )
             )
         }
+
+        resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java).registerParticipant(
+            resolver.resolveSingletonOrFail(SyncParticipant::class.java, "notifications")
+        )
     }
 }
 

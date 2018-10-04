@@ -156,7 +156,8 @@ class LocationAssembler(
         ) { resolver ->
             GeofencesRepository(
                 resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java),
-                resolver.resolveSingletonOrFail(GeofencesSqlStorage::class.java)
+                resolver.resolveSingletonOrFail(GeofencesSqlStorage::class.java),
+                resolver.resolveSingletonOrFail(Scheduler::class.java, "io")
             )
         }
 

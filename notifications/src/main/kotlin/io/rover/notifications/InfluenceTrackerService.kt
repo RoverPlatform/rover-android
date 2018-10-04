@@ -50,6 +50,12 @@ class InfluenceTrackerService(
         log.v("Marked that a notification arrived.")
     }
 
+    override fun nonRoverPushReceived() {
+        lastSeenNotificationAt = null
+        lastSeenNotificationJson = null
+        log.v("Marked that a non-Rover notification arrived, so forgetting current influenced-open candidate.")
+    }
+
     override fun startListening() {
         application.registerActivityLifecycleCallbacks(
             object : Application.ActivityLifecycleCallbacks {

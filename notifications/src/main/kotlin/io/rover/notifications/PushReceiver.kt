@@ -13,7 +13,8 @@ import java.net.MalformedURLException
 open class PushReceiver(
     private val pushTokenTransmissionChannel: PushTokenTransmissionChannel,
     private val notificationDispatcher: NotificationDispatcher,
-    private val dateFormatting: DateFormattingInterface
+    private val dateFormatting: DateFormattingInterface,
+    private val influenceTrackerService: InfluenceTrackerServiceInterface
 ) : PushReceiverInterface {
 
     override fun onTokenRefresh(token: String?) {
@@ -30,11 +31,15 @@ open class PushReceiver(
         // a) the notification does not have a display message component; OR
         // b) the app is running in foreground.
 
-        log.v("Received a push notification. Raw parameters: $parameters")
-
         if (!parameters.containsKey("rover")) {
-            log.w("Invalid push notification received: `rover` data parameter not present. Possibly was a Display-only push notification, or otherwise not intended for the Rover SDK. Ignoring.")
+            log.w("Non-Rover push notification received: `rover` data parameter not present. Possibly was a Display-only push notification, or otherwise not intended for the Rover SDK. Ignoring.")
+            // clear influenced open data so we don't take credit for an influenced open for a
+            // notification we did not receive.
+            influenceTrackerService.nonRoverPushReceived()
+            return
         }
+
+        log.v("Received a push notification. Raw parameters: $parameters")
 
         val notificationJson = parameters["rover"] ?: return
         handleRoverNotificationObject(notificationJson)

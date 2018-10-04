@@ -52,7 +52,7 @@ class SyncCoordinator(
         // fresh one.
         return chain.doOnSubscribe {
             subject.onNext(Action.AttemptSync)
-        }.subscribeOn(mainThreadScheduler)
+        }
     }
 
     override fun triggerSync() {
@@ -138,6 +138,7 @@ class SyncCoordinator(
     private var executing = false
 
     private val chain = subject
+        .observeOn(ioScheduler)
         .filter {
             // filter out all incoming requests if a sync is already executing.
             synchronized(executing) { !executing }
@@ -150,7 +151,7 @@ class SyncCoordinator(
                 // starting with all the registered participants.
                 this.participants.toList(),
                 this.participants.mapNotNull { it.initialRequest() }
-            )
+            ).doOnNext { log.v("Sync completed with: $it") }
         }.doOnNext {
             synchronized(executing) { executing = false }
         }.observeOn(mainThreadScheduler).shareHotAndReplay(0).subscribeOn(mainThreadScheduler)
@@ -172,7 +173,10 @@ class SyncCoordinator(
         params: WorkerParameters
     ): Worker(context, params) {
         override fun doWork(): Result {
-            val result = Rover.sharedInstance.resolveSingletonOrFail(SyncCoordinatorInterface::class.java).sync().first().blockForResult(300).first()
+            val result = Rover.sharedInstance.resolveSingletonOrFail(SyncCoordinatorInterface::class.java)
+                .sync()
+                .first()
+                .blockForResult(300).first()
             return when(result) {
                 SyncCoordinatorInterface.Result.Succeeded -> Result.SUCCESS
                 SyncCoordinatorInterface.Result.RetryNeeded -> Result.RETRY

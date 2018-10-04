@@ -254,7 +254,8 @@ class NotificationsAssembler @JvmOverloads constructor(
             PushReceiver(
                 resolver.resolveSingletonOrFail(PushTokenTransmissionChannel::class.java),
                 resolver.resolveSingletonOrFail(NotificationDispatcher::class.java),
-                resolver.resolveSingletonOrFail(DateFormattingInterface::class.java)
+                resolver.resolveSingletonOrFail(DateFormattingInterface::class.java),
+                resolver.resolveSingletonOrFail(InfluenceTrackerServiceInterface::class.java)
             )
         }
 

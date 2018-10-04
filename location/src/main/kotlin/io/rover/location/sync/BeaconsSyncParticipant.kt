@@ -10,14 +10,14 @@ import io.rover.core.data.domain.ID
 import io.rover.core.data.graphql.getObjectIterable
 import io.rover.core.data.graphql.getStringIterable
 import io.rover.core.data.graphql.safeGetString
-import io.rover.core.data.sync.SyncDecoder
-import io.rover.core.data.sync.PageInfo
 import io.rover.core.data.sync.GraphQLResponse
+import io.rover.core.data.sync.PageInfo
 import io.rover.core.data.sync.SqlSyncStorageInterface
-import io.rover.core.data.sync.SyncResource
 import io.rover.core.data.sync.SyncCoordinatorInterface
+import io.rover.core.data.sync.SyncDecoder
 import io.rover.core.data.sync.SyncQuery
 import io.rover.core.data.sync.SyncRequest
+import io.rover.core.data.sync.SyncResource
 import io.rover.core.data.sync.after
 import io.rover.core.data.sync.decodeJson
 import io.rover.core.data.sync.first
@@ -26,7 +26,6 @@ import io.rover.core.streams.Publishers
 import io.rover.core.streams.Scheduler
 import io.rover.core.streams.map
 import io.rover.core.streams.observeOn
-import io.rover.core.streams.shareAndReplay
 import io.rover.core.streams.subscribeOn
 import io.rover.location.domain.Beacon
 import org.json.JSONArray
@@ -39,10 +38,12 @@ class BeaconsRepository(
     private val beaconsSqlStorage: BeaconsSqlStorage,
     private val ioScheduler: Scheduler
 ) {
-    fun allBeacons(): Publisher<ClosableSequence<Beacon>> = syncCoordinator.sync()
-        .observeOn(ioScheduler).map {
-        beaconsSqlStorage.queryAllBeacons()
-    }.shareAndReplay(1)
+    fun allBeacons(): Publisher<ClosableSequence<Beacon>> = syncCoordinator
+        .sync()
+        .observeOn(ioScheduler)
+        .map {
+            beaconsSqlStorage.queryAllBeacons()
+        }
 
     /**
      * Look up a [Beacon] by its iBeacon UUID, major, and minor.  Yields it if it exists.

@@ -108,4 +108,12 @@ interface InfluenceTrackerServiceInterface {
     fun notifyNotificationReceived(
         notification: Notification
     )
+
+    /**
+     * Let the influence tracker know that a push notification not associated with Rover has been
+     * received, and so therefore an influenced open should not be tracked in order to avoid
+     * tracking credit for an influenced open for a Rover campaign that was not actually the most
+     * recently received push.
+     */
+    fun nonRoverPushReceived()
 }

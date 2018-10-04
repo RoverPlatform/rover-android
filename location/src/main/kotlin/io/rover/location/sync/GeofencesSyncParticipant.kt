@@ -9,20 +9,21 @@ import io.rover.core.data.domain.ID
 import io.rover.core.data.graphql.getObjectIterable
 import io.rover.core.data.graphql.getStringIterable
 import io.rover.core.data.graphql.safeGetString
-import io.rover.core.data.sync.SyncDecoder
-import io.rover.core.data.sync.PageInfo
 import io.rover.core.data.sync.GraphQLResponse
+import io.rover.core.data.sync.PageInfo
 import io.rover.core.data.sync.SqlSyncStorageInterface
-import io.rover.core.data.sync.SyncResource
 import io.rover.core.data.sync.SyncCoordinatorInterface
+import io.rover.core.data.sync.SyncDecoder
 import io.rover.core.data.sync.SyncQuery
 import io.rover.core.data.sync.SyncRequest
+import io.rover.core.data.sync.SyncResource
 import io.rover.core.data.sync.after
 import io.rover.core.data.sync.decodeJson
 import io.rover.core.data.sync.first
 import io.rover.core.logging.log
+import io.rover.core.streams.Scheduler
 import io.rover.core.streams.map
-import io.rover.core.streams.share
+import io.rover.core.streams.observeOn
 import io.rover.location.domain.Geofence
 import org.json.JSONArray
 import org.json.JSONObject
@@ -35,19 +36,23 @@ interface ClosableSequence<T>: Sequence<T>, AutoCloseable
 
 class GeofencesRepository(
     private val syncCoordinator: SyncCoordinatorInterface,
-    private val geofencesSqlStorage: GeofencesSqlStorage
+    private val geofencesSqlStorage: GeofencesSqlStorage,
+    private val ioScheduler: Scheduler
 ) {
     /**
      * Be informed when geofences are available.
      *
      * Be sure to close the [ClosableSequence] when you are finished iterating through it.
      */
-    fun allGeofences(): Publisher<ClosableSequence<Geofence>> = syncCoordinator.sync().map {
-        // for now, we don't check the result because we just want an *attempt* to have completely
-        // occurred.  In future we may keep state for tracking if at least one sync has happened
-        // successfully over the install lifetime of the app, but for now, this will do.
-        geofencesSqlStorage.queryAllGeofences()
-    }.share()
+    fun allGeofences(): Publisher<ClosableSequence<Geofence>> = syncCoordinator
+        .sync()
+        .observeOn(ioScheduler)
+        .map {
+            // for now, we don't check the result because we just want an *attempt* to have completely
+            // occurred.  In future we may keep state for tracking if at least one sync has happened
+            // successfully over the install lifetime of the app, but for now, this will do.
+            geofencesSqlStorage.queryAllGeofences()
+        }
 }
 
 class GeofencesSqlStorage(

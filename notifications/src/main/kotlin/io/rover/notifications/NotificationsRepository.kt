@@ -32,6 +32,7 @@ import io.rover.core.streams.observeOn
 import io.rover.core.streams.shareHotAndReplay
 import io.rover.core.streams.subscribeOn
 import io.rover.notifications.domain.Notification
+import io.rover.notifications.domain.events.asAttributeValue
 import io.rover.notifications.graphql.decodeJson
 import io.rover.notifications.graphql.encodeJson
 import io.rover.notifications.ui.concerns.NotificationsRepositoryInterface
@@ -213,7 +214,7 @@ class NotificationsRepository(
                     Event(
                         "Notification Marked Deleted",
                         hashMapOf(
-                            Pair("NotificationID", AttributeValue.Scalar.String(notification.id))
+                            Pair("notification", notification.asAttributeValue())
                         )
                     ),
                     EventQueueService.ROVER_NAMESPACE
@@ -250,7 +251,7 @@ class NotificationsRepository(
                     Event(
                         "Notification Marked Read",
                         hashMapOf(
-                            Pair("notificationID", AttributeValue.Scalar.String(notification.id))
+                            Pair("notification", notification.asAttributeValue())
                         )
                     ),
                     EventQueueService.ROVER_NAMESPACE

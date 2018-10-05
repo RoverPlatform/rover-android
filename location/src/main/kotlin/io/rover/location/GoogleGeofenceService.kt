@@ -178,7 +178,7 @@ class GoogleGeofenceService(
             Triple(permission, fences, location)
         }.observeOn(ioScheduler).map { (_, fences, location) ->
             log.v("Determining $geofenceMonitorLimit closest geofences for monitoring.")
-            fences.use { it.sortedBy { it.center.asLocation().distanceTo(location) }.take(geofenceMonitorLimit).toList() }
+            fences.iterator().use { it.asSequence().sortedBy { it.center.asLocation().distanceTo(location) }.take(geofenceMonitorLimit).toList() }
         }.observeOn(mainScheduler).subscribe { fences ->
             log.v("Got location permission, geofences, and current location.  Ready to start monitoring.")
             currentlyMonitoredFences = fences

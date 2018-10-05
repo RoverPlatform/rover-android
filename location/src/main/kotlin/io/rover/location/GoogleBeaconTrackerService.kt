@@ -132,7 +132,7 @@ class GoogleBeaconTrackerService(
         ) { permission, beacons ->
             Pair(permission, beacons)
         }.observeOn(ioScheduler).map { (_, beacons) ->
-            val fetchedBeacons = beacons.use { it.toList() }
+            val fetchedBeacons = beacons.iterator().use { it.asSequence().toList() }
             fetchedBeacons.aggregateToUniqueUuids().apply {
                 log.v("Starting up beacon tracking for ${fetchedBeacons.count()} beacon(s), aggregated to ${count()} filter(s).")
             }

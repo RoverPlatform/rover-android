@@ -1,6 +1,5 @@
 package io.rover.location.sync
 
-import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
@@ -29,10 +28,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.reactivestreams.Publisher
 
-/**
- * A Kotlin [Sequence], but one that must be closed once usage is complete.  Consider using [use].
- */
-interface ClosableSequence<T>: Sequence<T>, AutoCloseable
+
 
 class GeofencesRepository(
     private val syncCoordinator: SyncCoordinatorInterface,
@@ -63,27 +59,22 @@ class GeofencesSqlStorage(
         val columnNames = Columns.values().sortedBy { it.ordinal }.map { it.columnName }
 
         return object : ClosableSequence<Geofence> {
-
             // Responsibility for Recycling is delegated to the caller through the
             // [ClosableSequence].
+            override fun iterator(): CloseableIterator<Geofence> {
+                val cursor = sqLiteDatabase.query(
+                    TABLE_NAME,
+                    columnNames.toTypedArray(),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                ).apply {
+                    moveToFirst()
+                }
 
-            // TODO: change to only open the cursor when iteration begins.
-
-            @SuppressLint("Recycle")
-            val cursor = sqLiteDatabase.query(
-                TABLE_NAME,
-                columnNames.toTypedArray(),
-                null,
-                null,
-                null,
-                null,
-                null
-            )
-
-            override fun iterator(): Iterator<Geofence> {
-                cursor.moveToFirst()
-
-                return object : AbstractIterator<Geofence>() {
+                return object : AbstractIterator<Geofence>(), CloseableIterator<Geofence> {
                     override fun computeNext() {
                         if(!cursor.moveToNext()) {
                             done()
@@ -102,11 +93,11 @@ class GeofencesSqlStorage(
                             )
                         }
                     }
-                }
-            }
 
-            override fun close() {
-                cursor.close()
+                    override fun close() {
+                        cursor.close()
+                    }
+                }
             }
         }
     }

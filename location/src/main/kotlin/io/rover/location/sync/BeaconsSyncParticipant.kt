@@ -1,6 +1,5 @@
 package io.rover.location.sync
 
-import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
@@ -90,25 +89,20 @@ class BeaconsSqlStorage(
         val columnNames = Columns.values().sortedBy { it.ordinal }.map { it.columnName }
 
         return object : ClosableSequence<Beacon> {
-
             // Responsibility for Recycling is delegated to the caller through the
             // [ClosableSequence].
 
-            // TODO: change to only open the cursor when iteration begins.
-
-            @SuppressLint("Recycle")
-            val cursor = sqLiteDatabase.query(
-                TABLE_NAME,
-                columnNames.toTypedArray(),
-                null,
-                null,
-                null,
-                null,
-                null
-            )
-
-            override fun iterator(): Iterator<Beacon> {
-                return object : AbstractIterator<Beacon>() {
+            override fun iterator(): CloseableIterator<Beacon> {
+                val cursor = sqLiteDatabase.query(
+                    TABLE_NAME,
+                    columnNames.toTypedArray(),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+                return object : AbstractIterator<Beacon>(), CloseableIterator<Beacon> {
                     override fun computeNext() {
                         if(!cursor.moveToNext()) {
                             done()
@@ -118,12 +112,14 @@ class BeaconsSqlStorage(
                             )
                         }
                     }
+
+                    override fun close() {
+                        cursor.close()
+                    }
                 }
             }
 
-            override fun close() {
-                cursor.close()
-            }
+
         }
     }
 

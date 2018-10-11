@@ -129,13 +129,13 @@ class NotificationDispatcher(
         // Set large icon and Big Picture as needed by Rich Media values.  Enforce a timeout
         // so we don't fail to create the notification in the allotted 10s if network doesn't
         // cooperate.
-        val attachmentBitmapPublisher = when (notification.attachment) {
+        val attachmentBitmapPublisher: Publisher<NetworkResult<Bitmap>?> = when (notification.attachment) {
             is NotificationAttachment.Image -> {
                 assetService.getImageByUrl(notification.attachment.url)
                     .timeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
                     .onErrorReturn { error ->
                         // log.w("Timed out fetching notification image.  Will create image without the rich media.")
-                        NetworkResult.Error<NetworkResult<Bitmap>>(error, false)
+                        NetworkResult.Error<Bitmap>(error, false)
                     }
             }
             null -> Publishers.just(null)

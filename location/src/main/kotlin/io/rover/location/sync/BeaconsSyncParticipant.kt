@@ -170,9 +170,13 @@ class BeaconsSqlStorage(
         }
 
         fun dropSchema(sqLiteDatabase: SQLiteDatabase) {
-            sqLiteDatabase.execSQL("""
+            try {
+                sqLiteDatabase.execSQL("""
                 DROP TABLE $TABLE_NAME
             """.trimIndent())
+            } catch (e: SQLiteException) {
+                log.w("Unable to drop existing table, assuming it does not exist: $e")
+            }
         }
     }
 

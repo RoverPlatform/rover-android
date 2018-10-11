@@ -293,7 +293,7 @@ class CoreAssembler @JvmOverloads constructor(
                 application,
                 20,
                 30.0,
-                100,
+                50,
                 1000
             )
         }

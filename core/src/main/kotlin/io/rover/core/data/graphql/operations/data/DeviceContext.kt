@@ -93,7 +93,7 @@ internal fun DeviceContext.Companion.decodeJson(json: JSONObject, dateFormatting
         isBluetoothEnabled = json.safeOptBoolean("isBluetoothEnabled"),
         userInfo = json.getJSONObject("userInfo").toAttributesHash(),
         isTestDevice = json.safeOptBoolean("isTestDevice"),
-        location = json.getJSONObject("location").whenNotNull { locationJson ->
+        location = json.optJSONObject("location").whenNotNull { locationJson ->
             Location.decodeJson(locationJson, dateFormatting)
         }
     )

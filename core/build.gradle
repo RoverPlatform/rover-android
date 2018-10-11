@@ -55,7 +55,11 @@ dependencies {
     api 'org.reactivestreams:reactive-streams:1.0.2'
 
     api 'android.arch.lifecycle:extensions:1.1.1'
-    api "android.arch.work:work-runtime-ktx:1.0.0-alpha09" // use -ktx for Kotlin
+
+
+    // api "android.arch.work:work-runtime-ktx:1.0.0-alpha09" // use -ktx for Kotlin
+    // Using Evernote's Android Job in lieu of WorkManager for now.
+    implementation 'com.evernote:android-job:1.2.6'
 
     implementation 'com.android.support:customtabs:27.1.1'
 

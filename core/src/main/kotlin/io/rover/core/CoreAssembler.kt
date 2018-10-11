@@ -315,6 +315,7 @@ class CoreAssembler @JvmOverloads constructor(
 
         container.register(Scope.Singleton, SyncCoordinatorInterface::class.java) { resolver ->
             SyncCoordinator(
+                application,
                 resolver.resolveSingletonOrFail(Scheduler::class.java, "io"),
                 resolver.resolveSingletonOrFail(Scheduler::class.java, "main"),
                 resolver.resolveSingletonOrFail(SyncClientInterface::class.java)

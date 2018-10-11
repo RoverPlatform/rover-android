@@ -5,7 +5,7 @@ buildscript {
     ext.rover_sdk_version = '2.1.2'
     ext.rover_sdk_version_code = 2
 
-    ext.kotlin_version = '1.2.50'
+    ext.kotlin_version = '1.2.51'
 
     repositories {
         jcenter()
@@ -15,7 +15,7 @@ buildscript {
         classpath 'com.android.tools.build:gradle:3.1.4'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 
-        classpath "de.mannodermaus.gradle.plugins:android-junit5:1.0.31"
+        classpath "de.mannodermaus.gradle.plugins:android-junit5:1.0.32"
         classpath 'com.google.gms:google-services:3.2.0'
 
         // NOTE: Do not place your application dependencies here; they belong

@@ -3,10 +3,8 @@ import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDepen
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
-apply plugin: 'com.jfrog.bintray'
 apply plugin: 'org.jetbrains.dokka-android'
 apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.bintray'
 apply plugin: "de.mannodermaus.android-junit5"
 
 android {
@@ -55,7 +53,11 @@ dependencies {
     api 'org.reactivestreams:reactive-streams:1.0.2'
 
     api 'android.arch.lifecycle:extensions:1.1.1'
-    api "android.arch.work:work-runtime-ktx:1.0.0-alpha09" // use -ktx for Kotlin
+
+
+    // api "android.arch.work:work-runtime-ktx:1.0.0-alpha09" // use -ktx for Kotlin
+    // Using Evernote's Android Job in lieu of WorkManager for now.
+    implementation 'com.evernote:android-job:1.2.6'
 
     implementation 'com.android.support:customtabs:27.1.1'
 
@@ -227,30 +229,4 @@ publishing {
             }
         }
     }
-}
-
-//take a look at https://github.com/bintray/gradle-bintray-plugin#buildgradle
-bintray {
-    user = System.getenv('BINTRAY_USER')
-    key = System.getenv('BINTRAY_API_KEY')
-
-    configurations = ['archives']
-    publish = false //[Default: false] Whether version should be auto published after an upload
-    override = false //[Default: false] Whether to override version artifacts already published
-    // Package configuration. The plugin will use the repo and name properties to check if the
-    // package already exists. In that case, there's no need to configure the other package
-    // properties (like userOrg, desc, etc).
-
-    pkg {
-        repo = 'android'
-        name = "$groupId.$artifactId"
-        licenses = ['Apache-2.0']
-        userOrg = 'rover'
-        vcsUrl = 'https://github.com/roverplatform/rover-android'
-        version {
-            name = libVersion
-        }
-    }
-
-    publications = ["production"]
 }

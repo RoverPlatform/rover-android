@@ -5,10 +5,8 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
-apply plugin: 'com.jfrog.bintray'
 apply plugin: 'org.jetbrains.dokka-android'
 apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.bintray'
 
 android {
     compileSdkVersion 27
@@ -47,7 +45,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
-    implementation project(':rover-android-sdk:core')
+    implementation project(':core')
 }
 
 configurations {
@@ -191,30 +189,4 @@ publishing {
             }
         }
     }
-}
-
-//take a look at https://github.com/bintray/gradle-bintray-plugin#buildgradle
-bintray {
-    user = System.getenv('BINTRAY_USER')
-    key = System.getenv('BINTRAY_API_KEY')
-
-    configurations = ['archives']
-    publish = false //[Default: false] Whether version should be auto published after an upload
-    override = false //[Default: false] Whether to override version artifacts already published
-    // Package configuration. The plugin will use the repo and name properties to check if the
-    // package already exists. In that case, there's no need to configure the other package
-    // properties (like userOrg, desc, etc).
-
-    pkg {
-        repo = 'android'
-        name = "$groupId.$artifactId"
-        licenses = ['Apache-2.0']
-        userOrg = 'rover'
-        vcsUrl = 'https://github.com/roverplatform/rover-android'
-        version {
-            name = libVersion
-        }
-    }
-
-    publications = ["production"]
 }

@@ -3,13 +3,10 @@ package io.rover.core.data.sync
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.Worker
-import androidx.work.WorkerParameters
+import com.evernote.android.job.Job
+import com.evernote.android.job.JobCreator
+import com.evernote.android.job.JobManager
+import com.evernote.android.job.JobRequest
 import io.rover.core.Rover
 import io.rover.core.data.graphql.getObjectIterable
 import io.rover.core.data.http.HttpClientResponse
@@ -18,25 +15,22 @@ import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.Publishers
 import io.rover.core.streams.Scheduler
 import io.rover.core.streams.blockForResult
-import io.rover.core.streams.doOnComplete
 import io.rover.core.streams.doOnNext
 import io.rover.core.streams.doOnSubscribe
 import io.rover.core.streams.filter
 import io.rover.core.streams.first
 import io.rover.core.streams.flatMap
 import io.rover.core.streams.observeOn
-import io.rover.core.streams.share
 import io.rover.core.streams.shareHotAndReplay
-import io.rover.core.streams.subscribe
 import io.rover.core.streams.subscribeOn
 import org.json.JSONException
 import org.json.JSONObject
 import org.reactivestreams.Publisher
 import java.io.IOException
-import java.lang.RuntimeException
 import java.util.concurrent.TimeUnit
 
 class SyncCoordinator(
+    private val context: Context,
     private val ioScheduler: Scheduler,
     private val mainThreadScheduler: Scheduler,
     private val syncClient: SyncClientInterface,
@@ -59,17 +53,29 @@ class SyncCoordinator(
         subject.onNext(Action.AttemptSync)
     }
 
-    override fun ensureBackgroundSyncScheduled() {
-        log.v("Ensuring that Rover background sync is registered to execute every $hourlyTargetRefreshFrequency hours.")
-        val request = PeriodicWorkRequestBuilder<WorkManagerWorker>(
-            hourlyTargetRefreshFrequency.toLong(), TimeUnit.HOURS
-        ).setConstraints(
-            Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build()
-        ).build()
+    // Uncomment when migrating back to WorkManager:
+    //    override fun ensureBackgroundSyncScheduled() {
+    //        log.v("Ensuring that Rover background sync is registered to execute every $hourlyTargetRefreshFrequency hours.")
+    //        val request = PeriodicWorkRequestBuilder<WorkManagerWorker>(
+    //            hourlyTargetRefreshFrequency.toLong(), TimeUnit.HOURS
+    //        ).setConstraints(
+    //            Constraints.Builder()
+    //                .setRequiredNetworkType(NetworkType.CONNECTED)
+    //                .build()
+    //        ).build()
+    //
+    //        WorkManager.getInstance().enqueueUniquePeriodicWork("rover-sync", ExistingPeriodicWorkPolicy.REPLACE, request)
+    //    }
 
-        WorkManager.getInstance().enqueueUniquePeriodicWork("rover-sync", ExistingPeriodicWorkPolicy.REPLACE, request)
+    override fun ensureBackgroundSyncScheduled() {
+        JobManager.create(context).addJobCreator(EvernoteJobCreator())
+
+        JobRequest.Builder(EvernoteJob.TAG)
+            .setPeriodic(TimeUnit.HOURS.toMillis(hourlyTargetRefreshFrequency.toLong()))
+            .setUpdateCurrent(true)
+            .setRequiredNetworkType(JobRequest.NetworkType.CONNECTED)
+            .build()
+            .schedule()
     }
 
     private fun sync(participants: List<SyncParticipant>, requests: List<SyncRequest>): Publisher<SyncCoordinatorInterface.Result> {
@@ -168,19 +174,46 @@ class SyncCoordinator(
         }
     }
 
-    class WorkManagerWorker(
-        context: Context,
-        params: WorkerParameters
-    ): Worker(context, params) {
-        override fun doWork(): Result {
+    // Uncomment when migrating back to WorkManager:
+    //    class WorkManagerWorker(
+    //        context: Context,
+    //        params: WorkerParameters
+    //    ): Worker(context, params) {
+    //        override fun doWork(): Result {
+    //            val result = Rover.sharedInstance.resolveSingletonOrFail(SyncCoordinatorInterface::class.java)
+    //                .sync()
+    //                .first()
+    //                .blockForResult(300).first()
+    //            return when(result) {
+    //                SyncCoordinatorInterface.Result.Succeeded -> Result.SUCCESS
+    //                SyncCoordinatorInterface.Result.RetryNeeded -> Result.RETRY
+    //            }
+    //        }
+    //    }
+
+    class EvernoteJobCreator: JobCreator {
+        override fun create(tag: String): Job? {
+            return when(tag) {
+                EvernoteJob.TAG -> EvernoteJob()
+                else -> null
+            }
+        }
+    }
+
+    class EvernoteJob: Job() {
+        override fun onRunJob(params: Params): Result {
             val result = Rover.sharedInstance.resolveSingletonOrFail(SyncCoordinatorInterface::class.java)
                 .sync()
                 .first()
                 .blockForResult(300).first()
             return when(result) {
                 SyncCoordinatorInterface.Result.Succeeded -> Result.SUCCESS
-                SyncCoordinatorInterface.Result.RetryNeeded -> Result.RETRY
+                SyncCoordinatorInterface.Result.RetryNeeded -> Result.FAILURE
             }
+        }
+
+        companion object {
+            const val TAG = "io.rover.location.SyncCoordinator"
         }
     }
 }

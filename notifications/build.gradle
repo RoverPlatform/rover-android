@@ -45,7 +45,7 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-    implementation project(':rover-android:core')
+    implementation project(':core')
 
 
     testImplementation 'junit:junit:4.12'

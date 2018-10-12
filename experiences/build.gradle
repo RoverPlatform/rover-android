@@ -55,7 +55,7 @@ dependencies {
     testImplementation 'org.amshove.kluent:kluent:1.30'
     testImplementation 'org.amshove.kluent:kluent-android:1.30'
     testImplementation 'org.skyscreamer:jsonassert:1.5.0'
-    implementation project(':rover-android:core')
+    implementation project(':core')
 
     // used only by the UI concerns
     implementation 'com.android.support:transition:27.1.1'

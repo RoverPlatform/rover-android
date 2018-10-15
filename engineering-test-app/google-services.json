@@ -1,0 +1,81 @@
+{
+  "project_info": {
+    "project_number": "877615926335",
+    "firebase_url": "https://rover-android-inbox.firebaseio.com",
+    "project_id": "rover-android-inbox",
+    "storage_bucket": "rover-android-inbox.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:877615926335:android:3a2aedb794af829e",
+        "android_client_info": {
+          "package_name": "io.rover.app.inbox"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "877615926335-el52s1muuj48c8p7hl12m233emhevjte.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "877615926335-el52s1muuj48c8p7hl12m233emhevjte.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABvFLZ_-fzZbwvipXDqzBHL6jrIqx4vsI"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:877615926335:android:4e943d9ecaba8670",
+        "android_client_info": {
+          "package_name": "io.rover.app.inbox.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "877615926335-el52s1muuj48c8p7hl12m233emhevjte.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "877615926335-el52s1muuj48c8p7hl12m233emhevjte.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABvFLZ_-fzZbwvipXDqzBHL6jrIqx4vsI"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

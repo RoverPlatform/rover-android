@@ -19,9 +19,6 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
-
-# This seems to be depended on by some Android internal stuff, not any Rover stuff.
--dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 # And various libraries that apparently aren't shipping a Proguard rules file to merge in:
 -dontwarn retrofit2.**
 -dontwarn okhttp3.**

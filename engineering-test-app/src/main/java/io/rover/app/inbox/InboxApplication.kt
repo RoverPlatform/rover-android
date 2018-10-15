@@ -1,30 +1,29 @@
-package io.rover.app.engineering
+package io.rover.app.inbox
 
 import android.app.Application
 import android.content.Intent
+import com.google.firebase.iid.FirebaseInstanceId
 import com.microsoft.appcenter.AppCenter
 import com.microsoft.appcenter.crashes.AbstractCrashesListener
 import com.microsoft.appcenter.crashes.Crashes
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog
 import com.microsoft.appcenter.crashes.model.ErrorReport
 import com.microsoft.appcenter.distribute.Distribute
-import io.reactivex.schedulers.Schedulers
-import io.rover.app.engineering.account.AccountAssembler
-import io.rover.app.engineering.account.AuthService
-import io.rover.app.engineering.services.ExperienceRepository
-import io.rover.app.engineering.services.V1ApiNetworkClient
+import io.rover.account.AccountAssembler
+import io.rover.account.AuthService
 import io.rover.core.CoreAssembler
 import io.rover.core.Rover
 import io.rover.core.data.AuthenticationContext
 import io.rover.core.logging.GlobalStaticLogHolder
 import io.rover.core.logging.LogBuffer
+import io.rover.debug.DebugAssembler
 import io.rover.experiences.ExperiencesAssembler
+import io.rover.location.LocationAssembler
+import io.rover.notifications.NotificationsAssembler
 import timber.log.Timber
 
-/**
- * Android entry point for the Rover Android Experiences app.
- */
-class ExperiencesApplication: Application() {
+
+class InboxApplication : Application() {
 
     private val roverBaseUrl by lazy { resources.getString(R.string.rover_endpoint) }
 
@@ -32,16 +31,6 @@ class ExperiencesApplication: Application() {
         Rover.sharedInstance.resolveSingletonOrFail(
             AuthenticationContext::class.java
         ) as AuthService
-    }
-
-    val experienceRepository by lazy {
-        ExperienceRepository(
-            V1ApiNetworkClient(
-                authService,
-                roverBaseUrl
-            ),
-            Schedulers.io()
-        )
     }
 
     override fun onCreate() {
@@ -68,35 +57,36 @@ class ExperiencesApplication: Application() {
 
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
-        } else {
-            // TODO: Timber tree that reports to logs into Rover's own logger so the logs can be gathered by App Center crashes as seen above.
         }
-
-        Rover.initialize(
-            CoreAssembler(
-                "",
-                this,
-                listOf("rv-experiences"),
-                endpoint = "$roverBaseUrl/graphql"
-            ),
-            AccountAssembler(
-                this,
-                Intent(
-                    this,
-                    ExperiencesListActivity::class.java
-                ),
-                roverBaseUrl
-            ),
-            ExperiencesAssembler()
-        )
 
         Rover.installSaneGlobalHttpCache(this)
 
-        // So, a typical app using Rover would do the usual static-context Rover.initialize()
-        // routine here.  However, we will not do so since we are using a late-bound custom
-        // authentication context.  See AuthService. Now we have to at least warm up authservice, so
-        // it can do that side-effect of initializing the Rover SDK in the event that authentication
-        // is already persisted.
-        authService
+        Rover.initialize(
+            CoreAssembler(
+                accountToken = "",
+                application = this,
+                urlSchemes = listOf("rv-inbox"),
+                endpoint = "$roverBaseUrl/graphql"
+            ),
+            NotificationsAssembler(
+                applicationContext = this,
+                smallIconResId = R.mipmap.rover_notification_icon,
+                notificationCenterIntent = Intent(applicationContext, MainActivity::class.java)
+            ) {
+                FirebaseInstanceId.getInstance().deleteInstanceId()
+                FirebaseInstanceId.getInstance().token
+            },
+            ExperiencesAssembler(),
+            AccountAssembler(
+                application = this,
+                targetIntent = Intent(
+                    this,
+                    MainActivity::class.java
+                ),
+                roverEndpoint = roverBaseUrl
+            ),
+            LocationAssembler(),
+            DebugAssembler()
+        )
     }
 }

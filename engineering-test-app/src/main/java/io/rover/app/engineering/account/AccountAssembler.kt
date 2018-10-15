@@ -11,6 +11,11 @@ import io.rover.core.data.AuthenticationContext
 import io.rover.core.platform.LocalStorage
 import io.rover.core.platform.SharedPreferencesLocalStorage
 
+/**
+ * This module is for logging into Rover team-level accounts.
+ *
+ * It should be not used in any customer apps.
+ */
 class AccountAssembler(
     private val application: Application,
     private val targetIntent: Intent,

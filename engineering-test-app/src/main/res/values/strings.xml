@@ -1,10 +1,20 @@
 <resources>
-    <string name="app_name">Rover Experiences</string>
+    <string name="app_name">Rover Engineering Test App</string>
 
     <string name="tab_experiences_draft">Drafts</string>
     <string name="tab_experiences_published">Published</string>
     <string name="action_sign_out">Sign out</string>
     <string name="section_format">Hello World from section: %1$d</string>
 
-    <string name="title_activity_login">Sign In to Rover Experiences</string>
+    <string name="title_activity_login">Sign In to Rover Engineering Test App</string>
+
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password (optional)</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="error_invalid_email">This email address is invalid</string>
+    <string name="error_invalid_password">This password is too short</string>
+    <string name="error_incorrect_password">This password is incorrect</string>
+    <string name="error_field_required">This field is required</string>
 </resources>

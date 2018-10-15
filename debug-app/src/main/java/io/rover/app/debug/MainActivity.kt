@@ -1,4 +1,4 @@
-package io.rover.app.inbox
+package io.rover.app.debug
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
                 // sees the explanation, try again to request the permission.
 
                 AlertDialog.Builder(this)
-                    .setMessage("Inbox App would like to use your location to discover Geofences and Beacons.")
+                    .setMessage("Debug App would like to use your location to discover Geofences and Beacons.")
                     .setNeutralButton("Got it") { _, _ ->
                         makePermissionsAttempt()
                     }

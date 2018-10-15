@@ -1,7 +1,8 @@
 <resources>
-    <string name="app_name">Rover Inbox</string>
-
-    <string name="action_sign_out">Sign out</string>
-
-    <string name="title_activity_login">Sign In to Rover Inbox</string>
+    <string name="app_name">Rover Debug App</string>
+    <string name="title_activity_debug_main">DebugMainActivity</string>
+    <string name="title_home">Home \</string>
+    <string name="title_notifications">Notification Center</string>
+    <string name="title_geo">Dashboard</string>
+    <string name="title_settings">Settings</string>
 </resources>

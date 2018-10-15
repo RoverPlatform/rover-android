@@ -1,4 +1,4 @@
-package io.rover.app.inbox.fcm
+package io.rover.app.debug.fcm
 
 import com.google.firebase.iid.FirebaseInstanceId
 import com.google.firebase.iid.FirebaseInstanceIdService

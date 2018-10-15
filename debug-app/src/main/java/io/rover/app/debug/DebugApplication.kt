@@ -1,4 +1,4 @@
-package io.rover.app.inbox
+package io.rover.app.debug
 
 import android.app.Application
 import android.content.Intent
@@ -20,7 +20,7 @@ import io.rover.notifications.NotificationsAssembler
 import timber.log.Timber
 
 
-class InboxApplication : Application() {
+class DebugApplication : Application() {
 
     private val roverBaseUrl by lazy { resources.getString(R.string.rover_endpoint) }
 

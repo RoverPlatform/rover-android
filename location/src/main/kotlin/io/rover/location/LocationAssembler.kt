@@ -255,6 +255,7 @@ class LocationAssembler(
             ) { resolver ->
                 GoogleGeofenceService(
                     resolver.resolveSingletonOrFail(Context::class.java),
+                    resolver.resolveSingletonOrFail(LocalStorage::class.java),
                     resolver.resolveSingletonOrFail(GeofencingClient::class.java),
                     resolver.resolveSingletonOrFail(Scheduler::class.java, "main"),
                     resolver.resolveSingletonOrFail(Scheduler::class.java, "io"),

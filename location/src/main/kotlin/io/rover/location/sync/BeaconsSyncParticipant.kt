@@ -118,8 +118,6 @@ class BeaconsSqlStorage(
                     }
                 }
             }
-
-
         }
     }
 

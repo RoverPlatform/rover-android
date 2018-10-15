@@ -31,9 +31,15 @@ interface GeofenceServiceInterface {
     val geofenceEvents: Publisher<GeofenceEvent>
 
     /**
-     * Returns a list of geofences that the device is currently physically contained by.
+     * Returns a list of geofences that the device is currently physically enclosed by.
      */
+    @Deprecated("Use enclosingGeofences instead.")
     val currentGeofences: List<Geofence>
+
+    /**
+     * Returns a list of geofences that the device is currently physically enclosed by.
+     */
+    val enclosingGeofences: List<Geofence>
 
     data class GeofenceEvent(
         val exit: Boolean,

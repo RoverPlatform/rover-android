@@ -1,6 +1,7 @@
 package io.rover.location.sync
 
 import android.content.ContentValues
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import io.rover.core.data.domain.AttributeValue
@@ -20,9 +21,11 @@ import io.rover.core.data.sync.after
 import io.rover.core.data.sync.decodeJson
 import io.rover.core.data.sync.first
 import io.rover.core.logging.log
+import io.rover.core.streams.Publishers
 import io.rover.core.streams.Scheduler
 import io.rover.core.streams.map
 import io.rover.core.streams.observeOn
+import io.rover.core.streams.subscribeOn
 import io.rover.location.domain.Geofence
 import org.json.JSONArray
 import org.json.JSONObject
@@ -49,11 +52,52 @@ class GeofencesRepository(
             // successfully over the install lifetime of the app, but for now, this will do.
             geofencesSqlStorage.queryAllGeofences()
         }
+
+    fun geofenceByIdentifier(identifier: String): Publisher<Geofence?> {
+        return Publishers.defer {
+            Publishers.just(
+                geofencesSqlStorage.queryGeofenceByIdentifier(identifier)
+            )
+        }.subscribeOn(ioScheduler)
+    }
 }
 
 class GeofencesSqlStorage(
     private val sqLiteDatabase: SQLiteDatabase
 ): SqlSyncStorageInterface<Geofence> {
+
+    fun queryGeofenceByIdentifier(identifier: String): Geofence? {
+        val columnNames = Columns.values().sortedBy { it.ordinal }.map { it.columnName }
+
+        val queryByIdentifierComponents = Geofence.IdentiferComponents(identifier)
+
+        val cursor = sqLiteDatabase.query(
+            TABLE_NAME,
+            columnNames.toTypedArray(),
+            "${Columns.CenterLatitude.columnName} = ? AND ${Columns.CenterLongitude} = ? AND ${Columns.Radius}",
+            arrayOf(
+                queryByIdentifierComponents.latitude.toString(),
+                queryByIdentifierComponents.longitude.toString(),
+                queryByIdentifierComponents.radius.toString()
+            ),
+            null,
+            null,
+            null
+        )
+
+        return try {
+            if(cursor.moveToFirst()) {
+                return Geofence.fromSqliteCursor(cursor)
+            } else {
+                null
+            }
+        } catch (e: SQLiteException) {
+            log.w("Unable to query DB for geofence: $e")
+            null
+        } finally {
+            cursor.close()
+        }
+    }
 
     fun queryAllGeofences(): ClosableSequence<Geofence> {
         val columnNames = Columns.values().sortedBy { it.ordinal }.map { it.columnName }
@@ -80,16 +124,7 @@ class GeofencesSqlStorage(
                             done()
                         } else {
                             setNext(
-                                Geofence(
-                                    id = ID(cursor.getString(Columns.Id.ordinal)),
-                                    center = Geofence.Center(
-                                        cursor.getDouble(Columns.CenterLatitude.ordinal),
-                                        cursor.getDouble(Columns.CenterLongitude.ordinal)
-                                    ),
-                                    name = cursor.getString(Columns.Name.ordinal),
-                                    radius = cursor.getDouble(Columns.Radius.ordinal),
-                                    tags = JSONArray(cursor.getString(Columns.Tags.ordinal)).getStringIterable().toList()
-                                )
+                                Geofence.fromSqliteCursor(cursor)
                             )
                         }
                     }
@@ -167,6 +202,19 @@ class GeofencesSqlStorage(
         CenterLatitude("center_latitude"),
         CenterLongitude("center_longitude")
     }
+}
+
+fun Geofence.Companion.fromSqliteCursor(cursor: Cursor): Geofence {
+    return Geofence(
+        id = ID(cursor.getString(GeofencesSqlStorage.Columns.Id.ordinal)),
+        center = Geofence.Center(
+            cursor.getDouble(GeofencesSqlStorage.Columns.CenterLatitude.ordinal),
+            cursor.getDouble(GeofencesSqlStorage.Columns.CenterLongitude.ordinal)
+        ),
+        name = cursor.getString(GeofencesSqlStorage.Columns.Name.ordinal),
+        radius = cursor.getDouble(GeofencesSqlStorage.Columns.Radius.ordinal),
+        tags = JSONArray(cursor.getString(GeofencesSqlStorage.Columns.Tags.ordinal)).getStringIterable().toList()
+    )
 }
 
 class GeofencesSyncResource(

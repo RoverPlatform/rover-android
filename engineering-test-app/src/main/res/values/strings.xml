@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Rover Experiences</string>
+
+    <string name="tab_experiences_draft">Drafts</string>
+    <string name="tab_experiences_published">Published</string>
+    <string name="action_sign_out">Sign out</string>
+    <string name="section_format">Hello World from section: %1$d</string>
+
+    <string name="title_activity_login">Sign In to Rover Experiences</string>
+</resources>

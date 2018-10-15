@@ -2,7 +2,7 @@ package io.rover.app.engineering.services
 
 import com.google.gson.annotations.SerializedName
 import io.reactivex.Single
-import io.rover.account.AuthService
+import io.rover.app.engineering.account.AuthService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.HttpException

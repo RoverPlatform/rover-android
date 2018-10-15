@@ -1,9 +1,9 @@
-package io.rover.account
+package io.rover.app.engineering.account
 
 import android.app.Application
 import android.content.Intent
 import io.reactivex.schedulers.Schedulers
-import io.rover.account.ui.LoginActivity
+import io.rover.app.engineering.account.ui.LoginActivity
 import io.rover.core.container.Assembler
 import io.rover.core.container.Container
 import io.rover.core.container.Scope

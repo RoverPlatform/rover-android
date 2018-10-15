@@ -1,4 +1,4 @@
-package io.rover.account.ui
+package io.rover.app.engineering.account.ui
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
@@ -15,9 +15,9 @@ import android.widget.TextView
 import com.uber.autodispose.AutoDispose
 import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.rover.account.AuthResult
-import io.rover.account.AuthService
-import io.rover.account.R
+import io.rover.app.engineering.account.AuthResult
+import io.rover.app.engineering.account.AuthService
+import io.rover.app.engineering.account.R
 import io.rover.core.Rover
 import io.rover.core.data.AuthenticationContext
 import kotlinx.android.synthetic.main.activity_login.email

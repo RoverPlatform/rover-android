@@ -15,8 +15,8 @@ import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.subjects.PublishSubject
-import io.rover.account.AuthService
-import io.rover.account.ui.LoginActivity
+import io.rover.app.engineering.account.AuthService
+import io.rover.app.engineering.account.ui.LoginActivity
 import io.rover.app.engineering.services.ExperienceRepository
 import io.rover.app.engineering.viewmodels.ExperienceListFilter
 import io.rover.app.engineering.viewmodels.ExperiencesListViewModel

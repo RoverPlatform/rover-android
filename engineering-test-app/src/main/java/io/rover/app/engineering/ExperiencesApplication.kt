@@ -9,8 +9,8 @@ import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog
 import com.microsoft.appcenter.crashes.model.ErrorReport
 import com.microsoft.appcenter.distribute.Distribute
 import io.reactivex.schedulers.Schedulers
-import io.rover.account.AccountAssembler
-import io.rover.account.AuthService
+import io.rover.app.engineering.account.AccountAssembler
+import io.rover.app.engineering.account.AuthService
 import io.rover.app.engineering.services.ExperienceRepository
 import io.rover.app.engineering.services.V1ApiNetworkClient
 import io.rover.core.CoreAssembler

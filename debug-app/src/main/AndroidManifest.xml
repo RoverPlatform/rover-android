@@ -67,7 +67,7 @@
 
         <activity
             android:name=".DebugMainActivity"
-            android:label="@string/title_activity_debug_main">
+            android:label="@string/title_activity_debug_main" android:theme="@style/RoverDebugPreferencesActivityTheme">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

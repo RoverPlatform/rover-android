@@ -9,11 +9,8 @@ import com.microsoft.appcenter.crashes.Crashes
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog
 import com.microsoft.appcenter.crashes.model.ErrorReport
 import com.microsoft.appcenter.distribute.Distribute
-import io.rover.account.AccountAssembler
-import io.rover.account.AuthService
 import io.rover.core.CoreAssembler
 import io.rover.core.Rover
-import io.rover.core.data.AuthenticationContext
 import io.rover.core.logging.GlobalStaticLogHolder
 import io.rover.core.logging.LogBuffer
 import io.rover.debug.DebugAssembler
@@ -26,12 +23,6 @@ import timber.log.Timber
 class InboxApplication : Application() {
 
     private val roverBaseUrl by lazy { resources.getString(R.string.rover_endpoint) }
-
-    val authService by lazy {
-        Rover.sharedInstance.resolveSingletonOrFail(
-            AuthenticationContext::class.java
-        ) as AuthService
-    }
 
     override fun onCreate() {
         super.onCreate()
@@ -63,7 +54,7 @@ class InboxApplication : Application() {
 
         Rover.initialize(
             CoreAssembler(
-                accountToken = "",
+                accountToken = getString(R.string.rover_api_token),
                 application = this,
                 urlSchemes = listOf("rv-inbox"),
                 endpoint = "$roverBaseUrl/graphql"
@@ -77,14 +68,6 @@ class InboxApplication : Application() {
                 FirebaseInstanceId.getInstance().token
             },
             ExperiencesAssembler(),
-            AccountAssembler(
-                application = this,
-                targetIntent = Intent(
-                    this,
-                    MainActivity::class.java
-                ),
-                roverEndpoint = roverBaseUrl
-            ),
             LocationAssembler(),
             DebugAssembler()
         )

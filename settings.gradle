@@ -1,1 +1,1 @@
-include 'core', 'location', 'notifications', 'experiences', 'debug', 'ticketmaster', 'identity', ':engineering-test-app'
+include 'core', 'location', 'notifications', 'experiences', 'debug', 'ticketmaster', 'identity', 'debug-app'

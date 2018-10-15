@@ -5,7 +5,7 @@ android {
     compileSdkVersion 27
 
     defaultConfig {
-        applicationId "io.rover.app.inbox"
+        applicationId "io.rover.app.debug"
         minSdkVersion 19
         targetSdkVersion 27
         versionCode 1
@@ -33,12 +33,11 @@ dependencies {
     implementation 'com.android.support:support-v4:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.1.2'
 
-    implementation project(':rover-android-sdk:core')
-    implementation project(":rover-android-sdk:notifications")
-    implementation project(":rover-android-sdk:experiences")
-    implementation project(":rover-android-sdk:debug")
-    implementation project(":rover-android-sdk:location")
-    implementation project(":account")
+    implementation project(':core')
+    implementation project(":notifications")
+    implementation project(":experiences")
+    implementation project(":debug")
+    implementation project(":location")
 
     implementation "io.reactivex.rxjava2:rxjava:2.2.1"
     implementation "com.squareup.okhttp3:okhttp:3.11.0"

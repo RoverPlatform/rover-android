@@ -1,0 +1,6 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="microsoft_app_center_secret" tools:ignore="TypographyDashes">370922ac-85b5-43fc-a86f-55e5a62ee14b</string>
+    <string name="rover_endpoint">https://api.rover.io</string>
+
+    <string name="rover_api_token">72daccff7a7d497de0de3a8d3757dba99f8131e1</string>
+</resources>

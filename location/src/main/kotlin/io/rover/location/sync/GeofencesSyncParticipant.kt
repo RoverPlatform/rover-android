@@ -1,5 +1,6 @@
 package io.rover.location.sync
 
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
@@ -74,7 +75,7 @@ class GeofencesSqlStorage(
         val cursor = sqLiteDatabase.query(
             TABLE_NAME,
             columnNames.toTypedArray(),
-            "${Columns.CenterLatitude.columnName} = ? AND ${Columns.CenterLongitude} = ? AND ${Columns.Radius}",
+            "${Columns.CenterLatitude.columnName} = ? AND ${Columns.CenterLongitude.columnName} = ? AND ${Columns.Radius.columnName} = ?",
             arrayOf(
                 queryByIdentifierComponents.latitude.toString(),
                 queryByIdentifierComponents.longitude.toString(),
@@ -105,6 +106,7 @@ class GeofencesSqlStorage(
         return object : ClosableSequence<Geofence> {
             // Responsibility for Recycling is delegated to the caller through the
             // [ClosableSequence].
+            @SuppressLint("Recycle")
             override fun iterator(): CloseableIterator<Geofence> {
                 val cursor = sqLiteDatabase.query(
                     TABLE_NAME,

@@ -56,13 +56,13 @@ class DebugApplication : Application() {
             CoreAssembler(
                 accountToken = getString(R.string.rover_api_token),
                 application = this,
-                urlSchemes = listOf("rv-inbox"),
+                urlSchemes = listOf("rv-debug"),
                 endpoint = "$roverBaseUrl/graphql"
             ),
             NotificationsAssembler(
                 applicationContext = this,
                 smallIconResId = R.mipmap.rover_notification_icon,
-                notificationCenterIntent = Intent(applicationContext, MainActivity::class.java)
+                notificationCenterIntent = Intent(applicationContext, DebugMainActivity::class.java)
             ) {
                 FirebaseInstanceId.getInstance().deleteInstanceId()
                 FirebaseInstanceId.getInstance().token

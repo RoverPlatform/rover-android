@@ -30,10 +30,20 @@ interface GeofenceServiceInterface {
      */
     val geofenceEvents: Publisher<GeofenceEvent>
 
-    /**
-     * Returns a list of geofences that the device is currently physically contained by.
-     */
+    @Deprecated("Use enclosingGeofences instead.")
     val currentGeofences: List<Geofence>
+
+    /**
+     * Returns a list of geofences that the device is currently physically enclosed by.
+     *
+     * Note that this works by monitoring the geofence enter/exit events emitted by Google, and only
+     * stored in-memory.  Thus this is best-effort only: the list of enclosing geofences
+     * will be cleared in the case of the app being stopped in the background by Android.
+     *
+     * That means that this may give you false negatives (but not false positives): a geofence
+     * the user is enclosed by may not be present in this list at a given moment.
+     */
+    val enclosingGeofences: List<Geofence>
 
     data class GeofenceEvent(
         val exit: Boolean,

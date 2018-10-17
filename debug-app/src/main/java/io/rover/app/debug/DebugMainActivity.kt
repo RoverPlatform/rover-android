@@ -11,6 +11,7 @@ import android.support.v7.app.AppCompatActivity
 import android.view.View
 import io.rover.core.Rover
 import io.rover.core.permissionsNotifier
+import io.rover.experiences.ui.containers.ExperienceActivity
 import kotlinx.android.synthetic.main.activity_debug_main.navigation
 import kotlinx.android.synthetic.main.activity_debug_main.notification_center
 import kotlinx.android.synthetic.main.activity_debug_main.settings_fragment
@@ -45,6 +46,10 @@ class DebugMainActivity : AppCompatActivity() {
         selectTab(R.id.navigation_notifications)
 
         makePermissionsAttempt()
+
+        // startActivity(
+        //     ExperienceActivity.makeIntent(this, experienceId = "5bc783f9d3b833001200f999", campaignId = null)
+        // )
     }
 
     private fun makePermissionsAttempt() {

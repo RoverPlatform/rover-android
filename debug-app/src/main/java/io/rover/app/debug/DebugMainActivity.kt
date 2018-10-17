@@ -40,6 +40,8 @@ class DebugMainActivity : AppCompatActivity() {
 
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
 
+        notification_center.activity = this
+
         selectTab(R.id.navigation_notifications)
 
         makePermissionsAttempt()

@@ -139,9 +139,9 @@ class CoreAssembler @JvmOverloads constructor(
             urlSchemes.forEach { urlScheme ->
                 when {
                     urlScheme.isBlank() -> throw RuntimeException("Deep link URL scheme must not be blank.")
-                    !urlScheme.startsWith("rv-") -> throw RuntimeException("Rover URL schemes must start with `rv-`.  See the documentation for Deep Links.")
+                    !urlScheme.startsWith("rv-") -> throw RuntimeException("Rover URI schemes must start with `rv-`.  See the documentation for Deep Links.")
                     urlScheme.contains(" ") -> throw RuntimeException("Deep link scheme slug must not contain spaces.")
-                // TODO: check for special characters.
+                    // TODO: check for special characters.
                 }
             }
 

@@ -151,7 +151,7 @@ open class NotificationCenterListView : CoordinatorLayout {
                         }
                         is NotificationCenterListViewModelInterface.Event.Navigate -> {
                             val hostActivity = (activity
-                                ?: throw RuntimeException("Please set notificationCenterHost on NotificationCenterListView.  Otherwise, navigation cannot work."))
+                                ?: throw RuntimeException("Please set the `activity` property on NotificationCenterListView.  Otherwise, navigation cannot work."))
 
                             // A view is not normally considered an appropriate place to do this
                             // (perhaps, for example, the activity should subscribe to an event from the

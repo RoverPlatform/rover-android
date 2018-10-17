@@ -51,24 +51,19 @@ class GoogleGeofenceService(
     private val geofencesRepository: GeofencesRepository,
     googleBackgroundLocationService: GoogleBackgroundLocationServiceInterface,
     private val geofenceMonitorLimit: Int = 50
-    // TODO: customizable geofence limit
 ) : GoogleGeofenceServiceInterface {
 
     private val store = localStorage.getKeyValueStorageFor("io.rover.location.GoogleGeofenceService")
-
-    
 
     private val geofenceSubject = PublishSubject<GeofenceServiceInterface.GeofenceEvent>()
     override val geofenceEvents: Publisher<GeofenceServiceInterface.GeofenceEvent> = geofenceSubject
         .observeOn(mainScheduler)
         .share()
 
+    override val currentGeofences: List<io.rover.location.domain.Geofence>
+        get() = enclosingGeofences
 
-    override val currentGeofences: MutableList<io.rover.location.domain.Geofence> = mutableListOf()
-
-    // TODO: this must become persisted, because we only will get the entered (and exit) events once
-    override val enclosingGeofences: List<io.rover.location.domain.Geofence>
-        get() = currentGeofences
+    override val enclosingGeofences: MutableList<io.rover.location.domain.Geofence> = mutableListOf()
 
     override fun newGoogleGeofenceEvent(geofencingEvent: GeofencingEvent) {
         // have to do processing here because we need to know what the regions are.
@@ -97,7 +92,7 @@ class GoogleGeofenceService(
                         locationReportingService.trackEnterGeofence(
                             geofence
                         )
-                        currentGeofences.add(geofence)
+                        enclosingGeofences.add(geofence)
 
                         geofenceSubject.onNext(
                             GeofenceServiceInterface.GeofenceEvent(
@@ -105,14 +100,13 @@ class GoogleGeofenceService(
                                 geofence
                             )
                         )
-
                     }
                     Geofence.GEOFENCE_TRANSITION_EXIT -> {
                         locationReportingService.trackExitGeofence(
                             geofence
                         )
 
-                        currentGeofences.remove(geofence)
+                        enclosingGeofences.remove(geofence)
 
                         geofenceSubject.onNext(
                             GeofenceServiceInterface.GeofenceEvent(
@@ -135,14 +129,7 @@ class GoogleGeofenceService(
     @SuppressLint("MissingPermission")
     private fun startMonitoringGeofences(updatedFencesList: List<io.rover.location.domain.Geofence>) {
         log.v("Updating geofences.")
-        // This will remove any existing Rover geofences, because will all be registered with the
-        // same pending intent pointing to the receiver intent service.
-
-
-        // TODO I need to remove ONLY the non-applicable geofences (and then only add any new ones) below.
-
-
-        // the fences we want to be monitoring.
+        // the fences we ultimately want to be monitoring once the following operation is complete.
         val targetFenceIds = updatedFencesList.map { it.identifier }.toSet()
 
         val alreadyInGoogle = if(activeFences == null || activeFences?.isEmpty() == true) {

@@ -164,8 +164,7 @@ class NotificationsRepository(
                         Publishers.concat(
                             Publishers.just(NotificationsRepositoryInterface.Emission.Event.Refreshing(true))
                                 .doOnComplete {
-                                    log.v("Triggering Device State Manager refresh.")
-
+                                    log.v("Triggering Sync Coordinator refresh.")
                                     // this will result in an emission being received by the state
                                     // manager updates observer.
                                     syncCoordinator.triggerSync()

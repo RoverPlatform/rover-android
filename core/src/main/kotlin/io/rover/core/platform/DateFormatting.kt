@@ -19,13 +19,32 @@ class DateFormatting : DateFormattingInterface {
         timeZone = TimeZone.getTimeZone("UTC")
     }
 
-    private fun format8601WithTimeZone() = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US)
+    private val format8601WithTimeZone = if(
+            Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP
+    ) SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US) else
+        // on legacy Android use the RFC 822 format, and below for outgoing values we'll transform
+        // it to 8601.
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US)
 
     override fun dateAsIso8601(date: Date, localTime: Boolean): String =
-        if (localTime) format8601WithTimeZone().format(date) else format8601().format(date)
+        if (localTime) {
+            if(Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+                // new shit
+                format8601WithTimeZone.format(date)
+            } else {
+                // On legacy Android, we are using the RFC 822 (email) vs ISO 8601 date format, and
+                // we use the following regex to transform it to something 8601 compatible≥
+                format8601WithTimeZone.format(
+                    date
+                ).replace(Regex("(\\d\\d)(\\d\\d)$"), "$1:$2")
+            }
+
+        } else format8601().format(date)
 
     override fun iso8601AsDate(iso8601Date: String, localTime: Boolean): Date = try {
-        if (localTime) format8601WithTimeZone().parse(iso8601Date) else format8601().parse(iso8601Date)
+        iso8601Date.replace(Regex("Z$"), "+0000").let { transformed ->
+            if (localTime) format8601WithTimeZone.parse(transformed) else format8601().parse(transformed)
+        }
     } catch (throwable: Throwable) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             throw JSONException("Could not parse date '$iso8601Date' as ${if (localTime) "local" else "utc"}", throwable)

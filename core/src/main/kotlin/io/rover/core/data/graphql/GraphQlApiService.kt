@@ -33,7 +33,7 @@ class GraphQlApiService(
     private fun urlRequest(mutation: Boolean, queryParams: Map<String, String>): HttpRequest {
         val uri = Uri.parse(endpoint.toString())
         val builder = uri.buildUpon()
-        queryParams.forEach { k, v -> builder.appendQueryParameter(k, v) }
+        queryParams.forEach { (k, v) -> builder.appendQueryParameter(k, v) }
 
         return HttpRequest(
             URL(builder.toString()),

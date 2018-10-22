@@ -171,9 +171,10 @@ class GoogleGeofenceService(
 
     init {
         Publishers.combineLatest(
-            permissionsNotifier.notifyForPermission(Manifest.permission.ACCESS_FINE_LOCATION).doOnNext { log.v("Permission obtained.") },
-            geofencesRepository.allGeofences().doOnNext { log.v("Full geofences list obtained from sync.") },
-            googleBackgroundLocationService.locationUpdates.doOnNext { log.v("Location update obtained so that distant geofences can be filtered out.") }
+            // observeOn(mainScheduler) used on each because combineLatest() is not thread safe.
+            permissionsNotifier.notifyForPermission(Manifest.permission.ACCESS_FINE_LOCATION).observeOn(mainScheduler).doOnNext { log.v("Permission obtained.") },
+            geofencesRepository.allGeofences().observeOn(mainScheduler).doOnNext { log.v("Full geofences list obtained from sync.") },
+            googleBackgroundLocationService.locationUpdates.observeOn(mainScheduler).doOnNext { log.v("Location update obtained so that distant geofences can be filtered out.") }
         ) { permission, fences, location ->
             Triple(permission, fences, location)
         }.observeOn(ioScheduler).map { (_, fences, location) ->

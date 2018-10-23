@@ -74,19 +74,7 @@ dependencies {
     testCompileOnly junit5.unitTestsRuntime()
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-
-//    implementation 'com.facebook.stetho:stetho:1.5.0'
-//    // so we can inject Stetho HTTP monitoring into the Rover SDK
-//    implementation 'com.facebook.stetho:stetho-urlconnection:1.5.0'
-//    // so we can inject Stetho HTTP monitoring into the Retrofit requests made by the Experiences app.
-//    implementation 'com.facebook.stetho:stetho-okhttp3:1.5.0'
 }
-
-repositories {
-    mavenCentral()
-    jcenter()
-}
-
 
 configurations {
     ktlint

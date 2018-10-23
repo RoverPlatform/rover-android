@@ -10,9 +10,10 @@ buildscript {
     ext.dokka_version = '0.9.17'
 
     repositories {
-        jcenter()
         google()
+        jcenter()
     }
+
     dependencies {
         classpath 'com.android.tools.build:gradle:3.2.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
@@ -31,16 +32,13 @@ buildscript {
 
 allprojects {
     repositories {
+        google()
         jcenter()
         maven { url "http://dl.bintray.com/jetbrains/spek" }
-        google()
+
     }
 }
 
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
-
-// Note to Rover's own internal developers:  this top-level build file is typically only used by
-// external developers who wish to build our SDK from source.  In the context of our monorepo,
-// android/build.gradle is used instead.

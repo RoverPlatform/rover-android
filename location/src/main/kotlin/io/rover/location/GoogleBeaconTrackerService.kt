@@ -127,8 +127,9 @@ class GoogleBeaconTrackerService(
 
     init {
         Publishers.combineLatest(
-            permissionsNotifier.notifyForPermission(Manifest.permission.ACCESS_FINE_LOCATION).doOnNext { log.v("Permission obtained.") },
-            beaconsRepository.allBeacons().doOnNext { log.v("Full beacons list obtained from sync.") }
+            // observeOn(mainScheduler) used on each because combineLatest() is not thread safe.
+            permissionsNotifier.notifyForPermission(Manifest.permission.ACCESS_FINE_LOCATION).observeOn(mainScheduler).doOnNext { log.v("Permission obtained.") },
+            beaconsRepository.allBeacons().observeOn(mainScheduler).doOnNext { log.v("Full beacons list obtained from sync.") }
         ) { permission, beacons ->
             Pair(permission, beacons)
         }.observeOn(ioScheduler).map { (_, beacons) ->

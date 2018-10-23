@@ -67,8 +67,8 @@ class GoogleBackgroundLocationService(
                     locationResult.lastLocation.longitude,
                     1
                 ).firstOrNull()
-            } catch (ioException: IOException) {
-                log.w("Unable to use Android Geocoder API: $ioException")
+            } catch (exception: Exception) {
+                log.w("Unable to use Android Geocoder API: $exception")
                 null
             }
 

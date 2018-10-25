@@ -312,7 +312,11 @@ class NotificationsSyncResource(
 
         val values: HashMap<String, AttributeValue> = hashMapOf(
             Pair(SyncQuery.Argument.last.name, AttributeValue.Scalar.Integer(500)),
-            Pair(SyncQuery.Argument.deviceIdentifier.name, AttributeValue.Scalar.String(deviceIdentification.installationIdentifier))
+            Pair(SyncQuery.Argument.deviceIdentifier.name, AttributeValue.Scalar.String(deviceIdentification.installationIdentifier)),
+            Pair(SyncQuery.Argument.orderBy.name, AttributeValue.Object(
+                Pair("field", AttributeValue.Scalar.String("CREATED_AT")),
+                Pair("direction", AttributeValue.Scalar.String("DESC"))
+            ))
         )
 
         return SyncRequest(
@@ -366,10 +370,14 @@ val SyncQuery.Companion.notifications: SyncQuery
             }
         """.trimIndent(),
         arguments = listOf(
-            SyncQuery.Argument.last, SyncQuery.Argument.deviceIdentifier
+            SyncQuery.Argument.last, SyncQuery.Argument.deviceIdentifier, SyncQuery.Argument.orderBy
         ),
         fragments = listOf("notificationFields")
     )
 
 val SyncQuery.Argument.Companion.deviceIdentifier
     get() = SyncQuery.Argument("deviceIdentifier", "String!")
+
+
+private val SyncQuery.Argument.Companion.orderBy
+    get() = SyncQuery.Argument("orderBy", "NotificationOrder")

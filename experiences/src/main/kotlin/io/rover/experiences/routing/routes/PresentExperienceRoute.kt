@@ -45,14 +45,14 @@ open class PresentExperienceIntents(
     private val applicationContext: Context
 ) {
     fun displayExperienceIntentByExperienceId(experienceId: String): Intent {
-        return ExperienceActivity.makeIntent(applicationContext, experienceId)
+        return ExperienceActivity.makeIntent(applicationContext, experienceId = experienceId, campaignId = null)
     }
 
     fun displayExperienceIntentByCampaignId(campaignId: String): Intent {
-        return ExperienceActivity.makeIntent(applicationContext, null, campaignId)
+        return ExperienceActivity.makeIntent(applicationContext, experienceId = null, campaignId = campaignId)
     }
 
     fun displayExperienceIntentFromCampaignLink(universalLink: URI): Intent {
-        return ExperienceActivity.makeIntent(applicationContext, universalLink.toString())
+        return ExperienceActivity.makeIntent(applicationContext, experienceUrl = universalLink.toString())
     }
 }

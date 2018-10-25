@@ -38,8 +38,6 @@ class TransientNotificationLaunchActivity : AppCompatActivity() {
 
         log.v("Transient notification launch activity running.")
 
-        // TODO Inform Influence Tracker Service that we
-
         // grab the notification back out of the arguments.
         val notificationJson = this.intent.extras.getString(NOTIFICATION_JSON)
 

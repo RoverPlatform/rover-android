@@ -8,6 +8,7 @@ import io.rover.core.data.http.AndroidHttpsUrlConnectionNetworkClient
 import io.rover.core.logging.AndroidLogger
 import io.rover.core.logging.GlobalStaticLogHolder
 import io.rover.core.logging.LogBuffer
+import io.rover.core.logging.log
 import java.net.HttpURLConnection
 
 /**
@@ -52,6 +53,7 @@ class Rover(
                 throw RuntimeException("Rover already initialized.  This is most likely a bug.")
             }
             sharedInstanceBackingField = rover
+            log.i("Started Rover Android SDK v${BuildConfig.VERSION_NAME}.")
         }
 
         /**

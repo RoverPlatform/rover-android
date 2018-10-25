@@ -372,4 +372,4 @@ val SyncQuery.Companion.notifications: SyncQuery
     )
 
 val SyncQuery.Argument.Companion.deviceIdentifier
-    get() = SyncQuery.Argument("deviceIdentifier", SyncQuery.Type.String, isRequired = true)
+    get() = SyncQuery.Argument("deviceIdentifier", "String!")

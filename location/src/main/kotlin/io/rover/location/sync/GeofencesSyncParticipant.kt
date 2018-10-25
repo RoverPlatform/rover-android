@@ -32,8 +32,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.reactivestreams.Publisher
 
-
-
 class GeofencesRepository(
     private val syncCoordinator: SyncCoordinatorInterface,
     private val geofencesSqlStorage: GeofencesSqlStorage,
@@ -223,13 +221,18 @@ class GeofencesSyncResource(
     private val sqliteStorageInterface: SqlSyncStorageInterface<Geofence>
 ): SyncResource<Geofence> {
     override fun upsertObjects(nodes: List<Geofence>) {
-        // TODO: transform to domain object should happen here.
         sqliteStorageInterface.upsertObjects(nodes)
     }
 
     override fun nextRequest(cursor: String?): SyncRequest {
         log.v("Being asked for next sync request for cursor: $cursor")
-        val values: HashMap<String, AttributeValue> = hashMapOf(Pair(SyncQuery.Argument.first.name, AttributeValue.Scalar.Integer(500)))
+        val values: HashMap<String, AttributeValue> = hashMapOf(
+            Pair(SyncQuery.Argument.first.name, AttributeValue.Scalar.Integer(500)),
+            Pair(SyncQuery.Argument.orderBy.name, AttributeValue.Object(
+                Pair("field", AttributeValue.Scalar.String("UPDATED_AT")),
+                Pair("direction", AttributeValue.Scalar.String("ASC"))
+            ))
+        )
 
         if(cursor != null) {
             values[SyncQuery.Argument.after.name] = AttributeValue.Scalar.String(cursor)
@@ -302,7 +305,10 @@ val SyncQuery.Companion.geofences: SyncQuery
             """.trimIndent(),
 
         arguments = listOf(
-            SyncQuery.Argument.first, SyncQuery.Argument.after
+            SyncQuery.Argument.first, SyncQuery.Argument.after, SyncQuery.Argument.orderBy
         ),
         fragments = listOf("geofenceFields")
     )
+
+private val SyncQuery.Argument.Companion.orderBy
+    get() = SyncQuery.Argument("orderBy", "GeofenceOrder")

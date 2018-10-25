@@ -30,20 +30,9 @@ data class SyncQuery(
     val arguments: List<Argument>,
     val fragments: List<String>
 ) {
-    enum class Type(
-        val descriptor: kotlin.String
-    ) {
-        Int("Int"),
-        Float("Float"),
-        String("String"),
-        Boolean("Boolean"),
-        Id("ID")
-    }
-
     data class Argument(
         val name: String,
-        val type: Type,
-        val isRequired: Boolean
+        val type: String
     ) {
         companion object
     }
@@ -52,16 +41,16 @@ data class SyncQuery(
 }
 
 val SyncQuery.Argument.Companion.first
-    get() = SyncQuery.Argument("first", SyncQuery.Type.Int, isRequired = true)
+    get() = SyncQuery.Argument("first", "Int")
 
 val SyncQuery.Argument.Companion.after
-    get() = SyncQuery.Argument("after", SyncQuery.Type.String, isRequired = false)
+    get() = SyncQuery.Argument("after", "String")
 
 val SyncQuery.Argument.Companion.last
-    get() = SyncQuery.Argument("last", SyncQuery.Type.Int, isRequired = true)
+    get() = SyncQuery.Argument("last", "Int")
 
 val SyncQuery.Argument.Companion.before
-    get() = SyncQuery.Argument("before", SyncQuery.Type.String, isRequired = false)
+    get() = SyncQuery.Argument("before", "String")
 
 
 data class SyncRequest(

@@ -27,6 +27,10 @@ class TransientNotificationLaunchActivity : AppCompatActivity() {
         Rover.sharedInstance.notificationOpen
     }
 
+    private val influenceTrackerService by lazy {
+        Rover.sharedInstance.influenceTracker
+    }
+
     // TODO: make transparent/invisible somehow to avoid flicker
 
     override fun onStart() {
@@ -50,6 +54,8 @@ class TransientNotificationLaunchActivity : AppCompatActivity() {
             finish()
             return
         }
+
+        influenceTrackerService.notificationOpenedDirectly()
 
         ContextCompat.startActivity(
             this,

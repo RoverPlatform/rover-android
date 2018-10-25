@@ -3,6 +3,7 @@
 package io.rover.notifications
 
 import android.app.Application
+import android.arch.lifecycle.ProcessLifecycleOwner
 import android.content.Context
 import android.content.Intent
 import android.support.annotation.DrawableRes
@@ -243,7 +244,8 @@ class NotificationsAssembler @JvmOverloads constructor(
                 resolver.resolveSingletonOrFail(Application::class.java),
                 resolver.resolveSingletonOrFail(LocalStorage::class.java),
                 resolver.resolveSingletonOrFail(DateFormattingInterface::class.java),
-                resolver.resolveSingletonOrFail(NotificationOpenInterface::class.java)
+                resolver.resolveSingletonOrFail(NotificationOpenInterface::class.java),
+                ProcessLifecycleOwner.get().lifecycle
             )
         }
 
@@ -318,6 +320,9 @@ val Rover.pushReceiver: PushReceiverInterface
 
 val Rover.notificationOpen: NotificationOpenInterface
     get() = this.resolve(NotificationOpenInterface::class.java) ?: throw missingDependencyError("NotificationOpenInterface")
+
+val Rover.influenceTracker: InfluenceTrackerServiceInterface
+    get() = this.resolve(InfluenceTrackerServiceInterface::class.java) ?: throw missingDependencyError("InfluenceTrackerService")
 
 private fun missingDependencyError(name: String): Throwable {
     throw RuntimeException("Dependency not registered: $name.  Did you include NotificationsAssembler() in the assembler list?")

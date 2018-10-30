@@ -42,7 +42,8 @@ internal fun DeviceContext.asJson(dateFormatting: DateFormattingInterface): JSON
             DeviceContext::timeZone,
             DeviceContext::isBluetoothEnabled,
             DeviceContext::sdkVersion,
-            DeviceContext::isTestDevice
+            DeviceContext::isTestDevice,
+            DeviceContext::advertisingIdentifier
         )
 
         props.forEach { putProp(this@asJson, it) }
@@ -95,7 +96,8 @@ internal fun DeviceContext.Companion.decodeJson(json: JSONObject, dateFormatting
         isTestDevice = json.safeOptBoolean("isTestDevice"),
         location = json.optJSONObject("location").whenNotNull { locationJson ->
             Location.decodeJson(locationJson, dateFormatting)
-        }
+        },
+        advertisingIdentifier = json.safeOptString("advertisingIdentifier")
     )
 }
 

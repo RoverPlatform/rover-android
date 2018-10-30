@@ -38,7 +38,7 @@ class FirebasePushTokenContextProvider(
     }
 
     private val launchTime = Date()
-    private val keyValueStorage = localStorage.getKeyValueStorageFor(Companion.STORAGE_CONTEXT_IDENTIFIER)
+    private val keyValueStorage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
 
     private var token: String?
         get() = keyValueStorage[TOKEN_KEY]

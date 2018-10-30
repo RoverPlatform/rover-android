@@ -75,7 +75,12 @@ data class DeviceContext(
     /**
      * Device attributes.
      */
-    val userInfo: Attributes
+    val userInfo: Attributes,
+
+    /**
+     * A platform specific advertising identifier.
+     */
+    val advertisingIdentifier: String?
 ) {
     companion object {
         internal fun blank(): DeviceContext {
@@ -83,7 +88,7 @@ data class DeviceContext(
                 null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null,
-                null, null, null, null, null, null, false, null, hashMapOf()
+                null, null, null, null, null, null, false, null, hashMapOf(), null
             )
         }
     }

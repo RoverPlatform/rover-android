@@ -34,6 +34,9 @@ private fun Any.mapToAttributeValueFromJsonPrimitive(): AttributeValue =
         is Double -> {
             AttributeValue.Scalar.Double(this)
         }
+        is Boolean -> {
+            AttributeValue.Scalar.Boolean(this)
+        }
         is JSONObject -> {
             AttributeValue.Object(this.toFlatAttributesHash())
         }
@@ -61,6 +64,9 @@ private fun Any.mapToScalarAttributeValueFromJsonPrimitive(): AttributeValue.Sca
         }
         is Double -> {
             AttributeValue.Scalar.Double(this)
+        }
+        is Boolean -> {
+            AttributeValue.Scalar.Boolean(this)
         }
         else -> throw RuntimeException("Unsupported data type appeared for scalar value in attributes hash: ${javaClass.simpleName}")
     }

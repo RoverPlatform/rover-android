@@ -56,7 +56,6 @@ class SyncCoordinator(
         subject.onNext(Action.AttemptSync)
     }
 
-
     override fun ensureBackgroundSyncScheduled() {
         log.v("Ensuring that Rover background sync is registered to execute every $hourlyTargetRefreshFrequency hours.")
         val request = PeriodicWorkRequestBuilder<WorkManagerWorker>(

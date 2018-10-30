@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.support.annotation.ColorInt
+import androidx.work.WorkManager
 import io.rover.core.assets.AndroidAssetService
 import io.rover.core.assets.AssetService
 import io.rover.core.assets.ImageDownloader
@@ -118,7 +119,14 @@ class CoreAssembler @JvmOverloads constructor(
     /**
      * The location of the Rover API.  You should never need to change this.
      */
-    private val endpoint: String = "https://api.rover.io/graphql"
+    private val endpoint: String = "https://api.rover.io/graphql",
+
+    /**
+     * By default the Rover SDK will schedule occasional background syncs (for instance, if you have
+     * the Rover Location module installed, this will keep the monitored beacons and geofences up to
+     * date).
+     */
+    private val scheduleBackgroundSync: Boolean = true
 ) : Assembler {
     override fun assemble(container: Container) {
         container.register(Scope.Singleton, Context::class.java) { _ ->
@@ -399,7 +407,12 @@ class CoreAssembler @JvmOverloads constructor(
             )
         }
 
-        resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java).ensureBackgroundSyncScheduled()
+        if(scheduleBackgroundSync) {
+            resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java).ensureBackgroundSyncScheduled()
+        } else {
+            // deschedule any prior rover sync jobs.
+            WorkManager.getInstance().cancelAllWorkByTag("rover-sync")
+        }
     }
 }
 

@@ -3,7 +3,6 @@ package io.rover.app.debug
 import android.app.Application
 import android.content.Intent
 import com.google.firebase.iid.FirebaseInstanceId
-import io.rover.advertising.AdvertisingAssembler
 import io.rover.core.CoreAssembler
 import io.rover.core.Rover
 import io.rover.debug.DebugAssembler
@@ -42,8 +41,7 @@ class DebugApplication : Application() {
             },
             ExperiencesAssembler(),
             LocationAssembler(),
-            DebugAssembler(),
-            AdvertisingAssembler()
+            DebugAssembler()
         )
     }
 }

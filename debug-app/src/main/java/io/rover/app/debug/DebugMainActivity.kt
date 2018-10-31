@@ -48,9 +48,9 @@ class DebugMainActivity : AppCompatActivity() {
 
         makePermissionsAttempt()
 
-        // startActivity(
-        //     ExperienceActivity.makeIntent(this, experienceId = "5bc783f9d3b833001200f999", campaignId = null)
-        // )
+//         startActivity(
+//             ExperienceActivity.makeIntent(this, experienceId = "59e8b9d0d4459d00102c2958", campaignId = null)
+//         )
     }
 
     private fun makePermissionsAttempt() {

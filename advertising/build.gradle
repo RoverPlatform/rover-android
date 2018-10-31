@@ -47,7 +47,7 @@ dependencies {
 
     implementation project(':core')
 
-    implementation "com.google.android.gms:play-services-ads:15.0.1"
+    implementation "com.google.android.gms:play-services-ads:17.0.0"
 
 
     testImplementation 'junit:junit:4.12'

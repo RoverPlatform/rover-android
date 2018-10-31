@@ -27,7 +27,7 @@ class InjectionContainer(
         } catch (e: ClassCastException) {
             throw(
                 RuntimeException(errorMessageForFactoryInvocationFailure(type, name), e)
-                )
+            )
         }
     }
 

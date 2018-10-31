@@ -8,19 +8,21 @@ import android.os.Parcelable
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
-import io.rover.experiences.ui.ExperienceView
-import io.rover.experiences.ui.ExperienceViewModel
-import io.rover.experiences.ui.ExperienceViewModelInterface
-import io.rover.experiences.ui.navigation.ExperienceExternalNavigationEvent
 import io.rover.core.R
 import io.rover.core.Rover
 import io.rover.core.embeddedWebBrowserDisplay
 import io.rover.core.logging.log
+import io.rover.core.platform.whenNotNull
+import io.rover.core.router
+import io.rover.core.routing.Router
+import io.rover.core.routing.website.EmbeddedWebBrowserDisplayInterface
 import io.rover.core.streams.androidLifecycleDispose
 import io.rover.core.streams.subscribe
 import io.rover.core.ui.concerns.MeasuredBindableView
-import io.rover.core.platform.whenNotNull
-import io.rover.core.router
+import io.rover.experiences.ui.ExperienceView
+import io.rover.experiences.ui.ExperienceViewModel
+import io.rover.experiences.ui.ExperienceViewModelInterface
+import io.rover.experiences.ui.navigation.ExperienceExternalNavigationEvent
 
 /**
  * This can display a Rover experience in an Activity, self-contained.
@@ -48,25 +50,47 @@ open class ExperienceActivity : AppCompatActivity() {
      */
     protected open fun dispatchExternalNavigationEvent(externalNavigationEvent: ExperienceExternalNavigationEvent) {
         // TODO: factor this out into a separate object.
+
+        val rover = Rover.shared
+        if(rover == null) {
+            log.e("ExperienceActivity cannot work unless Rover has been initialized.")
+            return
+        }
+
+        val router = rover.resolve(Router::class.java)
+        if(router == null) {
+            log.e("Router not registered in the Rover container.  Ensure that CoreAssembler is passed to Rover.initialize().  Ignoring navigation event.")
+            return
+        }
+        val webDisplay = rover.resolve(EmbeddedWebBrowserDisplayInterface::class.java)
+        if(webDisplay == null) {
+            log.e("EmbeddedWebBrowserDisplayInterface not registered in the Rover container.  Ensure that CoreAssembler is passed to Rover.initialize(). Ignoring navigation event.")
+            return
+        }
+
         when (externalNavigationEvent) {
             is ExperienceExternalNavigationEvent.Exit -> {
                 finish()
             }
             is ExperienceExternalNavigationEvent.OpenUri -> {
-                ContextCompat.startActivity(
-                    this,
-                    Rover.sharedInstance.router.route(externalNavigationEvent.uri, false),
-                    null
-                )
+                router.route(externalNavigationEvent.uri, false).whenNotNull { intent ->
+                    ContextCompat.startActivity(
+                        this,
+                        intent,
+                        null
+                    )
+                }
             }
             is ExperienceExternalNavigationEvent.PresentWebsite -> {
-                ContextCompat.startActivity(
-                    this,
-                    Rover.sharedInstance.embeddedWebBrowserDisplay.intentForViewingWebsiteViaEmbeddedBrowser(
-                        externalNavigationEvent.url.toString()
-                    ),
-                    null
-                )
+                webDisplay.intentForViewingWebsiteViaEmbeddedBrowser(
+                    externalNavigationEvent.url.toString()
+                ).whenNotNull { intent ->
+                    ContextCompat.startActivity(
+                        this,
+                        intent,
+                        null
+                    )
+                }
             }
             is ExperienceExternalNavigationEvent.Custom -> {
                 log.w("You have emitted a Custom event: $externalNavigationEvent, but did not handle it in your subclass implementation of ExperienceActivity.dispatchExternalNavigationEvent()")
@@ -116,6 +140,13 @@ open class ExperienceActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val rover = Rover.shared
+        if(rover == null) {
+            log.w("ExperienceActivity cannot work unless Rover has been initialized.")
+            finish()
+            return
+        }
+
         // TODO: perhaps this arrangement is not necessary: confirm for sure that it will not pick
         // up the default theme set on the App (although we can hopefully check that they have an
         // actionbar-free theme enabled).
@@ -142,6 +173,7 @@ open class ExperienceActivity : AppCompatActivity() {
         val state: Parcelable? = savedInstanceState?.getParcelable("experienceState")
         experienceViewModel = when {
             experienceId != null && campaignId == null -> experienceViewModel(
+                rover,
                 ExperienceViewModel.ExperienceRequest.ById(experienceId!!),
                 // obtain any possibly saved state for the experience view model.  See
                 // onSaveInstanceState.
@@ -149,11 +181,13 @@ open class ExperienceActivity : AppCompatActivity() {
             )
 
             experienceId == null && campaignId != null -> experienceViewModel(
+                rover,
                 ExperienceViewModel.ExperienceRequest.ByCampaignId(campaignId!!),
                 state
             )
 
             experienceUrl != null -> experienceViewModel(
+                rover,
                 ExperienceViewModel.ExperienceRequest.ByCampaignUrl(experienceUrl!!),
                 state
             )
@@ -170,8 +204,9 @@ open class ExperienceActivity : AppCompatActivity() {
         experiencesView.toolbarHost = null
     }
 
-    private fun experienceViewModel(experienceRequest: ExperienceViewModel.ExperienceRequest, icicle: Parcelable?): ExperienceViewModelInterface {
-        return Rover.sharedInstance.resolve(ExperienceViewModelInterface::class.java, null, experienceRequest, icicle) ?: throw RuntimeException("Factory for ExperienceViewModelInterface not registered in Rover DI container.")
+    private fun experienceViewModel(rover: Rover, experienceRequest: ExperienceViewModel.ExperienceRequest, icicle: Parcelable?): ExperienceViewModelInterface {
+            return rover.resolve(ExperienceViewModelInterface::class.java, null, experienceRequest, icicle)
+                ?: throw RuntimeException("Factory for ExperienceViewModelInterface not registered in Rover DI container.")
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

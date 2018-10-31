@@ -249,7 +249,17 @@ class GoogleGeofenceService(
 
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        Rover.sharedInstance.googleGeofenceService.newGoogleGeofenceEvent(
+        val rover = Rover.shared
+        if(rover == null) {
+            log.e("Received a geofence result from Google, but Rover is not initialized.  Ignoring.")
+            return
+        }
+        val geofenceService = rover.resolve(GoogleGeofenceServiceInterface::class.java)
+        if(geofenceService == null) {
+            log.e("Received a geofence result from Google, but GoogleGeofenceServiceInterface is not registered in the Rover container. Ensure LocationAssembler() is in Rover.initialize(). Ignoring.")
+            return
+        }
+        geofenceService.newGoogleGeofenceEvent(
             GeofencingEvent.fromIntent(intent)
         )
     }

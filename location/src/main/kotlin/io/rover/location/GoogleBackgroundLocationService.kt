@@ -144,7 +144,17 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (LocationResult.hasResult(intent)) {
             val result = LocationResult.extractResult(intent)
-            Rover.sharedInstance.googleBackgroundLocationService.newGoogleLocationResult(result)
+            val rover = Rover.shared
+            if(rover == null) {
+                log.e("Received a location result from Google, but Rover is not initialized.  Ignoring.")
+                return
+            }
+            val backgroundLocationService = rover.resolve(GoogleBackgroundLocationServiceInterface::class.java)
+            if(backgroundLocationService == null) {
+                log.e("Received a location result from Google, but the Rover GoogleBackgroundLocationServiceInterface is missing. Ensure that LocationAssembler is added to Rover.initialize(). Ignoring.")
+                return
+            }
+            else backgroundLocationService.newGoogleLocationResult(result)
         } else {
             log.v("LocationReceiver received an intent, but it lacked a location result. Ignoring. Intent extras were ${intent.extras}")
         }

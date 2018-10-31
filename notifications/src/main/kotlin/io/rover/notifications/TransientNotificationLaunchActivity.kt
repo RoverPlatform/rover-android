@@ -8,9 +8,9 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import io.rover.core.Rover
 import io.rover.core.logging.log
+import io.rover.core.platform.DateFormattingInterface
 import io.rover.notifications.domain.Notification
 import io.rover.notifications.graphql.encodeJson
-import io.rover.core.platform.DateFormattingInterface
 
 /**
  * When the user taps a Rover notification created for the app by
@@ -23,18 +23,27 @@ import io.rover.core.platform.DateFormattingInterface
  * it does so by delegating to [NotificationOpen].
  */
 class TransientNotificationLaunchActivity : AppCompatActivity() {
-    private val notificationOpen by lazy {
-        Rover.sharedInstance.notificationOpen
-    }
-
-    private val influenceTrackerService by lazy {
-        Rover.sharedInstance.influenceTracker
-    }
 
     // TODO: make transparent/invisible somehow to avoid flicker
 
     override fun onStart() {
         super.onStart()
+
+        val rover = Rover.shared
+        if(rover == null) {
+            log.e("TransientNotificationLaunchActivity cannot be used before Rover is initialized.")
+            return
+        }
+        val notificationOpen = rover.resolve(NotificationOpenInterface::class.java)
+        if(notificationOpen == null) {
+            log.e("Could not resolve NotificationOpenInterface in Rover container.  Ensure NotificationAssembler() is added to Rover.initialize.")
+            return
+        }
+        val influenceTracker = rover.resolve(InfluenceTrackerServiceInterface::class.java)
+        if(influenceTracker == null) {
+            log.e("Could not resolve InfluenceTrackerServiceInterface in Rover container.  Ensure NotificationAssembler() is added to Rover.initialize.")
+            return
+        }
 
         log.v("Transient notification launch activity running.")
 
@@ -43,6 +52,7 @@ class TransientNotificationLaunchActivity : AppCompatActivity() {
 
         // this will also do the side-effect of issuing the Notification Opened event, which
         // is the whole reason for this activity existing.
+
         val intent = notificationOpen.intentForOpeningNotificationFromJson(notificationJson)
 
         if (intent.resolveActivityInfo(this.packageManager, PackageManager.GET_SHARED_LIBRARY_FILES) == null) {
@@ -55,7 +65,7 @@ class TransientNotificationLaunchActivity : AppCompatActivity() {
             return
         }
 
-        influenceTrackerService.notificationOpenedDirectly()
+        influenceTracker.notificationOpenedDirectly()
 
         ContextCompat.startActivity(
             this,
@@ -71,7 +81,11 @@ class TransientNotificationLaunchActivity : AppCompatActivity() {
             context: Context,
             notification: Notification
         ): PendingIntent {
-            val notificationJson = notification.encodeJson(Rover.sharedInstance.resolveSingletonOrFail(DateFormattingInterface::class.java))
+
+            val notificationJson = notification.encodeJson(
+                (Rover.shared ?: throw RuntimeException("Cannot generate Rover intent when Rover is not initialized."))
+                    .resolveSingletonOrFail(DateFormattingInterface::class.java)
+            )
 
             return PendingIntent.getActivity(
                 context,

@@ -514,6 +514,7 @@ class ExperiencesAssembler : Assembler {
     }
 }
 
+@Deprecated("Use .resolve(BarcodeRenderingServiceInterface::class.java)")
 val Rover.barcodeRenderingService: BarcodeRenderingServiceInterface
     get() = this.resolve(BarcodeRenderingServiceInterface::class.java) ?: throw missingDependencyError("BarcodeRenderingServiceInterface")
 

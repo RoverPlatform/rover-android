@@ -10,6 +10,7 @@ import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import io.rover.core.Rover
+import io.rover.core.permissions.PermissionsNotifierInterface
 import io.rover.core.permissionsNotifier
 import io.rover.experiences.ui.containers.ExperienceActivity
 import kotlinx.android.synthetic.main.activity_debug_main.navigation
@@ -80,7 +81,7 @@ class DebugMainActivity : AppCompatActivity() {
             }
         } else {
             // Permission has already been granted
-            Rover.sharedInstance.permissionsNotifier.permissionGranted(
+            Rover.shared!!.resolveSingletonOrFail(PermissionsNotifierInterface::class.java).permissionGranted(
                 Manifest.permission.ACCESS_FINE_LOCATION
             )
         }
@@ -90,7 +91,7 @@ class DebugMainActivity : AppCompatActivity() {
         val perms = permissions.zip(grantResults.toList()).associate { it }
 
         if(perms[Manifest.permission.ACCESS_FINE_LOCATION] == PackageManager.PERMISSION_GRANTED) {
-            Rover.sharedInstance.permissionsNotifier.permissionGranted(
+            Rover.shared!!.resolveSingletonOrFail(PermissionsNotifierInterface::class.java).permissionGranted(
                 Manifest.permission.ACCESS_FINE_LOCATION
             )
         }

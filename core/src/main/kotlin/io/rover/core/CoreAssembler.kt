@@ -420,24 +420,31 @@ data class UrlSchemes(
     val schemes: List<String>
 )
 
+@Deprecated("Use .resolve(EventQueueServiceInterface::class.java)")
 val Rover.eventQueue: EventQueueServiceInterface
     get() = this.resolve(EventQueueServiceInterface::class.java) ?: throw missingDependencyError("EventQueueService")
 
+@Deprecated("Use .resolve(PermissionsNotifierInterface::class.java)")
 val Rover.permissionsNotifier: PermissionsNotifierInterface
     get() = this.resolve(PermissionsNotifierInterface::class.java) ?: throw missingDependencyError("PermissionsNotifier")
 
+@Deprecated("Use .resolve(LinkOpenInterface::class.java)")
 val Rover.linkOpen: LinkOpenInterface
     get() = this.resolve(LinkOpenInterface::class.java) ?: throw missingDependencyError("LinkOpen")
 
+@Deprecated("Use .resolve(AssetService::class.java)")
 val Rover.assetService: AssetService
     get() = this.resolve(AssetService::class.java) ?: throw missingDependencyError("AssetService")
 
+@Deprecated("Use .resolve(Router::class.java)")
 val Rover.router: Router
     get() = this.resolve(Router::class.java) ?: throw missingDependencyError("Router")
 
+@Deprecated("Use .resolve(EmbeddedWebBrowserDisplayInterface::class.java)")
 val Rover.embeddedWebBrowserDisplay
     get() = this.resolve(EmbeddedWebBrowserDisplayInterface::class.java) ?: throw missingDependencyError("EmbeddedWebBrowserDisplayInterface")
 
+@Deprecated("Use .resolve(DeviceIdentificationInterface::class.java)")
 val Rover.deviceIdentification
     get() = this.resolve(DeviceIdentificationInterface::class.java) ?: throw missingDependencyError("DeviceIdentificationInterface")
 

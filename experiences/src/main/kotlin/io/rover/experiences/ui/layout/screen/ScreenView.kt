@@ -22,6 +22,7 @@ import io.rover.experiences.ui.layout.BlockAndRowRecyclerAdapter
 import io.rover.experiences.ui.pxAsDp
 import io.rover.experiences.ui.toMeasuredSize
 import org.reactivestreams.Publisher
+import java.lang.RuntimeException
 
 class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelInterface> {
     constructor(context: Context?) : super(context)
@@ -35,6 +36,9 @@ class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelInterface> 
     private val vtoMeasuredSizeSubject = PublishSubject<MeasuredSize>()
 
     init {
+
+        val rover = Rover.shared ?: throw RuntimeException("Rover Experience view layer not usable until Rover.initialize has been called (with ExperiencesAssembler included).")
+
         viewTreeObserver.addOnGlobalLayoutListener {
             vtoMeasuredSizeSubject.onNext(
                 MeasuredSize(
@@ -55,42 +59,42 @@ class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelInterface> 
         combined
             .androidLifecycleDispose(this)
             .subscribe { (viewModelBinding: MeasuredBindableView.Binding<ScreenViewModelInterface>, measuredSize: MeasuredSize) ->
-            log.v("View model and view measurements now both ready: $viewModelBinding and $measuredSize")
-            viewBackground.viewModelBinding = MeasuredBindableView.Binding(
-                viewModelBinding.viewModel,
-                measuredSize
-            )
-            val layout = viewModelBinding.viewModel.render(measuredSize.width)
+                log.v("View model and view measurements now both ready: $viewModelBinding and $measuredSize")
+                viewBackground.viewModelBinding = MeasuredBindableView.Binding(
+                    viewModelBinding.viewModel,
+                    measuredSize
+                )
+                val layout = viewModelBinding.viewModel.render(measuredSize.width)
 
-            val blockAndRowAdapter = Rover.sharedInstance.resolve(
-                BlockAndRowRecyclerAdapter::class.java, null, layout, resources.displayMetrics
-            )!!
+                val blockAndRowAdapter = rover.resolve(
+                    BlockAndRowRecyclerAdapter::class.java, null, layout, resources.displayMetrics
+                )!!
 
-            // set up the Experience layout manager for the RecyclerView.  Unlike a typical
-            // RecyclerView layout manager, in our system our layout is indeed data, so the
-            // layout manager needs the Screen view model.
-            layoutManager = Rover.sharedInstance.resolve(
-                BlockAndRowLayoutManager::class.java,
-                null,
-                layout,
-                resources.displayMetrics
-            )!!
+                // set up the Experience layout manager for the RecyclerView.  Unlike a typical
+                // RecyclerView layout manager, in our system our layout is indeed data, so the
+                // layout manager needs the Screen view model.
+                layoutManager = rover.resolve(
+                    BlockAndRowLayoutManager::class.java,
+                    null,
+                    layout,
+                    resources.displayMetrics
+                )!!
 
-            // and then setup the adapter itself.
-            adapter = blockAndRowAdapter
+                // and then setup the adapter itself.
+                adapter = blockAndRowAdapter
 
-            // and then iterate through all of the viewmodels that respond to PrefetchAfterMeasure
-            // and induce them to greedily start fetching their needed assets.
-            layout
-                .coordinatesAndViewModels
-                .filter { it.viewModel is PrefetchAfterMeasure }
-                .forEach { displayItem ->
-                    (displayItem.viewModel as PrefetchAfterMeasure)
-                        .measuredSizeReadyForPrefetch(displayItem.position.toMeasuredSize(
-                            resources.displayMetrics.density
-                        ))
+                // and then iterate through all of the viewmodels that respond to PrefetchAfterMeasure
+                // and induce them to greedily start fetching their needed assets.
+                layout
+                    .coordinatesAndViewModels
+                    .filter { it.viewModel is PrefetchAfterMeasure }
+                    .forEach { displayItem ->
+                        (displayItem.viewModel as PrefetchAfterMeasure)
+                            .measuredSizeReadyForPrefetch(displayItem.position.toMeasuredSize(
+                                resources.displayMetrics.density
+                            ))
+                    }
             }
-        }
     }
 
     override var viewModelBinding: MeasuredBindableView.Binding<ScreenViewModelInterface>? by ViewModelBinding { binding, _ ->

@@ -7,7 +7,6 @@ import io.rover.core.Rover
 import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.ViewModelBinding
 import io.rover.experiences.BarcodeRenderingServiceInterface
-import io.rover.experiences.barcodeRenderingService
 
 /**
  * Mixin that binds a barcode view model to an [AppCompatImageView] by rendering the barcodes and
@@ -58,5 +57,6 @@ class ViewBarcode(
         }
     }
 
-    private val barcodeRenderingService = Rover.sharedInstance.barcodeRenderingService
+    private val barcodeRenderingService = Rover.shared?.resolve(BarcodeRenderingServiceInterface::class.java) ?:
+        throw RuntimeException("Rover Experience view layer not usable until Rover.initialize has been called (with ExperiencesAssembler included).")
 }

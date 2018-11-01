@@ -93,22 +93,20 @@ class NotificationsAssembler @JvmOverloads constructor(
     private val notificationCenterIntent: Intent = NotificationCenterActivity.makeIntent(applicationContext),
 
     /**
-     * While normally your `FirebaseInstanceIdService` class will be responsible for being
-     * informed of push token changes, from time to time (particularly on app upgrades or when
-     * Rover 2.0 is first integrated in your app) Rover may need to force a reset of your Firebase
-     * push token.   However, you have to bridge the gap between Rover and the Firebase library
-     * by providing a small bit of boilerplate.
+     * Rover will ask you to request a push token from Firebase, which is delivered back to you
+     * asynchronously.  Then you should deliver the token back to Rover via a callback.
      *
-     * Please pass a block with the following contents:
+     * Thus, your code should look something like the following:
      *
      * ```kotlin
-     * FirebaseInstanceId.getInstance().deleteInstanceId()
-     * FirebaseInstanceId.getInstance().token
+     *  { tokenFutureCallback ->
+     *    FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener { task ->
+     *      tokenFutureCallback(task.result?.token)
+     *    }
+     *  }
      * ```
-     *
-     * Note: his closure will be called on a background worker thread.
      */
-    private val resetPushToken: () -> Unit
+    private val requestPushToken: (tokenFutureCallback: (token: String?) -> Unit) -> Unit
 ) : Assembler {
     override fun assemble(container: Container) {
         container.register(
@@ -158,8 +156,7 @@ class NotificationsAssembler @JvmOverloads constructor(
         // to capture the push token and ship it up via an Event.
         container.register(Scope.Singleton, ContextProvider::class.java, "pushToken") { resolver ->
             FirebasePushTokenContextProvider(
-                resolver.resolveSingletonOrFail(LocalStorage::class.java),
-                resetPushToken
+                resolver.resolveSingletonOrFail(LocalStorage::class.java)
             )
         }
 
@@ -310,6 +307,10 @@ class NotificationsAssembler @JvmOverloads constructor(
         resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java).registerParticipant(
             resolver.resolveSingletonOrFail(SyncParticipant::class.java, "notifications")
         )
+
+        requestPushToken { userProvidedToken ->
+            resolver.resolveSingletonOrFail(PushReceiverInterface::class.java).onTokenRefresh(userProvidedToken)
+        }
     }
 }
 

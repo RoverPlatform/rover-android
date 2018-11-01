@@ -32,11 +32,11 @@ block.
 ```groovy
 dependencies {
     // ...
-    implementation "io.rover:core:2.1.7"
-    implementation "io.rover:notifications:2.1.7"
-    implementation "io.rover:experiences:2.1.7"
-    implementation "io.rover:location:2.1.7"
-    implementation "io.rover:debug:2.1.7"
+    implementation "io.rover:core:2.1.8"
+    implementation "io.rover:notifications:2.1.8"
+    implementation "io.rover:experiences:2.1.8"
+    implementation "io.rover:location:2.1.8"
+    implementation "io.rover:debug:2.1.8"
 }
 ```
 

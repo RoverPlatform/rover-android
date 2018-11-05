@@ -35,9 +35,10 @@ class DebugApplication : Application() {
                 applicationContext = this,
                 smallIconResId = R.mipmap.rover_notification_icon,
                 notificationCenterIntent = Intent(applicationContext, DebugMainActivity::class.java)
-            ) {
-                FirebaseInstanceId.getInstance().deleteInstanceId()
-                FirebaseInstanceId.getInstance().token
+            ) { tokenCallback ->
+                FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener { task ->
+                    tokenCallback(task.result?.token)
+                }
             },
             ExperiencesAssembler(),
             LocationAssembler(),

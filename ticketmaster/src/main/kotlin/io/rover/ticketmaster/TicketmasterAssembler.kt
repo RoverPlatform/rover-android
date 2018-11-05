@@ -11,6 +11,8 @@ import io.rover.core.events.UserInfoInterface
 import io.rover.core.platform.LocalStorage
 
 class TicketmasterAssembler: Assembler {
+    override val name: String = "ticketmaster"
+
     override fun assemble(container: Container) {
         container.register(
             Scope.Singleton,

@@ -128,6 +128,8 @@ class CoreAssembler @JvmOverloads constructor(
      */
     private val scheduleBackgroundSync: Boolean = true
 ) : Assembler {
+    override val name: String = "core"
+
     override fun assemble(container: Container) {
         container.register(Scope.Singleton, Context::class.java) { _ ->
             application

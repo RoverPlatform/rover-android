@@ -15,6 +15,8 @@ import io.rover.core.streams.Scheduler
  * context sent with events.
  */
 class AdvertisingAssembler : Assembler {
+    override val name: String = "advertising"
+
     override fun assemble(container: Container) {
         container.register(
             Scope.Singleton,

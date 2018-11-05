@@ -99,6 +99,8 @@ import io.rover.experiences.ui.toolbar.ToolbarConfiguration
  * To use it to your project, add [ExperiencesAssembler] to your [Rover.initialize] invocation.
  */
 class ExperiencesAssembler : Assembler {
+    override val name: String = "experiences"
+
     override fun assemble(container: Container) {
         container.register(
             Scope.Singleton,

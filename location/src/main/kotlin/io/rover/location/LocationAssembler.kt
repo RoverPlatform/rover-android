@@ -87,6 +87,8 @@ class LocationAssembler(
      */
     private val automaticLocationTracking: Boolean = true
 ) : Assembler {
+    override val name: String = "location"
+
     override fun assemble(container: Container) {
         container.register(
             Scope.Singleton,

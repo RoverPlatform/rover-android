@@ -9,6 +9,12 @@ package io.rover.core.container
  */
 interface Assembler {
     /**
+     * A name for this assembler, if any.
+     */
+    val name: String?
+        get() = null
+
+    /**
      * Register any factories this Assembler can provide in the given [Container].
      *
      * This is where you define the bulk of the structure of the "module" this Assembler

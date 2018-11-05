@@ -23,6 +23,8 @@ import io.rover.debug.routes.DebugRoute
  * exposed.
  */
 class DebugAssembler : Assembler {
+    override val name: String = "debug"
+
     override fun assemble(container: Container) {
         container.register(
             Scope.Singleton,

@@ -109,6 +109,8 @@ class NotificationsAssembler @JvmOverloads constructor(
      */
     private val requestPushToken: (tokenFutureCallback: (token: String?) -> Unit) -> Unit
 ) : Assembler {
+    override val name: String = "notifications"
+
     override fun assemble(container: Container) {
         container.register(
             Scope.Singleton,

@@ -1,6 +1,7 @@
 package io.rover.core
 
 import android.content.Context
+import android.util.Log
 import io.rover.core.container.Assembler
 import io.rover.core.container.ContainerResolver
 import io.rover.core.container.InjectionContainer
@@ -54,12 +55,13 @@ class Rover(
 
         @JvmStatic
         fun initialize(vararg assemblers: Assembler) {
+            val assemblerNames = assemblers.mapNotNull { it.name }.joinToString(", ")
+            Log.i("Rover", "Starting Rover Android SDK v${BuildConfig.VERSION_NAME} with the $assemblerNames modules.")
             val rover = Rover(assemblers.asList())
             if (sharedInstanceBackingField != null) {
                 throw RuntimeException("Rover already initialized.  This is most likely a bug.")
             }
             sharedInstanceBackingField = rover
-            log.i("Started Rover Android SDK v${BuildConfig.VERSION_NAME}.")
         }
 
         /**

@@ -116,8 +116,7 @@ open class NotificationCenterListView : CoordinatorLayout {
      * An example implementation is provided here.  Copy and modify it for use in your own
      * implementation of this class.
      */
-    open val emptyLayout
-        get() = Rover.shared?.resolve(
+    open val emptyLayout = Rover.shared?.resolve(
             View::class.java,
             "notificationListEmptyArea",
             context

@@ -9,6 +9,7 @@ import io.rover.debug.DebugAssembler
 import io.rover.experiences.ExperiencesAssembler
 import io.rover.location.LocationAssembler
 import io.rover.notifications.NotificationsAssembler
+import io.rover.ticketmaster.TicketmasterAssembler
 import timber.log.Timber
 
 
@@ -42,7 +43,8 @@ class DebugApplication : Application() {
             },
             ExperiencesAssembler(),
             LocationAssembler(),
-            DebugAssembler()
+            DebugAssembler(),
+            TicketmasterAssembler()
         )
     }
 }

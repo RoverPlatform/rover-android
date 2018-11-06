@@ -42,6 +42,7 @@ dependencies {
     implementation project(":debug")
     implementation project(":location")
 //    implementation project(":advertising")
+    implementation project(":ticketmaster")
 
     implementation "io.reactivex.rxjava2:rxjava:2.2.1"
     implementation "com.squareup.okhttp3:okhttp:3.11.0"

@@ -29,7 +29,7 @@ class DebugApplication : Application() {
             CoreAssembler(
                 accountToken = getString(R.string.rover_api_token),
                 application = this,
-                urlSchemes = listOf("rv-debug"),
+                urlSchemes = listOf("rv-sean-rucker"),
                 endpoint = "$roverBaseUrl/graphql"
             ),
             NotificationsAssembler(

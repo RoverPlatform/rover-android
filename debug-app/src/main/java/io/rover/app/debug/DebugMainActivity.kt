@@ -81,7 +81,7 @@ class DebugMainActivity : AppCompatActivity() {
             }
         } else {
             // Permission has already been granted
-            Rover.shared!!.resolveSingletonOrFail(PermissionsNotifierInterface::class.java).permissionGranted(
+            Rover.shared?.resolveSingletonOrFail(PermissionsNotifierInterface::class.java)?.permissionGranted(
                 Manifest.permission.ACCESS_FINE_LOCATION
             )
         }
@@ -91,7 +91,7 @@ class DebugMainActivity : AppCompatActivity() {
         val perms = permissions.zip(grantResults.toList()).associate { it }
 
         if(perms[Manifest.permission.ACCESS_FINE_LOCATION] == PackageManager.PERMISSION_GRANTED) {
-            Rover.shared!!.resolveSingletonOrFail(PermissionsNotifierInterface::class.java).permissionGranted(
+            Rover.shared?.resolveSingletonOrFail(PermissionsNotifierInterface::class.java)?.permissionGranted(
                 Manifest.permission.ACCESS_FINE_LOCATION
             )
         }

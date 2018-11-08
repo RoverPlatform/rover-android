@@ -41,7 +41,7 @@ class GlobalStaticLogHolder {
 
 val Any.log: LogReceiver
     get() {
-        val receiver = GlobalStaticLogHolder.globalLogEmitter ?: throw RuntimeException("Logger has not yet been configured.")
+        val receiver = GlobalStaticLogHolder.globalLogEmitter ?: AndroidLogger() // default to a simple Android logger if logger not configured.
 
         val logTag = "Rover::${this.javaClass.simpleName}"
 

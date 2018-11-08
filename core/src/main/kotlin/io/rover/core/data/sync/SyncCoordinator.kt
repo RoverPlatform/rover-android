@@ -170,7 +170,7 @@ class SyncCoordinator(
         params: WorkerParameters
     ): Worker(context, params) {
         override fun doWork(): Result {
-            val result = Rover.shared?.resolveSingletonOrFail(SyncCoordinatorInterface::class.java)
+            val result = Rover.shared?.resolve(SyncCoordinatorInterface::class.java)
                 ?.sync()
                 ?.first()
                 ?.blockForResult(300)?.first()

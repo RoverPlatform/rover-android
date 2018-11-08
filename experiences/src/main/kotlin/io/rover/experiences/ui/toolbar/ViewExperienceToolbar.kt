@@ -72,11 +72,7 @@ class ViewExperienceToolbar(
             }
             .subscribe({ (actionBar, menu) ->
                 actionBar.setDisplayHomeAsUpEnabled(true)
-
-                val textButton = AppCompatButton(
-                    context, null, borderlessButtonStyle
-                )
-
+                
                 // we must keep a hold of this so we can remove it on unsubscribe
                 retrievedMenu = menu
 
@@ -118,7 +114,7 @@ class ViewExperienceToolbar(
 
                 showOrHideAction(configuration.upButton)
 
-                textButton.visibility = if (toolbarViewModel.configuration.closeButton) View.VISIBLE else View.GONE
+                closeButton.visibility = if (toolbarViewModel.configuration.closeButton) View.VISIBLE else View.GONE
             }, { error -> throw(error) }, { subscription ->
                 activeMenuSubscription = subscription
             })

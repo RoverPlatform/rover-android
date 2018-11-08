@@ -9,7 +9,6 @@ import io.rover.experiences.ui.containers.ExperienceActivity
 import java.net.URI
 
 class PresentExperienceRoute(
-    private val urlSchemes: List<String>,
     private val presentExperienceIntents: PresentExperienceIntents
 ) : Route {
     override fun resolveUri(uri: URI?): Intent? {
@@ -19,7 +18,8 @@ class PresentExperienceRoute(
                 // universal link!
                 presentExperienceIntents.displayExperienceIntentFromCampaignLink(uri)
             }
-            urlSchemes.contains(uri?.scheme) && uri?.authority == "presentExperience" -> {
+
+            uri?.scheme?.startsWith("rv-") == true && uri.authority == "presentExperience" -> {
                 val queryParameters = uri.query.parseAsQueryParameters()
                 val possibleCampaignId = queryParameters["campaignID"]
                 val possibleExperienceId = queryParameters["id"]

@@ -142,18 +142,13 @@ class CoreAssembler @JvmOverloads constructor(
                 .packageManager.getLaunchIntentForPackage(application.packageName)
         }
 
-        container.register(Scope.Singleton, UrlSchemes::class.java) { _ ->
-
-            urlSchemes.forEach { urlScheme ->
-                when {
-                    urlScheme.isBlank() -> throw RuntimeException("Deep link URL scheme must not be blank.")
-                    !urlScheme.startsWith("rv-") -> throw RuntimeException("Rover URI schemes must start with `rv-`.  See the documentation for Deep Links.")
-                    urlScheme.contains(" ") -> throw RuntimeException("Deep link scheme slug must not contain spaces.")
-                    // TODO: check for special characters.
-                }
+        urlSchemes.forEach { urlScheme ->
+            when {
+                urlScheme.isBlank() -> throw RuntimeException("Deep link URL scheme must not be blank.")
+                !urlScheme.startsWith("rv-") -> throw RuntimeException("Rover URI schemes must start with `rv-`.  See the documentation for Deep Links.")
+                urlScheme.contains(" ") -> throw RuntimeException("Deep link scheme slug must not contain spaces.")
+                // TODO: check for special characters.
             }
-
-            UrlSchemes(urlSchemes)
         }
 
         container.register(Scope.Singleton, NetworkClient::class.java) { resolver ->
@@ -415,10 +410,6 @@ class CoreAssembler @JvmOverloads constructor(
         }
     }
 }
-
-data class UrlSchemes(
-    val schemes: List<String>
-)
 
 @Deprecated("Use .resolve(EventQueueServiceInterface::class.java)")
 val Rover.eventQueue: EventQueueServiceInterface

@@ -46,5 +46,6 @@ class TicketmasterAssembler: Assembler {
     }
 }
 
+@Deprecated("Use .resolve(TicketmasterAuthorizer::class.java)")
 val Rover.ticketmasterAuthorizer: TicketmasterAuthorizer
     get() = Rover.sharedInstance.resolveSingletonOrFail(TicketmasterAuthorizer::class.java)

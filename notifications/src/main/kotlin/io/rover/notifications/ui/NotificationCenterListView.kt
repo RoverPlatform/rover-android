@@ -68,8 +68,8 @@ open class NotificationCenterListView : CoordinatorLayout {
      */
     fun makeNotificationRowView(): BindableView<NotificationItemViewModelInterface> {
         @Suppress("IMPLICIT_CAST_TO_ANY", "UNCHECKED_CAST")
-        return (Rover.sharedInstance.resolve(BindableView::class.java, "notificationItemView", context) ?: throw RuntimeException(
-            "Please be sure that NotificationsAssembler is added to Rover.init before using NotificationCenterListView."
+        return (Rover.shared?.resolve(BindableView::class.java, "notificationItemView", context) ?: throw RuntimeException(
+            "Please be sure that Rover is initialized and NotificationsAssembler is added to Rover.init before using NotificationCenterListView."
         )) as BindableView<NotificationItemViewModelInterface>
     }
 
@@ -86,12 +86,12 @@ open class NotificationCenterListView : CoordinatorLayout {
      * Documentation](https://www.rover.io/docs/android/notification-center/).
      */
     open fun makeSwipeToDeleteRevealBackgroundView(): View {
-        return Rover.sharedInstance.resolve(
+        return Rover.shared?.resolve(
             View::class.java,
             "notificationItemSwipeToDeleteBackgroundView",
             context
         ) ?: throw RuntimeException(
-            "Please be sure that NotificationsAssembler is added to Rover.init before using NotificationCenterListView."
+            "Please be sure that Rover is initialized and NotificationsAssembler is added before using NotificationCenterListView."
         )
     }
 
@@ -100,12 +100,12 @@ open class NotificationCenterListView : CoordinatorLayout {
      * [Notification].
      */
     open fun makeNotificationItemViewModel(notification: Notification): NotificationItemViewModelInterface {
-        return Rover.sharedInstance.resolve(
+        return Rover.shared?.resolve(
             NotificationItemViewModelInterface::class.java,
             null,
             notification
         ) ?: throw RuntimeException(
-            "Please be sure that NotificationsAssembler is added to Rover.init before using NotificationCenterListView."
+            "Please be sure that Rover is initialized and NotificationsAssembler is added before using NotificationCenterListView."
         )
     }
 
@@ -116,12 +116,11 @@ open class NotificationCenterListView : CoordinatorLayout {
      * An example implementation is provided here.  Copy and modify it for use in your own
      * implementation of this class.
      */
-    open val emptyLayout
-        get() = Rover.sharedInstance.resolve(
+    open val emptyLayout = Rover.shared?.resolve(
             View::class.java,
             "notificationListEmptyArea",
             context
-        ) ?: throw RuntimeException("Please be sure that NotificationsAssembler is added to Rover.init before using NotificationCenterListView.")
+        ) ?: throw RuntimeException("Please be sure that Rover is initialized and NotificationsAssembler is added to Rover.init before using NotificationCenterListView.")
 
     private var viewModel: NotificationCenterListViewModelInterface? by ViewModelBinding { viewModel, subscriptionCallback ->
         swipeRefreshLayout.isRefreshing = false
@@ -151,7 +150,7 @@ open class NotificationCenterListView : CoordinatorLayout {
                         }
                         is NotificationCenterListViewModelInterface.Event.Navigate -> {
                             val hostActivity = (activity
-                                ?: throw RuntimeException("Please set notificationCenterHost on NotificationCenterListView.  Otherwise, navigation cannot work."))
+                                ?: throw RuntimeException("Please set the `activity` property on NotificationCenterListView.  Otherwise, navigation cannot work."))
 
                             // A view is not normally considered an appropriate place to do this
                             // (perhaps, for example, the activity should subscribe to an event from the
@@ -237,7 +236,8 @@ open class NotificationCenterListView : CoordinatorLayout {
     }
 
     private val notificationOpen: NotificationOpenInterface by lazy {
-        Rover.sharedInstance.notificationOpen
+        Rover.shared?.resolve(NotificationOpenInterface::class.java) ?:
+        throw java.lang.RuntimeException("Please be sure that Rover is initialized and NotificationsAssembler is added to Rover.init before using NotificationCenterListView.")
     }
 
     init {
@@ -307,9 +307,8 @@ open class NotificationCenterListView : CoordinatorLayout {
             }
         }).attachToRecyclerView(itemsView)
 
-        viewModel = Rover.sharedInstance.resolve(NotificationCenterListViewModelInterface::class.java, null) ?: throw RuntimeException(
-            "NotificationCenterListViewModelInterface not registered in DI container.\n" +
-            "Ensure NotificationsAssembler() provided to Rover.initialize() before using notification center."
+        viewModel = Rover.shared?.resolve(NotificationCenterListViewModelInterface::class.java, null) ?: throw RuntimeException(
+            "Ensure Rover is initialized and NotificationsAssembler() added before using notification center."
         )
 
         viewTreeObserver.addOnGlobalLayoutListener {

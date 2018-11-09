@@ -42,9 +42,15 @@ class Rover(
 
         // we have a global singleton of the Rover container.
         @JvmStatic
+        @Deprecated("Please use shared instead.")
         val sharedInstance: Rover
             get() = sharedInstanceBackingField ?: throw RuntimeException("Rover shared instance accessed before calling initialize.\n\n" +
                 "Did you remember to call Rover.initialize() in your Application.onCreate()?")
+
+        @JvmStatic
+        val shared: Rover?
+            get() = sharedInstanceBackingField ?: log.w("Rover shared instance accessed before calling initialize.\n\n" +
+                "Did you remember to call Rover.initialize() in your Application.onCreate()?").let { null }
 
         @JvmStatic
         fun initialize(vararg assemblers: Assembler) {

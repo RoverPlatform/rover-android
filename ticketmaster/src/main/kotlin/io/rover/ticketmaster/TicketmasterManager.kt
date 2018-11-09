@@ -101,10 +101,10 @@ class TicketmasterManager(
 }
 
 val SyncQuery.Argument.Companion.hostMemberId
-    get() = SyncQuery.Argument("hostMemberID", SyncQuery.Type.String, false)
+    get() = SyncQuery.Argument("hostMemberID", "String")
 
 val SyncQuery.Argument.Companion.teamMemberID
-    get() = SyncQuery.Argument("teamMemberID", SyncQuery.Type.String, false)
+    get() = SyncQuery.Argument("teamMemberID", "String")
 
 
 val SyncQuery.Companion.ticketmaster

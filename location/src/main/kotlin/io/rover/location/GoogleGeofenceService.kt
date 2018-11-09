@@ -12,19 +12,24 @@ import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.GeofencingRequest
 import io.rover.core.Rover
+import io.rover.core.data.domain.Location
+import io.rover.core.data.graphql.getStringIterable
 import io.rover.core.logging.log
 import io.rover.core.permissions.PermissionsNotifierInterface
+import io.rover.core.platform.LocalStorage
+import io.rover.core.platform.whenNotNull
+import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.Publishers
 import io.rover.core.streams.Scheduler
+import io.rover.core.streams.blockForResult
 import io.rover.core.streams.doOnNext
 import io.rover.core.streams.map
 import io.rover.core.streams.observeOn
-import io.rover.core.streams.subscribe
-import io.rover.core.data.domain.Location
-import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.share
+import io.rover.core.streams.subscribe
 import io.rover.location.domain.asLocation
 import io.rover.location.sync.GeofencesRepository
+import org.json.JSONArray
 import org.reactivestreams.Publisher
 
 /**
@@ -37,32 +42,39 @@ import org.reactivestreams.Publisher
  */
 class GoogleGeofenceService(
     private val applicationContext: Context,
+    private val localStorage: LocalStorage,
     private val geofencingClient: GeofencingClient,
     mainScheduler: Scheduler,
     ioScheduler: Scheduler,
     private val locationReportingService: LocationReportingServiceInterface,
     permissionsNotifier: PermissionsNotifierInterface,
-    geofencesRepository: GeofencesRepository,
+    private val geofencesRepository: GeofencesRepository,
     googleBackgroundLocationService: GoogleBackgroundLocationServiceInterface,
     private val geofenceMonitorLimit: Int = 50
-    // TODO: customizable geofence limit
 ) : GoogleGeofenceServiceInterface {
+
+    private val store = localStorage.getKeyValueStorageFor("io.rover.location.GoogleGeofenceService")
+
     private val geofenceSubject = PublishSubject<GeofenceServiceInterface.GeofenceEvent>()
     override val geofenceEvents: Publisher<GeofenceServiceInterface.GeofenceEvent> = geofenceSubject
         .observeOn(mainScheduler)
         .share()
 
-    override val currentGeofences: MutableList<io.rover.location.domain.Geofence> = mutableListOf()
+    override val currentGeofences: List<io.rover.location.domain.Geofence>
+        get() = enclosingGeofences
+
+    override val enclosingGeofences: MutableList<io.rover.location.domain.Geofence> = mutableListOf()
 
     override fun newGoogleGeofenceEvent(geofencingEvent: GeofencingEvent) {
         // have to do processing here because we need to know what the regions are.
         if (!geofencingEvent.hasError()) {
-            val transitioningGeofences = geofencingEvent.triggeringGeofences.mapNotNull {
-                val fence = geofencingEvent.triggeringGeofences.first()
+            val transitioningGeofences = geofencingEvent.triggeringGeofences.mapNotNull { fence ->
+                val geofence = geofencesRepository.geofenceByIdentifier(
+                    fence.requestId
+                ).blockForResult().firstOrNull()
 
-                val region = currentlyMonitoredFences.firstOrNull { it.identifier == fence.requestId }
 
-                if (region == null) {
+                if (geofence == null) {
                     val verb = when (geofencingEvent.geofenceTransition) {
                         Geofence.GEOFENCE_TRANSITION_ENTER -> "enter"
                         Geofence.GEOFENCE_TRANSITION_EXIT -> "exit"
@@ -70,7 +82,8 @@ class GoogleGeofenceService(
                     }
                     log.w("Received an $verb event for Geofence with request-id/identifier '${fence.requestId}', but not currently tracking that one. Ignoring.")
                 }
-                region
+
+                geofence
             }
 
             transitioningGeofences.forEach { geofence ->
@@ -79,7 +92,7 @@ class GoogleGeofenceService(
                         locationReportingService.trackEnterGeofence(
                             geofence
                         )
-                        currentGeofences.add(geofence)
+                        enclosingGeofences.add(geofence)
 
                         geofenceSubject.onNext(
                             GeofenceServiceInterface.GeofenceEvent(
@@ -87,14 +100,13 @@ class GoogleGeofenceService(
                                 geofence
                             )
                         )
-
                     }
                     Geofence.GEOFENCE_TRANSITION_EXIT -> {
                         locationReportingService.trackExitGeofence(
                             geofence
                         )
 
-                        currentGeofences.remove(geofence)
+                        enclosingGeofences.remove(geofence)
 
                         geofenceSubject.onNext(
                             GeofenceServiceInterface.GeofenceEvent(
@@ -115,28 +127,55 @@ class GoogleGeofenceService(
     }
 
     @SuppressLint("MissingPermission")
-    private fun startMonitoringGeofences() {
+    private fun startMonitoringGeofences(updatedFencesList: List<io.rover.location.domain.Geofence>) {
         log.v("Updating geofences.")
-        // This will remove any existing Rover geofences, because will all be registered with the
-        // same pending intent pointing to the receiver intent service.
-        geofencingClient.removeGeofences(
-            pendingIntentForReceiverService()
-        )
+        // the fences we ultimately want to be monitoring once the following operation is complete.
+        val targetFenceIds = updatedFencesList.map { it.identifier }.toSet()
 
-        if(currentlyMonitoredFences.isNotEmpty()) {
-            val geofences = currentlyMonitoredFences.map { geofence ->
-                Geofence.Builder()
-                    .setRequestId(geofence.identifier)
-                    .setCircularRegion(
-                        geofence.center.latitude,
-                        geofence.center.longitude,
-                        geofence.radius.toFloat()
-                    )
-                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
-                    .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                    .build()
+        val alreadyInGoogle = if(activeFences == null || activeFences?.isEmpty() == true) {
+            // if I don't have any persisted "previously set" fences, then I should do a full
+            // clear from our pending intent, because I don't know what fences could be left from a
+            // prior SDK that wasn't tracking the state.
+            geofencingClient.removeGeofences(
+                pendingIntentForReceiverService()
+            )
+            emptySet()
+        } else {
+            // remove any geofences that are active but no longer in our list of target geofence ids.
+            val staleGeofences = (activeFences!! - targetFenceIds).toList()
+            if(staleGeofences.isNotEmpty()) {
+                geofencingClient.removeGeofences(
+                    staleGeofences
+                )
+            } else {
+                log.v("No removals from currently monitored geofences on Google needed.")
             }
+            // now google's state is that it has all target fences that were ALREADY being monitored.
+            activeFences!!.intersect(targetFenceIds)
+        }
 
+        val toAdd = targetFenceIds - alreadyInGoogle
+
+        val fencesByIdentifier = updatedFencesList.associateBy { it.identifier }
+
+        val geofences = toAdd.map { geofenceIdentifier ->
+            val geofence = fencesByIdentifier[geofenceIdentifier] ?: throw RuntimeException(
+                "Logic error in Rover's GoogleGeofenceService, identifier missing in indexed geofences mapping."
+            )
+
+            Geofence.Builder()
+                .setRequestId(geofence.identifier)
+                .setCircularRegion(
+                    geofence.center.latitude,
+                    geofence.center.longitude,
+                    geofence.radius.toFloat()
+                )
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
+                .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                .build()
+        }
+
+        if(geofences.isNotEmpty()) {
             val request = GeofencingRequest.Builder()
                 .addGeofences(geofences)
                 .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER or GeofencingRequest.INITIAL_TRIGGER_DWELL)
@@ -148,8 +187,10 @@ class GoogleGeofenceService(
                 log.v("Now monitoring ${geofences.count()} Rover geofences.")
             }
         } else {
-            log.v("No geofences, so not setting up monitoring.")
+            log.v("No additions to currently monitored geofences on Google needed.")
         }
+
+        activeFences = targetFenceIds
     }
 
     /**
@@ -165,9 +206,24 @@ class GoogleGeofenceService(
     }
 
     /**
-     * State: the current subset of fences we're monitoring for.
+     * A list of the IDs of all the Geofences that have already been pushed into Google, by
+     * requestId.
      */
-    private var currentlyMonitoredFences: List<io.rover.location.domain.Geofence> = listOf()
+    private var activeFences: Set<String>? =
+            try {
+                val currentFencesJson = store[ACTIVE_FENCES_KEY]
+                when(currentFencesJson) {
+                    null -> null
+                    else -> JSONArray(currentFencesJson).getStringIterable().toSet()
+                }
+            } catch (throwable: Throwable) {
+                log.w("Corrupted list of active geofences, ignoring and starting fresh.  Cause: ${throwable.message}")
+                null
+            }
+        set(value) {
+            field = value
+            store[ACTIVE_FENCES_KEY] = value.whenNotNull { JSONArray(it.toList()).toString() }
+        }
 
     init {
         Publishers.combineLatest(
@@ -182,15 +238,28 @@ class GoogleGeofenceService(
             fences.iterator().use { it.asSequence().sortedBy { it.center.asLocation().distanceTo(location) }.take(geofenceMonitorLimit).toList() }
         }.observeOn(mainScheduler).subscribe { fences ->
             log.v("Got location permission, geofences, and current location.  Ready to start monitoring.")
-            currentlyMonitoredFences = fences
-            startMonitoringGeofences()
+            startMonitoringGeofences(fences)
         }
+    }
+
+    companion object {
+        private const val ACTIVE_FENCES_KEY = "active-fences"
     }
 }
 
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        Rover.sharedInstance.googleGeofenceService.newGoogleGeofenceEvent(
+        val rover = Rover.shared
+        if(rover == null) {
+            log.e("Received a geofence result from Google, but Rover is not initialized.  Ignoring.")
+            return
+        }
+        val geofenceService = rover.resolve(GoogleGeofenceServiceInterface::class.java)
+        if(geofenceService == null) {
+            log.e("Received a geofence result from Google, but GoogleGeofenceServiceInterface is not registered in the Rover container. Ensure LocationAssembler() is in Rover.initialize(). Ignoring.")
+            return
+        }
+        geofenceService.newGoogleGeofenceEvent(
             GeofencingEvent.fromIntent(intent)
         )
     }

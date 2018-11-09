@@ -3,6 +3,7 @@
 package io.rover.notifications
 
 import android.app.Application
+import android.arch.lifecycle.ProcessLifecycleOwner
 import android.content.Context
 import android.content.Intent
 import android.support.annotation.DrawableRes
@@ -12,7 +13,6 @@ import android.view.View
 import android.widget.TextView
 import io.rover.core.R
 import io.rover.core.Rover
-import io.rover.core.UrlSchemes
 import io.rover.core.assets.AssetService
 import io.rover.core.container.Assembler
 import io.rover.core.container.Container
@@ -240,7 +240,8 @@ class NotificationsAssembler @JvmOverloads constructor(
                 resolver.resolveSingletonOrFail(Application::class.java),
                 resolver.resolveSingletonOrFail(LocalStorage::class.java),
                 resolver.resolveSingletonOrFail(DateFormattingInterface::class.java),
-                resolver.resolveSingletonOrFail(NotificationOpenInterface::class.java)
+                resolver.resolveSingletonOrFail(NotificationOpenInterface::class.java),
+                ProcessLifecycleOwner.get().lifecycle
             )
         }
 
@@ -298,7 +299,6 @@ class NotificationsAssembler @JvmOverloads constructor(
         resolver.resolveSingletonOrFail(Router::class.java).apply {
             registerRoute(
                 PresentNotificationCenterRoute(
-                    resolver.resolveSingletonOrFail(UrlSchemes::class.java).schemes,
                     notificationCenterIntent
                 )
             )
@@ -313,12 +313,17 @@ class NotificationsAssembler @JvmOverloads constructor(
         }
     }
 }
-
+@Deprecated("Use .resolve(PushReceiverInterface::class.java)")
 val Rover.pushReceiver: PushReceiverInterface
     get() = this.resolve(PushReceiverInterface::class.java) ?: throw missingDependencyError("PushReceiverInterface")
 
+@Deprecated("Use .resolve(NotificationOpenInterface::class.java)")
 val Rover.notificationOpen: NotificationOpenInterface
     get() = this.resolve(NotificationOpenInterface::class.java) ?: throw missingDependencyError("NotificationOpenInterface")
+
+@Deprecated("Use .resolve(InfluenceTrackerServiceInterface::class.java)")
+val Rover.influenceTracker: InfluenceTrackerServiceInterface
+    get() = this.resolve(InfluenceTrackerServiceInterface::class.java) ?: throw missingDependencyError("InfluenceTrackerService")
 
 private fun missingDependencyError(name: String): Throwable {
     throw RuntimeException("Dependency not registered: $name.  Did you include NotificationsAssembler() in the assembler list?")

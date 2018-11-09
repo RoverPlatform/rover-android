@@ -2,7 +2,7 @@
 
 buildscript {
     // all of the modules of the SDK will use this version number.
-    ext.rover_sdk_version = '2.1.8'
+    ext.rover_sdk_version = '2.2.0'
     ext.rover_sdk_version_code = 3
 
     ext.kotlin_version = '1.2.51'
@@ -15,7 +15,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.2.0'
+        classpath 'com.android.tools.build:gradle:3.2.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "de.mannodermaus.gradle.plugins:android-junit5:1.0.32"
         classpath 'com.google.gms:google-services:3.2.0'

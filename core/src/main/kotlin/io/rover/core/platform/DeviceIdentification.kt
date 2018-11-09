@@ -1,8 +1,12 @@
 package io.rover.core.platform
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Build
 import android.provider.Settings
 import io.rover.core.logging.log
+import java.io.File
+import java.io.FileNotFoundException
 import java.util.UUID
 
 interface DeviceIdentificationInterface {
@@ -33,7 +37,7 @@ class DeviceIdentification(
 
         // if persisted UUID not present then generate and persist a new one. Memoize it in memory.
         (storage.get(identifierKey) ?: (
-            UUID.randomUUID().toString().apply {
+            (getAndClearSdk1IdentifierIfPresent() ?: UUID.randomUUID().toString()).apply {
                 storage.set(identifierKey, this)
             }
         )).apply {
@@ -47,4 +51,26 @@ class DeviceIdentification(
     override val deviceName: String? = Settings.Secure.getString(
         applicationContext.contentResolver, "bluetooth_name"
     )
+
+
+    private fun getAndClearSdk1IdentifierIfPresent(): String? {
+        val legacySharedPreferencesFile = "ROVER_SHARED_DEVICE"
+        val legacySharedDevice = applicationContext.getSharedPreferences(legacySharedPreferencesFile, Context.MODE_PRIVATE)
+        val legacyUdid = legacySharedDevice.getString("UDID", null)
+
+        if(legacyUdid != null) {
+            log.i("Migrated legacy Rover SDK 1.x installation identifier: $legacyUdid")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                try {
+                    log.v("Deleting legacy shared preferences file.")
+                    applicationContext.deleteSharedPreferences("ROVER_SHARED_DEVICE")
+
+                } catch (e: FileNotFoundException) {
+                    log.w("Unable to delete legacy Rover shared preferences file: $e")
+                }
+            }
+        }
+
+        return legacyUdid
+    }
 }

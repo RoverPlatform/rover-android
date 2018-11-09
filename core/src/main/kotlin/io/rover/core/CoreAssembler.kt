@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.support.annotation.ColorInt
+import androidx.work.WorkManager
 import io.rover.core.assets.AndroidAssetService
 import io.rover.core.assets.AssetService
 import io.rover.core.assets.ImageDownloader
@@ -118,7 +119,14 @@ class CoreAssembler @JvmOverloads constructor(
     /**
      * The location of the Rover API.  You should never need to change this.
      */
-    private val endpoint: String = "https://api.rover.io/graphql"
+    private val endpoint: String = "https://api.rover.io/graphql",
+
+    /**
+     * By default the Rover SDK will schedule occasional background syncs (for instance, if you have
+     * the Rover Location module installed, this will keep the monitored beacons and geofences up to
+     * date).
+     */
+    private val scheduleBackgroundSync: Boolean = true
 ) : Assembler {
     override fun assemble(container: Container) {
         container.register(Scope.Singleton, Context::class.java) { _ ->
@@ -134,18 +142,13 @@ class CoreAssembler @JvmOverloads constructor(
                 .packageManager.getLaunchIntentForPackage(application.packageName)
         }
 
-        container.register(Scope.Singleton, UrlSchemes::class.java) { _ ->
-
-            urlSchemes.forEach { urlScheme ->
-                when {
-                    urlScheme.isBlank() -> throw RuntimeException("Deep link URL scheme must not be blank.")
-                    !urlScheme.startsWith("rv-") -> throw RuntimeException("Rover URL schemes must start with `rv-`.  See the documentation for Deep Links.")
-                    urlScheme.contains(" ") -> throw RuntimeException("Deep link scheme slug must not contain spaces.")
+        urlSchemes.forEach { urlScheme ->
+            when {
+                urlScheme.isBlank() -> throw RuntimeException("Deep link URL scheme must not be blank.")
+                !urlScheme.startsWith("rv-") -> throw RuntimeException("Rover URI schemes must start with `rv-`.  See the documentation for Deep Links.")
+                urlScheme.contains(" ") -> throw RuntimeException("Deep link scheme slug must not contain spaces.")
                 // TODO: check for special characters.
-                }
             }
-
-            UrlSchemes(urlSchemes)
         }
 
         container.register(Scope.Singleton, NetworkClient::class.java) { resolver ->
@@ -399,32 +402,40 @@ class CoreAssembler @JvmOverloads constructor(
             )
         }
 
-        resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java).ensureBackgroundSyncScheduled()
+        if(scheduleBackgroundSync) {
+            resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java).ensureBackgroundSyncScheduled()
+        } else {
+            // deschedule any prior rover sync jobs.
+            WorkManager.getInstance().cancelAllWorkByTag("rover-sync")
+        }
     }
 }
 
-data class UrlSchemes(
-    val schemes: List<String>
-)
-
+@Deprecated("Use .resolve(EventQueueServiceInterface::class.java)")
 val Rover.eventQueue: EventQueueServiceInterface
     get() = this.resolve(EventQueueServiceInterface::class.java) ?: throw missingDependencyError("EventQueueService")
 
+@Deprecated("Use .resolve(PermissionsNotifierInterface::class.java)")
 val Rover.permissionsNotifier: PermissionsNotifierInterface
     get() = this.resolve(PermissionsNotifierInterface::class.java) ?: throw missingDependencyError("PermissionsNotifier")
 
+@Deprecated("Use .resolve(LinkOpenInterface::class.java)")
 val Rover.linkOpen: LinkOpenInterface
     get() = this.resolve(LinkOpenInterface::class.java) ?: throw missingDependencyError("LinkOpen")
 
+@Deprecated("Use .resolve(AssetService::class.java)")
 val Rover.assetService: AssetService
     get() = this.resolve(AssetService::class.java) ?: throw missingDependencyError("AssetService")
 
+@Deprecated("Use .resolve(Router::class.java)")
 val Rover.router: Router
     get() = this.resolve(Router::class.java) ?: throw missingDependencyError("Router")
 
+@Deprecated("Use .resolve(EmbeddedWebBrowserDisplayInterface::class.java)")
 val Rover.embeddedWebBrowserDisplay
     get() = this.resolve(EmbeddedWebBrowserDisplayInterface::class.java) ?: throw missingDependencyError("EmbeddedWebBrowserDisplayInterface")
 
+@Deprecated("Use .resolve(DeviceIdentificationInterface::class.java)")
 val Rover.deviceIdentification
     get() = this.resolve(DeviceIdentificationInterface::class.java) ?: throw missingDependencyError("DeviceIdentificationInterface")
 

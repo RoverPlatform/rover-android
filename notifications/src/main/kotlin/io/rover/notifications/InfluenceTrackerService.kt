@@ -1,9 +1,9 @@
 package io.rover.notifications
 
-import android.app.Activity
 import android.app.Application
-import android.content.Intent
-import android.os.Bundle
+import android.arch.lifecycle.Lifecycle
+import android.arch.lifecycle.LifecycleObserver
+import android.arch.lifecycle.OnLifecycleEvent
 import io.rover.core.logging.log
 import io.rover.core.platform.DateFormattingInterface
 import io.rover.core.platform.LocalStorage
@@ -19,8 +19,9 @@ class InfluenceTrackerService(
     localStorage: LocalStorage,
     private val dateFormatting: DateFormattingInterface,
     private val notificationOpen: NotificationOpenInterface,
+    private val lifecycle: Lifecycle,
     private val influenceThresholdSeconds: Int = 60
-) : InfluenceTrackerServiceInterface {
+    ) : InfluenceTrackerServiceInterface {
     private val store = localStorage.getKeyValueStorageFor("influenced-opens")
 
     private var lastSeenNotificationAt: Long?
@@ -56,29 +57,25 @@ class InfluenceTrackerService(
         log.v("Marked that a non-Rover notification arrived, so forgetting current influenced-open candidate.")
     }
 
+    private var notificationJustOpened = false
+
+    override fun notificationOpenedDirectly() {
+        notificationJustOpened = true
+    }
+
     override fun startListening() {
-        application.registerActivityLifecycleCallbacks(
-            object : Application.ActivityLifecycleCallbacks {
-                override fun onActivityPaused(activity: Activity?) { }
+        // goal is to notice when:
+        // * app is opened or switched back to;
+        // * but NOT opened from a notification or a navigation event within the app.
 
-                override fun onActivityResumed(activity: Activity?) { }
+        lifecycle.addObserver(
+            object : LifecycleObserver {
+                @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
+                fun onResume() {
+                    if(!notificationJustOpened) {
+                        // app was switched to but not by opening a notification.
 
-                override fun onActivityStarted(activity: Activity?) { }
-
-                override fun onActivityDestroyed(activity: Activity?) { }
-
-                override fun onActivitySaveInstanceState(activity: Activity?, outState: Bundle?) { }
-
-                override fun onActivityStopped(activity: Activity?) { }
-
-                override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-                    if (savedInstanceState == null && activity.intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
-                        // app was started from the launcher by tapping the icon. contrasted with
-                        // navigating within the app, state restore happening when returning to the
-                        // app after process death, or app being opened by tapping on a
-                        // notification.
-
-                        // thus, we can track an influenced opens here.
+                        // thus, we can track an influenced open here.
                         val seenWithinThreshold = lastSeenNotificationAt?.whenNotNull { lastSeen ->
                             System.currentTimeMillis() / 1000L - lastSeen < influenceThresholdSeconds
                         }
@@ -98,18 +95,21 @@ class InfluenceTrackerService(
                                 log.w("Invalid JSON for a Notification appeared in storage for tracking influenced opens.  Dropping. Reason: ${e.message}")
                                 lastSeenNotificationAt = null
                                 lastSeenNotificationJson = null
+                                notificationJustOpened = false
                                 return
                             }
 
                             notificationOpen.appOpenedAfterReceivingNotification(
                                 notification
                             )
-
-                            lastSeenNotificationAt = null
-                            lastSeenNotificationJson = null
                         }
                     }
+
+                    lastSeenNotificationAt = null
+                    lastSeenNotificationJson = null
+                    notificationJustOpened = false
                 }
+
             }
         )
     }

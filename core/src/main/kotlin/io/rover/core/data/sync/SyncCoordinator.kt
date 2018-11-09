@@ -56,7 +56,6 @@ class SyncCoordinator(
         subject.onNext(Action.AttemptSync)
     }
 
-
     override fun ensureBackgroundSyncScheduled() {
         log.v("Ensuring that Rover background sync is registered to execute every $hourlyTargetRefreshFrequency hours.")
         val request = PeriodicWorkRequestBuilder<WorkManagerWorker>(
@@ -171,13 +170,17 @@ class SyncCoordinator(
         params: WorkerParameters
     ): Worker(context, params) {
         override fun doWork(): Result {
-            val result = Rover.sharedInstance.resolveSingletonOrFail(SyncCoordinatorInterface::class.java)
-                .sync()
-                .first()
-                .blockForResult(300).first()
+            val result = Rover.shared?.resolve(SyncCoordinatorInterface::class.java)
+                ?.sync()
+                ?.first()
+                ?.blockForResult(300)?.first()
             return when(result) {
                 SyncCoordinatorInterface.Result.Succeeded -> Result.SUCCESS
                 SyncCoordinatorInterface.Result.RetryNeeded -> Result.RETRY
+                null -> {
+                    log.w("Rover isn't initialized or CoreAssembler hasn't been added, but the background sync job with work manager is still scheduled. Marking as failed.")
+                    Result.FAILURE
+                }
             }
         }
     }

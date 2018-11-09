@@ -255,6 +255,7 @@ class LocationAssembler(
             ) { resolver ->
                 GoogleGeofenceService(
                     resolver.resolveSingletonOrFail(Context::class.java),
+                    resolver.resolveSingletonOrFail(LocalStorage::class.java),
                     resolver.resolveSingletonOrFail(GeofencingClient::class.java),
                     resolver.resolveSingletonOrFail(Scheduler::class.java, "main"),
                     resolver.resolveSingletonOrFail(Scheduler::class.java, "io"),
@@ -341,12 +342,15 @@ class LocationAssembler(
     }
 }
 
+@Deprecated("Use .resolve(GoogleBackgroundLocationServiceInterface::class.java)")
 val Rover.googleBackgroundLocationService: GoogleBackgroundLocationServiceInterface
     get() = this.resolve(GoogleBackgroundLocationServiceInterface::class.java) ?: throw missingDependencyError("GoogleBackgroundLocationServiceInterface")
 
+@Deprecated("Use .resolve(GoogleBeaconTrackerServiceInterface::class.java)")
 val Rover.googleBeaconTrackerService: GoogleBeaconTrackerServiceInterface
     get() = this.resolve(GoogleBeaconTrackerServiceInterface::class.java) ?: throw missingDependencyError("GoogleBeaconTrackerServiceInterface")
 
+@Deprecated("Use .resolve(GoogleGeofenceServiceInterface::class.java)")
 val Rover.googleGeofenceService: GoogleGeofenceServiceInterface
     get() = this.resolve(GoogleGeofenceServiceInterface::class.java) ?: throw missingDependencyError("GoogleGeofenceServiceInterface")
 

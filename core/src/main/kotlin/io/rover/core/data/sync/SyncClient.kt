@@ -99,7 +99,7 @@ val SyncQuery.signature: String?
         }
 
         return arguments.joinToString(", ") {
-            "\$$name${it.name.capitalize()}:${it.typeDescriptor}"
+            "\$$name${it.name.capitalize()}:${it.type}"
         }
     }
 
@@ -122,14 +122,4 @@ val SyncQuery.definition: String
             $body
         }
         """.trimIndent()
-    }
-
-
-val SyncQuery.Argument.typeDescriptor: String
-    get() {
-        return if(isRequired) {
-            "${type.name}!"
-        } else {
-            type.name
-        }
     }

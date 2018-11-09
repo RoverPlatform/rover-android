@@ -116,4 +116,11 @@ interface InfluenceTrackerServiceInterface {
      * recently received push.
      */
     fun nonRoverPushReceived()
+
+    /**
+     * Let the influence tracker know that a Rover push notification has just been opened,
+     * so the influence tracker should not count the app coming to the foreground as
+     * being an influenced open (it will be instead tracked elsewhere as a direct open).
+     */
+    fun notificationOpenedDirectly()
 }

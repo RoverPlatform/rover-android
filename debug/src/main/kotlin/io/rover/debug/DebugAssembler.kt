@@ -53,6 +53,7 @@ class DebugAssembler : Assembler {
     }
 }
 
+@Deprecated("Use .resolve(DebugPreferences::class.java)")
 val Rover.debugPreferences: DebugPreferences
     get() = this.resolve(DebugPreferences::class.java) ?: throw missingDependencyError("DebugPreferences")
 

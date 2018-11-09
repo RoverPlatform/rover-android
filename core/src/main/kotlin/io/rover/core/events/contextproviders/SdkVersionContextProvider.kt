@@ -10,7 +10,9 @@ import io.rover.core.events.ContextProvider
 class SdkVersionContextProvider : ContextProvider {
     override fun captureContext(deviceContext: DeviceContext): DeviceContext {
         return deviceContext.copy(
-            sdkVersion = BuildConfig.VERSION_NAME
+            // cloud-side campaigns services have issues with meta/prerelease version strings.
+            // Drop it.  https://github.com/RoverPlatform/rover/issues/2481
+            sdkVersion = BuildConfig.VERSION_NAME.substringBefore("-")
         )
     }
 }

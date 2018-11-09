@@ -33,7 +33,7 @@ class VersionTracker(
             // fresh install, or at least first update to include the Rover SDK:
             null -> trackAppInstalled(versionCode, versionName)
             // downgrade:
-            in 0 until versionCode -> trackAppVersionChange(false, lastSeenCode, lastSeenName, versionCode, versionName)
+            in 0 until lastSeenCode -> trackAppVersionChange(false, lastSeenCode, lastSeenName, versionCode, versionName)
             // upgrade:
             else -> trackAppVersionChange(true, lastSeenCode, lastSeenName, versionCode, versionName)
         }

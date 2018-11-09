@@ -507,6 +507,7 @@ class ExperiencesAssembler : Assembler {
             registerRoute(
                 PresentExperienceRoute(
                     resolver.resolveSingletonOrFail(UrlSchemes::class.java).schemes,
+                    resolver.resolveSingletonOrFail(UrlSchemes::class.java).associatedDomains,
                     resolver.resolveSingletonOrFail(PresentExperienceIntents::class.java)
                 )
             )

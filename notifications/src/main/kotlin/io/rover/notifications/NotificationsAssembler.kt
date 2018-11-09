@@ -13,6 +13,7 @@ import android.view.View
 import android.widget.TextView
 import io.rover.core.R
 import io.rover.core.Rover
+import io.rover.core.UrlSchemes
 import io.rover.core.assets.AssetService
 import io.rover.core.container.Assembler
 import io.rover.core.container.Container
@@ -299,6 +300,7 @@ class NotificationsAssembler @JvmOverloads constructor(
         resolver.resolveSingletonOrFail(Router::class.java).apply {
             registerRoute(
                 PresentNotificationCenterRoute(
+                    resolver.resolveSingletonOrFail(UrlSchemes::class.java).schemes,
                     notificationCenterIntent
                 )
             )

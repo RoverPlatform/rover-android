@@ -9,17 +9,18 @@ import io.rover.experiences.ui.containers.ExperienceActivity
 import java.net.URI
 
 class PresentExperienceRoute(
+    private val urlSchemes: List<String>,
+    private val associatedDomains: List<String>,
     private val presentExperienceIntents: PresentExperienceIntents
 ) : Route {
     override fun resolveUri(uri: URI?): Intent? {
         // Experiences can be opened either by a deep link or a universal link.
         return when {
-            uri?.scheme == "https" || uri?.scheme == "http" -> {
+            (uri?.scheme == "https" || uri?.scheme == "http") && associatedDomains.contains(uri.host) -> {
                 // universal link!
                 presentExperienceIntents.displayExperienceIntentFromCampaignLink(uri)
             }
-
-            uri?.scheme?.startsWith("rv-") == true && uri.authority == "presentExperience" -> {
+            urlSchemes.contains(uri?.scheme) && uri?.authority == "presentExperience" -> {
                 val queryParameters = uri.query.parseAsQueryParameters()
                 val possibleCampaignId = queryParameters["campaignID"]
                 val possibleExperienceId = queryParameters["id"]

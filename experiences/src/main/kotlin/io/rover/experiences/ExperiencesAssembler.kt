@@ -6,6 +6,7 @@ import android.content.Context
 import android.os.Parcelable
 import android.util.DisplayMetrics
 import io.rover.core.Rover
+import io.rover.core.UrlSchemes
 import io.rover.core.assets.AssetService
 import io.rover.core.container.Assembler
 import io.rover.core.container.Container
@@ -505,6 +506,8 @@ class ExperiencesAssembler : Assembler {
         resolver.resolveSingletonOrFail(Router::class.java).apply {
             registerRoute(
                 PresentExperienceRoute(
+                    resolver.resolveSingletonOrFail(UrlSchemes::class.java).schemes,
+                    resolver.resolveSingletonOrFail(UrlSchemes::class.java).associatedDomains,
                     resolver.resolveSingletonOrFail(PresentExperienceIntents::class.java)
                 )
             )

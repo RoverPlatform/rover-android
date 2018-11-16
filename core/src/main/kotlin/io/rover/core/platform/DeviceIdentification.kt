@@ -35,6 +35,8 @@ class DeviceIdentification(
     override val installationIdentifier by lazy {
         // Further reading: https://developer.android.com/training/articles/user-data-ids.html
 
+//        "6426d321-c1c7-4b5a-96cf-2910003713da"
+
         // if persisted UUID not present then generate and persist a new one. Memoize it in memory.
         (storage.get(identifierKey) ?: (
             (getAndClearSdk1IdentifierIfPresent() ?: UUID.randomUUID().toString()).apply {

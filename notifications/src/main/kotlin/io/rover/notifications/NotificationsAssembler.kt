@@ -202,7 +202,7 @@ class NotificationsAssembler @JvmOverloads constructor(
             "notificationListEmptyArea"
         ) { _, context: Context ->
             TextView(context).apply {
-                text = "" // Set a copy string to display here.
+                text = "yo no notifications" // Set a copy string to display here.
             }.apply {
                 // center it in the display.
                 gravity = Gravity.CENTER_VERTICAL or Gravity.CENTER_HORIZONTAL

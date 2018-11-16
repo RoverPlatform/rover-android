@@ -58,7 +58,7 @@ class NotificationsRepository(
     // TODO: gate access to the localStorage via a single-thread executor pool.
 
     override fun updates(): Publisher<NotificationsRepositoryInterface.Emission.Update> = Publishers.concat(
-        currentNotificationsOnDisk().filterNulls().map { existingNotifications ->
+        currentNotificationsOnDisk().map { existingNotifications ->
             NotificationsRepositoryInterface.Emission.Update(existingNotifications)
         },
         epic
@@ -90,7 +90,7 @@ class NotificationsRepository(
 
     private val actions = PublishSubject<Action>()
 
-    private fun currentNotificationsOnDisk(): Publisher<List<Notification>?> {
+    private fun currentNotificationsOnDisk(): Publisher<List<Notification>> {
         return Publishers.defer {
             Publishers.just(
                     try {
@@ -98,10 +98,10 @@ class NotificationsRepository(
                             JSONArray(jsonString).getObjectIterable().map { notificationJson ->
                                 Notification.decodeJson(notificationJson, dateFormatting)
                             }
-                        }
+                        } ?: listOf()
                     } catch (e: JSONException) {
                         log.w("Invalid JSON appeared in Notifications cache, so starting fresh: ${e.message}")
-                        null
+                        listOf<Notification>()
                     }
                 )
         }.subscribeOn(ioExecutor)
@@ -195,11 +195,6 @@ class NotificationsRepository(
      */
     private fun doMarkAsDeleted(notification: Notification): Publisher<List<Notification>> {
         return currentNotificationsOnDisk().flatMap { onDisk ->
-            if (onDisk == null) {
-                log.w("No notifications currently stored on disk.  Cannot mark notification as deleted.")
-                return@flatMap Publishers.empty<List<Notification>>()
-            }
-
             val alreadyDeleted = onDisk.find { it.id == notification.id }?.isDeleted ?: false
 
             val modified = onDisk.map { onDiskNotification ->
@@ -232,11 +227,6 @@ class NotificationsRepository(
      */
     private fun doMarkAsRead(notification: Notification): Publisher<List<Notification>> {
         return currentNotificationsOnDisk().flatMap { onDisk ->
-            if (onDisk == null) {
-                log.w("No notifications currently stored on disk.  Cannot mark notification as read.")
-                return@flatMap Publishers.empty<List<Notification>>()
-            }
-
             val alreadyRead = onDisk.find { it.id == notification.id }?.isRead ?: false
 
             val modified = onDisk.map { onDiskNotification ->

@@ -10,7 +10,11 @@ import io.rover.core.Rover
 import io.rover.core.logging.log
 import io.rover.core.platform.DateFormattingInterface
 import io.rover.notifications.domain.Notification
+import io.rover.notifications.graphql.decodeJson
 import io.rover.notifications.graphql.encodeJson
+import io.rover.notifications.ui.concerns.NotificationsRepositoryInterface
+import org.json.JSONException
+import org.json.JSONObject
 
 /**
  * When the user taps a Rover notification created for the app by
@@ -44,6 +48,15 @@ class TransientNotificationLaunchActivity : AppCompatActivity() {
             log.e("Could not resolve InfluenceTrackerServiceInterface in Rover container.  Ensure NotificationAssembler() is added to Rover.initialize.")
             return
         }
+        val dateFormatting = rover.resolve(DateFormattingInterface::class.java)
+        if(dateFormatting == null) {
+            log.e("Could not resolve DateFormattingInterface in Rover container.  Ensure NotificationAssembler() is added to Rover.initialize.")
+            return
+        }
+        val notificationsRepository = rover.resolve(NotificationsRepositoryInterface::class.java)
+        if (notificationsRepository == null) {
+            log.e("Could not resolve NotificationsRepositoryInterface in the Rover container.  Ensure NotificationAssembler() is added to Rover.initialize.")
+        }
 
         log.v("Transient notification launch activity running.")
 
@@ -63,6 +76,16 @@ class TransientNotificationLaunchActivity : AppCompatActivity() {
             )
             finish()
             return
+        }
+
+        try {
+            val notification = Notification.decodeJson(
+                JSONObject(notificationJson),
+                dateFormatting
+            )
+            notificationsRepository?.markRead(notification)
+        } catch (e: JSONException) {
+            log.w("Badly formed notification, could not mark it as read.")
         }
 
         influenceTracker.notificationOpenedDirectly()

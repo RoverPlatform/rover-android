@@ -97,7 +97,7 @@ interface NotificationOpenInterface {
 
 interface InfluenceTrackerServiceInterface {
     /**
-     * Start monitoring the application lifecycle for app opens, allowing the Influene Tracker
+     * Start monitoring the application lifecycle for app opens, allowing the Influence Tracker
      * to emit an Event when the app is opened soon after a push notification arrives.
      */
     fun startListening()

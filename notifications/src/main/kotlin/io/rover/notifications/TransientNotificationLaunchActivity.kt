@@ -83,9 +83,7 @@ class TransientNotificationLaunchActivity : AppCompatActivity() {
                 JSONObject(notificationJson),
                 dateFormatting
             )
-
             notificationsRepository?.markRead(notification)
-
         } catch (e: JSONException) {
             log.w("Badly formed notification, could not mark it as read.")
         }

@@ -170,10 +170,15 @@ class SyncCoordinator(
         params: WorkerParameters
     ): Worker(context, params) {
         override fun doWork(): Result {
-            val result = Rover.shared?.resolve(SyncCoordinatorInterface::class.java)
-                ?.sync()
-                ?.first()
-                ?.blockForResult(300)?.first()
+            val result = try {
+                Rover.shared?.resolve(SyncCoordinatorInterface::class.java)
+                    ?.sync()
+                    ?.first()
+                    ?.blockForResult(300)?.first()
+            } catch (e: Exception) {
+                log.w("Unexpected failure running background sync: $e")
+                return Result.RETRY
+            }
             return when(result) {
                 SyncCoordinatorInterface.Result.Succeeded -> Result.SUCCESS
                 SyncCoordinatorInterface.Result.RetryNeeded -> Result.RETRY

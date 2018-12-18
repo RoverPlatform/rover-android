@@ -38,7 +38,7 @@ class BeaconsRepository(
     private val ioScheduler: Scheduler
 ) {
     fun allBeacons(): Publisher<ClosableSequence<Beacon>> = syncCoordinator
-        .sync()
+        .updates
         .observeOn(ioScheduler)
         .map {
             beaconsSqlStorage.queryAllBeacons()

@@ -55,8 +55,6 @@ class NotificationsRepository(
     private val syncCoordinator: SyncCoordinatorInterface,
     localStorage: LocalStorage
 ) : NotificationsRepositoryInterface {
-    // TODO: gate access to the localStorage via a single-thread executor pool.
-
     override fun updates(): Publisher<NotificationsRepositoryInterface.Emission.Update> = Publishers.concat(
         currentNotificationsOnDisk().map { existingNotifications ->
             NotificationsRepositoryInterface.Emission.Update(existingNotifications)
@@ -143,7 +141,7 @@ class NotificationsRepository(
      * This chain of behaviour maps incoming updates from the [StateManagerServiceInterface] to
      * notifications updates, along with the side-effect of updating local state.
      */
-    private val stateStoreObserverChain = syncCoordinator.sync().flatMap { syncResult ->
+    private val stateStoreObserverChain = syncCoordinator.syncResults.flatMap { syncResult ->
         log.v("Received sync completed notification.")
         when(syncResult) {
             SyncCoordinatorInterface.Result.Succeeded -> Publishers.just(NotificationsRepositoryInterface.Emission.Event.Refreshing(false))
@@ -164,7 +162,7 @@ class NotificationsRepository(
                         Publishers.concat(
                             Publishers.just(NotificationsRepositoryInterface.Emission.Event.Refreshing(true))
                                 .doOnComplete {
-                                    log.v("Triggering Sync Coordinator refresh.")
+                                    log.v("Triggering Sync Coordinator refresh by request.")
                                     // this will result in an emission being received by the state
                                     // manager updates observer.
                                     syncCoordinator.triggerSync()

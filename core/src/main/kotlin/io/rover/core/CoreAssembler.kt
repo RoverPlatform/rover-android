@@ -23,6 +23,7 @@ import io.rover.core.data.graphql.GraphQlApiService
 import io.rover.core.data.graphql.GraphQlApiServiceInterface
 import io.rover.core.data.http.AndroidHttpsUrlConnectionNetworkClient
 import io.rover.core.data.http.NetworkClient
+import io.rover.core.data.sync.SyncByApplicationLifecycle
 import io.rover.core.data.sync.SyncClient
 import io.rover.core.data.sync.SyncClientInterface
 import io.rover.core.data.sync.SyncCoordinator
@@ -337,7 +338,6 @@ class CoreAssembler @JvmOverloads constructor(
 
         container.register(Scope.Singleton, SyncCoordinatorInterface::class.java) { resolver ->
             SyncCoordinator(
-                application,
                 resolver.resolveSingletonOrFail(Scheduler::class.java, "io"),
                 resolver.resolveSingletonOrFail(Scheduler::class.java, "main"),
                 resolver.resolveSingletonOrFail(SyncClientInterface::class.java)
@@ -389,6 +389,17 @@ class CoreAssembler @JvmOverloads constructor(
                 resolver.resolveSingletonOrFail(SessionTrackerInterface::class.java)
             )
         }
+
+        container.register(
+            Scope.Singleton,
+            SyncByApplicationLifecycle::class.java
+        ) { resolver ->
+            SyncByApplicationLifecycle(
+                resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java),
+                resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java),
+                ProcessLifecycleOwner.get().lifecycle
+            )
+        }
     }
 
     override fun afterAssembly(resolver: Resolver) {
@@ -410,6 +421,8 @@ class CoreAssembler @JvmOverloads constructor(
         resolver.resolveSingletonOrFail(VersionTrackerInterface::class.java).trackAppVersion()
 
         resolver.resolveSingletonOrFail(ApplicationSessionEmitter::class.java).start()
+
+        resolver.resolveSingletonOrFail(SyncByApplicationLifecycle::class.java).start()
 
         resolver.resolve(BluetoothAdapter::class.java).whenNotNull { bluetoothAdapter ->
             eventQueue.addContextProvider(BluetoothContextProvider(bluetoothAdapter))

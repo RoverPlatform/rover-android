@@ -89,7 +89,19 @@ interface SyncCoordinatorInterface {
      *
      * Will remain subscribed afterwards so that you can discover subsequent sync results.
      */
+    @Deprecated("This method can cause unnecessary syncs to be triggered.  Consider separate usages of triggerSync() and one of the 'events' or 'syncs' properties.")
     fun sync(): Publisher<Result>
+
+    /**
+     * Subscribe to be informed of when Syncs complete or fail.
+     */
+    val syncResults: Publisher<Result>
+
+    /**
+     * Subscribe to be informed of when a Sync has been completed.  Use this to ensure that
+     * something downstream is kept update whenever a sync completes.
+     */
+    val updates: Publisher<Unit>
 
     /**
      * Asynchronously trigger a sync without being interested in a response.

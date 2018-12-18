@@ -1,8 +1,6 @@
 package io.rover.core.data.sync
 
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
@@ -23,7 +21,9 @@ import io.rover.core.streams.doOnSubscribe
 import io.rover.core.streams.filter
 import io.rover.core.streams.first
 import io.rover.core.streams.flatMap
+import io.rover.core.streams.map
 import io.rover.core.streams.observeOn
+import io.rover.core.streams.share
 import io.rover.core.streams.shareHotAndReplay
 import io.rover.core.streams.subscribeOn
 import org.json.JSONException
@@ -33,9 +33,8 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 class SyncCoordinator(
-    private val context: Context,
     private val ioScheduler: Scheduler,
-    private val mainThreadScheduler: Scheduler,
+    mainThreadScheduler: Scheduler,
     private val syncClient: SyncClientInterface,
     private val hourlyTargetRefreshFrequency: Int = 1
 ): SyncCoordinatorInterface {
@@ -66,7 +65,13 @@ class SyncCoordinator(
                 .build()
         ).build()
 
-        WorkManager.getInstance().enqueueUniquePeriodicWork("rover-sync", ExistingPeriodicWorkPolicy.REPLACE, request)
+        WorkManager.getInstance().enqueueUniquePeriodicWork(
+            "rover-sync",
+            // note: if the parameters are changed, then the existing periodic work needs to be
+            // manually cancelled and the current work given a new unique work name.
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
     }
 
     private fun sync(participants: List<SyncParticipant>, requests: List<SyncRequest>): Publisher<SyncCoordinatorInterface.Result> {
@@ -132,6 +137,7 @@ class SyncCoordinator(
 
     private val subject = PublishSubject<Action>()
 
+    @Volatile
     private var executing = false
 
     private val chain = subject
@@ -153,16 +159,12 @@ class SyncCoordinator(
             synchronized(executing) { executing = false }
         }.observeOn(mainThreadScheduler).shareHotAndReplay(0).subscribeOn(mainThreadScheduler)
 
+    override val syncResults: Publisher<SyncCoordinatorInterface.Result> = chain
+
+    override val updates: Publisher<Unit> = chain.filter { it == SyncCoordinatorInterface.Result.Succeeded }.map { Unit }.share()
+
     enum class Action {
         AttemptSync
-    }
-
-    init {
-        // trigger sync for the next loop of the Android main looper.  This will happen
-        // after all of the Rover DI has completed and thus all of the participants have been registered.
-        Handler(Looper.getMainLooper()).post {
-            subject.onNext(Action.AttemptSync)
-        }
     }
 
     class WorkManagerWorker(

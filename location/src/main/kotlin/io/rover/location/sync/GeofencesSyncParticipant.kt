@@ -43,7 +43,7 @@ class GeofencesRepository(
      * Be sure to close the [ClosableSequence] when you are finished iterating through it.
      */
     fun allGeofences(): Publisher<ClosableSequence<Geofence>> = syncCoordinator
-        .sync()
+        .updates
         .observeOn(ioScheduler)
         .map {
             // for now, we don't check the result because we just want an *attempt* to have completely

@@ -118,7 +118,9 @@ class NotificationDispatcher(
         builder.setContentText(notification.body)
         builder.setSmallIcon(smallIconResId, smallIconDrawableLevel)
 
+        if(notification.isNotificationCenterEnabled) {
         notificationsRepository.notificationArrivedByPush(notification)
+        }
 
         builder.setContentIntent(
             notificationOpen.pendingIntentForAndroidNotification(

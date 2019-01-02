@@ -3,7 +3,7 @@
   <groupId>io.rover</groupId>
   <artifactId>ticketmaster</artifactId>
   <versioning>
-    <release>2.2.5</release>
+    <release>2.2.6</release>
     <versions>
       <version>2.1.0</version>
       <version>2.1.1</version>
@@ -22,7 +22,8 @@
       <version>2.2.3</version>
       <version>2.2.4</version>
       <version>2.2.5</version>
+      <version>2.2.6</version>
     </versions>
-    <lastUpdated>20181218224057</lastUpdated>
+    <lastUpdated>20190102182634</lastUpdated>
   </versioning>
 </metadata>

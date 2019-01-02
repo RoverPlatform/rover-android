@@ -116,10 +116,11 @@ class NotificationDispatcher(
 
         builder.setContentTitle(notification.title)
         builder.setContentText(notification.body)
+        builder.setStyle(NotificationCompat.BigTextStyle())
         builder.setSmallIcon(smallIconResId, smallIconDrawableLevel)
 
         if(notification.isNotificationCenterEnabled) {
-        notificationsRepository.notificationArrivedByPush(notification)
+            notificationsRepository.notificationArrivedByPush(notification)
         }
 
         builder.setContentIntent(

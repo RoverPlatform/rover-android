@@ -141,7 +141,12 @@ class CoreAssembler @JvmOverloads constructor(
      * the Rover Location module installed, this will keep the monitored beacons and geofences up to
      * date).
      */
-    private val scheduleBackgroundSync: Boolean = true
+    private val scheduleBackgroundSync: Boolean = true,
+
+    /**
+     * Specifices long sessions shall be held open before they are considered closed and their events tracked.
+     */
+    private val sessionKeepAliveTime: Int = 10
 ) : Assembler {
     override fun assemble(container: Container) {
         container.register(Scope.Singleton, Context::class.java) { _ ->
@@ -365,7 +370,8 @@ class CoreAssembler @JvmOverloads constructor(
         container.register(Scope.Singleton, SessionStoreInterface::class.java) { resolver ->
             SessionStore(
                 resolver.resolveSingletonOrFail(LocalStorage::class.java),
-                resolver.resolveSingletonOrFail(DateFormattingInterface::class.java)
+                resolver.resolveSingletonOrFail(DateFormattingInterface::class.java),
+                10
             )
         }
 

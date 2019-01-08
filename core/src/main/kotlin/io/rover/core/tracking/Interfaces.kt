@@ -11,21 +11,26 @@ interface SessionStoreInterface {
      */
     fun enterSession(sessionKey: Any, sessionEventName: String, attributes: Attributes)
 
-fun leaveSession(sessionKey: Any)
+    fun leaveSession(sessionKey: Any)
 
     /**
      * Returns the soonest time that a session is going to expire.
+     *
+     * The [keepAliveSeconds] parameter is deprecated.
      */
-    fun soonestExpiryInSeconds(keepAliveSeconds: Int): Int?
+    fun soonestExpiryInSeconds(keepAliveSeconds: Int? = null): Int?
 
     /**
      * Returns the sessions that are expired and should have their event emitted.
      *
      * Such sessions will only be returned once; they are deleted.
+     *
+     * The [keepAliveSeconds] parameter is deprecated.
      */
-    fun collectExpiredSessions(keepAliveSeconds: Int): List<ExpiredSession>
+    fun collectExpiredSessions(keepAliveSeconds: Int? = null): List<ExpiredSession>
 
     data class ExpiredSession(
+        val sessionKey: Any,
         val uuid: UUID,
         val eventName: String,
         val attributes: Attributes,

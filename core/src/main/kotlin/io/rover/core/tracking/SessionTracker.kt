@@ -39,6 +39,7 @@ class SessionTracker(
         sessionEventName: String,
         attributes: Attributes
     ) {
+        log.v("Entering session $sessionKey")
         sessionStore.enterSession(sessionKey, sessionEventName, attributes)
 
         eventQueueService.trackEvent(
@@ -65,8 +66,9 @@ class SessionTracker(
     }
 
     private fun timerCallback() {
-        log.v("Emitting events for expired sessions. ${hashCode()}")
+        log.v("Emitting events for expired sessions.")
         sessionStore.collectExpiredSessions(keepAliveTime).forEach { expiredSession ->
+            log.v("... expired session: ${expiredSession.sessionKey}")
             eventQueueService.trackEvent(
                 Event(
                     expiredSession.eventName,
@@ -86,6 +88,7 @@ class SessionTracker(
         sessionEndEventName: String,
         attributes: Attributes
     ) {
+        log.v("Leaving session $sessionKey")
         sessionStore.leaveSession(sessionKey)
 
         eventQueueService.trackEvent(
@@ -102,9 +105,18 @@ class SessionTracker(
 
 class SessionStore(
     localStorage: LocalStorage,
-    private val dateFormatting: DateFormattingInterface
+    private val dateFormatting: DateFormattingInterface,
+    /**
+     * The number of seconds to leave the session open for in the event that the user leaves
+     * temporarily.
+     */
+    private val keepAliveTime: Int
 ) : SessionStoreInterface {
     private val store = localStorage.getKeyValueStorageFor(STORAGE_IDENTIFIER)
+
+    init {
+        gc()
+    }
 
     override fun enterSession(sessionKey: Any, sessionEventName: String, attributes: Attributes) {
         val session = getEntry(sessionKey) ?: SessionEntry(
@@ -127,8 +139,6 @@ class SessionStore(
                 closedAt = Date()
             ))
         }
-
-        gc()
     }
 
     private fun getEntry(sessionKey: Any): SessionEntry? {
@@ -146,12 +156,13 @@ class SessionStore(
         store[sessionKey.toString()] = sessionEntry.encodeJson(dateFormatting).toString()
     }
 
-    override fun soonestExpiryInSeconds(keepAliveSeconds: Int): Int? {
+    override fun soonestExpiryInSeconds(keepAliveSeconds: Int?): Int? {
+        val keepAlive = keepAliveSeconds ?: this.keepAliveTime
         // gather stale expiring session entries that have passed.
         val earliestExpiry = store.keys
             .mapNotNull { key -> getEntry(key) }
             .mapNotNull { entry -> entry.closedAt?.time }
-            .map { closedAt -> closedAt + (keepAliveSeconds * 1000L) }
+            .map { closedAt -> closedAt + (keepAlive * 1000L) }
             // differential from current time in seconds, assuming expiry in the future.
             .map { expiryTimeMsEpoch ->
                 ((expiryTimeMsEpoch - Date().time) / 1000).toInt()
@@ -166,7 +177,8 @@ class SessionStore(
        }
     }
 
-    override fun collectExpiredSessions(keepAliveSeconds: Int): List<SessionStoreInterface.ExpiredSession> {
+    override fun collectExpiredSessions(keepAliveSeconds: Int?): List<SessionStoreInterface.ExpiredSession> {
+        val keepAlive = keepAliveSeconds ?: this.keepAliveTime
         val expiringEntries = store.keys
             .mapNotNull { key ->
                 getEntry(key).whenNotNull { Pair(key, it) }
@@ -185,8 +197,9 @@ class SessionStore(
             store.unset(key)
         }
 
-        return expiringEntries.map { (_, entry) ->
+        return expiringEntries.map { (key, entry) ->
             SessionStoreInterface.ExpiredSession(
+                key,
                 entry.uuid,
                 entry.sessionEventName,
                 entry.sessionAttributes,
@@ -246,7 +259,7 @@ class SessionStore(
         }
 
         companion object {
-            fun decodeJson(jsonObject: JSONObject): SessionEntry? {
+            fun decodeJson(jsonObject: JSONObject): SessionEntry {
                 return SessionEntry(
                     UUID.fromString(jsonObject.safeGetString("uuid")),
                     jsonObject.safeGetString("session-event-name"),

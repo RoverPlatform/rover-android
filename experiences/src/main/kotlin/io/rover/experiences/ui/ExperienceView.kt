@@ -148,6 +148,7 @@ class ExperienceView : CoordinatorLayout, MeasuredBindableView<ExperienceViewMod
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+
     }
 
     override fun onDetachedFromWindow() {

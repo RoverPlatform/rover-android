@@ -370,8 +370,7 @@ class CoreAssembler @JvmOverloads constructor(
         container.register(Scope.Singleton, SessionStoreInterface::class.java) { resolver ->
             SessionStore(
                 resolver.resolveSingletonOrFail(LocalStorage::class.java),
-                resolver.resolveSingletonOrFail(DateFormattingInterface::class.java),
-                10
+                resolver.resolveSingletonOrFail(DateFormattingInterface::class.java)
             )
         }
 

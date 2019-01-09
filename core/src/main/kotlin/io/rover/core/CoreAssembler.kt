@@ -141,12 +141,7 @@ class CoreAssembler @JvmOverloads constructor(
      * the Rover Location module installed, this will keep the monitored beacons and geofences up to
      * date).
      */
-    private val scheduleBackgroundSync: Boolean = true,
-
-    /**
-     * Specifices long sessions shall be held open before they are considered closed and their events tracked.
-     */
-    private val sessionKeepAliveTime: Int = 10
+    private val scheduleBackgroundSync: Boolean = true
 ) : Assembler {
     override fun assemble(container: Container) {
         container.register(Scope.Singleton, Context::class.java) { _ ->

@@ -39,6 +39,7 @@ class SessionTracker(
         sessionEventName: String,
         attributes: Attributes
     ) {
+        log.v("Entering session $sessionKey")
         sessionStore.enterSession(sessionKey, sessionEventName, attributes)
 
         eventQueueService.trackEvent(
@@ -65,8 +66,9 @@ class SessionTracker(
     }
 
     private fun timerCallback() {
-        log.v("Emitting events for expired sessions. ${hashCode()}")
+        log.v("Emitting events for expired sessions.")
         sessionStore.collectExpiredSessions(keepAliveTime).forEach { expiredSession ->
+            log.v("Session closed: ${expiredSession.sessionKey}")
             eventQueueService.trackEvent(
                 Event(
                     expiredSession.eventName,
@@ -86,6 +88,7 @@ class SessionTracker(
         sessionEndEventName: String,
         attributes: Attributes
     ) {
+        log.v("Leaving session $sessionKey")
         sessionStore.leaveSession(sessionKey)
 
         eventQueueService.trackEvent(
@@ -106,8 +109,15 @@ class SessionStore(
 ) : SessionStoreInterface {
     private val store = localStorage.getKeyValueStorageFor(STORAGE_IDENTIFIER)
 
+    init {
+        gc()
+    }
+
     override fun enterSession(sessionKey: Any, sessionEventName: String, attributes: Attributes) {
-        val session = getEntry(sessionKey) ?: SessionEntry(
+        val session = getEntry(sessionKey)?.copy(
+            // clear closedAt to avoid expiring the session if it is being re-opened.
+            closedAt = null
+        ) ?: SessionEntry(
             UUID.randomUUID(),
             sessionEventName,
             Date(),
@@ -127,8 +137,6 @@ class SessionStore(
                 closedAt = Date()
             ))
         }
-
-        gc()
     }
 
     private fun getEntry(sessionKey: Any): SessionEntry? {
@@ -181,12 +189,13 @@ class SessionStore(
             }
 
         expiringEntries.map { it.first }.forEach { key ->
-            log.v("Removing Expired entry $key")
+            log.v("Removing now expired session entry $key from store.")
             store.unset(key)
         }
 
-        return expiringEntries.map { (_, entry) ->
+        return expiringEntries.map { (key, entry) ->
             SessionStoreInterface.ExpiredSession(
+                key,
                 entry.uuid,
                 entry.sessionEventName,
                 entry.sessionAttributes,
@@ -246,7 +255,7 @@ class SessionStore(
         }
 
         companion object {
-            fun decodeJson(jsonObject: JSONObject): SessionEntry? {
+            fun decodeJson(jsonObject: JSONObject): SessionEntry {
                 return SessionEntry(
                     UUID.fromString(jsonObject.safeGetString("uuid")),
                     jsonObject.safeGetString("session-event-name"),

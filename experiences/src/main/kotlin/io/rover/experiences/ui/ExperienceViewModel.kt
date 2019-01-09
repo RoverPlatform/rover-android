@@ -1,10 +1,14 @@
 package io.rover.experiences.ui
 
 import android.annotation.SuppressLint
+import android.arch.lifecycle.Lifecycle
+import android.arch.lifecycle.LifecycleObserver
+import android.arch.lifecycle.OnLifecycleEvent
 import android.graphics.Color
 import android.os.Parcelable
 import io.rover.core.data.NetworkResult
 import io.rover.core.data.domain.Attributes
+import io.rover.core.platform.whenNotNull
 import io.rover.experiences.data.graphql.operations.FetchExperienceRequest
 import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.Publishers
@@ -165,13 +169,6 @@ class ExperienceViewModel(
                 // store a reference to the view model in object scope so it can contribute to the
                 // state parcelable.
                 this@ExperienceViewModel.navigationViewModel = this
-
-                // track events with a side-effect, but I need the experience itself in scope.
-                trackEnterExperience(experience)
-
-                this.externalNavigationEvents.subscribe { _ ->
-                    trackLeaveExperience(experience)
-                }
             }
         }.shareAndReplay(1)
 
@@ -204,29 +201,6 @@ class ExperienceViewModel(
         events = eventsSubject.shareAndReplay(0).observeOn(mainThreadScheduler)
     }
 
-    protected fun trackEnterExperience(experience: Experience) {
-        sessionTracker.enterSession(
-            ExperienceSessionKey(experience.id.rawValue, experience.campaignId),
-            "Experience Presented",
-            "Experience Viewed",
-            sessionEventAttributes(experience)
-        )
-    }
-
-    protected fun trackLeaveExperience(experience: Experience) {
-        sessionTracker.leaveSession(
-            ExperienceSessionKey(experience.id.rawValue, experience.campaignId),
-            "Experience Dismissed",
-            sessionEventAttributes(experience)
-        )
-    }
-
-    protected fun sessionEventAttributes(experience: Experience): Attributes {
-        return hashMapOf(
-            Pair("experience", experience.asAttributeValue())
-        )
-    }
-
     enum class Action {
         /**
          * Back pressed before the experience navigation view model became available.  We can't
@@ -247,11 +221,6 @@ class ExperienceViewModel(
     data class State(
         val navigationState: Parcelable?
     ) : Parcelable
-
-    data class ExperienceSessionKey(
-        val experienceId: String,
-        val campaignId: String?
-    )
 
     sealed class ExperienceRequest {
         data class ByCampaignUrl(val url: String) : ExperienceRequest()

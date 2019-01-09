@@ -11,7 +11,7 @@ interface SessionStoreInterface {
      */
     fun enterSession(sessionKey: Any, sessionEventName: String, attributes: Attributes)
 
-fun leaveSession(sessionKey: Any)
+    fun leaveSession(sessionKey: Any)
 
     /**
      * Returns the soonest time that a session is going to expire.
@@ -26,6 +26,7 @@ fun leaveSession(sessionKey: Any)
     fun collectExpiredSessions(keepAliveSeconds: Int): List<ExpiredSession>
 
     data class ExpiredSession(
+        val sessionKey: Any,
         val uuid: UUID,
         val eventName: String,
         val attributes: Attributes,

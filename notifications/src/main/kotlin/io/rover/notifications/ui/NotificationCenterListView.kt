@@ -3,7 +3,6 @@ package io.rover.notifications.ui
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Rect
 import android.os.Handler
 import android.support.design.widget.CoordinatorLayout
 import android.support.design.widget.Snackbar
@@ -19,14 +18,13 @@ import android.widget.FrameLayout
 import io.rover.core.R
 import io.rover.core.Rover
 import io.rover.core.logging.log
+import io.rover.core.platform.whenNotNull
 import io.rover.core.streams.androidLifecycleDispose
 import io.rover.core.streams.subscribe
-import io.rover.core.ui.concerns.ViewModelBinding
-import io.rover.core.platform.whenNotNull
 import io.rover.core.ui.concerns.BindableView
-import io.rover.notifications.domain.Notification
+import io.rover.core.ui.concerns.ViewModelBinding
 import io.rover.notifications.NotificationOpenInterface
-import io.rover.notifications.notificationOpen
+import io.rover.notifications.domain.Notification
 import io.rover.notifications.ui.concerns.NotificationCenterListViewModelInterface
 import io.rover.notifications.ui.concerns.NotificationItemViewModelInterface
 
@@ -57,6 +55,14 @@ open class NotificationCenterListView : CoordinatorLayout {
      * You must provide an Activity here before binding the view model.
      */
     var activity: AppCompatActivity? = null
+        set(activity) {
+            field = activity
+            viewModel = if(activity == null) {
+                null
+            } else Rover.shared?.resolve(NotificationCenterListViewModelInterface::class.java, null, activity.lifecycle) ?: throw RuntimeException(
+                "Ensure Rover is initialized and NotificationsAssembler() added before using notification center."
+            )
+        }
 
     /**
      * This method will generate a row view.
@@ -123,6 +129,7 @@ open class NotificationCenterListView : CoordinatorLayout {
         ) ?: throw RuntimeException("Please be sure that Rover is initialized and NotificationsAssembler is added to Rover.init before using NotificationCenterListView.")
 
     private var viewModel: NotificationCenterListViewModelInterface? by ViewModelBinding { viewModel, subscriptionCallback ->
+
         swipeRefreshLayout.isRefreshing = false
 
         if (viewModel == null) {
@@ -173,10 +180,6 @@ open class NotificationCenterListView : CoordinatorLayout {
 
             swipeRefreshLayout.setOnRefreshListener {
                 viewModel.requestRefresh()
-            }
-
-            if (isAttachedToWindow) {
-                viewModel.becameVisible()
             }
         }
     }
@@ -306,27 +309,6 @@ open class NotificationCenterListView : CoordinatorLayout {
                 )
             }
         }).attachToRecyclerView(itemsView)
-
-        viewModel = Rover.shared?.resolve(NotificationCenterListViewModelInterface::class.java, null) ?: throw RuntimeException(
-            "Ensure Rover is initialized and NotificationsAssembler() added before using notification center."
-        )
-
-        viewTreeObserver.addOnGlobalLayoutListener {
-            val rect = Rect()
-            val visible = getGlobalVisibleRect(rect)
-            if (visible && isShown) {
-                viewModel?.becameVisible()
-            } else {
-                viewModel?.becameInvisible()
-            }
-        }
-    }
-
-    override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
-        super.onWindowFocusChanged(hasWindowFocus)
-        if (!hasWindowFocus) {
-            viewModel?.becameInvisible()
-        }
     }
 
     private fun notificationClicked(notification: Notification) {

@@ -1,5 +1,8 @@
 package io.rover.experiences.ui.navigation
 
+import android.arch.lifecycle.Lifecycle
+import android.arch.lifecycle.LifecycleObserver
+import android.arch.lifecycle.OnLifecycleEvent
 import android.os.Parcelable
 import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
@@ -38,6 +41,7 @@ open class ExperienceNavigationViewModel(
     private val sessionTracker: SessionTrackerInterface,
     private val resolveScreenViewModel: (screen: Screen) -> ScreenViewModelInterface,
     private val resolveToolbarViewModel: (configuration: ToolbarConfiguration) -> ExperienceToolbarViewModelInterface,
+    activityLifecycle: Lifecycle,
     icicle: Parcelable? = null
 ) : ExperienceNavigationViewModelInterface {
 
@@ -217,14 +221,35 @@ open class ExperienceNavigationViewModel(
             )
         }
 
-        // session changes from moving between screens or leaving
+        // session changes from moving between screens.
         screenSubject.subscribe { screenUpdate ->
             trackLeaveScreen()
             trackEnterScreen(screenUpdate.screenViewModel)
         }
-        externalNavigationEvents.subscribe { _ ->
-            trackLeaveScreen()
-        }
+
+        // handle visibility changes for session tracking:
+
+        activityLifecycle.addObserver(object : LifecycleObserver {
+            @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
+            fun presented() {
+                trackEnterExperience(experience)
+
+                // if an experience screen is already active (which can happen if the containing
+                // Activity is resumed without having been entirely destroyed), then handle
+                // re-emitting the trackEnterScreen event.
+                activeScreenViewModelIfPresent().whenNotNull { activeScreen ->
+                    trackEnterScreen(
+                        activeScreen
+                    )
+                }
+            }
+
+            @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+            fun dismissed() {
+                trackLeaveScreen()
+                trackLeaveExperience(experience)
+            }
+        })
     }
 
     /**
@@ -278,6 +303,23 @@ open class ExperienceNavigationViewModel(
         } ?: closeExperience(state.backStack) // can't go any further back: backstack would be empty; instead emit Exit.
     }
 
+    protected fun trackEnterExperience(experience: Experience) {
+        sessionTracker.enterSession(
+            ExperienceSessionKey(experience.id.rawValue, experience.campaignId),
+            "Experience Presented",
+            "Experience Viewed",
+            sessionExperienceEventAttributes(experience)
+        )
+    }
+
+    protected fun trackLeaveExperience(experience: Experience) {
+        sessionTracker.leaveSession(
+            ExperienceSessionKey(experience.id.rawValue, experience.campaignId),
+            "Experience Dismissed",
+            sessionExperienceEventAttributes(experience)
+        )
+    }
+
     /**
      * Called when leaving an Experience screen.  Add any side-effects here, such as tracking the
      * session.
@@ -291,7 +333,7 @@ open class ExperienceNavigationViewModel(
             sessionTracker.leaveSession(
                 ExperienceScreenSessionKey(experience.id.rawValue, currentScreenId),
                 "Screen Dismissed",
-                sessionEventAttributes(screenViewModel)
+                sessionScreenEventAttributes(screenViewModel)
             )
         }
     }
@@ -305,12 +347,12 @@ open class ExperienceNavigationViewModel(
             ExperienceScreenSessionKey(experience.id.rawValue, screenViewModel.screenId),
             "Screen Presented",
             "Screen Viewed",
-            sessionEventAttributes(screenViewModel)
+            sessionScreenEventAttributes(screenViewModel)
         )
     }
 
     /**
-     * Exits the Experience by emiting the appropriate events.
+     * Exits the Experience by emitting the appropriate events.
      *
      * You can override this to modify the exit behaviour, perhaps to emit a
      * [ExperienceNavigationViewModelInterface.Emission.Event.NavigateAway] with a
@@ -328,6 +370,11 @@ open class ExperienceNavigationViewModel(
     private fun activeScreenViewModel(): ScreenViewModelInterface {
         val currentScreenId = state.backStack.lastOrNull()?.screenId ?: throw RuntimeException("Backstack unexpectedly empty")
         return screenViewModelsById[currentScreenId] ?: throw RuntimeException("Unexpectedly found a dangling screen id in the back stack.")
+    }
+
+    private fun activeScreenViewModelIfPresent(): ScreenViewModelInterface? {
+        val currentScreenId = state.backStack.lastOrNull()?.screenId ?: return null
+        return screenViewModelsById[currentScreenId]
     }
 
     /**
@@ -348,7 +395,13 @@ open class ExperienceNavigationViewModel(
         )
     }
 
-    private fun sessionEventAttributes(screenViewModel: ScreenViewModelInterface): Attributes {
+    protected open fun sessionExperienceEventAttributes(experience: Experience): Attributes {
+        return hashMapOf(
+            Pair("experience", experience.asAttributeValue())
+        )
+    }
+
+    protected open fun sessionScreenEventAttributes(screenViewModel: ScreenViewModelInterface): Attributes {
         return hashMapOf(
             Pair("experience", experience.asAttributeValue()),
             Pair("screen", screenViewModel.attributes)
@@ -366,10 +419,19 @@ open class ExperienceNavigationViewModel(
     ) : Parcelable
 
     /**
-     * A unique descriptor for identifying a given experience screen to [SessionTrackerInterface].
+     * A unique descriptor for identifying a given experience screen to the [SessionTrackerInterface].
      */
     data class ExperienceScreenSessionKey(
         private val experienceId: String,
         private val screenId: String
     )
+
+    /**
+     * A unique descriptor for identifying a given experience to the [SessionTrackerInterface].
+     */
+    data class ExperienceSessionKey(
+        val experienceId: String,
+        val campaignId: String?
+    )
+
 }

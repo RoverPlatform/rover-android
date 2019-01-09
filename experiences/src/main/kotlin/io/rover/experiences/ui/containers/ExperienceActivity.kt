@@ -205,7 +205,7 @@ open class ExperienceActivity : AppCompatActivity() {
     }
 
     private fun experienceViewModel(rover: Rover, experienceRequest: ExperienceViewModel.ExperienceRequest, icicle: Parcelable?): ExperienceViewModelInterface {
-            return rover.resolve(ExperienceViewModelInterface::class.java, null, experienceRequest, icicle)
+            return rover.resolve(ExperienceViewModelInterface::class.java, null, experienceRequest, this.lifecycle, icicle)
                 ?: throw RuntimeException("Factory for ExperienceViewModelInterface not registered in Rover DI container.")
     }
 

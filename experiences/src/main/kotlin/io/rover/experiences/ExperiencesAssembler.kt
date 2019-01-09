@@ -2,6 +2,8 @@
 
 package io.rover.experiences
 
+import android.arch.lifecycle.Lifecycle
+import android.arch.lifecycle.LifecycleOwner
 import android.content.Context
 import android.os.Parcelable
 import android.util.DisplayMetrics
@@ -155,13 +157,14 @@ class ExperiencesAssembler : Assembler {
         container.register(
             Scope.Transient,
             ExperienceNavigationViewModelInterface::class.java
-        ) { resolver: Resolver, experience: Experience, icicle: Parcelable? ->
+        ) { resolver: Resolver, experience: Experience, lifecycle: Lifecycle, icicle: Parcelable? ->
             ExperienceNavigationViewModel(
                 experience,
                 resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java),
                 resolver.resolveSingletonOrFail(SessionTrackerInterface::class.java),
                 { screen -> resolver.resolve(ScreenViewModelInterface::class.java, null, screen)!! },
                 { toolbarConfiguration -> resolver.resolve(ExperienceToolbarViewModelInterface::class.java, null, toolbarConfiguration)!! },
+                lifecycle,
                 icicle
             )
         }
@@ -207,14 +210,14 @@ class ExperiencesAssembler : Assembler {
         container.register(
             Scope.Transient,
             ExperienceViewModelInterface::class.java
-        ) { resolver: Resolver, experienceRequest: ExperienceViewModel.ExperienceRequest, icicle: Parcelable? ->
+        ) { resolver: Resolver, experienceRequest: ExperienceViewModel.ExperienceRequest, lifecycle: Lifecycle, icicle: Parcelable? ->
             ExperienceViewModel(
                 experienceRequest,
                 resolver.resolveSingletonOrFail(ExperiencesGraphqlApiClient::class.java),
                 resolver.resolveSingletonOrFail(Scheduler::class.java, "main"),
                 resolver.resolveSingletonOrFail(SessionTrackerInterface::class.java),
                 { experience: Experience, navigationIcicle: Parcelable? ->
-                    resolver.resolve(ExperienceNavigationViewModelInterface::class.java, null, experience, navigationIcicle)!!
+                    resolver.resolve(ExperienceNavigationViewModelInterface::class.java, null, experience, lifecycle, navigationIcicle)!!
                 },
                 icicle
             )

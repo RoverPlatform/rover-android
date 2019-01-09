@@ -1,9 +1,11 @@
 package io.rover.notifications.ui
 
+import android.arch.lifecycle.Lifecycle
+import android.arch.lifecycle.LifecycleObserver
+import android.arch.lifecycle.OnLifecycleEvent
 import io.rover.core.logging.log
 import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.Publishers
-import org.reactivestreams.Publisher
 import io.rover.core.streams.doOnNext
 import io.rover.core.streams.doOnRequest
 import io.rover.core.streams.filterNulls
@@ -14,13 +16,13 @@ import io.rover.core.tracking.SessionTrackerInterface
 import io.rover.notifications.domain.Notification
 import io.rover.notifications.ui.concerns.NotificationCenterListViewModelInterface
 import io.rover.notifications.ui.concerns.NotificationsRepositoryInterface
-import io.rover.core.streams.distinctUntilChanged
-import io.rover.core.streams.subscribe
+import org.reactivestreams.Publisher
 import java.util.Date
 
 class NotificationCenterListViewModel(
     private val notificationsRepository: NotificationsRepositoryInterface,
-    private val sessionTracker: SessionTrackerInterface
+    private val sessionTracker: SessionTrackerInterface,
+    activityLifecycle: Lifecycle
 ) : NotificationCenterListViewModelInterface {
     override fun events(): Publisher<out NotificationCenterListViewModelInterface.Event> = epic.doOnRequest {
         // Infer from a new subscriber that it's a newly displayed view, and, thus, an
@@ -96,15 +98,7 @@ class NotificationCenterListViewModel(
             }
         ).shareHotAndReplay(0)
 
-    override fun becameVisible() {
-        visibilityStateSubject.onNext(true)
-    }
-
-    override fun becameInvisible() {
-        visibilityStateSubject.onNext(false)
-    }
-
-    protected fun trackEnterNotificationCenter() {
+    private fun trackEnterNotificationCenter() {
         sessionTracker.enterSession(
             "NotificationCenter",
             "Notification Center Presented",
@@ -113,7 +107,7 @@ class NotificationCenterListViewModel(
         )
     }
 
-    protected fun trackLeaveNotificationCenter() {
+    private fun trackLeaveNotificationCenter() {
         sessionTracker.leaveSession(
             "NotificationCenter",
             "Notification Center Dismissed",
@@ -129,16 +123,19 @@ class NotificationCenterListViewModel(
         }
     }
 
-    private val visibilityStateSubject = PublishSubject<Boolean>()
 
     init {
-        visibilityStateSubject.distinctUntilChanged().subscribe { visible ->
-            if (visible) {
+        activityLifecycle.addObserver(object : LifecycleObserver {
+            @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
+            fun presented() {
                 trackEnterNotificationCenter()
-            } else {
+            }
+
+            @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+            fun dismissed() {
                 trackLeaveNotificationCenter()
             }
-        }
+        })
     }
 
     private sealed class Action {

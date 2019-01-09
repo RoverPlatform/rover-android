@@ -1,5 +1,6 @@
 package io.rover.notifications.ui
 
+import android.arch.lifecycle.Lifecycle
 import io.rover.core.logging.log
 import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.Publishers
@@ -20,7 +21,8 @@ import java.util.Date
 
 class NotificationCenterListViewModel(
     private val notificationsRepository: NotificationsRepositoryInterface,
-    private val sessionTracker: SessionTrackerInterface
+    private val sessionTracker: SessionTrackerInterface,
+    private val lifecycle: Lifecycle
 ) : NotificationCenterListViewModelInterface {
     override fun events(): Publisher<out NotificationCenterListViewModelInterface.Event> = epic.doOnRequest {
         // Infer from a new subscriber that it's a newly displayed view, and, thus, an

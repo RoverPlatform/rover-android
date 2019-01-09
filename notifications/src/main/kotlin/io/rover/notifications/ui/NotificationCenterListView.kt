@@ -57,6 +57,14 @@ open class NotificationCenterListView : CoordinatorLayout {
      * You must provide an Activity here before binding the view model.
      */
     var activity: AppCompatActivity? = null
+        set(activity) {
+            field = activity
+            viewModel = if(activity == null) {
+                null
+            } else Rover.shared?.resolve(NotificationCenterListViewModelInterface::class.java, null, activity.lifecycle) ?: throw RuntimeException(
+                "Ensure Rover is initialized and NotificationsAssembler() added before using notification center."
+            )
+        }
 
     /**
      * This method will generate a row view.
@@ -306,20 +314,6 @@ open class NotificationCenterListView : CoordinatorLayout {
                 )
             }
         }).attachToRecyclerView(itemsView)
-
-        viewModel = Rover.shared?.resolve(NotificationCenterListViewModelInterface::class.java, null) ?: throw RuntimeException(
-            "Ensure Rover is initialized and NotificationsAssembler() added before using notification center."
-        )
-
-        viewTreeObserver.addOnGlobalLayoutListener {
-            val rect = Rect()
-            val visible = getGlobalVisibleRect(rect)
-            if (visible && isShown) {
-                viewModel?.becameVisible()
-            } else {
-                viewModel?.becameInvisible()
-            }
-        }
     }
 
     override fun onWindowFocusChanged(hasWindowFocus: Boolean) {

@@ -68,7 +68,7 @@ class SessionTracker(
     private fun timerCallback() {
         log.v("Emitting events for expired sessions.")
         sessionStore.collectExpiredSessions(keepAliveTime).forEach { expiredSession ->
-            log.v("... expired session: ${expiredSession.sessionKey}")
+            log.v("Session closed: ${expiredSession.sessionKey}")
             eventQueueService.trackEvent(
                 Event(
                     expiredSession.eventName,
@@ -119,7 +119,10 @@ class SessionStore(
     }
 
     override fun enterSession(sessionKey: Any, sessionEventName: String, attributes: Attributes) {
-        val session = getEntry(sessionKey) ?: SessionEntry(
+        val session = getEntry(sessionKey)?.copy(
+            // clear closedAt to avoid expiring the session if it is being re-opened.
+            closedAt = null
+        ) ?: SessionEntry(
             UUID.randomUUID(),
             sessionEventName,
             Date(),
@@ -187,13 +190,13 @@ class SessionStore(
             .filter { entry ->
                 entry.second.closedAt!!.before(
                     Date(
-                        Date().time + keepAliveSeconds * 1000L
+                        Date().time + keepAlive * 1000L
                     )
                 )
             }
 
         expiringEntries.map { it.first }.forEach { key ->
-            log.v("Removing Expired entry $key")
+            log.v("Removing now expired session entry $key from store.")
             store.unset(key)
         }
 

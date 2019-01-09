@@ -3,6 +3,7 @@
 package io.rover.notifications
 
 import android.app.Application
+import android.arch.lifecycle.Lifecycle
 import android.arch.lifecycle.ProcessLifecycleOwner
 import android.content.Context
 import android.content.Intent
@@ -170,10 +171,11 @@ class NotificationsAssembler @JvmOverloads constructor(
         container.register(
             Scope.Transient, // can be a singleton because it is stateless and has no parameters.
             NotificationCenterListViewModelInterface::class.java
-        ) { resolver ->
+        ) { resolver, activityLifecycle: Lifecycle ->
             NotificationCenterListViewModel(
                 resolver.resolveSingletonOrFail(NotificationsRepositoryInterface::class.java),
-                resolver.resolveSingletonOrFail(SessionTrackerInterface::class.java)
+                resolver.resolveSingletonOrFail(SessionTrackerInterface::class.java),
+                activityLifecycle
             )
         }
 

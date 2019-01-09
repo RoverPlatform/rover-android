@@ -22,7 +22,7 @@ import java.util.Date
 class NotificationCenterListViewModel(
     private val notificationsRepository: NotificationsRepositoryInterface,
     private val sessionTracker: SessionTrackerInterface,
-    private val activityLifecycle: Lifecycle
+    activityLifecycle: Lifecycle
 ) : NotificationCenterListViewModelInterface {
     override fun events(): Publisher<out NotificationCenterListViewModelInterface.Event> = epic.doOnRequest {
         // Infer from a new subscriber that it's a newly displayed view, and, thus, an

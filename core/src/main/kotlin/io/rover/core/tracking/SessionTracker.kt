@@ -105,12 +105,7 @@ class SessionTracker(
 
 class SessionStore(
     localStorage: LocalStorage,
-    private val dateFormatting: DateFormattingInterface,
-    /**
-     * The number of seconds to leave the session open for in the event that the user leaves
-     * temporarily.
-     */
-    private val keepAliveTime: Int
+    private val dateFormatting: DateFormattingInterface
 ) : SessionStoreInterface {
     private val store = localStorage.getKeyValueStorageFor(STORAGE_IDENTIFIER)
 
@@ -159,13 +154,12 @@ class SessionStore(
         store[sessionKey.toString()] = sessionEntry.encodeJson(dateFormatting).toString()
     }
 
-    override fun soonestExpiryInSeconds(keepAliveSeconds: Int?): Int? {
-        val keepAlive = keepAliveSeconds ?: this.keepAliveTime
+    override fun soonestExpiryInSeconds(keepAliveSeconds: Int): Int? {
         // gather stale expiring session entries that have passed.
         val earliestExpiry = store.keys
             .mapNotNull { key -> getEntry(key) }
             .mapNotNull { entry -> entry.closedAt?.time }
-            .map { closedAt -> closedAt + (keepAlive * 1000L) }
+            .map { closedAt -> closedAt + (keepAliveSeconds * 1000L) }
             // differential from current time in seconds, assuming expiry in the future.
             .map { expiryTimeMsEpoch ->
                 ((expiryTimeMsEpoch - Date().time) / 1000).toInt()
@@ -180,8 +174,7 @@ class SessionStore(
        }
     }
 
-    override fun collectExpiredSessions(keepAliveSeconds: Int?): List<SessionStoreInterface.ExpiredSession> {
-        val keepAlive = keepAliveSeconds ?: this.keepAliveTime
+    override fun collectExpiredSessions(keepAliveSeconds: Int): List<SessionStoreInterface.ExpiredSession> {
         val expiringEntries = store.keys
             .mapNotNull { key ->
                 getEntry(key).whenNotNull { Pair(key, it) }
@@ -190,7 +183,7 @@ class SessionStore(
             .filter { entry ->
                 entry.second.closedAt!!.before(
                     Date(
-                        Date().time + keepAlive * 1000L
+                        Date().time + keepAliveSeconds * 1000L
                     )
                 )
             }

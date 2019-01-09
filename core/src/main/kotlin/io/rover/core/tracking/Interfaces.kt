@@ -15,19 +15,15 @@ interface SessionStoreInterface {
 
     /**
      * Returns the soonest time that a session is going to expire.
-     *
-     * The [keepAliveSeconds] parameter is deprecated.
      */
-    fun soonestExpiryInSeconds(keepAliveSeconds: Int? = null): Int?
+    fun soonestExpiryInSeconds(keepAliveSeconds: Int): Int?
 
     /**
      * Returns the sessions that are expired and should have their event emitted.
      *
      * Such sessions will only be returned once; they are deleted.
-     *
-     * The [keepAliveSeconds] parameter is deprecated.
      */
-    fun collectExpiredSessions(keepAliveSeconds: Int? = null): List<ExpiredSession>
+    fun collectExpiredSessions(keepAliveSeconds: Int): List<ExpiredSession>
 
     data class ExpiredSession(
         val sessionKey: Any,

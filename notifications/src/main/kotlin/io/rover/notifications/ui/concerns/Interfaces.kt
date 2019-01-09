@@ -123,10 +123,6 @@ interface NotificationCenterListViewModelInterface : BindableViewModel {
      * User did the pull down gesture to ask for a refresh.
      */
     fun requestRefresh()
-
-    fun becameVisible()
-
-    fun becameInvisible()
 }
 
 /**

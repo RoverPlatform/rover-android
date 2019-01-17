@@ -54,7 +54,7 @@ class AndroidHttpsUrlConnectionNetworkClient(
                 // them in the same LRU cache pool will mean that rotating through just a few
                 // large photos will cause the small payloads to be evicted even though their
                 // contribution to consumption of the cache is tiny.
-                throw missingCacheException()
+                emitMissingCacheWarning()
             }
 
             val requestBody = bodyData?.toByteArray(Charsets.UTF_8)?.asGzip()
@@ -175,10 +175,11 @@ class AndroidHttpsUrlConnectionNetworkClient(
         }
 
         @JvmStatic
-        internal fun missingCacheException(): RuntimeException {
-            return RuntimeException("An HTTPUrlConnection cache is not enabled.\n" +
-                "Please see the Rover documentation for Installation and Initialization of the Rover SDK: https://www.rover.io/docs/android/\n" +
-                "Consider calling Rover.installSaneGlobalHttpCache() in your Application.onCreate()")
+        internal fun emitMissingCacheWarning() {
+            log.e("An HTTPUrlConnection cache is not enabled.\n" +
+                "Please see the Rover documentation for Installation and Initialization of the Rover SDK: https://developer.rover.io/v2/android/\n" +
+                "Ensure you are calling Rover.installSaneGlobalHttpCache() before Rover.initialize().\n" +
+                "Currently installed cache appears to be: ${HttpResponseCache.getInstalled().}")
         }
     }
 

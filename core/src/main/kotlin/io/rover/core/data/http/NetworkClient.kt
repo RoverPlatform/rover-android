@@ -179,7 +179,7 @@ class AndroidHttpsUrlConnectionNetworkClient(
             log.e("An HTTPUrlConnection cache is not enabled.\n" +
                 "Please see the Rover documentation for Installation and Initialization of the Rover SDK: https://developer.rover.io/v2/android/\n" +
                 "Ensure you are calling Rover.installSaneGlobalHttpCache() before Rover.initialize().\n" +
-                "Currently installed cache appears to be: ${HttpResponseCache.getInstalled().}")
+                "Currently installed cache appears to be: ${HttpResponseCache.getInstalled()}")
         }
     }
 

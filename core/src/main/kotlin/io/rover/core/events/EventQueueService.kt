@@ -17,7 +17,12 @@ import io.rover.core.logging.log
 import io.rover.core.streams.subscribe
 import io.rover.core.platform.DateFormattingInterface
 import io.rover.core.platform.LocalStorage
+import io.rover.core.streams.PublishSubject
+import io.rover.core.streams.Scheduler
+import io.rover.core.streams.observeOn
+import io.rover.core.streams.share
 import org.json.JSONArray
+import org.reactivestreams.Publisher
 import java.util.Deque
 import java.util.LinkedList
 import java.util.concurrent.Executors
@@ -27,6 +32,7 @@ class EventQueueService(
     localStorage: LocalStorage,
     private val dateFormatting: DateFormattingInterface,
     application: Application,
+    mainScheduler: Scheduler,
     private val flushAt: Int,
     private val flushIntervalSeconds: Double,
     private val maxBatchSize: Int,
@@ -36,10 +42,14 @@ class EventQueueService(
     private val contextProviders: MutableList<ContextProvider> = mutableListOf()
     private val keyValueStorage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
 
+    private val eventSubject = PublishSubject<Event>()
+
     // state:
     private val eventQueue: Deque<EventSnapshot> = LinkedList()
     private var deviceContext: DeviceContext? = null
     private var isFlushingEvents: Boolean = false
+
+    override val trackedEvents: Publisher<Event> = eventSubject.observeOn(mainScheduler).share()
 
     override fun addContextProvider(contextProvider: ContextProvider) {
         serialQueueExecutor.execute {
@@ -52,6 +62,7 @@ class EventQueueService(
         log.v("Tracking event: $event")
         captureContext()
         enqueueEvent(event, namespace)
+        eventSubject.onNext(event)
         flushEvents(flushAt)
     }
 

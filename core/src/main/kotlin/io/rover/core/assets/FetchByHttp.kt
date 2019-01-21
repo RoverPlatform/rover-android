@@ -61,6 +61,8 @@ class ImageDownloader(
 
                         connection.apply {
                             requestMethod = "GET"
+                            connectTimeout = 60000
+                            readTimeout = 60000
                         }
 
                         val responseCode = try {

@@ -5,6 +5,7 @@ import io.rover.core.data.domain.Attributes
 import io.rover.core.data.domain.DeviceContext
 import io.rover.core.events.contextproviders.UserInfoContextProvider
 import io.rover.core.events.domain.Event
+import org.reactivestreams.Publisher
 
 /**
  * Objects that can contribute to a [DeviceContext] structure.
@@ -70,6 +71,11 @@ interface EventQueueServiceInterface {
      * Asynchronous, will immediately return.
      */
     fun flushNow()
+
+    /**
+     * Subscribe to this Publisher to be informed whenever a new Event is tracked into the Queue.
+     */
+    val trackedEvents: Publisher<Event>
 }
 
 interface UserInfoInterface {

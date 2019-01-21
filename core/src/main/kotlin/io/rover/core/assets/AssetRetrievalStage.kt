@@ -1,7 +1,9 @@
 package io.rover.core.assets
 
+import io.rover.core.logging.log
 import io.rover.core.streams.blockForResult
 import java.io.BufferedInputStream
+import java.lang.Exception
 import java.net.URL
 
 /**
@@ -21,10 +23,15 @@ class AssetRetrievalStage(
     override fun request(input: URL): PipelineStageResult<BufferedInputStream> {
         // so now I am going to just *block* while waiting for the callback, since this is all being
         // run on a background executor.
-        val streamResult = imageDownloader
-            .downloadStreamFromUrl(input)
-            .blockForResult()
-            .first()
+        val streamResult = try {
+             imageDownloader
+                .downloadStreamFromUrl(input)
+                .blockForResult(timeoutSeconds = 300)
+                .first()
+        } catch (exception: Exception) {
+            log.w("Unable to download asset because: ${exception.message}")
+            return PipelineStageResult.Failed<BufferedInputStream>(exception)
+        }
 
         // My use of blockForResult() here has an unfortunate side-effect: because downloadStreamFromUrl()
         // itself dispatches work to the ioExecutor, and does not yield the Publisher until that

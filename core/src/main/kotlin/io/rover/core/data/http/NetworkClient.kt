@@ -153,7 +153,7 @@ class AndroidHttpsUrlConnectionNetworkClient(
             // TODO: detect if this was a cache hit and log as such.
             // completionHandler(result)
             this@AndroidHttpsUrlConnectionNetworkClient.log.v(
-                "Cache hit count currently is: ${HttpResponseCache.getInstalled().hitCount}"
+                "Cache hit count currently is: ${HttpResponseCache.getInstalled()?.hitCount}"
             )
 
             subscriber.onNext(result)

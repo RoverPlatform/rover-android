@@ -314,6 +314,7 @@ class CoreAssembler @JvmOverloads constructor(
                 resolver.resolveSingletonOrFail(LocalStorage::class.java),
                 resolver.resolveSingletonOrFail(DateFormattingInterface::class.java),
                 application,
+                resolver.resolveSingletonOrFail(Scheduler::class.java, "main"),
                 20,
                 30.0,
                 50,

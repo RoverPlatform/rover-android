@@ -66,7 +66,7 @@ class RowViewModelSpec : Spek({
                         container.register(
                             Scope.Singleton,
                             UrlSchemes::class.java
-                        ) { _ -> UrlSchemes(listOf("rv-inbox")) }
+                        ) { _ -> UrlSchemes(listOf("rv-inbox"), associatedDomains = listOf("inbox.rover.io")) }
 
                         container.register(
                             Scope.Singleton,

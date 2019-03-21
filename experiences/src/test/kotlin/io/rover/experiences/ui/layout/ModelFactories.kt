@@ -8,6 +8,7 @@ import io.rover.experiences.data.domain.Color
 import io.rover.experiences.data.domain.Height
 import io.rover.experiences.data.domain.HorizontalAlignment
 import io.rover.core.data.domain.ID
+import io.rover.experiences.data.domain.Block
 import io.rover.experiences.data.domain.Insets
 import io.rover.experiences.data.domain.Position
 import io.rover.experiences.data.domain.RectangleBlock
@@ -47,7 +48,9 @@ class ModelFactories {
                     textColor = Color(0xff, 0xff, 0xff, 1.0),
                     useDefaultStyle = true
                 ),
-                keys = emptyMap()
+                keys = emptyMap(),
+                name = "An empty screen",
+                tags = emptyList()
             ).copy()
         }
 
@@ -63,13 +66,16 @@ class ModelFactories {
                     scale = BackgroundScale.X1
                 ),
                 blocks = listOf(),
-                id = ID("0")
+                id = ID("0"),
+                keys = emptyMap(),
+                name = "Row 1",
+                tags = emptyList()
             )
         }
 
         fun emptyRectangleBlock(): RectangleBlock {
             return RectangleBlock(
-                tapBehavior = null,
+                tapBehavior = Block.TapBehavior.None(),
                 position = Position(
                     horizontalAlignment = HorizontalAlignment.Fill(
                         0.0, 0.0
@@ -92,7 +98,9 @@ class ModelFactories {
                 id = ID(""),
                 insets = Insets(0, 0, 0, 0),
                 opacity = 1.0,
-                keys = emptyMap()
+                keys = emptyMap(),
+                name = "Example Rectangle Block",
+                tags = emptyList()
             )
         }
 

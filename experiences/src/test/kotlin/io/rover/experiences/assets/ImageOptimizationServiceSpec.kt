@@ -1,4 +1,4 @@
-package io.rover.core.assets
+package io.rover.experiences.assets
 
 import io.rover.experiences.data.domain.Background
 import io.rover.experiences.data.domain.BackgroundContentMode

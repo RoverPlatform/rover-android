@@ -3,8 +3,13 @@ package io.rover.app.debug
 import android.app.Application
 import android.content.Intent
 import com.google.firebase.iid.FirebaseInstanceId
+import io.reactivex.Observable
 import io.rover.core.CoreAssembler
 import io.rover.core.Rover
+import io.rover.core.events.EventQueueServiceInterface
+import io.rover.core.events.domain.Event
+import io.rover.core.logging.log
+import io.rover.core.streams.subscribe
 import io.rover.debug.DebugAssembler
 import io.rover.experiences.ExperiencesAssembler
 import io.rover.location.LocationAssembler
@@ -47,5 +52,17 @@ class DebugApplication : Application() {
             DebugAssembler(),
             TicketmasterAssembler()
         )
+
+        val eventObservable : Observable<Event> = Observable.fromPublisher(
+            Rover.shared!!.resolveSingletonOrFail(EventQueueServiceInterface::class.java).trackedEvents
+        )
+
+        eventObservable.subscribe { event ->
+            log.w("Received an event: ${event.name}")
+        }
+
+//        Rover.shared?.resolveSingletonOrFail(EventQueueServiceInterface::class.java)?.trackedEvents?.subscribe { event ->
+//            log.w("Received an event: $event")
+//        }
     }
 }

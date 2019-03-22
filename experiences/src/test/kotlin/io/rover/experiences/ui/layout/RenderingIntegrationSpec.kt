@@ -18,16 +18,25 @@ import io.rover.core.logging.JvmLogger
 import io.rover.core.logging.log
 import io.rover.core.routing.Router
 import io.rover.core.streams.Scheduler
+import io.rover.experiences.data.graphql.operations.data.decodeJson
 import org.amshove.kluent.mock
 import org.amshove.kluent.shouldBeLessThan
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.describe
-import org.jetbrains.spek.api.dsl.it
-import org.jetbrains.spek.api.dsl.on
+import org.amshove.kluent.shouldEqual
 import org.json.JSONObject
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 import kotlin.system.measureNanoTime
 
-class RenderingIntegrationTest : Spek({
+class RenderingIntegrationSpec : Spek({
+    describe("use of org.json within tests") {
+        context("test suite run") {
+            val parsedJson = JSONObject("""{"a": 42}""")
+            it("can parse a value out of JSON") {
+                parsedJson.getInt("a").shouldEqual(42)
+            }
+        }
+    }
+
     describe("integration test with a full experience in JSON") {
         GlobalStaticLogHolder.globalLogEmitter = JvmLogger()
         val realObjectStack = InjectionContainer(
@@ -62,7 +71,7 @@ class RenderingIntegrationTest : Spek({
                         container.register(
                             Scope.Singleton,
                             UrlSchemes::class.java
-                        ) { _ -> UrlSchemes(listOf("rv-inbox")) }
+                        ) { _ -> UrlSchemes(listOf("rv-inbox"), associatedDomains = listOf("inbox.rover.io")) }
 
                         container.register(
                             Scope.Singleton,
@@ -79,7 +88,7 @@ class RenderingIntegrationTest : Spek({
 
         log.v("There are ${experience.screens.count()} screens.")
 
-        on("layout") {
+        context("layout") {
             val screenViewModels = experience.screens.map {
                 realObjectStack.resolve(ScreenViewModelInterface::class.java, null, it)!!
             }

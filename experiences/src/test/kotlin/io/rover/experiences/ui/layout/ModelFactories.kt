@@ -19,6 +19,10 @@ import io.rover.experiences.data.domain.StatusBarStyle
 import io.rover.experiences.data.domain.TitleBar
 import io.rover.experiences.data.domain.TitleBarButtons
 import io.rover.experiences.data.domain.VerticalAlignment
+import io.rover.experiences.ui.RectF
+import io.rover.experiences.ui.blocks.concerns.layout.LayoutableViewModel
+import org.amshove.kluent.shouldBeInstanceOf
+import org.amshove.kluent.shouldEqual
 
 class ModelFactories {
     companion object {
@@ -109,4 +113,14 @@ class ModelFactories {
         val Transparent = Color(0xff, 0xff, 0xff, 0.0)
         val DarkBlue = Color(0, 0, 0x7f, 1.0)
     }
+}
+
+fun DisplayItem.shouldMatch(
+    position: RectF,
+    type: Class<out LayoutableViewModel>,
+    clip: RectF? = null
+) {
+    this.position.shouldEqual(position)
+    this.viewModel.shouldBeInstanceOf(type)
+    this.clip.shouldEqual(clip)
 }

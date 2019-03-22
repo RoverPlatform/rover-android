@@ -24,13 +24,11 @@ import io.rover.experiences.data.domain.VerticalAlignment
 import io.rover.core.routing.Router
 import io.rover.experiences.ui.RectF
 import org.amshove.kluent.mock
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.given
-import org.jetbrains.spek.api.dsl.it
-import org.jetbrains.spek.api.dsl.on
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
-class ScreenViewModelSpec : Spek({
-    given("integration tests with real row view models") {
+object ScreenViewModelSpec : Spek({
+    describe("integration tests with real row view models") {
 
         val realObjectStack = InjectionContainer(
             listOf(
@@ -75,7 +73,7 @@ class ScreenViewModelSpec : Spek({
         )
         realObjectStack.initializeContainer()
 
-        given("a basic screen with one row with a rectangle block") {
+        context("a basic screen with one row with a rectangle block") {
             val screen = ModelFactories.emptyScreen().copy(
                 rows = listOf(
                     ModelFactories.emptyRow().copy(
@@ -94,7 +92,7 @@ class ScreenViewModelSpec : Spek({
 
             val screenViewModel = realObjectStack.resolve(ScreenViewModelInterface::class.java, null, screen)!!
 
-            on("rendering") {
+            context("rendering") {
                 val rendered = screenViewModel.render(
                     40f
                 )
@@ -114,7 +112,7 @@ class ScreenViewModelSpec : Spek({
             }
         }
 
-        given("a screen with two rows") {
+        context("a screen with two rows") {
             val screen = ModelFactories.emptyScreen().copy(
                 rows = listOf(
                     ModelFactories.emptyRow().copy(
@@ -137,7 +135,7 @@ class ScreenViewModelSpec : Spek({
             )
             val screenViewModel = realObjectStack.resolve(ScreenViewModelInterface::class.java, null, screen)!!
 
-            on("rendering") {
+            context("rendering") {
                 val rendered = screenViewModel.render(
                     40f
                 )
@@ -163,7 +161,7 @@ class ScreenViewModelSpec : Spek({
             }
         }
 
-        given("a screen with a row and a block with a vertical fill offset and a horizontal left offset") {
+        context("a screen with a row and a block with a vertical fill offset and a horizontal left offset") {
             val screen = ModelFactories.emptyScreen().copy(
                 rows = listOf(
                     ModelFactories.emptyRow().copy(
@@ -192,7 +190,7 @@ class ScreenViewModelSpec : Spek({
             )
             val screenViewModel = realObjectStack.resolve(ScreenViewModelInterface::class.java, null, screen)!!
 
-            on("rendering") {
+            context("rendering") {
                 val rendered = screenViewModel.render(
                     40f
                 )
@@ -206,7 +204,7 @@ class ScreenViewModelSpec : Spek({
             }
         }
 
-        given("a screen with a row with a vertically centered block within") {
+        context("a screen with a row with a vertically centered block within") {
             val screen = ModelFactories.emptyScreen().copy(
                 rows = listOf(
                     ModelFactories.emptyRow().copy(
@@ -228,7 +226,7 @@ class ScreenViewModelSpec : Spek({
             )
             val screenViewModel = realObjectStack.resolve(ScreenViewModelInterface::class.java, null, screen)!!
 
-            on("rendering") {
+            context("rendering") {
                 val rendered = screenViewModel.render(
                     300f
                 )

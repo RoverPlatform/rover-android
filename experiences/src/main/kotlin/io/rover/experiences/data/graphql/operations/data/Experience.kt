@@ -5,14 +5,11 @@ package io.rover.experiences.data.graphql.operations.data
 import io.rover.core.data.domain.ID
 import io.rover.core.data.graphql.getObjectIterable
 import io.rover.core.data.graphql.getStringIterable
-import io.rover.core.data.graphql.operations.data.encodeJson
-import io.rover.core.data.graphql.operations.data.toAttributesHash
 import io.rover.core.data.graphql.operations.data.toStringHash
 import io.rover.core.data.graphql.putProp
 import io.rover.core.data.graphql.safeGetString
 import io.rover.core.data.graphql.safeGetUri
 import io.rover.core.data.graphql.safeOptString
-import io.rover.core.platform.DateFormattingInterface
 import io.rover.experiences.data.domain.Background
 import io.rover.experiences.data.domain.BackgroundContentMode
 import io.rover.experiences.data.domain.BackgroundScale

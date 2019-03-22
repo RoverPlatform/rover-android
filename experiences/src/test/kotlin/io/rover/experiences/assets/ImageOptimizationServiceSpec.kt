@@ -7,22 +7,19 @@ import io.rover.experiences.data.domain.Color
 import io.rover.experiences.data.domain.Image
 import io.rover.core.ui.PixelSize
 import org.amshove.kluent.shouldEqual
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.given
-import org.jetbrains.spek.api.dsl.it
-import org.jetbrains.spek.api.dsl.on
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 import java.net.URI
 import java.net.URLDecoder
 
-class ImageOptimizationServiceSpec : Spek({
-
+object ImageOptimizationServiceSpec : Spek({
     fun decodeUriParams(uri: URI): Map<String, String> {
         return uri.query.split("&").map { it.split("=").map { URLDecoder.decode(it, "UTF-8") } }.associate { Pair(it[0], it[1]) }
     }
 
     val imageOptimizationService = ImageOptimizationService()
 
-    given("a stretched background") {
+    describe("a stretched background") {
         val image = Image(
             120,
             100,
@@ -38,7 +35,7 @@ class ImageOptimizationServiceSpec : Spek({
             BackgroundScale.X3 // 480 dpi
         )
 
-        on("optimized to display in exactly the same pixel-size block") {
+        context("optimized to display in exactly the same pixel-size block") {
 
             val (uri, _) = imageOptimizationService.optimizeImageBackground(
                 background,
@@ -54,7 +51,7 @@ class ImageOptimizationServiceSpec : Spek({
             }
         }
 
-        on("optimized to display in a block with smaller pixel-size but the same aspect ratio") {
+        context("optimized to display in a block with smaller pixel-size but the same aspect ratio") {
 
             val (uri, _) = imageOptimizationService.optimizeImageBackground(
                 background,
@@ -70,7 +67,7 @@ class ImageOptimizationServiceSpec : Spek({
             }
         }
 
-        on("optimized to display in smaller but same aspect ratio block") {
+        context("optimized to display in smaller but same aspect ratio block") {
             val (uri, _) = imageOptimizationService.optimizeImageBackground(
                 background,
                 PixelSize(34, 29),
@@ -85,7 +82,7 @@ class ImageOptimizationServiceSpec : Spek({
             }
         }
 
-        on("optimized to display in a block with a wider dimension and a narrower dimension") {
+        context("optimized to display in a block with a wider dimension and a narrower dimension") {
             // TODO: should have same assertions as the same-pixel size case!
 
             val (uri, _) = imageOptimizationService.optimizeImageBackground(
@@ -103,7 +100,7 @@ class ImageOptimizationServiceSpec : Spek({
         }
     }
 
-    given("an original size image block background at 3X (480 dpi) that must be cropped") {
+    describe("an original size image block background at 3X (480 dpi) that must be cropped") {
         val image = Image(
             120,
             100,
@@ -122,7 +119,7 @@ class ImageOptimizationServiceSpec : Spek({
            BackgroundScale.X3
         )
 
-        on("optimized to display in exactly the same size block on same density display") {
+        context("optimized to display in exactly the same size block on same density display") {
             val (uri, optimizedConfiguration) = imageOptimizationService.optimizeImageBackground(
                 background,
                 PixelSize(120, 100),
@@ -148,7 +145,7 @@ class ImageOptimizationServiceSpec : Spek({
             }
         }
 
-        on("optimized to display in exactly the same size block on a 560 dpi display") {
+        context("optimized to display in exactly the same size block on a 560 dpi display") {
             val (uri, optimizedConfiguration) = imageOptimizationService.optimizeImageBackground(
                 background,
                 PixelSize(140, 117), // * 1.16666~ (480 dp -> 560 dp factor)
@@ -175,7 +172,7 @@ class ImageOptimizationServiceSpec : Spek({
             }
         }
 
-        on("optimized to display in a slightly wider block on same density display") {
+        context("optimized to display in a slightly wider block on same density display") {
             val (uri, optimizedConfiguration) = imageOptimizationService.optimizeImageBackground(
                 background,
                 PixelSize(140, 100), // wider by 20 image pixels (which is the same as display pixels here)
@@ -201,7 +198,7 @@ class ImageOptimizationServiceSpec : Spek({
             }
         }
 
-        on("optimized to display in a slightly wider block on a 560 dpi display") {
+        context("optimized to display in a slightly wider block on a 560 dpi display") {
             val (uri, optimizedConfiguration) = imageOptimizationService.optimizeImageBackground(
                 background,
                 PixelSize(163, 117), // wider by 20 image pixels and then * 1.16666~ (480 dp -> 560 dp factor)
@@ -228,7 +225,7 @@ class ImageOptimizationServiceSpec : Spek({
             }
         }
 
-        on("optimized to display in a narrower block on same density display") {
+        context("optimized to display in a narrower block on same density display") {
             val (uri, optimizedConfiguration) = imageOptimizationService.optimizeImageBackground(
                 background,
                 PixelSize(100, 100), // 20 image pixels narrower.
@@ -254,7 +251,7 @@ class ImageOptimizationServiceSpec : Spek({
             }
         }
 
-        on("optimized to display in a narrower block on a 560 dpi display") {
+        context("optimized to display in a narrower block on a 560 dpi display") {
             val (uri, optimizedConfiguration) = imageOptimizationService.optimizeImageBackground(
                 background,
                 PixelSize(117, 117), // 20 image pixels narrower and then * 1.16666~ (480 dp -> 560 dp factor)
@@ -281,7 +278,7 @@ class ImageOptimizationServiceSpec : Spek({
             }
         }
 
-        on("optimized to display in exactly the same size block on a 160 dpi display") {
+        context("optimized to display in exactly the same size block on a 160 dpi display") {
             val (uri, optimizedConfiguration) = imageOptimizationService.optimizeImageBackground(
                 background,
                 PixelSize(40, 33), // * 0.3 (480 dp -> 160 dp factor)
@@ -307,7 +304,7 @@ class ImageOptimizationServiceSpec : Spek({
             }
         }
 
-        on("optimized to display in a narrower block on a 160 dpi display") {
+        context("optimized to display in a narrower block on a 160 dpi display") {
             val (uri, optimizedConfiguration) = imageOptimizationService.optimizeImageBackground(
                 background,
                 PixelSize(33, 33), // 20 image pixels narrower and then * 0.3 (480 dp -> 160 dp factor)
@@ -333,7 +330,7 @@ class ImageOptimizationServiceSpec : Spek({
             }
         }
 
-        on("optimized to display in a slightly wider block on a 160 dpi display") {
+        context("optimized to display in a slightly wider block on a 160 dpi display") {
             val (uri, optimizedConfiguration) = imageOptimizationService.optimizeImageBackground(
                 background,
                 PixelSize(47, 33), // wider by 20 image pixels and then * 0.3 (480 dp -> 160 dp factor)

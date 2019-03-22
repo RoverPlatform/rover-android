@@ -24,11 +24,24 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        // debug {
+        //     minifyEnabled true
+        // }
     }
 
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-        test.java.srcDirs += 'src/test/kotlin'
+    // Add Kotlin source directory to all source sets
+    sourceSets.each {
+        it.java.srcDirs += "src/$it.name/kotlin"
+    }
+
+    testOptions {
+        junitPlatform {
+            filters {
+                engines {
+                    include 'spek2'
+                }
+            }
+        }
     }
 }
 
@@ -59,21 +72,22 @@ dependencies {
     implementation 'com.android.support:customtabs:27.1.1'
 
     testImplementation 'junit:junit:4.12'
-    testImplementation 'org.jetbrains.spek:spek-api:1.1.5'
-    testImplementation 'org.jetbrains.spek:spek-junit-platform-engine:1.1.5'
+
+    // spek
+    testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
+    testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek_version"
+
     testImplementation 'com.natpryce:hamkrest:1.4.2.0'
     testImplementation 'org.amshove.kluent:kluent:1.30'
     testImplementation 'org.amshove.kluent:kluent-android:1.30'
     testImplementation 'org.skyscreamer:jsonassert:1.5.0'
 
     // JUnit 5 support.  Needed for Spek.
-    testImplementation junit5.unitTests()
-    // (Optional) If you need "parameterized tests"
-    testImplementation junit5.parameterized()
-    // (Optional) For running tests inside Android Studio 3.x (needed as of at least beta 7)
-    testCompileOnly junit5.unitTestsRuntime()
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.3.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.3.2")
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 }
 
 configurations {

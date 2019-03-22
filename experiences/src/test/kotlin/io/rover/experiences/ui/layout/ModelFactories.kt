@@ -8,6 +8,7 @@ import io.rover.experiences.data.domain.Color
 import io.rover.experiences.data.domain.Height
 import io.rover.experiences.data.domain.HorizontalAlignment
 import io.rover.core.data.domain.ID
+import io.rover.experiences.data.domain.Block
 import io.rover.experiences.data.domain.Insets
 import io.rover.experiences.data.domain.Position
 import io.rover.experiences.data.domain.RectangleBlock
@@ -18,6 +19,10 @@ import io.rover.experiences.data.domain.StatusBarStyle
 import io.rover.experiences.data.domain.TitleBar
 import io.rover.experiences.data.domain.TitleBarButtons
 import io.rover.experiences.data.domain.VerticalAlignment
+import io.rover.experiences.ui.RectF
+import io.rover.experiences.ui.blocks.concerns.layout.LayoutableViewModel
+import org.amshove.kluent.shouldBeInstanceOf
+import org.amshove.kluent.shouldEqual
 
 class ModelFactories {
     companion object {
@@ -47,7 +52,9 @@ class ModelFactories {
                     textColor = Color(0xff, 0xff, 0xff, 1.0),
                     useDefaultStyle = true
                 ),
-                keys = emptyMap()
+                keys = emptyMap(),
+                name = "An empty screen",
+                tags = emptyList()
             ).copy()
         }
 
@@ -63,13 +70,16 @@ class ModelFactories {
                     scale = BackgroundScale.X1
                 ),
                 blocks = listOf(),
-                id = ID("0")
+                id = ID("0"),
+                keys = emptyMap(),
+                name = "Row 1",
+                tags = emptyList()
             )
         }
 
         fun emptyRectangleBlock(): RectangleBlock {
             return RectangleBlock(
-                tapBehavior = null,
+                tapBehavior = Block.TapBehavior.None(),
                 position = Position(
                     horizontalAlignment = HorizontalAlignment.Fill(
                         0.0, 0.0
@@ -92,7 +102,9 @@ class ModelFactories {
                 id = ID(""),
                 insets = Insets(0, 0, 0, 0),
                 opacity = 1.0,
-                keys = emptyMap()
+                keys = emptyMap(),
+                name = "Example Rectangle Block",
+                tags = emptyList()
             )
         }
 
@@ -101,4 +113,14 @@ class ModelFactories {
         val Transparent = Color(0xff, 0xff, 0xff, 0.0)
         val DarkBlue = Color(0, 0, 0x7f, 1.0)
     }
+}
+
+fun DisplayItem.shouldMatch(
+    position: RectF,
+    type: Class<out LayoutableViewModel>,
+    clip: RectF? = null
+) {
+    this.position.shouldEqual(position)
+    this.viewModel.shouldBeInstanceOf(type)
+    this.clip.shouldEqual(clip)
 }

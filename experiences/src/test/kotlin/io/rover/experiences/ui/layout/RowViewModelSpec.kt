@@ -25,13 +25,10 @@ import io.rover.experiences.ui.RectF
 import org.amshove.kluent.mock
 import org.amshove.kluent.shouldBeInstanceOf
 import org.amshove.kluent.shouldEqual
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.describe
-import org.jetbrains.spek.api.dsl.given
-import org.jetbrains.spek.api.dsl.it
-import org.jetbrains.spek.api.dsl.on
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
-class RowViewModelSpec : Spek({
+object RowViewModelSpec : Spek({
     describe("integration tests with real block view models") {
         val realObjectStack = InjectionContainer(
             listOf(
@@ -66,7 +63,7 @@ class RowViewModelSpec : Spek({
                         container.register(
                             Scope.Singleton,
                             UrlSchemes::class.java
-                        ) { _ -> UrlSchemes(listOf("rv-inbox")) }
+                        ) { _ -> UrlSchemes(listOf("rv-inbox"), associatedDomains = listOf("inbox.rover.io")) }
 
                         container.register(
                             Scope.Singleton,
@@ -78,7 +75,7 @@ class RowViewModelSpec : Spek({
         )
         realObjectStack.initializeContainer()
 
-        given("an autoheight row with stacked blocks") {
+        context("an autoheight row with stacked blocks") {
             val emptyRow = ModelFactories
                 .emptyRow()
             val rowViewModel = RowViewModel(
@@ -112,7 +109,7 @@ class RowViewModelSpec : Spek({
                 mock()
             )
 
-            on("frame()") {
+            context("frame()") {
                 // row bounds' bottom is given as 0, because rows are always responsible
                 // for either setting their own height or measuring their stacked auto-height.
                 val frame = rowViewModel.frame(RectF(0f, 0f, 60f, 0f))
@@ -122,7 +119,7 @@ class RowViewModelSpec : Spek({
                 }
             }
 
-            on("frame() when erroneously given 0 width") {
+            context("frame() when erroneously given 0 width") {
                 val frame = rowViewModel.frame(RectF(0f, 0f, 0f, 0f))
 
                 it("expands its height to contain the blocks") {
@@ -130,7 +127,7 @@ class RowViewModelSpec : Spek({
                 }
             }
 
-            on("render()") {
+            context("render()") {
                 val layout = rowViewModel.mapBlocksToRectDisplayList(
                     // bottom is given here as 90f because mapBlocksToRectDisplayList must be called
                     // with the fully measured dimensions as returned by frame().
@@ -151,7 +148,7 @@ class RowViewModelSpec : Spek({
                 }
             }
 
-            on("render() when erroneously given 0 width") {
+            context("render() when erroneously given 0 width") {
                 val layout = rowViewModel.mapBlocksToRectDisplayList(
                     // bottom is given here as 90f because mapBlocksToRectDisplayList must be called
                     // with the fully measured dimensions as returned by frame().
@@ -173,7 +170,7 @@ class RowViewModelSpec : Spek({
             }
         }
 
-        given("a non-autoheight row with a floating block that extends outside the top of the row") {
+        context("a non-autoheight row with a floating block that extends outside the top of the row") {
             val rowViewModel = RowViewModel(
                 ModelFactories
                     .emptyRow()
@@ -196,7 +193,7 @@ class RowViewModelSpec : Spek({
                 mock()
             )
 
-            on("frame()") {
+            context("frame()") {
                 // row bounds' bottom is given as 0, because rows are always responsible
                 // for either setting their own height or measuring their stacked auto-height.
                 val frame = rowViewModel.frame(RectF(0f, 0f, 60f, 0f))
@@ -205,7 +202,7 @@ class RowViewModelSpec : Spek({
                 }
             }
 
-            on("render()") {
+            context("render()") {
                 val layout = rowViewModel.mapBlocksToRectDisplayList(
                     rowViewModel.frame(RectF(0f, 0f, 40f, 0f))
                 )
@@ -221,7 +218,7 @@ class RowViewModelSpec : Spek({
             }
         }
 
-        given("a non-autoheight row with a floating block that extends outside the bottom of the row") {
+        context("a non-autoheight row with a floating block that extends outside the bottom of the row") {
             val rowViewModel = RowViewModel(
                 ModelFactories
                     .emptyRow()
@@ -245,7 +242,7 @@ class RowViewModelSpec : Spek({
                 mock()
             )
 
-            on("frame()") {
+            context("frame()") {
                 // row bounds' bottom is given as 0, because rows are always responsible
                 // for either setting their own height or measuring their stacked auto-height.
                 val frame = rowViewModel.frame(RectF(0f, 0f, 60f, 0f))
@@ -254,7 +251,7 @@ class RowViewModelSpec : Spek({
                 }
             }
 
-            on("render()") {
+            context("render()") {
                 val layout = rowViewModel.mapBlocksToRectDisplayList(
                     rowViewModel.frame(RectF(0f, 0f, 40f, 0f))
                 )
@@ -270,7 +267,7 @@ class RowViewModelSpec : Spek({
             }
         }
 
-        given("a non-auto-height row with a floating block") {
+        context("a non-auto-height row with a floating block") {
             val blockHeight = 10.0
             val blockWidth = 30.0
             val rowHeight = 20.0
@@ -298,13 +295,13 @@ class RowViewModelSpec : Spek({
                 )
             }
 
-            given("a non-autoheight row with a floating block is aligned to the bottom") {
+            context("a non-autoheight row with a floating block is aligned to the bottom") {
                 val rowViewModel = nonAutoHeightRowWithFloatingBlock(
                     VerticalAlignment.Bottom(0.0, Height.Static(blockHeight)),
                     HorizontalAlignment.Left(0.0, blockWidth)
                 )
 
-                on("render()") {
+                context("render()") {
                     val layout = rowViewModel.mapBlocksToRectDisplayList(
                         rowViewModel.frame(RectF(0f, 0f, 40f, 0f))
                     )
@@ -319,13 +316,13 @@ class RowViewModelSpec : Spek({
                 }
             }
 
-            given("a non-autoheight row with a floating block is aligned to the middle (vertical)") {
+            context("a non-autoheight row with a floating block is aligned to the middle (vertical)") {
                 val rowViewModel = nonAutoHeightRowWithFloatingBlock(
                     VerticalAlignment.Middle(0.0, Height.Static(blockHeight)),
                     HorizontalAlignment.Left(0.0, blockWidth)
                 )
 
-                on("render()") {
+                context("render()") {
                     val layout = rowViewModel.mapBlocksToRectDisplayList(
                         rowViewModel.frame(RectF(0f, 0f, 40f, 0f))
                     )
@@ -340,13 +337,13 @@ class RowViewModelSpec : Spek({
                 }
             }
 
-            given("a non-autoheight row with a floating block is aligned to the center (horizontal)") {
+            context("a non-autoheight row with a floating block is aligned to the center (horizontal)") {
                 val rowViewModel = nonAutoHeightRowWithFloatingBlock(
                     VerticalAlignment.Top(0.0, Height.Static(blockHeight)),
                     HorizontalAlignment.Center(0.0, blockWidth)
                 )
 
-                on("render()") {
+                context("render()") {
                     val layout = rowViewModel.mapBlocksToRectDisplayList(
                         rowViewModel.frame(RectF(0f, 0f, 40f, 0f))
                     )
@@ -361,13 +358,13 @@ class RowViewModelSpec : Spek({
                 }
             }
 
-            given("a non-autoheight row with a floating block that is aligned to the right") {
+            context("a non-autoheight row with a floating block that is aligned to the right") {
                 val rowViewModel = nonAutoHeightRowWithFloatingBlock(
                     VerticalAlignment.Top(0.0, Height.Static(blockHeight)),
                     HorizontalAlignment.Right(0.0, blockWidth)
                 )
 
-                on("render()") {
+                context("render()") {
                     val layout = rowViewModel.mapBlocksToRectDisplayList(
                         rowViewModel.frame(RectF(0f, 0f, 40f, 0f))
                     )
@@ -385,12 +382,3 @@ class RowViewModelSpec : Spek({
     }
 })
 
-fun DisplayItem.shouldMatch(
-    position: RectF,
-    type: Class<out LayoutableViewModel>,
-    clip: RectF? = null
-) {
-    this.position.shouldEqual(position)
-    this.viewModel.shouldBeInstanceOf(type)
-    this.clip.shouldEqual(clip)
-}

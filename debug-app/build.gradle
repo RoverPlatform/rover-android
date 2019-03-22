@@ -22,8 +22,8 @@ android {
         }
 
         debug {
-            // minifyEnabled true
-            // proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Necessary if you happen to have Instant Run disabled.
+            multiDexEnabled true
             applicationIdSuffix ".debug"
         }
     }

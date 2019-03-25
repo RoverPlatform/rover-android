@@ -29,7 +29,7 @@ class Rover(
         // global, which we "inject" using static scope
         GlobalStaticLogHolder.globalLogEmitter =
             LogBuffer(
-                // uses the resolver to discover when the EventQueueService is ready and can be used
+                // uses the resolver to discover when the EventEmitter is ready and can be used
                 // to submit the logs.
                 AndroidLogger()
             )

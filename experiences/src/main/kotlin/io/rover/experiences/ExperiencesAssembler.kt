@@ -3,7 +3,6 @@
 package io.rover.experiences
 
 import android.arch.lifecycle.Lifecycle
-import android.arch.lifecycle.LifecycleOwner
 import android.content.Context
 import android.os.Parcelable
 import android.util.DisplayMetrics
@@ -15,7 +14,7 @@ import io.rover.core.container.Container
 import io.rover.core.container.Resolver
 import io.rover.core.container.Scope
 import io.rover.core.data.graphql.GraphQlApiServiceInterface
-import io.rover.core.events.EventQueueServiceInterface
+import io.rover.core.events.EventEmitterInterface
 import io.rover.core.routing.Router
 import io.rover.core.streams.Scheduler
 import io.rover.core.tracking.SessionTrackerInterface
@@ -160,7 +159,7 @@ class ExperiencesAssembler : Assembler {
         ) { resolver: Resolver, experience: Experience, lifecycle: Lifecycle, icicle: Parcelable? ->
             ExperienceNavigationViewModel(
                 experience,
-                resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java),
+                resolver.resolveSingletonOrFail(EventEmitterInterface::class.java),
                 resolver.resolveSingletonOrFail(SessionTrackerInterface::class.java),
                 { screen -> resolver.resolve(ScreenViewModelInterface::class.java, null, screen)!! },
                 { toolbarConfiguration -> resolver.resolve(ExperienceToolbarViewModelInterface::class.java, null, toolbarConfiguration)!! },

@@ -2,15 +2,15 @@ package io.rover.core.version
 
 import android.content.Context
 import io.rover.core.data.domain.AttributeValue
-import io.rover.core.events.EventQueueService.Companion.ROVER_NAMESPACE
-import io.rover.core.events.EventQueueServiceInterface
+import io.rover.core.events.EventEmitter.Companion.ROVER_NAMESPACE
+import io.rover.core.events.EventEmitterInterface
 import io.rover.core.events.domain.Event
 import io.rover.core.logging.log
 import io.rover.core.platform.LocalStorage
 
 class VersionTracker(
     private val applicationContext: Context,
-    private val eventQueueService: EventQueueServiceInterface,
+    private val eventEmitter: EventEmitterInterface,
     localStorage: LocalStorage
 ) : VersionTrackerInterface {
     override fun trackAppVersion() {
@@ -45,7 +45,7 @@ class VersionTracker(
 
     private fun trackAppInstalled(versionCode: Int, versionName: String) {
         log.v("App has been installed. Version: $versionName ($versionCode).")
-        eventQueueService.trackEvent(
+        eventEmitter.trackEvent(
             Event(
                 "App Installed",
                 hashMapOf()
@@ -59,7 +59,7 @@ class VersionTracker(
         log.v("App has been $verb from $previousVersionName ($previousVersionCode) to $versionName ($versionCode).")
 
         if (upgrade) {
-            eventQueueService.trackEvent(
+            eventEmitter.trackEvent(
                 Event(
                     "App Updated",
                     // the current app version is included as part of Context already thanks to ApplicationContextProvider.

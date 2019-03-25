@@ -8,8 +8,8 @@ import io.rover.core.data.graphql.operations.data.encodeJson
 import io.rover.core.data.graphql.operations.data.toAttributesHash
 import io.rover.core.data.graphql.safeGetString
 import io.rover.core.data.graphql.safeOptInt
-import io.rover.core.events.EventQueueService.Companion.ROVER_NAMESPACE
-import io.rover.core.events.EventQueueServiceInterface
+import io.rover.core.events.EventEmitter.Companion.ROVER_NAMESPACE
+import io.rover.core.events.EventEmitterInterface
 import io.rover.core.events.domain.Event
 import io.rover.core.logging.log
 import io.rover.core.platform.DateFormattingInterface
@@ -21,7 +21,7 @@ import java.util.UUID
 import kotlin.math.max
 
 class SessionTracker(
-    private val eventQueueService: EventQueueServiceInterface,
+    private val eventEmitter: EventEmitterInterface,
 
     private val sessionStore: SessionStoreInterface,
 
@@ -42,7 +42,7 @@ class SessionTracker(
         log.v("Entering session $sessionKey")
         sessionStore.enterSession(sessionKey, sessionEventName, attributes)
 
-        eventQueueService.trackEvent(
+        eventEmitter.trackEvent(
             Event(
                 sessionStartEventName,
                 attributes
@@ -69,7 +69,7 @@ class SessionTracker(
         log.v("Emitting events for expired sessions.")
         sessionStore.collectExpiredSessions(keepAliveTime).forEach { expiredSession ->
             log.v("Session closed: ${expiredSession.sessionKey}")
-            eventQueueService.trackEvent(
+            eventEmitter.trackEvent(
                 Event(
                     expiredSession.eventName,
                     hashMapOf(
@@ -91,7 +91,7 @@ class SessionTracker(
         log.v("Leaving session $sessionKey")
         sessionStore.leaveSession(sessionKey)
 
-        eventQueueService.trackEvent(
+        eventEmitter.trackEvent(
             Event(
                 sessionEndEventName,
                 attributes

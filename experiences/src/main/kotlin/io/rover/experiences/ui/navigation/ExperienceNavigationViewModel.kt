@@ -8,8 +8,8 @@ import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
 import io.rover.experiences.data.domain.Experience
 import io.rover.experiences.data.domain.Screen
-import io.rover.core.events.EventQueueService
-import io.rover.core.events.EventQueueServiceInterface
+import io.rover.core.events.EventEmitter
+import io.rover.core.events.EventEmitterInterface
 import io.rover.core.events.domain.Event
 import io.rover.core.logging.log
 import io.rover.core.platform.whenNotNull
@@ -37,7 +37,7 @@ import org.reactivestreams.Publisher
  */
 open class ExperienceNavigationViewModel(
     private val experience: Experience,
-    private val eventQueueService: EventQueueServiceInterface,
+    private val eventEmitter: EventEmitterInterface,
     private val sessionTracker: SessionTrackerInterface,
     private val resolveScreenViewModel: (screen: Screen) -> ScreenViewModelInterface,
     private val resolveToolbarViewModel: (configuration: ToolbarConfiguration) -> ExperienceToolbarViewModelInterface,
@@ -141,7 +141,7 @@ open class ExperienceNavigationViewModel(
                         attributes = attributes
                     )
 
-                    eventQueueService.trackEvent(event, EventQueueService.ROVER_NAMESPACE)
+                    eventEmitter.trackEvent(event, EventEmitter.ROVER_NAMESPACE)
                 }
             }
         }

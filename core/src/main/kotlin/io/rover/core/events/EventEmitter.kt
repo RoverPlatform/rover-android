@@ -1,0 +1,21 @@
+package io.rover.core.events
+
+import io.rover.core.events.domain.Event
+import io.rover.core.streams.PublishSubject
+import io.rover.core.streams.share
+import org.reactivestreams.Publisher
+
+class EventEmitter(
+
+) : EventEmitterInterface {
+
+    // maybe use?
+    private val eventSubject = PublishSubject<Event>()
+
+    override val trackedEvents: Publisher<Event> = eventSubject.share()
+
+    override fun trackEvent(event: Event, namespace: String?) {
+        // TODO
+    }
+
+}

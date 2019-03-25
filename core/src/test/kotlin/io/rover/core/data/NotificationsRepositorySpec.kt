@@ -2,7 +2,7 @@
 //
 // import io.rover.notifications.domain.Notification
 // import io.rover.rover.core.data.state.StateManagerServiceInterface
-// import io.rover.rover.core.events.EventQueueServiceInterface
+// import io.rover.rover.core.events.EventEmitterInterface
 // import io.rover.rover.core.logging.GlobalStaticLogHolder
 // import io.rover.rover.core.logging.JvmLogger
 // import io.rover.rover.core.streams.Publisher
@@ -37,7 +37,7 @@
 //        GlobalStaticLogHolder.globalLogEmitter = JvmLogger()
 //
 //        fun repo(notificationsToEmit: List<Notification>): NotificationsRepository {
-//            val eventQueue : EventQueueServiceInterface = mock()
+//            val eventQueue : EventEmitterInterface = mock()
 //
 //            val stateManagerService: StateManagerServiceInterface = object : StateManagerServiceInterface by mock() {
 //                override fun updatesForQueryFragment(queryFragment: String): Publisher<NetworkResult<JSONObject>> {

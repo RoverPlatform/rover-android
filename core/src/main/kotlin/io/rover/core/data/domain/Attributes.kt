@@ -4,6 +4,8 @@ import io.rover.core.events.domain.Event
 
 /**
  * The Rover API data model sometimes includes unstructured data.  See [Attributes].
+ *
+ * TODO replace with an untyped Hash<String, Any> setup.
  */
 sealed class AttributeValue {
     abstract class Scalar : AttributeValue() {

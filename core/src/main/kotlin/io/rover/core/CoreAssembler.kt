@@ -29,8 +29,8 @@ import io.rover.core.data.sync.SyncClientInterface
 import io.rover.core.data.sync.SyncCoordinator
 import io.rover.core.data.sync.SyncCoordinatorInterface
 import io.rover.core.events.ContextProvider
-import io.rover.core.events.EventQueueService
-import io.rover.core.events.EventQueueServiceInterface
+import io.rover.core.events.EventEmitter
+import io.rover.core.events.EventEmitterInterface
 import io.rover.core.events.UserInfo
 import io.rover.core.events.UserInfoInterface
 import io.rover.core.events.contextproviders.ApplicationContextProvider
@@ -240,7 +240,7 @@ class CoreAssembler @JvmOverloads constructor(
         container.register(Scope.Singleton, VersionTrackerInterface::class.java) { resolver ->
             VersionTracker(
                 application,
-                resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java),
+                resolver.resolveSingletonOrFail(EventEmitterInterface::class.java),
                 resolver.resolveSingletonOrFail(LocalStorage::class.java)
             )
         }
@@ -308,8 +308,8 @@ class CoreAssembler @JvmOverloads constructor(
             }
         }
 
-        container.register(Scope.Singleton, EventQueueServiceInterface::class.java) { resolver ->
-            EventQueueService(
+        container.register(Scope.Singleton, EventEmitterInterface::class.java) { resolver ->
+            EventEmitter(
                 resolver.resolveSingletonOrFail(GraphQlApiServiceInterface::class.java),
                 resolver.resolveSingletonOrFail(LocalStorage::class.java),
                 resolver.resolveSingletonOrFail(DateFormattingInterface::class.java),
@@ -375,7 +375,7 @@ class CoreAssembler @JvmOverloads constructor(
             SessionTrackerInterface::class.java
         ) { resolver ->
             SessionTracker(
-                resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java),
+                resolver.resolveSingletonOrFail(EventEmitterInterface::class.java),
                 resolver.resolveSingletonOrFail(SessionStoreInterface::class.java),
                 10
             )
@@ -397,14 +397,14 @@ class CoreAssembler @JvmOverloads constructor(
         ) { resolver ->
             SyncByApplicationLifecycle(
                 resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java),
-                resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java),
+                resolver.resolveSingletonOrFail(EventEmitterInterface::class.java),
                 ProcessLifecycleOwner.get().lifecycle
             )
         }
     }
 
     override fun afterAssembly(resolver: Resolver) {
-        val eventQueue = resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java)
+        val eventQueue = resolver.resolveSingletonOrFail(EventEmitterInterface::class.java)
 
         listOf(
             resolver.resolveSingletonOrFail(ContextProvider::class.java, "device"),
@@ -449,9 +449,9 @@ data class UrlSchemes(
     val associatedDomains: List<String>
 )
 
-@Deprecated("Use .resolve(EventQueueServiceInterface::class.java)")
-val Rover.eventQueue: EventQueueServiceInterface
-    get() = this.resolve(EventQueueServiceInterface::class.java) ?: throw missingDependencyError("EventQueueService")
+@Deprecated("Use .resolve(EventEmitterInterface::class.java)")
+val Rover.eventQueue: EventEmitterInterface
+    get() = this.resolve(EventEmitterInterface::class.java) ?: throw missingDependencyError("EventEmitter")
 
 @Deprecated("Use .resolve(PermissionsNotifierInterface::class.java)")
 val Rover.permissionsNotifier: PermissionsNotifierInterface

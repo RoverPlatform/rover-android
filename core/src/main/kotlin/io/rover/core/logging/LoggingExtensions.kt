@@ -3,8 +3,8 @@ package io.rover.core.logging
 import android.util.Log
 import io.rover.core.container.Resolver
 import io.rover.core.data.domain.AttributeValue
-import io.rover.core.events.EventQueueService.Companion.ROVER_NAMESPACE
-import io.rover.core.events.EventQueueServiceInterface
+import io.rover.core.events.EventEmitter.Companion.ROVER_NAMESPACE
+import io.rover.core.events.EventEmitterInterface
 import io.rover.core.events.domain.Event
 import io.rover.core.streams.filter
 import io.rover.core.streams.map
@@ -116,7 +116,7 @@ class JvmLogger : LogEmitter {
 /**
  * Log error and warning messages as Rover events.
  *
- * Will lazily wait for the EventQueueService to become available, and will buffer log messages in
+ * Will lazily wait for the EventEmitter to become available, and will buffer log messages in
  * the meantime.
  */
 class EventQueueLogger(
@@ -140,15 +140,15 @@ class EventQueueLogger(
 
     private val bufferedMessages = mutableListOf<Event>()
 
-    private var eventQueueServiceInterface: EventQueueServiceInterface? = null
+    private var eventQueueServiceInterface: EventEmitterInterface? = null
 
     init {
         resolver
             .activations
-            .filter { it.type == EventQueueServiceInterface::class.java }
+            .filter { it.type == EventEmitterInterface::class.java }
             .map { it.instance }
             .subscribe { eventQueueServiceInterface ->
-                this.eventQueueServiceInterface = (eventQueueServiceInterface as EventQueueServiceInterface)
+                this.eventQueueServiceInterface = (eventQueueServiceInterface as EventEmitterInterface)
             }
     }
 

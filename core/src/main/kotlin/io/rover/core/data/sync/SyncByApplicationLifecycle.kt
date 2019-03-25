@@ -3,7 +3,7 @@ package io.rover.core.data.sync
 import android.arch.lifecycle.Lifecycle
 import android.arch.lifecycle.LifecycleObserver
 import android.arch.lifecycle.OnLifecycleEvent
-import io.rover.core.events.EventQueueServiceInterface
+import io.rover.core.events.EventEmitterInterface
 import io.rover.core.logging.log
 
 /**
@@ -11,7 +11,7 @@ import io.rover.core.logging.log
  */
 class SyncByApplicationLifecycle(
     private val syncCoordinator: SyncCoordinatorInterface,
-    private val eventQueueService: EventQueueServiceInterface,
+    private val eventEmitter: EventEmitterInterface,
     private val processLifecycle: Lifecycle
 ) {
     private var observer: LifecycleObserver = object : LifecycleObserver {
@@ -24,7 +24,7 @@ class SyncByApplicationLifecycle(
         @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         fun appPause() {
             log.v("App backgrounded, triggering event flush.")
-            eventQueueService.flushNow()
+            eventEmitter.flushNow()
         }
     }
 

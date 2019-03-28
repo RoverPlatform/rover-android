@@ -2,7 +2,6 @@ package io.rover.experiences.data.domain
 
 import android.util.DisplayMetrics
 import io.rover.core.data.domain.ID
-import io.rover.core.routing.Router
 import io.rover.experiences.data.domain.BackgroundScale.X3
 import java.net.URI
 import java.net.URL

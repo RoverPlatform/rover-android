@@ -8,7 +8,6 @@ import io.rover.core.data.graphql.operations.data.encodeJson
 import io.rover.core.data.graphql.operations.data.toAttributesHash
 import io.rover.core.data.graphql.safeGetString
 import io.rover.core.data.graphql.safeOptInt
-import io.rover.core.events.EventEmitter.Companion.ROVER_NAMESPACE
 import io.rover.core.events.EventEmitterInterface
 import io.rover.core.events.domain.Event
 import io.rover.core.logging.log
@@ -46,8 +45,7 @@ class SessionTracker(
             Event(
                 sessionStartEventName,
                 attributes
-            ),
-            ROVER_NAMESPACE
+            )
         )
     }
 
@@ -75,8 +73,7 @@ class SessionTracker(
                     hashMapOf(
                         Pair("duration", AttributeValue.Scalar.Integer(expiredSession.durationSeconds))
                     ) + expiredSession.attributes
-                ),
-                ROVER_NAMESPACE
+                )
             )
         }
 
@@ -95,8 +92,7 @@ class SessionTracker(
             Event(
                 sessionEndEventName,
                 attributes
-            ),
-            ROVER_NAMESPACE
+            )
         )
 
         updateTimer()

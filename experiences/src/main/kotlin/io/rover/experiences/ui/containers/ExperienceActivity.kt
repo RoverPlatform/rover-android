@@ -3,15 +3,19 @@ package io.rover.experiences.ui.containers
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
+import io.rover.core.EmbeddedWebBrowserDisplay
+import io.rover.core.EmbeddedWebBrowserDisplayInterface
 import io.rover.core.R
 import io.rover.core.Rover
 import io.rover.core.embeddedWebBrowserDisplay
 import io.rover.core.logging.log
+import io.rover.core.platform.asAndroidUri
 import io.rover.core.platform.whenNotNull
 import io.rover.core.router
 import io.rover.core.routing.Router
@@ -31,12 +35,21 @@ import io.rover.experiences.ui.navigation.ExperienceExternalNavigationEvent
  * a Rover [ExperienceView] in your own Activities.
  */
 open class ExperienceActivity : AppCompatActivity() {
-    protected val experienceId: String? by lazy { this.intent.getStringExtra("EXPERIENCE_ID") }
+    protected open val experienceId: String? by lazy { this.intent.getStringExtra("EXPERIENCE_ID") }
 
-    protected val experienceUrl: String? by lazy { this.intent.getStringExtra("EXPERIENCE_URL") }
+    protected open val experienceUrl: String? by lazy { this.intent.getStringExtra("EXPERIENCE_URL") }
 
     protected val campaignId: String?
         get() = this.intent.getStringExtra("CAMPAIGN_ID")
+
+    /***
+     * Open a URI directly (not to be confused with a so-called Custom Tab, which is a web browser
+     * embedded within the app).
+     */
+    protected open fun openUri(uri: Uri) {
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        this.startActivity(intent)
+    }
 
     /**
      * This method is responsible for performing external navigation events: that is, navigation
@@ -49,37 +62,12 @@ open class ExperienceActivity : AppCompatActivity() {
      * to do some other sort of external behaviour in your app, such as open a native login screen.
      */
     protected open fun dispatchExternalNavigationEvent(externalNavigationEvent: ExperienceExternalNavigationEvent) {
-        // TODO: factor this out into a separate object.
-
-        val rover = Rover.shared
-        if(rover == null) {
-            log.e("ExperienceActivity cannot work unless Rover has been initialized.")
-            return
-        }
-
-        val router = rover.resolve(Router::class.java)
-        if(router == null) {
-            log.e("Router not registered in the Rover container.  Ensure that CoreAssembler is passed to Rover.initialize().  Ignoring navigation event.")
-            return
-        }
-        val webDisplay = rover.resolve(EmbeddedWebBrowserDisplayInterface::class.java)
-        if(webDisplay == null) {
-            log.e("EmbeddedWebBrowserDisplayInterface not registered in the Rover container.  Ensure that CoreAssembler is passed to Rover.initialize(). Ignoring navigation event.")
-            return
-        }
-
         when (externalNavigationEvent) {
             is ExperienceExternalNavigationEvent.Exit -> {
                 finish()
             }
             is ExperienceExternalNavigationEvent.OpenUri -> {
-                router.route(externalNavigationEvent.uri, false).whenNotNull { intent ->
-                    ContextCompat.startActivity(
-                        this,
-                        intent,
-                        null
-                    )
-                }
+                openUri(externalNavigationEvent.uri.asAndroidUri())
             }
             is ExperienceExternalNavigationEvent.PresentWebsite -> {
                 webDisplay.intentForViewingWebsiteViaEmbeddedBrowser(
@@ -98,8 +86,19 @@ open class ExperienceActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * [ExperienceViewModel] is responsible for describing the appearance and behaviour of the
+     * experience contents.  If you customize it, you must return your customized version here.
+     */
     protected open val experiencesView by lazy { ExperienceView(this) }
 
+    /**
+     * Holds the currently set view model, including side-effect behaviour for binding it to the
+     * Experiences View.
+     *
+     * This is a mutable property because it cannot be set up at Activity construction time in the
+     * constructor; at that stage the requesting Intent and its parameters are not available.
+     */
     private var experienceViewModel: ExperienceViewModelInterface? = null
         set(viewModel) {
             field = viewModel
@@ -122,6 +121,14 @@ open class ExperienceActivity : AppCompatActivity() {
                     }
                 )
         }
+
+    /**
+     * Provides a method for opening URIs with a Custom Chrome Tab.
+     */
+    // TODO: go to new simple container, don't put it here like I did on iOS.
+    protected open val webDisplay: EmbeddedWebBrowserDisplay by lazy {
+        EmbeddedWebBrowserDisplay()
+    }
 
     override fun onBackPressed() {
         if (experienceViewModel != null) {
@@ -199,12 +206,14 @@ open class ExperienceActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // TODO: this is liable to be forgotten by implementers making their own activity. If
-        // forgotten, the activity will be leaked.
         experiencesView.toolbarHost = null
     }
 
-    private fun experienceViewModel(rover: Rover, experienceRequest: ExperienceViewModel.ExperienceRequest, icicle: Parcelable?): ExperienceViewModelInterface {
+    /**
+     * This method If you customize it, you must return your customized version here.
+     */
+    protected open fun experienceViewModel(rover: Rover, experienceRequest: ExperienceViewModel.ExperienceRequest, icicle: Parcelable?): ExperienceViewModelInterface {
+            // TODO: go to new simple container.
             return rover.resolve(ExperienceViewModelInterface::class.java, null, experienceRequest, this.lifecycle, icicle)
                 ?: throw RuntimeException("Factory for ExperienceViewModelInterface not registered in Rover DI container.")
     }

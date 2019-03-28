@@ -36,13 +36,12 @@ import org.reactivestreams.Publisher
 /**
  * Embed this view to include a Rover Experience in a layout.
  *
- * Most applications will likely want to use [ExperienceActivity] and
- * [ExperienceFragment] to display an Experience, but for more custom setups (say, tablet-enabled
- * single-activity apps that avoid fragments), you can embed [ExperienceView] directly.
+ * Most applications will likely want to use [ExperienceActivity] to display an Experience, but for
+ * more custom setups (say, tablet-enabled single-activity apps that avoid fragments), you can embed
+ * [ExperienceView] directly, although you will need to do a few more things manually.
  *
- * In order to display an Experience, use the implementation of
- * [ViewModelFactoryInterface.viewModelForExperience] to create an instance of the needed Experience
- * view model, and then bind it to the view model with setViewModel.
+ * In order to display an Experience, instantiate ExperienceViewModel and set it to
+ * [viewModelBinding].
  *
  * Note about Android state restoration: Rover SDK views handle state saving & restoration through
  * their view models, so you will need store a Parcelable on behalf of ExperienceView and

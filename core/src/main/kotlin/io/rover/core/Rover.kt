@@ -77,3 +77,9 @@ class Rover(
         }
     }
 }
+
+
+
+
+var poop: String = "donut";
+

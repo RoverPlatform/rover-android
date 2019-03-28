@@ -2,19 +2,15 @@ package io.rover.core.data.graphql
 
 import android.net.Uri
 import io.rover.core.data.APIException
-import io.rover.core.data.AuthenticationContext
 import io.rover.core.data.GraphQlRequest
 import io.rover.core.data.NetworkError
 import io.rover.core.data.NetworkResult
-import io.rover.core.data.domain.EventSnapshot
-import io.rover.core.data.graphql.operations.SendEventsRequest
 import io.rover.core.data.http.HttpClientResponse
 import io.rover.core.data.http.HttpRequest
 import io.rover.core.data.http.HttpVerb
 import io.rover.core.data.http.NetworkClient
 import io.rover.core.logging.log
 import io.rover.core.platform.DateFormattingInterface
-import io.rover.core.streams.Publishers
 import io.rover.core.streams.map
 import org.json.JSONException
 import org.reactivestreams.Publisher
@@ -24,12 +20,12 @@ import java.net.URL
 /**
  * Responsible for providing access the Rover cloud API, powered by GraphQL.
  */
-class GraphQlApiService(
+open class GraphQlApiService(
     private val endpoint: URL,
-    private val authenticationContext: AuthenticationContext,
-    private val networkClient: NetworkClient,
-    private val dateFormatting: DateFormattingInterface
-) : GraphQlApiServiceInterface {
+    private val accountToken: String?,
+    private val bearerToken: String?,
+    private val networkClient: NetworkClient
+) {
     private fun urlRequest(mutation: Boolean, queryParams: Map<String, String>): HttpRequest {
         val uri = Uri.parse(endpoint.toString())
         val builder = uri.buildUpon()
@@ -43,8 +39,8 @@ class GraphQlApiService(
                 }
 
                 when {
-                    authenticationContext.sdkToken != null -> this["x-rover-account-token"] = authenticationContext.sdkToken!!
-                    authenticationContext.bearerToken != null -> this["authorization"] = "Bearer ${authenticationContext.bearerToken}"
+                    accountToken != null -> this["x-rover-account-token"] = bearerToken!!
+                    bearerToken != null -> this["authorization"] = "Bearer $bearerToken"
                 }
 
                 this.entries.forEach { (key, value) ->
@@ -123,7 +119,7 @@ class GraphQlApiService(
             }
         }
 
-    override fun <TEntity> operation(request: GraphQlRequest<TEntity>): Publisher<NetworkResult<TEntity>> {
+    open fun <TEntity> operation(request: GraphQlRequest<TEntity>): Publisher<NetworkResult<TEntity>> {
         // TODO: once we change urlRequest() to use query parameters and GET for non-mutation
         // requests, replace true `below` with `request.mutation`.
         val urlRequest = urlRequest(request.mutation, request.encodeQueryParameters())
@@ -131,36 +127,8 @@ class GraphQlApiService(
 
         log.v("going to make network request $urlRequest")
 
-        return if (authenticationContext.isAvailable()) {
-            networkClient.request(urlRequest, bodyData).map { httpClientResponse ->
-                httpResult(request, httpClientResponse)
-            }
-        } else {
-            Publishers.just(
-                NetworkResult.Error(
-                    Throwable("Rover API authentication not available."),
-                    true
-                )
-            )
-        }
-    }
-
-    override fun submitEvents(events: List<EventSnapshot>): Publisher<NetworkResult<String>> {
-        return if (!authenticationContext.isAvailable()) {
-            log.w("Events may not be submitted without a Rover authentication context being configured.")
-            Publishers.just(
-                NetworkResult.Error(
-                    Exception("Attempt to submit Events without Rover authentication context being configured."),
-                    false
-                )
-            )
-        } else {
-            operation(
-                SendEventsRequest(
-                    dateFormatting,
-                    events
-                )
-            )
+        return networkClient.request(urlRequest, bodyData).map { httpClientResponse ->
+            httpResult(request, httpClientResponse)
         }
     }
 }

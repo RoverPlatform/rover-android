@@ -3,7 +3,6 @@
 package io.rover.core
 
 import android.app.Application
-import android.arch.lifecycle.ProcessLifecycleOwner
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
@@ -16,7 +15,6 @@ import io.rover.core.container.Assembler
 import io.rover.core.container.Container
 import io.rover.core.container.Resolver
 import io.rover.core.container.Scope
-import io.rover.core.data.AuthenticationContext
 import io.rover.core.data.ServerKey
 import io.rover.core.data.graphql.GraphQlApiService
 import io.rover.core.data.graphql.GraphQlApiServiceInterface

@@ -27,23 +27,14 @@ interface KeyValueStorage {
 }
 
 /**
- * Obtain a persistent key-value named persistent storage area.
+ *  Obtain a persistent key-value named persistent storage area using Android's [SharedPreferences].
  */
-interface LocalStorage {
-    fun getKeyValueStorageFor(namedContext: String): KeyValueStorage
-}
-
-/**
- * Implementation of [LocalStorage] using Android's [SharedPreferences].
- */
-class SharedPreferencesLocalStorage(
-    val context: Context,
-    private val baseContextName: String = "io.rover.core.platform.localstorage"
-) : LocalStorage {
-    override fun getKeyValueStorageFor(namedContext: String): KeyValueStorage {
-        val prefs = context.getSharedPreferences("$baseContextName.$namedContext", MODE_PRIVATE)
-        // TODO: implement singleton guarding to avoid multiple consumer instances requesting the
-        // same namedContext and possibly conflicting.
+open class LocalStorage(
+    private val androidContext: Context,
+    private val baseContextName: String = "io.rover.localstorage"
+)  {
+    open fun getKeyValueStorageFor(namedContext: String): KeyValueStorage {
+        val prefs = androidContext.getSharedPreferences("$baseContextName.$namedContext", MODE_PRIVATE)
         return object : KeyValueStorage {
             override fun get(key: String): String? = prefs.getString(key, null)
 

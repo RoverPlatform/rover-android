@@ -1,14 +1,6 @@
 package io.rover.core.logging
 
 import android.util.Log
-import io.rover.core.container.Resolver
-import io.rover.core.data.domain.AttributeValue
-import io.rover.core.events.EventEmitter.Companion.ROVER_NAMESPACE
-import io.rover.core.events.EventEmitterInterface
-import io.rover.core.events.domain.Event
-import io.rover.core.streams.filter
-import io.rover.core.streams.map
-import io.rover.core.streams.subscribe
 import java.util.ArrayDeque
 import java.util.concurrent.Executors
 
@@ -35,7 +27,11 @@ class GlobalStaticLogHolder {
     companion object {
         // This is the only example of a global scope, mutable, allocated-at-runtime value.  This is
         // to avoid the complexity of trying to inject a logger into all and sundry location.
-        var globalLogEmitter: LogEmitter? = null
+        var globalLogEmitter: LogEmitter? = LogBuffer(
+            // uses the resolver to discover when the EventEmitter is ready and can be used
+            // to submit the logs.
+            AndroidLogger()
+        )
     }
 }
 
@@ -110,59 +106,6 @@ class JvmLogger : LogEmitter {
 
     override fun d(logTag: String, message: String) {
         System.out.println("D/$logTag $message")
-    }
-}
-
-/**
- * Log error and warning messages as Rover events.
- *
- * Will lazily wait for the EventEmitter to become available, and will buffer log messages in
- * the meantime.
- */
-class EventQueueLogger(
-    resolver: Resolver,
-    private val nextLogger: LogEmitter
-) : LogEmitter by nextLogger {
-
-    private val serialExecutor = Executors.newSingleThreadExecutor()
-
-    override fun e(logTag: String, message: String) {
-        nextLogger.e(logTag, message)
-        logMessage(
-            Event(
-                "Error",
-                hashMapOf(
-                    Pair("message", AttributeValue.Scalar.String("$logTag: $message"))
-                )
-            )
-        )
-    }
-
-    private val bufferedMessages = mutableListOf<Event>()
-
-    private var eventQueueServiceInterface: EventEmitterInterface? = null
-
-    init {
-        resolver
-            .activations
-            .filter { it.type == EventEmitterInterface::class.java }
-            .map { it.instance }
-            .subscribe { eventQueueServiceInterface ->
-                this.eventQueueServiceInterface = (eventQueueServiceInterface as EventEmitterInterface)
-            }
-    }
-
-    private fun logMessage(event: Event) {
-        serialExecutor.execute {
-            if (eventQueueServiceInterface != null) {
-                bufferedMessages.forEach { queuedMessage ->
-                    eventQueueServiceInterface!!.trackEvent(queuedMessage, ROVER_NAMESPACE)
-                }
-                eventQueueServiceInterface!!.trackEvent(event, ROVER_NAMESPACE)
-            } else {
-                bufferedMessages.add(event)
-            }
-        }
     }
 }
 

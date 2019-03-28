@@ -1,15 +1,28 @@
 package io.rover.core
 
+import android.app.Application
 import android.content.Context
-import io.rover.core.container.Assembler
-import io.rover.core.container.ContainerResolver
-import io.rover.core.container.InjectionContainer
+import android.graphics.Color
+import android.support.annotation.ColorInt
+import io.rover.core.assets.AndroidAssetService
+import io.rover.core.assets.ImageDownloader
+import io.rover.core.data.graphql.GraphQlApiService
 import io.rover.core.data.http.AndroidHttpsUrlConnectionNetworkClient
-import io.rover.core.logging.AndroidLogger
-import io.rover.core.logging.GlobalStaticLogHolder
-import io.rover.core.logging.LogBuffer
+import io.rover.core.data.http.NetworkClient
+import io.rover.core.events.EventEmitter
 import io.rover.core.logging.log
+import io.rover.core.platform.DateFormatting
+import io.rover.core.platform.IoMultiplexingExecutor
+import io.rover.core.platform.LocalStorage
+import io.rover.core.streams.Scheduler
+import io.rover.core.streams.forAndroidMainThread
+import io.rover.core.streams.forExecutor
+import io.rover.core.tracking.SessionStore
+import io.rover.core.tracking.SessionTracker
 import java.net.HttpURLConnection
+import java.net.URL
+import java.util.concurrent.Executor
+
 
 /**
  * Entry point for the Rover SDK.
@@ -18,52 +31,64 @@ import java.net.HttpURLConnection
  * (eg. Experiences and Location) of the Rover Platform.  It's up to you to select which
  * are appropriate to activate in your app.
  *
- * TODO: exhaustive usage information.
- *
- * Serves as a dependency injection container for the various components (modules) of the Rover SDK.
+ * Serves as a dependency injection container (backplane) for the various components of the Rover
+ * SDK.
  */
-class Rover(
-    assemblers: List<Assembler>
-) : ContainerResolver by InjectionContainer(assemblers) {
-    init {
-        // global, which we "inject" using static scope
-        GlobalStaticLogHolder.globalLogEmitter =
-            LogBuffer(
-                // uses the resolver to discover when the EventEmitter is ready and can be used
-                // to submit the logs.
-                AndroidLogger()
-            )
+open class Rover(
+    /**
+     * When initializing Rover you must give it a reference
+     */
+    open val application: Application,
 
-        initializeContainer()
-    }
+    /**
+     * Set your Rover Account Token (API Key) here.
+     */
+    open var accountToken: String? = null,
 
+    /**
+     * Set the background colour for the Custom Chrome tabs that are used for presenting web content
+     * in a web browser.
+     */
+    open val chromeTabBackgroundColor: Int,
+
+    open val endpoint: String = "https://api.rover.io/graphql",
+
+    open val dateFormatting: DateFormatting = DateFormatting(),
+
+    open val mainScheduler: Scheduler = Scheduler.forAndroidMainThread(),
+
+    open val ioExecutor: Executor = IoMultiplexingExecutor.build("io"),
+
+    open val ioScheduler: Scheduler = Scheduler.forExecutor(
+        ioExecutor
+    ),
+
+    open val imageDownloader: ImageDownloader = ImageDownloader(ioExecutor),
+
+    open val assetService: AndroidAssetService = AndroidAssetService(imageDownloader, ioScheduler, mainScheduler),
+
+    open val networkClient: NetworkClient = AndroidHttpsUrlConnectionNetworkClient(ioScheduler),
+
+    open val webBrowserDisplay: EmbeddedWebBrowserDisplay = EmbeddedWebBrowserDisplay(chromeTabBackgroundColor),
+
+    open val localStorage: LocalStorage = LocalStorage(application),
+
+    open val sessionStore: SessionStore = SessionStore(localStorage, dateFormatting),
+
+    open val eventEmitter: EventEmitter = EventEmitter(),
+
+    /**
+     * Not for use by typical applications: present so OAuth/SSO with apps that log into the Rover web apps can use the SDK.  You can safely ignore this.
+     */
+    open var bearerToken: String? = null,
+
+    open val apiService: GraphQlApiService = GraphQlApiService(URL(endpoint), accountToken, bearerToken, networkClient),
+
+    open val sessionTracker: SessionTracker = SessionTracker(eventEmitter, sessionStore, 60)
+) {
     companion object {
-        private var sharedInstanceBackingField: Rover? = null
-
-        // we have a global singleton of the Rover container.
-        @JvmStatic
-        @Deprecated("Please use shared instead.")
-        val sharedInstance: Rover
-            get() = sharedInstanceBackingField ?: throw RuntimeException("Rover shared instance accessed before calling initialize.\n\n" +
-                "Did you remember to call Rover.initialize() in your Application.onCreate()?")
-
-        @JvmStatic
-        val shared: Rover?
-            get() = sharedInstanceBackingField ?: log.w("Rover shared instance accessed before calling initialize.\n\n" +
-                "Did you remember to call Rover.initialize() in your Application.onCreate()?").let { null }
-
-        @JvmStatic
-        fun initialize(vararg assemblers: Assembler) {
-            val rover = Rover(assemblers.asList())
-            if (sharedInstanceBackingField != null) {
-                throw RuntimeException("Rover already initialized.  This is most likely a bug.")
-            }
-            sharedInstanceBackingField = rover
-            log.i("Started Rover Android SDK v${BuildConfig.VERSION_NAME}.")
-        }
-
         /**
-         * Be sure to always call this after [Rover.initialize] in your Application's onCreate()!
+         * Be sure to always call this after [Rover.dsfasdfasdfdasfda] in your Application's onCreate()!
          *
          * Rover internally uses the standard HTTP client included with Android, but to work
          * effectively it needs HTTP caching enabled.  Unfortunately, this can only be done at the
@@ -75,11 +100,23 @@ class Rover(
         fun installSaneGlobalHttpCache(applicationContext: Context) {
             AndroidHttpsUrlConnectionNetworkClient.installSaneGlobalHttpCache(applicationContext)
         }
+
+        fun initialize(application: Application, accountToken: String, @ColorInt chromeTabColor: Int = Color.BLACK) {
+            shared = Rover(application = application, accountToken = accountToken, chromeTabBackgroundColor = chromeTabColor)
+        }
+
+        /**
+         * Instantiate and set Rover here.  Use one of the [initialize] method to do so.
+         */
+        @JvmStatic
+        var shared: Rover? = null
+
+        // START HERE AND DO A COMMIT AND THEN INTERFACES FLATTEN/CLEANUP
+        
+    }
+
+    init {
+        log.i("Started Rover Android SDK v${BuildConfig.VERSION_NAME}.")
     }
 }
-
-
-
-
-var poop: String = "donut";
 

@@ -19,7 +19,7 @@ import org.reactivestreams.Publisher
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
-internal class AndroidAssetService(
+public open class AndroidAssetService(
     imageDownloader: ImageDownloader,
     private val ioScheduler: Scheduler,
     private val mainThreadScheduler: Scheduler

@@ -160,7 +160,17 @@ open class Rover(
 
     open val views: Views = Views()
 ) {
-    open val viewModels: ViewModels by lazy { ViewModels(this) }
+    open val viewModels: ViewModels by lazy {
+        ViewModels(
+            apiService,
+            mainScheduler,
+            eventEmitter,
+            sessionTracker,
+            imageOptimizationService,
+            assetService,
+            measurementService
+        )
+    }
 
     companion object {
         /**
@@ -196,7 +206,14 @@ open class Rover(
 
 // TODO: consider moving entire class into appropriate sub-package
 open class ViewModels(
-    protected open val rover: Rover
+//    protected open val rover: Rover
+    protected val apiService: GraphQlApiService,
+    protected val mainScheduler: Scheduler,
+    protected val eventEmitter: EventEmitter,
+    protected val sessionTracker: SessionTracker,
+    protected val imageOptimizationService: ImageOptimizationService,
+    protected val assetService: AndroidAssetService,
+    protected val measurementService: MeasurementService
 ) {
     open fun experienceViewModel(
         experienceRequest: ExperienceViewModel.ExperienceRequest,
@@ -204,9 +221,9 @@ open class ViewModels(
     ): ExperienceViewModel {
         return ExperienceViewModel(
             experienceRequest = experienceRequest,
-            graphQlApiService = rover.apiService,
-            mainThreadScheduler = rover.mainScheduler,
-            sessionTracker = rover.sessionTracker,
+            graphQlApiService = apiService,
+            mainThreadScheduler = mainScheduler,
+            sessionTracker = sessionTracker,
             resolveNavigationViewModel = { experience, icicle ->
                 experienceNavigationViewModel(experience, activityLifecycle, icicle)
             }
@@ -224,8 +241,8 @@ open class ViewModels(
     ): ExperienceNavigationViewModel {
         return ExperienceNavigationViewModel(
             experience,
-            eventEmitter = rover.eventEmitter,
-            sessionTracker = rover.sessionTracker,
+            eventEmitter = eventEmitter,
+            sessionTracker = sessionTracker,
             resolveScreenViewModel = { screen -> screenViewModel(screen) },
             resolveToolbarViewModel = { configuration -> experienceToolbarViewModel(configuration) },
             activityLifecycle = activityLifecycle,
@@ -239,7 +256,7 @@ open class ViewModels(
         return ScreenViewModel(
             screen,
             backgroundViewModel(screen.background),
-            resolveNavigationViewModel = { row -> rowViewModel(row)  }
+            resolveRowViewModel = { row -> rowViewModel(row)  }
         )
     }
 
@@ -248,9 +265,9 @@ open class ViewModels(
     ): BackgroundViewModel {
         return BackgroundViewModel(
             background = background,
-            assetService = rover.assetService,
-            imageOptimizationService = rover.imageOptimizationService,
-            mainScheduler = rover.mainScheduler
+            assetService = assetService,
+            imageOptimizationService = imageOptimizationService,
+            mainScheduler = mainScheduler
         )
     }
 
@@ -348,7 +365,7 @@ open class ViewModels(
     ): TextViewModel {
         return TextViewModel(
             styledText = text,
-            measurementService = rover.measurementService,
+            measurementService = measurementService,
             singleLine = singleLine
         )
     }
@@ -360,9 +377,9 @@ open class ViewModels(
         return ImageViewModel(
             image = image,
             block = containingBlock,
-            imageOptimizationService = rover.imageOptimizationService,
-            assetService = rover.assetService,
-            mainScheduler = rover.mainScheduler
+            imageOptimizationService = imageOptimizationService,
+            assetService = assetService,
+            mainScheduler = mainScheduler
         )
     }
 
@@ -377,7 +394,7 @@ open class ViewModels(
     ): BarcodeViewModel {
         return BarcodeViewModel(
             barcode,
-            rover.measurementService
+            measurementService
         )
     }
 }

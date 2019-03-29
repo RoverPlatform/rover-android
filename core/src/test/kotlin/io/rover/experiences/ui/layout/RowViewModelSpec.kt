@@ -1,113 +1,61 @@
 package io.rover.experiences.ui.layout
 
-import android.content.Context
-import io.rover.core.UrlSchemes
-import io.rover.experiences.ExperiencesAssembler
-import io.rover.experiences.MeasurementService
-import io.rover.experiences.ui.blocks.concerns.layout.CompositeBlockViewModelInterface
-import io.rover.experiences.ui.blocks.concerns.layout.LayoutableViewModel
-import io.rover.experiences.ui.blocks.rectangle.RectangleBlockViewModelInterface
-import io.rover.experiences.ui.layout.row.RowViewModel
-import io.rover.core.assets.AssetService
-import io.rover.experiences.assets.ImageOptimizationServiceInterface
-import io.rover.core.container.Assembler
-import io.rover.core.container.Container
-import io.rover.core.container.InjectionContainer
-import io.rover.core.container.Resolver
-import io.rover.core.container.Scope
+import io.rover.core.ViewModels
 import io.rover.experiences.data.domain.Height
 import io.rover.experiences.data.domain.HorizontalAlignment
 import io.rover.experiences.data.domain.Position
 import io.rover.experiences.data.domain.VerticalAlignment
-import io.rover.core.routing.Router
-import io.rover.core.streams.Scheduler
 import io.rover.experiences.ui.RectF
+import io.rover.experiences.ui.blocks.rectangle.RectangleBlockViewModelInterface
+import io.rover.experiences.ui.layout.row.RowViewModel
 import org.amshove.kluent.mock
-import org.amshove.kluent.shouldBeInstanceOf
 import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 object RowViewModelSpec : Spek({
     describe("integration tests with real block view models") {
-        val realObjectStack = InjectionContainer(
-            listOf(
-                ExperiencesAssembler(),
-                // now I need to override certain objects in the experiences assembler with mock ones.
-                object : Assembler {
-                    override fun assemble(container: Container) {
-                        container.register(Scope.Singleton, AssetService::class.java) { resolver ->
-                            mock()
-                        }
-
-                        container.register(Scope.Singleton, ImageOptimizationServiceInterface::class.java) { resolver ->
-                            mock()
-                        }
-
-                        container.register(
-                            Scope.Singleton,
-                            Scheduler::class.java,
-                            "main"
-                        ) { resolver -> mock() }
-
-                        container.register(
-                            Scope.Singleton,
-                            MeasurementService::class.java
-                        ) { _: Resolver -> mock() }
-
-                        container.register(
-                            Scope.Singleton,
-                            Router::class.java
-                        ) { _ -> mock() }
-
-                        container.register(
-                            Scope.Singleton,
-                            UrlSchemes::class.java
-                        ) { _ -> UrlSchemes(listOf("rv-inbox"), associatedDomains = listOf("inbox.rover.io")) }
-
-                        container.register(
-                            Scope.Singleton,
-                            Context::class.java
-                        ) { _ -> mock() }
-                    }
-                }
-            )
+        val viewModels = ViewModels(
+            apiService = mock(),
+            mainScheduler = mock(),
+            eventEmitter = mock(),
+            sessionTracker = mock(),
+            imageOptimizationService = mock(),
+            assetService = mock(),
+            measurementService = mock()
         )
-        realObjectStack.initializeContainer()
 
         context("an autoheight row with stacked blocks") {
             val emptyRow = ModelFactories
                 .emptyRow()
-            val rowViewModel = RowViewModel(
-                emptyRow
-                    .copy(
-                        height = Height.Intrinsic(),
-                        blocks = listOf(
-                            ModelFactories.emptyRectangleBlock().copy(
-                                position = Position(
-                                    horizontalAlignment = HorizontalAlignment.Left(
-                                        0.0, 40.0
-                                    ),
-                                    verticalAlignment = VerticalAlignment.Stacked(
-                                        0.0, 0.0, Height.Static(20.0)
-                                    )
-                                )
+
+            val exampleRow = emptyRow.copy(
+                height = Height.Intrinsic(),
+                blocks = listOf(
+                    ModelFactories.emptyRectangleBlock().copy(
+                        position = Position(
+                            horizontalAlignment = HorizontalAlignment.Left(
+                                0.0, 40.0
                             ),
-                            ModelFactories.emptyRectangleBlock().copy(
-                                position = Position(
-                                    horizontalAlignment = HorizontalAlignment.Left(
-                                        0.0, 40.0
-                                    ),
-                                    verticalAlignment = VerticalAlignment.Stacked(
-                                        0.0, 0.0, Height.Static(70.0)
-                                    )
-                                )
+                            verticalAlignment = VerticalAlignment.Stacked(
+                                0.0, 0.0, Height.Static(20.0)
                             )
                         )
                     ),
-                { block -> realObjectStack.resolve(CompositeBlockViewModelInterface::class.java, null, block)!! },
-                mock()
+                    ModelFactories.emptyRectangleBlock().copy(
+                        position = Position(
+                            horizontalAlignment = HorizontalAlignment.Left(
+                                0.0, 40.0
+                            ),
+                            verticalAlignment = VerticalAlignment.Stacked(
+                                0.0, 0.0, Height.Static(70.0)
+                            )
+                        )
+                    )
+                )
             )
+
+            val rowViewModel = viewModels.rowViewModel(exampleRow)
 
             context("frame()") {
                 // row bounds' bottom is given as 0, because rows are always responsible
@@ -171,27 +119,25 @@ object RowViewModelSpec : Spek({
         }
 
         context("a non-autoheight row with a floating block that extends outside the top of the row") {
-            val rowViewModel = RowViewModel(
-                ModelFactories
-                    .emptyRow()
-                    .copy(
-                        height = Height.Static(20.0),
-                        blocks = listOf(
-                            ModelFactories.emptyRectangleBlock().copy(
-                                position = Position(
-                                    horizontalAlignment = HorizontalAlignment.Left(
-                                        0.0, 40.0
-                                    ),
-                                    verticalAlignment = VerticalAlignment.Top(
-                                        -5.0, Height.Static(10.0)
-                                    )
+            val exampleRow = ModelFactories
+                .emptyRow()
+                .copy(
+                    height = Height.Static(20.0),
+                    blocks = listOf(
+                        ModelFactories.emptyRectangleBlock().copy(
+                            position = Position(
+                                horizontalAlignment = HorizontalAlignment.Left(
+                                    0.0, 40.0
+                                ),
+                                verticalAlignment = VerticalAlignment.Top(
+                                    -5.0, Height.Static(10.0)
                                 )
                             )
                         )
-                    ),
-                { block -> realObjectStack.resolve(CompositeBlockViewModelInterface::class.java, null, block)!! },
-                mock()
-            )
+                    )
+                )
+
+            val rowViewModel = viewModels.rowViewModel(exampleRow)
 
             context("frame()") {
                 // row bounds' bottom is given as 0, because rows are always responsible
@@ -219,28 +165,26 @@ object RowViewModelSpec : Spek({
         }
 
         context("a non-autoheight row with a floating block that extends outside the bottom of the row") {
-            val rowViewModel = RowViewModel(
-                ModelFactories
-                    .emptyRow()
-                    .copy(
-                        height = Height.Static(20.0),
-                        blocks = listOf(
-                            ModelFactories.emptyRectangleBlock().copy(
-                                position = Position(
-                                    horizontalAlignment = HorizontalAlignment.Left(
-                                        0.0, 40.0
-                                    ),
-                                    verticalAlignment = VerticalAlignment.Top(
-                                        15.0,
-                                        Height.Static(10.0)
-                                    )
+            val exampleRow = ModelFactories
+                .emptyRow()
+                .copy(
+                    height = Height.Static(20.0),
+                    blocks = listOf(
+                        ModelFactories.emptyRectangleBlock().copy(
+                            position = Position(
+                                horizontalAlignment = HorizontalAlignment.Left(
+                                    0.0, 40.0
+                                ),
+                                verticalAlignment = VerticalAlignment.Top(
+                                    15.0,
+                                    Height.Static(10.0)
                                 )
                             )
                         )
-                    ),
-                { block -> realObjectStack.resolve(CompositeBlockViewModelInterface::class.java, null, block)!! },
-                mock()
-            )
+                    )
+                )
+
+            val rowViewModel = viewModels.rowViewModel(exampleRow)
 
             context("frame()") {
                 // row bounds' bottom is given as 0, because rows are always responsible
@@ -276,23 +220,20 @@ object RowViewModelSpec : Spek({
                 verticalAlignment: VerticalAlignment,
                 horizontalAlignment: HorizontalAlignment
             ): RowViewModel {
-                return RowViewModel(
-                    ModelFactories
-                        .emptyRow()
-                        .copy(
-                            height = Height.Static(rowHeight),
-                            blocks = listOf(
-                                ModelFactories.emptyRectangleBlock().copy(
-                                    position = Position(
-                                        horizontalAlignment,
-                                        verticalAlignment
-                                    )
+                val exampleRow = ModelFactories
+                    .emptyRow()
+                    .copy(
+                        height = Height.Static(rowHeight),
+                        blocks = listOf(
+                            ModelFactories.emptyRectangleBlock().copy(
+                                position = Position(
+                                    horizontalAlignment,
+                                    verticalAlignment
                                 )
                             )
-                        ),
-                    { block -> realObjectStack.resolve(CompositeBlockViewModelInterface::class.java, null, block)!! },
-                    mock()
-                )
+                        )
+                    )
+                return viewModels.rowViewModel(exampleRow)
             }
 
             context("a non-autoheight row with a floating block is aligned to the bottom") {

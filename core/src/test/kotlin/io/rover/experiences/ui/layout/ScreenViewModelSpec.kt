@@ -1,78 +1,29 @@
 package io.rover.experiences.ui.layout
 
-import android.content.Context
-import io.rover.core.UrlSchemes
-import io.rover.experiences.ExperiencesAssembler
-import io.rover.experiences.MeasurementService
-import io.rover.experiences.ui.blocks.concerns.background.BackgroundViewModelInterface
-import io.rover.experiences.ui.blocks.rectangle.RectangleBlockViewModel
-import io.rover.experiences.ui.layout.row.RowViewModel
-import io.rover.experiences.ui.layout.screen.ScreenViewModelInterface
-import io.rover.core.assets.AssetService
-import io.rover.experiences.assets.ImageOptimizationServiceInterface
-import io.rover.core.container.Assembler
-import io.rover.core.container.Container
-import io.rover.core.container.InjectionContainer
-import io.rover.core.container.Resolver
-import io.rover.core.container.Scope
-import io.rover.experiences.data.domain.Background
+import io.rover.core.ViewModels
+import io.rover.core.data.domain.ID
 import io.rover.experiences.data.domain.Height
 import io.rover.experiences.data.domain.HorizontalAlignment
-import io.rover.core.data.domain.ID
 import io.rover.experiences.data.domain.Position
 import io.rover.experiences.data.domain.VerticalAlignment
-import io.rover.core.routing.Router
 import io.rover.experiences.ui.RectF
+import io.rover.experiences.ui.blocks.rectangle.RectangleBlockViewModel
+import io.rover.experiences.ui.layout.row.RowViewModel
 import org.amshove.kluent.mock
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 object ScreenViewModelSpec : Spek({
     describe("integration tests with real row view models") {
-
-        val realObjectStack = InjectionContainer(
-            listOf(
-                ExperiencesAssembler(),
-                // now I need to override certain objects in the experiences assembler with mock ones.
-                object : Assembler {
-                    override fun assemble(container: Container) {
-                        container.register(Scope.Singleton, AssetService::class.java) { resolver ->
-                            mock()
-                        }
-
-                        container.register(Scope.Singleton, ImageOptimizationServiceInterface::class.java) { resolver ->
-                            mock()
-                        }
-
-                        container.register(Scope.Transient, BackgroundViewModelInterface::class.java) { resolver, background: Background ->
-                            mock()
-                        }
-
-                        container.register(
-                            Scope.Singleton,
-                            MeasurementService::class.java
-                        ) { _: Resolver -> mock() }
-
-                        container.register(
-                            Scope.Singleton,
-                            Router::class.java
-                        ) { _ -> mock() }
-
-                        container.register(
-                            Scope.Singleton,
-                            UrlSchemes::class.java
-                        ) { _ -> UrlSchemes(listOf("rv-inbox"), associatedDomains = listOf("inbox.rover.io")) }
-
-                        container.register(
-                            Scope.Singleton,
-                            Context::class.java
-                        ) { _ -> mock() }
-                    }
-                }
-            )
+        val viewModels = ViewModels(
+            apiService = mock(),
+            mainScheduler = mock(),
+            eventEmitter = mock(),
+            sessionTracker = mock(),
+            imageOptimizationService = mock(),
+            assetService = mock(),
+            measurementService = mock()
         )
-        realObjectStack.initializeContainer()
-
         context("a basic screen with one row with a rectangle block") {
             val screen = ModelFactories.emptyScreen().copy(
                 rows = listOf(
@@ -90,7 +41,7 @@ object ScreenViewModelSpec : Spek({
                 )
             )
 
-            val screenViewModel = realObjectStack.resolve(ScreenViewModelInterface::class.java, null, screen)!!
+            val screenViewModel = viewModels.screenViewModel(screen)
 
             context("rendering") {
                 val rendered = screenViewModel.render(
@@ -133,7 +84,7 @@ object ScreenViewModelSpec : Spek({
                     )
                 )
             )
-            val screenViewModel = realObjectStack.resolve(ScreenViewModelInterface::class.java, null, screen)!!
+            val screenViewModel = viewModels.screenViewModel(screen)
 
             context("rendering") {
                 val rendered = screenViewModel.render(
@@ -188,7 +139,7 @@ object ScreenViewModelSpec : Spek({
                     )
                 )
             )
-            val screenViewModel = realObjectStack.resolve(ScreenViewModelInterface::class.java, null, screen)!!
+            val screenViewModel = viewModels.screenViewModel(screen)
 
             context("rendering") {
                 val rendered = screenViewModel.render(
@@ -224,7 +175,7 @@ object ScreenViewModelSpec : Spek({
                     )
                 )
             )
-            val screenViewModel = realObjectStack.resolve(ScreenViewModelInterface::class.java, null, screen)!!
+            val screenViewModel = viewModels.screenViewModel(screen)
 
             context("rendering") {
                 val rendered = screenViewModel.render(

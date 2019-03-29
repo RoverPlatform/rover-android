@@ -22,7 +22,7 @@ import org.reactivestreams.Publisher
 class ScreenViewModel(
     private val screen: Screen,
     private val backgroundViewModel: BackgroundViewModelInterface,
-    private val resolveNavigationViewModel: (row: Row) -> RowViewModelInterface
+    private val resolveRowViewModel: (row: Row) -> RowViewModelInterface
 ) : ScreenViewModelInterface, BackgroundViewModelInterface by backgroundViewModel {
 
     // TODO: remember (State) scroll position
@@ -41,7 +41,7 @@ class ScreenViewModel(
     private val rowViewModelsById: Map<String, RowViewModelInterface> by lazy {
         rowsById.mapValues { (_, row) ->
             // TODO: why on earth is this copy() here?
-            resolveNavigationViewModel(row.copy(blocks = row.blocks))
+            resolveRowViewModel(row.copy(blocks = row.blocks))
         }
     }
 

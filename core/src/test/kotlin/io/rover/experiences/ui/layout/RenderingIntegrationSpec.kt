@@ -1,23 +1,10 @@
 package io.rover.experiences.ui.layout
 
-import android.content.Context
-import io.rover.core.UrlSchemes
-import io.rover.experiences.ExperiencesAssembler
-import io.rover.experiences.MeasurementService
-import io.rover.experiences.ui.layout.screen.ScreenViewModelInterface
-import io.rover.core.assets.AssetService
-import io.rover.experiences.assets.ImageOptimizationServiceInterface
-import io.rover.core.container.Assembler
-import io.rover.core.container.Container
-import io.rover.core.container.InjectionContainer
-import io.rover.core.container.Resolver
-import io.rover.core.container.Scope
-import io.rover.experiences.data.domain.Experience
+import io.rover.core.ViewModels
 import io.rover.core.logging.GlobalStaticLogHolder
 import io.rover.core.logging.JvmLogger
 import io.rover.core.logging.log
-import io.rover.core.routing.Router
-import io.rover.core.streams.Scheduler
+import io.rover.experiences.data.domain.Experience
 import io.rover.experiences.data.graphql.operations.data.decodeJson
 import org.amshove.kluent.mock
 import org.amshove.kluent.shouldBeLessThan
@@ -39,58 +26,25 @@ class RenderingIntegrationSpec : Spek({
 
     describe("integration test with a full experience in JSON") {
         GlobalStaticLogHolder.globalLogEmitter = JvmLogger()
-        val realObjectStack = InjectionContainer(
-            listOf(
-                ExperiencesAssembler(),
-                object : Assembler {
-                    override fun assemble(container: Container) {
-                        container.register(Scope.Singleton, AssetService::class.java) { resolver ->
-                            mock()
-                        }
-
-                        container.register(Scope.Singleton, ImageOptimizationServiceInterface::class.java) { resolver ->
-                            mock()
-                        }
-
-                        container.register(
-                            Scope.Singleton,
-                            Scheduler::class.java,
-                            "main"
-                        ) { resolver -> mock() }
-
-                        container.register(
-                            Scope.Singleton,
-                            MeasurementService::class.java
-                        ) { _: Resolver -> mock() }
-
-                        container.register(
-                            Scope.Singleton,
-                            Router::class.java
-                        ) { _ -> mock() }
-
-                        container.register(
-                            Scope.Singleton,
-                            UrlSchemes::class.java
-                        ) { _ -> UrlSchemes(listOf("rv-inbox"), associatedDomains = listOf("inbox.rover.io")) }
-
-                        container.register(
-                            Scope.Singleton,
-                            Context::class.java
-                        ) { _ -> mock() }
-                    }
-                }
-            )
-        )
-        realObjectStack.initializeContainer()
-
         val experienceJson = this.javaClass.classLoader.getResourceAsStream("experience.json").bufferedReader(Charsets.UTF_8).readText()
         val experience = Experience.decodeJson(JSONObject(experienceJson))
 
         log.v("There are ${experience.screens.count()} screens.")
 
         context("layout") {
-            val screenViewModels = experience.screens.map {
-                realObjectStack.resolve(ScreenViewModelInterface::class.java, null, it)!!
+            val viewModels = ViewModels(
+                apiService = mock(),
+                mainScheduler = mock(),
+                eventEmitter = mock(),
+                sessionTracker = mock(),
+                imageOptimizationService = mock(),
+                assetService = mock(),
+                measurementService = mock()
+            )
+
+            val screenViewModels = experience.screens.map { screen ->
+                // realObjectStack.resolve(ScreenViewModelInterface::class.java, null, it)!!
+                viewModels.screenViewModel(screen)
             }
 
             val rendered: MutableList<Layout> = mutableListOf()

@@ -1,1 +1,1 @@
-include 'core', 'experiences', 'debug-app'
+include 'core', 'debug-app'

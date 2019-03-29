@@ -5,4 +5,6 @@
 
     <string name="default_notification_channel_name">Default</string>
     <string name="default_notification_description">Default</string>
+
+    <string name="rover_experiences_fetch_failure">Something went wrong.</string>
 </resources>

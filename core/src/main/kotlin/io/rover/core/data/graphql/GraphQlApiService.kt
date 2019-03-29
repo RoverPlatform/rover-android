@@ -12,6 +12,8 @@ import io.rover.core.data.http.NetworkClient
 import io.rover.core.logging.log
 import io.rover.core.platform.DateFormattingInterface
 import io.rover.core.streams.map
+import io.rover.experiences.data.domain.Experience
+import io.rover.experiences.data.graphql.operations.FetchExperienceRequest
 import org.json.JSONException
 import org.reactivestreams.Publisher
 import java.io.IOException
@@ -39,7 +41,7 @@ open class GraphQlApiService(
                 }
 
                 when {
-                    accountToken != null -> this["x-rover-account-token"] = bearerToken!!
+                    accountToken != null -> this["x-rover-account-token"] = accountToken
                     bearerToken != null -> this["authorization"] = "Bearer $bearerToken"
                 }
 
@@ -119,6 +121,9 @@ open class GraphQlApiService(
             }
         }
 
+    /**
+     * Performs the given [GraphQlRequest] when subscribed and yields the result to the subscriber.
+     */
     open fun <TEntity> operation(request: GraphQlRequest<TEntity>): Publisher<NetworkResult<TEntity>> {
         // TODO: once we change urlRequest() to use query parameters and GET for non-mutation
         // requests, replace true `below` with `request.mutation`.
@@ -130,5 +135,16 @@ open class GraphQlApiService(
         return networkClient.request(urlRequest, bodyData).map { httpClientResponse ->
             httpResult(request, httpClientResponse)
         }
+    }
+
+    /**
+     * Retrieves the experience when subscribed and yields it to the subscriber.
+     */
+    open fun fetchExperience(
+        query: FetchExperienceRequest.ExperienceQueryIdentifier
+    ): Publisher<NetworkResult<Experience>> {
+        return this.operation(
+            FetchExperienceRequest(query)
+        )
     }
 }

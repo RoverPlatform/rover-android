@@ -64,7 +64,7 @@ class NotificationsRepository(
 
     override fun unreadCount(): Publisher<Int> = updates().map { update ->
         update.notifications.filter {
-            it.isNotificationCenterEnabled && !it.isRead
+            it.isNotificationCenterEnabled && !it.isRead && !it.isDeleted
         }.count()
     }.observeOn(mainThreadScheduler).shareAndReplay(1)
 

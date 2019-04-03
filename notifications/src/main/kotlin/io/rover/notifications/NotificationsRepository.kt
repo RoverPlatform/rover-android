@@ -25,10 +25,10 @@ import io.rover.core.streams.asPublisher
 import io.rover.core.streams.doOnComplete
 import io.rover.core.streams.doOnNext
 import io.rover.core.streams.filterForSubtype
-import io.rover.core.streams.filterNulls
 import io.rover.core.streams.flatMap
 import io.rover.core.streams.map
 import io.rover.core.streams.observeOn
+import io.rover.core.streams.shareAndReplay
 import io.rover.core.streams.shareHotAndReplay
 import io.rover.core.streams.subscribeOn
 import io.rover.notifications.domain.Notification
@@ -62,6 +62,12 @@ class NotificationsRepository(
         epic
     ).observeOn(mainThreadScheduler).filterForSubtype()
 
+    override fun unreadCount(): Publisher<Int> = updates().map { update ->
+        update.notifications.filter {
+            it.isNotificationCenterEnabled && !it.isRead && !it.isDeleted
+        }.count()
+    }.observeOn(mainThreadScheduler).shareAndReplay(1)
+
     override fun events(): Publisher<NotificationsRepositoryInterface.Emission.Event> = epic.filterForSubtype()
 
     override fun refresh() {
@@ -70,6 +76,10 @@ class NotificationsRepository(
 
     override fun markRead(notification: Notification) {
         actions.onNext(Action.MarkRead(notification))
+    }
+
+    override fun markAllAsRead() {
+        actions.onNext(Action.MarkAllRead())
     }
 
     override fun delete(notification: Notification) {
@@ -106,14 +116,13 @@ class NotificationsRepository(
     }
 
     /**
-     * Add the existing notifications on disk together any new ones.
+     * Add the existing notifications on disk together with any new ones.
      *
      * The new list need not be exhaustive; existing non-conflicting records will be kept,
      * up until a cutoff.  That means this method may be used for partial updates.
      */
     private fun mergeWithLocalStorage(incomingNotifications: List<Notification>): Publisher<out List<Notification>> {
         return currentNotificationsOnDisk().map { notifications ->
-
             val notificationsOnDiskById = notifications?.associateBy { it.id } ?: hashMapOf()
             val incomingNotificationsById = incomingNotifications.associateBy { it.id }
 
@@ -175,6 +184,9 @@ class NotificationsRepository(
                     is Action.MarkRead -> {
                         doMarkAsRead(action.notification).map { NotificationsRepositoryInterface.Emission.Update(it) }
                     }
+                    is Action.MarkAllRead -> {
+                        doMarkAllRead().map { NotificationsRepositoryInterface.Emission.Update(it) }
+                    }
                     is Action.NotificationsFetchedOrArrived -> {
                         mergeWithLocalStorage(action.notifications).flatMap { merged -> replaceLocalStorage(merged) }.map {
                             NotificationsRepositoryInterface.Emission.Update(it)
@@ -219,6 +231,18 @@ class NotificationsRepository(
         }.subscribeOn(ioExecutor)
     }
 
+    private fun emitMarkedReadEvent(notification: Notification) {
+        eventQueue.trackEvent(
+            Event(
+                "Notification Marked Read",
+                hashMapOf(
+                    Pair("notification", notification.asAttributeValue())
+                )
+            ),
+            EventQueueService.ROVER_NAMESPACE
+        )
+    }
+
     /**
      * When subscribed, performs the side-effect of marking the given notification as deleted
      * locally (on the I/O executor).
@@ -234,21 +258,27 @@ class NotificationsRepository(
             }
 
             if (!alreadyRead) {
-                eventQueue.trackEvent(
-                    Event(
-                        "Notification Marked Read",
-                        hashMapOf(
-                            Pair("notification", notification.asAttributeValue())
-                        )
-                    ),
-                    EventQueueService.ROVER_NAMESPACE
-                )
+                emitMarkedReadEvent(notification)
             }
 
             replaceLocalStorage(
                 modified
             ).map { modified }
         }.subscribeOn(ioExecutor)
+    }
+
+    private fun doMarkAllRead(): Publisher<List<Notification>> {
+        return currentNotificationsOnDisk().flatMap { onDisk ->
+            val unread = onDisk.filter { !it.isRead }
+            val modified = onDisk.map { onDiskNotification ->
+                onDiskNotification.copy(isRead = true)
+            }
+
+            replaceLocalStorage(modified).map { modified }.doOnComplete {
+                // side-effect: emit all marked-read events.
+                unread.forEach { emitMarkedReadEvent(it) }
+            }
+        }
     }
 
     private fun Collection<Notification>.orderNotifications(): List<Notification> {
@@ -278,6 +308,8 @@ class NotificationsRepository(
          * User has requested a mark to be delete.
          */
         class MarkDeleted(val notification: Notification) : Action()
+
+        class MarkAllRead: Action()
 
         /**
          * Notifications arrived or fetched, and need to be merged in.

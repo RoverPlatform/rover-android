@@ -9,10 +9,14 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.rover.core.Rover
 import io.rover.core.permissions.PermissionsNotifierInterface
-import io.rover.core.permissionsNotifier
-import io.rover.experiences.ui.containers.ExperienceActivity
+import io.rover.notifications.ui.concerns.NotificationsRepositoryInterface
+import kotlinx.android.synthetic.main.activity_debug_main.mark_all_unread_button
 import kotlinx.android.synthetic.main.activity_debug_main.navigation
 import kotlinx.android.synthetic.main.activity_debug_main.notification_center
 import kotlinx.android.synthetic.main.activity_debug_main.settings_fragment
@@ -47,6 +51,20 @@ class DebugMainActivity : AppCompatActivity() {
         selectTab(R.id.navigation_notifications)
 
         makePermissionsAttempt()
+
+        val unreadObservable = Observable.fromPublisher(
+            Rover.shared!!.resolve(NotificationsRepositoryInterface::class.java)!!.unreadCount()
+        )
+
+        unreadObservable
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { unreadCount ->
+                this.title = "Rover Inbox: $unreadCount unread"
+            }
+
+        (this.mark_all_unread_button as Button).setOnClickListener {
+            Rover.shared!!.resolve(NotificationsRepositoryInterface::class.java)!!.markAllAsRead()
+        }
 
 //         startActivity(
 //             ExperienceActivity.makeIntent(this, experienceId = "59e8b9d0d4459d00102c2958", campaignId = null)

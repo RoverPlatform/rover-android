@@ -29,6 +29,11 @@ interface NotificationsRepositoryInterface {
     fun updates(): Publisher<Emission.Update>
 
     /**
+     * Subscribe to this to be notified of the current count of unread messages.
+     */
+    fun unreadCount(): Publisher<Int>
+
+    /**
      * Be informed of changes occurring to the Repository itself; for instance, if a refresh cycle
      * currently running.
      */
@@ -45,6 +50,11 @@ interface NotificationsRepositoryInterface {
      * publisher.
      */
     fun markRead(notification: Notification)
+
+    /**
+     * Request that all notifications currently in the repository are marked as read.
+     */
+    fun markAllAsRead()
 
     /**
      * A notification arrived by push.  This will asynchronously insert it into the repository. This

@@ -19,14 +19,14 @@ import io.rover.core.logging.log
 import io.rover.core.streams.androidLifecycleDispose
 import io.rover.core.streams.doOnUnsubscribe
 import io.rover.core.streams.subscribe
-import io.rover.experiences.ui.ExperienceView
+import io.rover.experiences.ui.RoverView
 import org.reactivestreams.Subscription
 
 class ViewExperienceToolbar(
     private val hostView: View,
     hostWindowForStatusBar: Window,
     private val context: Context,
-    private val toolbarHost: ExperienceView.ToolbarHost
+    private val toolbarHost: RoverView.ToolbarHost
 ) : ViewExperienceToolbarInterface {
     private val menuItemId = View.generateViewId()
 

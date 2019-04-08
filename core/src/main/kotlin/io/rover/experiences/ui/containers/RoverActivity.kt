@@ -18,18 +18,18 @@ import io.rover.core.platform.whenNotNull
 import io.rover.core.streams.androidLifecycleDispose
 import io.rover.core.streams.subscribe
 import io.rover.core.ui.concerns.MeasuredBindableView
-import io.rover.experiences.ui.ExperienceView
-import io.rover.experiences.ui.ExperienceViewModel
-import io.rover.experiences.ui.ExperienceViewModelInterface
+import io.rover.experiences.ui.RoverView
+import io.rover.experiences.ui.RoverViewModel
+import io.rover.experiences.ui.RoverViewModelInterface
 import io.rover.experiences.ui.navigation.ExperienceExternalNavigationEvent
 
 /**
  * This can display a Rover experience in an Activity, self-contained.
  *
  * You may use this either as a subclass for your own Activity, or as a template for embedding
- * a Rover [ExperienceView] in your own Activities.
+ * a Rover [RoverView] in your own Activities.
  */
-open class ExperienceActivity : AppCompatActivity() {
+open class RoverActivity : AppCompatActivity() {
     protected open val experienceId: String? by lazy { this.intent.getStringExtra("EXPERIENCE_ID") }
 
     protected open val experienceUrl: String? by lazy { this.intent.getStringExtra("EXPERIENCE_URL") }
@@ -76,16 +76,16 @@ open class ExperienceActivity : AppCompatActivity() {
                 }
             }
             is ExperienceExternalNavigationEvent.Custom -> {
-                log.w("You have emitted a Custom event: $externalNavigationEvent, but did not handle it in your subclass implementation of ExperienceActivity.dispatchExternalNavigationEvent()")
+                log.w("You have emitted a Custom event: $externalNavigationEvent, but did not handle it in your subclass implementation of RoverActivity.dispatchExternalNavigationEvent()")
             }
         }
     }
 
     /**
-     * [ExperienceViewModel] is responsible for describing the appearance and behaviour of the
+     * [RoverViewModel] is responsible for describing the appearance and behaviour of the
      * experience contents.  If you customize it, you must return your customized version here.
      */
-    protected open val experiencesView by lazy { ExperienceView(this) }
+    protected open val experiencesView by lazy { RoverView(this) }
 
     /**
      * Holds the currently set view model, including side-effect behaviour for binding it to the
@@ -94,7 +94,7 @@ open class ExperienceActivity : AppCompatActivity() {
      * This is a mutable property because it cannot be set up at Activity construction time in the
      * constructor; at that stage the requesting Intent and its parameters are not available.
      */
-    private var experienceViewModel: ExperienceViewModelInterface? = null
+    private var roverViewModel: RoverViewModelInterface? = null
         set(viewModel) {
             field = viewModel
 
@@ -106,7 +106,7 @@ open class ExperienceActivity : AppCompatActivity() {
                 ?.subscribe(
                     { event ->
                         when (event) {
-                            is ExperienceViewModelInterface.Event.NavigateTo -> {
+                            is RoverViewModelInterface.Event.NavigateTo -> {
                                 log.v("Received an external navigation event: ${event.externalNavigationEvent}")
                                 dispatchExternalNavigationEvent(event.externalNavigationEvent)
                             }
@@ -126,8 +126,8 @@ open class ExperienceActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        if (experienceViewModel != null) {
-            experienceViewModel?.pressBack()
+        if (roverViewModel != null) {
+            roverViewModel?.pressBack()
         } else {
             // default to standard Android back-button behaviour (ie., pop the activity) if our view
             // model isn't yet available.
@@ -144,7 +144,7 @@ open class ExperienceActivity : AppCompatActivity() {
 
         val rover = Rover.shared
         if(rover == null) {
-            log.w("ExperienceActivity cannot work unless Rover has been initialized.")
+            log.w("RoverActivity cannot work unless Rover has been initialized.")
             finish()
             return
         }
@@ -158,7 +158,7 @@ open class ExperienceActivity : AppCompatActivity() {
         ).getBoolean(0, false)
 
         if (displayNoCustomThemeWarningMessage) {
-            log.w("You have set no theme for ExperienceActivity (or your optional subclass thereof) in your AndroidManifest.xml.\n" +
+            log.w("You have set no theme for RoverActivity (or your optional subclass thereof) in your AndroidManifest.xml.\n" +
                 "In particular, this means the toolbar will not pick up your brand colours.")
         }
 
@@ -166,17 +166,17 @@ open class ExperienceActivity : AppCompatActivity() {
             experiencesView
         )
 
-        // wire up the toolbar host to the ExperienceView.  Note that the activity will be leaked
+        // wire up the toolbar host to the RoverView.  Note that the activity will be leaked
         // unless you remember to set it back to null in onDestroy().
         experiencesView.toolbarHost = toolbarHost
 
         // obtain any possibly saved state for the experience view model.  See
         // onSaveInstanceState.
         val state: Parcelable? = savedInstanceState?.getParcelable("experienceState")
-        experienceViewModel = when {
+        roverViewModel = when {
             experienceId != null && campaignId == null -> experienceViewModel(
                 rover,
-                ExperienceViewModel.ExperienceRequest.ById(experienceId!!),
+                RoverViewModel.ExperienceRequest.ById(experienceId!!),
                 // obtain any possibly saved state for the experience view model.  See
                 // onSaveInstanceState.
                 state
@@ -184,17 +184,17 @@ open class ExperienceActivity : AppCompatActivity() {
 
             experienceId == null && campaignId != null -> experienceViewModel(
                 rover,
-                ExperienceViewModel.ExperienceRequest.ByCampaignId(campaignId!!),
+                RoverViewModel.ExperienceRequest.ByCampaignId(campaignId!!),
                 state
             )
 
             experienceUrl != null -> experienceViewModel(
                 rover,
-                ExperienceViewModel.ExperienceRequest.ByCampaignUrl(experienceUrl!!),
+                RoverViewModel.ExperienceRequest.ByCampaignUrl(experienceUrl!!),
                 state
             )
             else -> throw RuntimeException(
-                "Please pass either one of CAMPAIGN_ID/EXPERIENCE_ID or EXPERIENCE_URL. Consider using ExperienceActivity.makeIntent()"
+                "Please pass either one of CAMPAIGN_ID/EXPERIENCE_ID or EXPERIENCE_URL. Consider using RoverActivity.makeIntent()"
             )
         }
     }
@@ -209,15 +209,15 @@ open class ExperienceActivity : AppCompatActivity() {
      */
     protected open fun experienceViewModel(
         rover: Rover,
-        experienceRequest: ExperienceViewModel.ExperienceRequest,
+        experienceRequest: RoverViewModel.ExperienceRequest,
         icicle: Parcelable?
-    ): ExperienceViewModelInterface {
+    ): RoverViewModelInterface {
         return Rover.shared?.viewModels?.experienceViewModel(experienceRequest, this.lifecycle) ?: throw RuntimeException("Rover not usable until Rover.initialize has been called.")
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         super.onCreateOptionsMenu(menu)
-        // ExperienceView owns the toolbar, this is so ExperienceView can take your menu and include
+        // RoverView owns the toolbar, this is so RoverView can take your menu and include
         // it in its internal toolbar.
         toolbarHost.menu = menu
         return true
@@ -227,13 +227,13 @@ open class ExperienceActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
         // grab the state for the Experience view out of its view model and store it in the
         // activity's own bundle.
-        outState.putParcelable("experienceState", experienceViewModel?.state)
+        outState.putParcelable("experienceState", roverViewModel?.state)
     }
 
     companion object {
         @JvmStatic
         @JvmOverloads
-        fun makeIntent(packageContext: Context, experienceId: String?, campaignId: String?, activityClass: Class<out Activity> = ExperienceActivity::class.java): Intent {
+        fun makeIntent(packageContext: Context, experienceId: String?, campaignId: String?, activityClass: Class<out Activity> = RoverActivity::class.java): Intent {
             return Intent(packageContext, activityClass).apply {
                 putExtra("EXPERIENCE_ID", experienceId)
                 putExtra("CAMPAIGN_ID", campaignId)
@@ -242,7 +242,7 @@ open class ExperienceActivity : AppCompatActivity() {
 
         @JvmStatic
         @JvmOverloads
-        fun makeIntent(packageContext: Context, experienceUrl: String, activityClass: Class<out Activity> = ExperienceActivity::class.java): Intent {
+        fun makeIntent(packageContext: Context, experienceUrl: String, activityClass: Class<out Activity> = RoverActivity::class.java): Intent {
             return Intent(packageContext, activityClass).apply {
                 putExtra("EXPERIENCE_URL", experienceUrl)
             }

@@ -20,7 +20,7 @@ import io.rover.core.tracking.SessionTracker
 import io.rover.experiences.data.domain.Experience
 import io.rover.experiences.data.domain.Screen
 import io.rover.experiences.data.domain.events.asAttributeValue
-import io.rover.experiences.ui.containers.ExperienceActivity
+import io.rover.experiences.ui.containers.RoverActivity
 import io.rover.experiences.ui.layout.screen.ScreenViewModelInterface
 import io.rover.experiences.ui.toolbar.ExperienceToolbarViewModelInterface
 import io.rover.experiences.ui.toolbar.ToolbarConfiguration
@@ -34,7 +34,7 @@ import org.reactivestreams.Publisher
  * state persistence, WebView-like canGoBack/goBack methods, and exposing an API for customizing
  * flow behaviour.
  */
-open class ExperienceNavigationViewModel(
+open class NavigationViewModel(
     private val experience: Experience,
     private val eventEmitter: EventEmitter,
     private val sessionTracker: SessionTracker,
@@ -42,7 +42,7 @@ open class ExperienceNavigationViewModel(
     private val resolveToolbarViewModel: (configuration: ToolbarConfiguration) -> ExperienceToolbarViewModelInterface,
     activityLifecycle: Lifecycle,
     icicle: Parcelable? = null
-) : ExperienceNavigationViewModelInterface {
+) : NavigationViewModelInterface {
 
     override fun start() {
         actions.onNext(Action.Begin())
@@ -60,8 +60,8 @@ open class ExperienceNavigationViewModel(
     private val toolbarSubject = PublishSubject<ExperienceToolbarViewModelInterface>()
     final override val toolbar: Publisher<ExperienceToolbarViewModelInterface> = toolbarSubject.shareHotAndReplay(1)
 
-    private val screenSubject = PublishSubject<ExperienceNavigationViewModelInterface.ScreenUpdate>()
-    final override val screen: Publisher<ExperienceNavigationViewModelInterface.ScreenUpdate> = screenSubject.shareHotAndReplay(1)
+    private val screenSubject = PublishSubject<NavigationViewModelInterface.ScreenUpdate>()
+    final override val screen: Publisher<NavigationViewModelInterface.ScreenUpdate> = screenSubject.shareHotAndReplay(1)
 
     private val backlightSubject = PublishSubject<Boolean>()
     final override val backlight: Publisher<Boolean> = backlightSubject.shareHotAndReplay(1)
@@ -196,7 +196,7 @@ open class ExperienceNavigationViewModel(
                     } else {
                         // just direct subscribers to the screen last left in the state.
                         screenSubject.onNext(
-                            ExperienceNavigationViewModelInterface.ScreenUpdate(
+                            NavigationViewModelInterface.ScreenUpdate(
                                 activeScreenViewModel(), false, false
                             )
                         )
@@ -257,7 +257,7 @@ open class ExperienceNavigationViewModel(
      *
      * You can override this to emit a [ExperienceExternalNavigationEvent.Custom] event and thus
      * be able respond to it in your container (say, a subclass of
-     * [ExperienceActivity]), and perform your custom behaviour, such as launching an
+     * [RoverActivity]), and perform your custom behaviour, such as launching an
      * app login screen.
      */
     protected open fun navigateToScreen(
@@ -267,7 +267,7 @@ open class ExperienceNavigationViewModel(
         forwards: Boolean
     ) {
         screenSubject.onNext(
-            ExperienceNavigationViewModelInterface.ScreenUpdate(
+            NavigationViewModelInterface.ScreenUpdate(
                 screenViewModel,
                 !forwards,
                 currentBackStack.isNotEmpty()
@@ -354,7 +354,7 @@ open class ExperienceNavigationViewModel(
      * Exits the Experience by emitting the appropriate events.
      *
      * You can override this to modify the exit behaviour, perhaps to emit a
-     * [ExperienceNavigationViewModelInterface.Emission.Event.NavigateAway] with a
+     * [NavigationViewModelInterface.Emission.Event.NavigateAway] with a
      * [ExperienceExternalNavigationEvent.Custom] to inform your main Activity to instead perform no
      * effect at all.
      */

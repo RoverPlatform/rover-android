@@ -2,7 +2,7 @@ package io.rover.app.debug
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import io.rover.experiences.ui.containers.ExperienceActivity
+import io.rover.experiences.ui.containers.RoverActivity
 
 class DebugMainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -11,7 +11,7 @@ class DebugMainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_debug_main)
 
          startActivity(
-             ExperienceActivity.makeIntent(this, experienceId = "INSERT ME", campaignId = null)
+             RoverActivity.makeIntent(this, experienceId = "INSERT ME", campaignId = null)
          )
     }
 }

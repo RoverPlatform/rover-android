@@ -21,54 +21,53 @@ import android.view.Window
 import android.view.WindowManager
 import android.view.animation.LinearInterpolator
 import io.rover.core.R
-import io.rover.experiences.ui.containers.ExperienceActivity
-import io.rover.experiences.ui.navigation.ExperienceNavigationView
+import io.rover.experiences.ui.containers.RoverActivity
+import io.rover.experiences.ui.navigation.NavigationView
 import io.rover.experiences.ui.toolbar.ViewExperienceToolbar
 import io.rover.core.logging.log
 import io.rover.core.streams.androidLifecycleDispose
 import io.rover.core.streams.subscribe
 import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.ViewModelBinding
-import io.rover.experiences.ui.dpAsPx
 import io.rover.core.platform.whenNotNull
 import org.reactivestreams.Publisher
 
 /**
  * Embed this view to include a Rover Experience in a layout.
  *
- * Most applications will likely want to use [ExperienceActivity] to display an Experience, but for
+ * Most applications will likely want to use [RoverActivity] to display an Experience, but for
  * more custom setups (say, tablet-enabled single-activity apps that avoid fragments), you can embed
- * [ExperienceView] directly, although you will need to do a few more things manually.
+ * [RoverView] directly, although you will need to do a few more things manually.
  *
- * In order to display an Experience, instantiate ExperienceViewModel and set it to
+ * In order to display an Experience, instantiate RoverViewModel and set it to
  * [viewModelBinding].
  *
  * Note about Android state restoration: Rover SDK views handle state saving & restoration through
- * their view models, so you will need store a Parcelable on behalf of ExperienceView and
- * [ExperienceViewModel] (grabbing the state Parcelable from the view model at save time and
+ * their view models, so you will need store a Parcelable on behalf of RoverView and
+ * [RoverViewModel] (grabbing the state Parcelable from the view model at save time and
  * restoring it by passing it to the view model factory at restart time).
  *
- * See [ExperienceActivity] for an example of how to integrate.
+ * See [RoverActivity] for an example of how to integrate.
  */
-class ExperienceView : CoordinatorLayout, MeasuredBindableView<ExperienceViewModelInterface> {
+class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    override var viewModelBinding: MeasuredBindableView.Binding<ExperienceViewModelInterface>? by ViewModelBinding(false) { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<RoverViewModelInterface>? by ViewModelBinding(false) { binding, subscriptionCallback ->
         // sadly have to set rebindingAllowed to be false because of complexity dealing with the
         // toolbar; the toolbar may not be configured twice.
         val viewModel = binding?.viewModel
 
         val toolbarHost = toolbarHost
-            ?: throw RuntimeException("You must set the ToolbarHost up on ExperienceView before binding the view to a view model.")
+            ?: throw RuntimeException("You must set the ToolbarHost up on RoverView before binding the view to a view model.")
 
-        experienceNavigationView.viewModelBinding = null
+        navigationView.viewModelBinding = null
 
         if (viewModel != null) {
             viewModel.events.androidLifecycleDispose(this).subscribe({ event ->
                 when (event) {
-                    is ExperienceViewModelInterface.Event.DisplayError -> {
+                    is RoverViewModelInterface.Event.DisplayError -> {
                         Snackbar.make(this, R.string.rover_experiences_fetch_failure, Snackbar.LENGTH_LONG).show()
                         log.w("Unable to retrieve experience: ${event.engineeringReason}")
                     }
@@ -126,8 +125,8 @@ class ExperienceView : CoordinatorLayout, MeasuredBindableView<ExperienceViewMod
                 runningAnimator = animator
             }, { throw(it) }, { subscriptionCallback(it) })
 
-            viewModel.experienceNavigation.androidLifecycleDispose(this).subscribe({ experienceNavigationViewModel ->
-                experienceNavigationView.viewModelBinding = MeasuredBindableView.Binding(
+            viewModel.navigationViewModel.androidLifecycleDispose(this).subscribe({ experienceNavigationViewModel ->
+                navigationView.viewModelBinding = MeasuredBindableView.Binding(
                     experienceNavigationViewModel
                 )
                 turnOffProgressIndicator()
@@ -184,16 +183,16 @@ class ExperienceView : CoordinatorLayout, MeasuredBindableView<ExperienceViewMod
 
     private var toolbar: Toolbar? = null
 
-    private val experienceNavigationView: ExperienceNavigationView = ExperienceNavigationView(context)
+    private val navigationView: NavigationView = NavigationView(context)
 
     private val appBarLayout = AppBarLayout(context)
 
     init {
         addView(
-            experienceNavigationView
+            navigationView
         )
 
-        (experienceNavigationView.layoutParams as CoordinatorLayout.LayoutParams).apply {
+        (navigationView.layoutParams as CoordinatorLayout.LayoutParams).apply {
             behavior = AppBarLayout.ScrollingViewBehavior()
             width = LayoutParams.MATCH_PARENT
             height = LayoutParams.MATCH_PARENT
@@ -246,7 +245,7 @@ class ExperienceView : CoordinatorLayout, MeasuredBindableView<ExperienceViewMod
     }
 
     private val viewExperienceToolbar by lazy {
-        val toolbarHost = toolbarHost ?: throw RuntimeException("You must set the ToolbarHost up on ExperienceView before binding the view to a view model.")
+        val toolbarHost = toolbarHost ?: throw RuntimeException("You must set the ToolbarHost up on RoverView before binding the view to a view model.")
         ViewExperienceToolbar(
             this,
             toolbarHost.provideWindow(),

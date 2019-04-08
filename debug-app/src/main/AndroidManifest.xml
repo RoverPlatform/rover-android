@@ -11,7 +11,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="io.rover.experiences.ui.containers.ExperienceActivity"
+            android:name="io.rover.experiences.ui.containers.RoverActivity"
             android:theme="@style/AppTheme.NoActionBar" />
 
         <activity

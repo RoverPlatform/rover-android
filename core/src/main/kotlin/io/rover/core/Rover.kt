@@ -41,7 +41,7 @@ import io.rover.experiences.data.domain.Text
 import io.rover.experiences.data.domain.TextBlock
 import io.rover.experiences.data.domain.WebView
 import io.rover.experiences.data.domain.WebViewBlock
-import io.rover.experiences.ui.ExperienceViewModel
+import io.rover.experiences.ui.RoverViewModel
 import io.rover.experiences.ui.blocks.barcode.BarcodeBlockView
 import io.rover.experiences.ui.blocks.barcode.BarcodeBlockViewModel
 import io.rover.experiences.ui.blocks.barcode.BarcodeViewModel
@@ -74,7 +74,7 @@ import io.rover.experiences.ui.layout.ViewType
 import io.rover.experiences.ui.layout.row.RowView
 import io.rover.experiences.ui.layout.row.RowViewModel
 import io.rover.experiences.ui.layout.screen.ScreenViewModel
-import io.rover.experiences.ui.navigation.ExperienceNavigationViewModel
+import io.rover.experiences.ui.navigation.NavigationViewModel
 import io.rover.experiences.ui.toolbar.ExperienceToolbarViewModel
 import io.rover.experiences.ui.toolbar.ToolbarConfiguration
 import java.net.HttpURLConnection
@@ -213,10 +213,10 @@ open class ViewModels(
     protected val measurementService: MeasurementService
 ) {
     open fun experienceViewModel(
-        experienceRequest: ExperienceViewModel.ExperienceRequest,
+        experienceRequest: RoverViewModel.ExperienceRequest,
         activityLifecycle: Lifecycle
-    ): ExperienceViewModel {
-        return ExperienceViewModel(
+    ): RoverViewModel {
+        return RoverViewModel(
             experienceRequest = experienceRequest,
             graphQlApiService = apiService,
             mainThreadScheduler = mainScheduler,
@@ -235,8 +235,8 @@ open class ViewModels(
         experience: Experience,
         activityLifecycle: Lifecycle,
         icicle: Parcelable? = null
-    ): ExperienceNavigationViewModel {
-        return ExperienceNavigationViewModel(
+    ): NavigationViewModel {
+        return NavigationViewModel(
             experience,
             eventEmitter = eventEmitter,
             sessionTracker = sessionTracker,
@@ -397,7 +397,7 @@ open class ViewModels(
 }
 
 open class Views {
-    // TODO: consider moving into ExperienceView
+    // TODO: consider moving into RoverView
     fun blockAndRowLayoutManager(
         layout: Layout,
         displayMetrics: DisplayMetrics
@@ -423,7 +423,7 @@ open class Views {
         }
     }
 
-    // TODO: consider moving into ExperienceView
+    // TODO: consider moving into RoverView
     fun blockAndRowRecyclerAdapter(
         layout: Layout,
         displayMetrics: DisplayMetrics

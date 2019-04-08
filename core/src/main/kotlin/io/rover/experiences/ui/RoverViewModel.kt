@@ -19,47 +19,47 @@ import io.rover.core.tracking.SessionTracker
 import io.rover.experiences.data.domain.Experience
 import io.rover.experiences.data.graphql.operations.FetchExperienceRequest
 import io.rover.experiences.ui.navigation.ExperienceExternalNavigationEvent
-import io.rover.experiences.ui.navigation.ExperienceNavigationViewModelInterface
+import io.rover.experiences.ui.navigation.NavigationViewModelInterface
 import io.rover.experiences.ui.toolbar.ExperienceToolbarViewModelInterface
 import io.rover.experiences.ui.toolbar.ToolbarConfiguration
 import kotlinx.android.parcel.Parcelize
 import org.reactivestreams.Publisher
 
-class ExperienceViewModel(
+class RoverViewModel(
     private val experienceRequest: ExperienceRequest,
     private val graphQlApiService: GraphQlApiService,
     private val mainThreadScheduler: Scheduler,
     private val sessionTracker: SessionTracker,
-    private val resolveNavigationViewModel: (experience: Experience, icicle: Parcelable?) -> ExperienceNavigationViewModelInterface,
+    private val resolveNavigationViewModel: (experience: Experience, icicle: Parcelable?) -> NavigationViewModelInterface,
     private val icicle: Parcelable? = null
-) : ExperienceViewModelInterface {
+) : RoverViewModelInterface {
 
     override val state: Parcelable
         get() {
             // this is a slightly strange arrangement: since (almost) all state is really within a
             // contained view model (that only becomes available synchronously) we effectively
             // assume we have only our icicle state when that nested view model is not available.
-            return if (navigationViewModel == null) {
+            return if (currentNavigationViewModel == null) {
                 // getting saved early, starting over.
                 icicle ?: State(null)
             } else {
                 State(
-                    navigationViewModel?.state
+                    currentNavigationViewModel?.state
                 )
             }
         }
 
     override val actionBar: Publisher<ExperienceToolbarViewModelInterface>
     override val extraBrightBacklight: Publisher<Boolean>
-    override val experienceNavigation: Publisher<ExperienceNavigationViewModelInterface>
-    override val events: Publisher<ExperienceViewModelInterface.Event>
+    override val navigationViewModel: Publisher<NavigationViewModelInterface>
+    override val events: Publisher<RoverViewModelInterface.Event>
     override val loadingState: Publisher<Boolean>
 
     override fun pressBack() {
-        if (navigationViewModel == null) {
+        if (currentNavigationViewModel == null) {
             actionSource.onNext(Action.BackPressedBeforeExperienceReady)
         } else {
-            navigationViewModel?.pressBack()
+            currentNavigationViewModel?.pressBack()
         }
     }
 
@@ -82,7 +82,7 @@ class ExperienceViewModel(
      * Hold on to a reference to the navigation view model so that it can contribute to the Android
      * state restore parcelable.
      */
-    private var navigationViewModel: ExperienceNavigationViewModelInterface? = null
+    private var currentNavigationViewModel: NavigationViewModelInterface? = null
 
     init {
         // maybe for each type fork I should split out and delegate to subjects?
@@ -90,12 +90,12 @@ class ExperienceViewModel(
 
         val toolBarSubject = PublishSubject<ExperienceToolbarViewModelInterface>()
         val loadingSubject = PublishSubject<Boolean>()
-        val eventsSubject = PublishSubject<ExperienceViewModelInterface.Event>()
+        val eventsSubject = PublishSubject<RoverViewModelInterface.Event>()
 
         actions.subscribe { action ->
             when (action!!) {
                 Action.BackPressedBeforeExperienceReady -> {
-                    eventsSubject.onNext(ExperienceViewModelInterface.Event.NavigateTo(
+                    eventsSubject.onNext(RoverViewModelInterface.Event.NavigateTo(
                         ExperienceExternalNavigationEvent.Exit()
                     ))
                 }
@@ -122,11 +122,11 @@ class ExperienceViewModel(
                                     )
 
                                     override fun pressedBack() {
-                                        actionSource.onNext(ExperienceViewModel.Action.BackPressedBeforeExperienceReady)
+                                        actionSource.onNext(RoverViewModel.Action.BackPressedBeforeExperienceReady)
                                     }
 
                                     override fun pressedClose() {
-                                        actionSource.onNext(ExperienceViewModel.Action.BackPressedBeforeExperienceReady)
+                                        actionSource.onNext(RoverViewModel.Action.BackPressedBeforeExperienceReady)
                                     }
                                 }
                             )
@@ -142,7 +142,7 @@ class ExperienceViewModel(
            loadingSubject.onNext(false)
            when (networkResult) {
                is ApiResult.Error -> {
-                   eventsSubject.onNext(ExperienceViewModelInterface.Event.DisplayError(
+                   eventsSubject.onNext(RoverViewModelInterface.Event.DisplayError(
                        networkResult.throwable.message ?: "Unknown"
                    ))
                }
@@ -154,7 +154,7 @@ class ExperienceViewModel(
 
         // yields an experience navigation view model. used by both our view and some of the
         // internal subscribers below.
-        experienceNavigation = experiences.map { experience ->
+        navigationViewModel = experiences.map { experience ->
             resolveNavigationViewModel(
                 experience,
                 // allow it to restore from state if there is any.
@@ -162,27 +162,27 @@ class ExperienceViewModel(
             ).apply {
                 // store a reference to the view model in object scope so it can contribute to the
                 // state parcelable.
-                this@ExperienceViewModel.navigationViewModel = this
+                this@RoverViewModel.currentNavigationViewModel = this
             }
         }.shareAndReplay(1)
 
         // filter out all the navigation view model events external navigation events.
-        val navigateAwayEvents = experienceNavigation.flatMap { navigationViewModel ->
+        val navigateAwayEvents = navigationViewModel.flatMap { navigationViewModel ->
             navigationViewModel.externalNavigationEvents
         }
 
         // emit those navigation events to our view.
         navigateAwayEvents.subscribe { navigateAway ->
             eventsSubject.onNext(
-                ExperienceViewModelInterface.Event.NavigateTo(navigateAway)
+                RoverViewModelInterface.Event.NavigateTo(navigateAway)
             )
         }
 
         // pass through the backlight and toolbar updates.
-        val backlightEvents = experienceNavigation.flatMap { navigationViewModel ->
+        val backlightEvents = navigationViewModel.flatMap { navigationViewModel ->
             navigationViewModel.backlight
         }
-        val toolbarEvents = experienceNavigation.flatMap { navigationViewModel ->
+        val toolbarEvents = navigationViewModel.flatMap { navigationViewModel ->
             navigationViewModel.toolbar
         }
         val backlightSubject = PublishSubject<Boolean>()

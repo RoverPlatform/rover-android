@@ -11,7 +11,7 @@ import io.rover.core.ui.concerns.BindableViewModel
 import org.reactivestreams.Publisher
 import java.net.URI
 
-interface ExperienceNavigationViewModelInterface : BindableViewModel {
+interface NavigationViewModelInterface : BindableViewModel {
     /**
      * Emits when the user should be navigated away to some other piece of content external to the
      * Experience.
@@ -64,7 +64,7 @@ interface ExperienceNavigationViewModelInterface : BindableViewModel {
      *
      * Check this before calling [pressBack].  However, it is optional: if you call pressBack()
      * without checking [canGoBack], and there are no remaining back stack entries remaining, you'll
-     * receive an [ExperienceNavigationViewModelInterface.Event.NavigateAway] containing a
+     * receive an [NavigationViewModelInterface.Event.NavigateAway] containing a
      * [ExperienceExternalNavigationEvent.Exit] event.
      */
     fun canGoBack(): Boolean
@@ -78,20 +78,20 @@ interface ExperienceNavigationViewModelInterface : BindableViewModel {
 /**
  * These are navigation that are emitted by the experience navigation view model but because they
  * are for destinations external to the experience they must be passed up by the containing
- * ExperienceViewModel.
+ * RoverViewModel.
  */
 sealed class ExperienceExternalNavigationEvent {
     // TODO: we may want to do an (optional) internal web browser like iOS, but there is less call for it
     // because Android has its back button.  Will discuss.
 
     // TODO: add an Event here for customers to insert a custom navigation event that their own code
-    // can handle on the outer side of ExperienceViewModel for navigating to other screens in their
+    // can handle on the outer side of RoverViewModel for navigating to other screens in their
     // app and such.
 
     /**
      *  Containing view context should launch a web browser for the given URI in the surrounding
      *  navigation flow (such as the general Android backstack, Conductor backstack, etc.) external
-     *  to the internal Rover ExperienceNavigationViewModel, whatever it happens to be in the
+     *  to the internal Rover NavigationViewModel, whatever it happens to be in the
      *  surrounding app.
      */
     data class OpenUri(val uri: URI) : ExperienceExternalNavigationEvent()
@@ -101,7 +101,7 @@ sealed class ExperienceExternalNavigationEvent {
     /**
      * Containing view context (hosting the Experience) should pop itself ([Activity.finish], etc.)
      * in the surrounding navigation flow (such as the general Android backstack, Conductor
-     * backstack, etc.) external to the internal Rover ExperienceNavigationViewModel, whatever it
+     * backstack, etc.) external to the internal Rover NavigationViewModel, whatever it
      * happens to be in the surrounding app.
      */
     class Exit : ExperienceExternalNavigationEvent()
@@ -109,10 +109,10 @@ sealed class ExperienceExternalNavigationEvent {
     /**
      * This is a custom navigation type.  It is not used in typical operation of the Rover SDK's
      * Experiences module, however, to insert custom behaviour developers may override
-     * [ExperienceNavigationViewModel], [ScreenViewModel], or [BlockViewModel] to emit these Custom
+     * [NavigationViewModel], [ScreenViewModel], or [BlockViewModel] to emit these Custom
      * events thus handle them in their [ExperienceView] container.  A common use case is to peek at
      * incoming screens that have some sort of "needs login" meta property within
-     * [ExperienceNavigationViewModel], emit a custom event, and then consuming it within a custom
+     * [NavigationViewModel], emit a custom event, and then consuming it within a custom
      * [ExperienceView] to launch your native, non-Rover, login screen.
      *
      * See the documentation for further details.

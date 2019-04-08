@@ -22,7 +22,7 @@ import io.rover.experiences.ui.layout.screen.ScreenViewModelInterface
 /**
  * Navigation behaviour between screens of an Experience.
  */
-class ExperienceNavigationView : FrameLayout, MeasuredBindableView<ExperienceNavigationViewModelInterface> {
+class NavigationView : FrameLayout, MeasuredBindableView<NavigationViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
@@ -47,14 +47,14 @@ class ExperienceNavigationView : FrameLayout, MeasuredBindableView<ExperienceNav
         return viewCache[screenViewModel] ?: ScreenView(
             context
         ).apply {
-            this@ExperienceNavigationView.addView(this)
+            this@NavigationView.addView(this)
             this.visibility = View.GONE
             viewCache.put(screenViewModel, this)
             this.viewModelBinding = MeasuredBindableView.Binding(screenViewModel)
         }
     }
 
-    override var viewModelBinding: MeasuredBindableView.Binding<ExperienceNavigationViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<NavigationViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
         val viewModel = binding?.viewModel
         viewModel?.screen?.androidLifecycleDispose(this)?.subscribe({ screenUpdate ->
             if (!screenUpdate.animate) {

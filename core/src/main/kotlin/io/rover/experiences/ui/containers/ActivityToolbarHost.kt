@@ -7,11 +7,11 @@ import android.view.Menu
 import android.view.Window
 import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.share
-import io.rover.experiences.ui.ExperienceView
+import io.rover.experiences.ui.RoverView
 import org.reactivestreams.Publisher
 
 /**
- * Activities that wish to host [ExperienceView] must instantiate [ActivityToolbarHost], and
+ * Activities that wish to host [RoverView] must instantiate [ActivityToolbarHost], and
  * then also implement [AppCompatActivity.onCreateOptionsMenu] wherein they must then set the menu
  * on the toolbar host with [ActivityToolbarHost.menu].
  *
@@ -22,7 +22,7 @@ import org.reactivestreams.Publisher
  *
  * TODO: include direction about either setting the ActionBar feature to off in code or by style.
  */
-class ActivityToolbarHost(private val activity: AppCompatActivity) : ExperienceView.ToolbarHost {
+class ActivityToolbarHost(private val activity: AppCompatActivity) : RoverView.ToolbarHost {
     var menu: Menu? = null
         set(newMenu) {
             field = newMenu
@@ -48,7 +48,7 @@ class ActivityToolbarHost(private val activity: AppCompatActivity) : ExperienceV
         try {
             activity.setSupportActionBar(toolbar)
         } catch (e: IllegalStateException) {
-            throw RuntimeException("You've used ExperienceView inside an Activity that already has an action bar set.\n" +
+            throw RuntimeException("You've used RoverView inside an Activity that already has an action bar set.\n" +
                 "Do not request Window.FEATURE_SUPPORT_ACTION_BAR and set windowActionBar to false in your theme to use a Toolbar instead.\n" +
                 "Consider changing the Activity's theme to use a .NoActionBar variant of your theme.", e)
         }

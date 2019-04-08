@@ -4,8 +4,8 @@ import android.os.Handler
 import android.os.Looper
 import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
-import io.rover.core.data.graphql.operations.data.encodeJson
-import io.rover.core.data.graphql.operations.data.toAttributesHash
+import io.rover.core.data.graphql.encodeJson
+import io.rover.core.data.graphql.toAttributesHash
 import io.rover.core.data.graphql.safeGetString
 import io.rover.core.data.graphql.safeOptInt
 import io.rover.core.events.EventEmitter

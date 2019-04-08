@@ -1,7 +1,7 @@
 package io.rover.core.assets
 
 import android.graphics.Bitmap
-import io.rover.core.data.NetworkResult
+import io.rover.core.data.graphql.ApiResult
 import org.reactivestreams.Publisher
 import java.net.URL
 
@@ -40,7 +40,7 @@ interface AssetService {
      */
     fun getImageByUrl(
         url: URL
-    ): Publisher<NetworkResult<Bitmap>>
+    ): Publisher<ApiResult<Bitmap>>
 
     // TODO: the aggregation behaviour will go in the Asset Service.
 

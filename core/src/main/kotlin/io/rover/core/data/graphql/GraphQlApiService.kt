@@ -1,10 +1,6 @@
 package io.rover.core.data.graphql
 
 import android.net.Uri
-import io.rover.core.data.APIException
-import io.rover.core.data.GraphQlRequest
-import io.rover.core.data.NetworkError
-import io.rover.core.data.NetworkResult
 import io.rover.core.data.http.HttpClient
 import io.rover.core.data.http.HttpClientResponse
 import io.rover.core.data.http.HttpRequest
@@ -56,13 +52,13 @@ open class GraphQlApiService(
         )
     }
 
-    private fun <TEntity> httpResult(httpRequest: GraphQlRequest<TEntity>, httpResponse: HttpClientResponse): NetworkResult<TEntity> =
+    private fun <TEntity> httpResult(httpRequest: GraphQlRequest<TEntity>, httpResponse: HttpClientResponse): ApiResult<TEntity> =
         when (httpResponse) {
-            is HttpClientResponse.ConnectionFailure -> NetworkResult.Error(httpResponse.reason, true)
+            is HttpClientResponse.ConnectionFailure -> ApiResult.Error(httpResponse.reason, true)
             is HttpClientResponse.ApplicationError -> {
                 log.w("Given GraphQL error reason: ${httpResponse.reportedReason}")
-                NetworkResult.Error(
-                    NetworkError.InvalidStatusCode(httpResponse.responseCode, httpResponse.reportedReason),
+                ApiResult.Error(
+                    ApiError.InvalidStatusCode(httpResponse.responseCode, httpResponse.reportedReason),
                     when {
                         // actually won't see any 200 codes here; already filtered about in the
                         // HttpClient response mapping.
@@ -85,16 +81,16 @@ open class GraphQlApiService(
 
                     log.v("RESPONSE BODY: $body")
                     when (body) {
-                        "" -> NetworkResult.Error(NetworkError.EmptyResponseData(), false)
+                        "" -> ApiResult.Error(ApiError.EmptyResponseData(), false)
                         else -> {
                             try {
-                                NetworkResult.Success(
+                                ApiResult.Success(
                                     httpRequest.decode(body)
                                 )
                             } catch (e: APIException) {
                                 log.w("API error: $e")
-                                NetworkResult.Error<TEntity>(
-                                    NetworkError.InvalidResponseData(e.message ?: "API returned unknown error."),
+                                ApiResult.Error<TEntity>(
+                                    ApiError.InvalidResponseData(e.message ?: "API returned unknown error."),
                                     // retry is not appropriate when we're getting a domain-level
                                     // error from the GraphQL API.
                                     false
@@ -105,8 +101,8 @@ open class GraphQlApiService(
                                 // errors, throw the traceback onto the console:
                                 log.w("JSON decode problem details: $e, ${e.stackTrace.joinToString("\n")}")
 
-                                NetworkResult.Error<TEntity>(
-                                    NetworkError.InvalidResponseData(e.message ?: "API returned unknown error."),
+                                ApiResult.Error<TEntity>(
+                                    ApiError.InvalidResponseData(e.message ?: "API returned unknown error."),
                                     // retry is not appropriate when we're getting a domain-level
                                     // error from the GraphQL API.
                                     false
@@ -115,7 +111,7 @@ open class GraphQlApiService(
                         }
                     }
                 } catch (exception: IOException) {
-                    NetworkResult.Error<TEntity>(exception, true)
+                    ApiResult.Error<TEntity>(exception, true)
                 }
             }
         }
@@ -123,7 +119,7 @@ open class GraphQlApiService(
     /**
      * Performs the given [GraphQlRequest] when subscribed and yields the result to the subscriber.
      */
-    open fun <TEntity> operation(request: GraphQlRequest<TEntity>): Publisher<NetworkResult<TEntity>> {
+    open fun <TEntity> operation(request: GraphQlRequest<TEntity>): Publisher<ApiResult<TEntity>> {
         // TODO: once we change urlRequest() to use query parameters and GET for non-mutation
         // requests, replace true `below` with `request.mutation`.
         val urlRequest = urlRequest(request.mutation, request.encodeQueryParameters())
@@ -141,7 +137,7 @@ open class GraphQlApiService(
      */
     open fun fetchExperience(
         query: FetchExperienceRequest.ExperienceQueryIdentifier
-    ): Publisher<NetworkResult<Experience>> {
+    ): Publisher<ApiResult<Experience>> {
         return this.operation(
             FetchExperienceRequest(query)
         )

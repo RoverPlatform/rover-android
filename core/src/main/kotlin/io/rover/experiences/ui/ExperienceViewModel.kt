@@ -3,7 +3,7 @@ package io.rover.experiences.ui
 import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Parcelable
-import io.rover.core.data.NetworkResult
+import io.rover.core.data.graphql.ApiResult
 import io.rover.core.data.graphql.GraphQlApiService
 import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.Publishers
@@ -70,7 +70,7 @@ class ExperienceViewModel(
     private val actionSource = PublishSubject<Action>()
     private val actions = actionSource.share()
 
-    private fun fetchExperience(): Publisher<out NetworkResult<Experience>> =
+    private fun fetchExperience(): Publisher<out ApiResult<Experience>> =
         graphQlApiService.fetchExperience(
             when (experienceRequest) {
                 is ExperienceRequest.ByCampaignUrl -> FetchExperienceRequest.ExperienceQueryIdentifier.ByUniversalLink(experienceRequest.url)
@@ -86,7 +86,7 @@ class ExperienceViewModel(
 
     init {
         // maybe for each type fork I should split out and delegate to subjects?
-        val fetchAttempts = PublishSubject<NetworkResult<Experience>>()
+        val fetchAttempts = PublishSubject<ApiResult<Experience>>()
 
         val toolBarSubject = PublishSubject<ExperienceToolbarViewModelInterface>()
         val loadingSubject = PublishSubject<Boolean>()
@@ -141,12 +141,12 @@ class ExperienceViewModel(
         fetchAttempts.subscribe { networkResult ->
            loadingSubject.onNext(false)
            when (networkResult) {
-               is NetworkResult.Error -> {
+               is ApiResult.Error -> {
                    eventsSubject.onNext(ExperienceViewModelInterface.Event.DisplayError(
                        networkResult.throwable.message ?: "Unknown"
                    ))
                }
-               is NetworkResult.Success -> {
+               is ApiResult.Success -> {
                    experiences.onNext(networkResult.response)
                }
            }

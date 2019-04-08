@@ -1,7 +1,7 @@
 package io.rover.core.assets
 
 import android.graphics.Bitmap
-import io.rover.core.data.NetworkResult
+import io.rover.core.data.graphql.ApiResult
 import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.Publishers
 import io.rover.core.streams.Scheduler
@@ -51,7 +51,7 @@ public open class AndroidAssetService(
         requests.onNext(url)
     }
 
-    override fun getImageByUrl(url: URL): Publisher<NetworkResult<Bitmap>> {
+    override fun getImageByUrl(url: URL): Publisher<ApiResult<Bitmap>> {
         return Publishers.defer {
             Publishers.just(
                 // this block will be dispatched onto the ioExecutor by
@@ -69,14 +69,14 @@ public open class AndroidAssetService(
         }.subscribeOn(ioScheduler).map { pipelineResult ->
             when (pipelineResult) {
                 is PipelineStageResult.Successful -> {
-                    NetworkResult.Success(pipelineResult.output)
+                    ApiResult.Success(pipelineResult.output)
                 }
                 is PipelineStageResult.Failed -> {
-                    NetworkResult.Error<Bitmap>(pipelineResult.reason, false)
+                    ApiResult.Error<Bitmap>(pipelineResult.reason, false)
                 }
             }
         }.onErrorReturn { error ->
-            NetworkResult.Error<Bitmap>(error, false) as NetworkResult<Bitmap>
+            ApiResult.Error<Bitmap>(error, false) as ApiResult<Bitmap>
         }.observeOn(
             mainThreadScheduler
         )
@@ -102,14 +102,14 @@ public open class AndroidAssetService(
                 getImageByUrl(url)
                     .timeout(10, TimeUnit.SECONDS)
                     .onErrorReturn {
-                        NetworkResult.Error<Bitmap>(it, false) as NetworkResult<Bitmap>
+                        ApiResult.Error<Bitmap>(it, false) as ApiResult<Bitmap>
                     }
                     .map { Pair(url, it) }
             }
             .subscribe { (url, result) ->
                 synchronized(outstanding) { outstanding.remove(url) }
                 when (result) {
-                    is NetworkResult.Success -> receivedImages.onNext(
+                    is ApiResult.Success -> receivedImages.onNext(
                         ImageReadyEvent(url, result.response)
                     )
                 }

@@ -1,9 +1,7 @@
-package io.rover.core.data.graphql.operations.data
+package io.rover.core.data.graphql
 
 import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
-import io.rover.core.data.graphql.getIterable
-import io.rover.core.data.graphql.safeGetString
 import io.rover.core.platform.DateFormattingInterface
 import org.json.JSONArray
 import org.json.JSONObject

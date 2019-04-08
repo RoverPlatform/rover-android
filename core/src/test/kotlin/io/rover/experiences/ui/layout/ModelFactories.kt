@@ -24,7 +24,7 @@ import io.rover.experiences.ui.blocks.concerns.layout.LayoutableViewModel
 import org.amshove.kluent.shouldBeInstanceOf
 import org.amshove.kluent.shouldEqual
 
-class ModelFactories {
+internal class ModelFactories {
     companion object {
         /**
          * Construct an empty [Screen].

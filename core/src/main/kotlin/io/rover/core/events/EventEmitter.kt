@@ -6,12 +6,12 @@ import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.share
 import org.reactivestreams.Publisher
 
-class EventEmitter(
+open class EventEmitter(
 
 ) : EventEmitterInterface {
 
     // maybe use?
-    private val eventSubject = PublishSubject<Event>()
+    protected val eventSubject = PublishSubject<Event>()
 
     override val trackedEvents: Publisher<Event> = eventSubject.share()
 

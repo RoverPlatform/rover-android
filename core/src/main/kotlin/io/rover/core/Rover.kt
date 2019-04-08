@@ -10,8 +10,7 @@ import android.util.DisplayMetrics
 import io.rover.core.assets.AndroidAssetService
 import io.rover.core.assets.ImageDownloader
 import io.rover.core.data.graphql.GraphQlApiService
-import io.rover.core.data.http.AndroidHttpsUrlConnectionNetworkClient
-import io.rover.core.data.http.NetworkClient
+import io.rover.core.data.http.HttpClient
 import io.rover.core.events.EventEmitter
 import io.rover.core.logging.log
 import io.rover.core.platform.DateFormatting
@@ -127,7 +126,7 @@ open class Rover(
 
     open val imageOptimizationService: ImageOptimizationService = ImageOptimizationService(),
 
-    open val networkClient: NetworkClient = AndroidHttpsUrlConnectionNetworkClient(ioScheduler),
+    open val httpClient: HttpClient = HttpClient(ioScheduler),
 
     open val webBrowserDisplay: EmbeddedWebBrowserDisplay = EmbeddedWebBrowserDisplay(chromeTabBackgroundColor),
 
@@ -142,7 +141,7 @@ open class Rover(
      */
     open var bearerToken: String? = null,
 
-    open val apiService: GraphQlApiService = GraphQlApiService(URL(endpoint), accountToken, bearerToken, networkClient),
+    open val apiService: GraphQlApiService = GraphQlApiService(URL(endpoint), accountToken, bearerToken, httpClient),
 
     open val sessionTracker: SessionTracker = SessionTracker(eventEmitter, sessionStore, 60),
 
@@ -182,7 +181,7 @@ open class Rover(
          */
         @JvmStatic
         fun installSaneGlobalHttpCache(applicationContext: Context) {
-            AndroidHttpsUrlConnectionNetworkClient.installSaneGlobalHttpCache(applicationContext)
+            HttpClient.installSaneGlobalHttpCache(applicationContext)
         }
 
         fun initialize(application: Application, accountToken: String, @ColorInt chromeTabColor: Int = Color.BLACK) {

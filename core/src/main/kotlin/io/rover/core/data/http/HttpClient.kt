@@ -18,13 +18,20 @@ import java.util.zip.GZIPOutputStream
 import javax.net.ssl.HttpsURLConnection
 
 /**
- * An implementation of [NetworkClient] powered by Android's stock [HttpsURLConnection].
+ * HTTP client (used for both Rover API access and other tasks), powered by Android's stock
+ * [HttpsURLConnection].
  */
-class AndroidHttpsUrlConnectionNetworkClient(
+open class HttpClient(
     private val ioScheduler: Scheduler
-) : NetworkClient {
-
-    override fun request(
+)  {
+    /**
+     * When subscribed performs the given [HttpRequest] and then yields the result.
+     *
+     * Note that the subscriber is given an [HttpClientResponse], which includes readable streams.
+     * Thus, it is called on the background worker thread to allow for client code to read those
+     * streams, safely away from the Android main UI thread.
+     */
+    open fun request(
         request: HttpRequest,
         bodyData: String?
     ): Publisher<HttpClientResponse> {
@@ -34,7 +41,7 @@ class AndroidHttpsUrlConnectionNetworkClient(
         // has a synchronous API.
 
         return Publishers.create<HttpClientResponse> { subscriber ->
-            this@AndroidHttpsUrlConnectionNetworkClient.log.d("Starting request: $request")
+            this@HttpClient.log.d("Starting request: $request")
             val connection = request.url
                 .openConnection() as HttpURLConnection
 
@@ -107,7 +114,7 @@ class AndroidHttpsUrlConnectionNetworkClient(
                 return@create
             }
 
-            this@AndroidHttpsUrlConnectionNetworkClient.log.d("$request : $responseCode")
+            this@HttpClient.log.d("$request : $responseCode")
 
             val result = when (responseCode) {
             // success codes, and also handle 304 cached handling treat body as normal
@@ -152,7 +159,7 @@ class AndroidHttpsUrlConnectionNetworkClient(
             }
             // TODO: detect if this was a cache hit and log as such.
             // completionHandler(result)
-            this@AndroidHttpsUrlConnectionNetworkClient.log.v(
+            this@HttpClient.log.v(
                 "Cache hit count currently is: ${HttpResponseCache.getInstalled()?.hitCount}"
             )
 

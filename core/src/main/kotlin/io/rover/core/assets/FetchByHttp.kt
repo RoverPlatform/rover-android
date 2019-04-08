@@ -1,8 +1,8 @@
 package io.rover.core.assets
 
 import android.net.http.HttpResponseCache
+import io.rover.core.data.http.HttpClient
 import io.rover.core.logging.log
-import io.rover.core.data.http.AndroidHttpsUrlConnectionNetworkClient
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscription
 import java.io.BufferedInputStream
@@ -49,14 +49,14 @@ class ImageDownloader(
                             // approach for now.
                             //
                             // This is made even more unfortunate because it would have been to our
-                            // advantage to set up parallel NetworkClients with different caches in order to
+                            // advantage to set up parallel HttpClients with different caches in order to
                             // cache different request payloads separately: when the goal is to save
                             // perceptible delay for users small JSON payloads are more valuable to cache
                             // byte-for-byte compared with large bulky asset (say, images) payloads. Leaving
                             // them in the same LRU cache pool will mean that rotating through just a few
                             // large photos will cause the small payloads to be evicted even though their
                             // contribution to consumption of the cache is tiny.
-                            AndroidHttpsUrlConnectionNetworkClient.emitMissingCacheWarning()
+                            HttpClient.emitMissingCacheWarning()
                         }
 
                         connection.apply {

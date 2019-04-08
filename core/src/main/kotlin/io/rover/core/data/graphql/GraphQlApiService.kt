@@ -5,12 +5,11 @@ import io.rover.core.data.APIException
 import io.rover.core.data.GraphQlRequest
 import io.rover.core.data.NetworkError
 import io.rover.core.data.NetworkResult
+import io.rover.core.data.http.HttpClient
 import io.rover.core.data.http.HttpClientResponse
 import io.rover.core.data.http.HttpRequest
 import io.rover.core.data.http.HttpVerb
-import io.rover.core.data.http.NetworkClient
 import io.rover.core.logging.log
-import io.rover.core.platform.DateFormattingInterface
 import io.rover.core.streams.map
 import io.rover.experiences.data.domain.Experience
 import io.rover.experiences.data.graphql.operations.FetchExperienceRequest
@@ -26,7 +25,7 @@ open class GraphQlApiService(
     private val endpoint: URL,
     private val accountToken: String?,
     private val bearerToken: String?,
-    private val networkClient: NetworkClient
+    private val httpClient: HttpClient
 ) {
     private fun urlRequest(mutation: Boolean, queryParams: Map<String, String>): HttpRequest {
         val uri = Uri.parse(endpoint.toString())
@@ -132,7 +131,7 @@ open class GraphQlApiService(
 
         log.v("going to make network request $urlRequest")
 
-        return networkClient.request(urlRequest, bodyData).map { httpClientResponse ->
+        return httpClient.request(urlRequest, bodyData).map { httpClientResponse ->
             httpResult(request, httpClientResponse)
         }
     }

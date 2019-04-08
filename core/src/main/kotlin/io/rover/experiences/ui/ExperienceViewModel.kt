@@ -15,7 +15,7 @@ import io.rover.core.streams.observeOn
 import io.rover.core.streams.share
 import io.rover.core.streams.shareAndReplay
 import io.rover.core.streams.subscribe
-import io.rover.core.tracking.SessionTrackerInterface
+import io.rover.core.tracking.SessionTracker
 import io.rover.experiences.data.domain.Experience
 import io.rover.experiences.data.graphql.operations.FetchExperienceRequest
 import io.rover.experiences.ui.navigation.ExperienceExternalNavigationEvent
@@ -29,7 +29,7 @@ class ExperienceViewModel(
     private val experienceRequest: ExperienceRequest,
     private val graphQlApiService: GraphQlApiService,
     private val mainThreadScheduler: Scheduler,
-    private val sessionTracker: SessionTrackerInterface,
+    private val sessionTracker: SessionTracker,
     private val resolveNavigationViewModel: (experience: Experience, icicle: Parcelable?) -> ExperienceNavigationViewModelInterface,
     private val icicle: Parcelable? = null
 ) : ExperienceViewModelInterface {

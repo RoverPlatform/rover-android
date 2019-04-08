@@ -8,7 +8,7 @@ import io.rover.core.data.graphql.operations.data.encodeJson
 import io.rover.core.data.graphql.operations.data.toAttributesHash
 import io.rover.core.data.graphql.safeGetString
 import io.rover.core.data.graphql.safeOptInt
-import io.rover.core.events.EventEmitterInterface
+import io.rover.core.events.EventEmitter
 import io.rover.core.events.domain.Event
 import io.rover.core.logging.log
 import io.rover.core.platform.DateFormattingInterface
@@ -20,19 +20,31 @@ import java.util.UUID
 import kotlin.math.max
 
 open class SessionTracker(
-    private val eventEmitter: EventEmitterInterface,
+    private val eventEmitter: EventEmitter,
 
-    private val sessionStore: SessionStoreInterface,
+    private val sessionStore: SessionStore,
 
     /**
      * The number of seconds to leave the session open for in the event that the user leaves
      * temporarily.
      */
     private val keepAliveTime: Int
-) : SessionTrackerInterface {
+)  {
     private val timerHandler = Handler(Looper.getMainLooper())
 
-    override fun enterSession(
+    /**
+     * Indicate a session is opening for the given session key.  The Session Key should be a value
+     * object (a Kotlin data class, a string, etc.) that properly implements hashcode, equals, and
+     * an exhaustive version of toString(). This value object should describe the given semantic
+     * item the user is looking at (a given experience, a given view, etc.).
+     *
+     * Note that the values need to be unique amongst the different event sources in the app, so be
+     * particularly careful with string values or data class class names.
+     *
+     * A [sessionEventName] must be provided so that the Session Tracker can emit session viewed
+     * after the timeout completes.
+     */
+    open fun enterSession(
         sessionKey: Any,
         sessionStartEventName: String,
         sessionEventName: String,
@@ -49,6 +61,9 @@ open class SessionTracker(
         )
     }
 
+    /**
+     * Indicate a session is being left.  See [enterSession] for an explanation of session key.
+     */
     private fun updateTimer() {
         timerHandler.removeCallbacksAndMessages(this::timerCallback)
         sessionStore.soonestExpiryInSeconds(keepAliveTime).whenNotNull { soonestExpiry ->
@@ -80,7 +95,7 @@ open class SessionTracker(
         updateTimer()
     }
 
-    override fun leaveSession(
+    open fun leaveSession(
         sessionKey: Any,
         sessionEndEventName: String,
         attributes: Attributes
@@ -99,17 +114,22 @@ open class SessionTracker(
     }
 }
 
-class SessionStore(
+open class SessionStore(
     localStorage: LocalStorage,
     private val dateFormatting: DateFormattingInterface
-) : SessionStoreInterface {
+)  {
     private val store = localStorage.getKeyValueStorageFor(STORAGE_IDENTIFIER)
 
     init {
         gc()
     }
 
-    override fun enterSession(sessionKey: Any, sessionEventName: String, attributes: Attributes) {
+    /**
+     * Enters a session.
+     *
+     * Returns the new session's UUID, or, if a session is already active, null.
+     */
+    open fun enterSession(sessionKey: Any, sessionEventName: String, attributes: Attributes) {
         val session = getEntry(sessionKey)?.copy(
             // clear closedAt to avoid expiring the session if it is being re-opened.
             closedAt = null
@@ -124,7 +144,7 @@ class SessionStore(
         setEntry(sessionKey, session)
     }
 
-    override fun leaveSession(sessionKey: Any) {
+    open fun leaveSession(sessionKey: Any) {
         val existingEntry = getEntry(sessionKey)
 
         if (existingEntry != null) {
@@ -150,7 +170,10 @@ class SessionStore(
         store[sessionKey.toString()] = sessionEntry.encodeJson(dateFormatting).toString()
     }
 
-    override fun soonestExpiryInSeconds(keepAliveSeconds: Int): Int? {
+    /**
+     * Returns the soonest time that a session is going to expire.
+     */
+    open fun soonestExpiryInSeconds(keepAliveSeconds: Int): Int? {
         // gather stale expiring session entries that have passed.
         val earliestExpiry = store.keys
             .mapNotNull { key -> getEntry(key) }
@@ -170,7 +193,12 @@ class SessionStore(
        }
     }
 
-    override fun collectExpiredSessions(keepAliveSeconds: Int): List<SessionStoreInterface.ExpiredSession> {
+    /**
+     * Returns the sessions that are expired and should have their event emitted.
+     *
+     * Such sessions will only be returned once; they are deleted.
+     */
+    open fun collectExpiredSessions(keepAliveSeconds: Int): List<ExpiredSession> {
         val expiringEntries = store.keys
             .mapNotNull { key ->
                 getEntry(key).whenNotNull { Pair(key, it) }
@@ -190,7 +218,7 @@ class SessionStore(
         }
 
         return expiringEntries.map { (key, entry) ->
-            SessionStoreInterface.ExpiredSession(
+            ExpiredSession(
                 key,
                 entry.uuid,
                 entry.sessionEventName,
@@ -200,7 +228,7 @@ class SessionStore(
         }
     }
 
-    private fun gc() {
+    open fun gc() {
         log.v("Garbage collecting any expired sessions.")
 
         store.keys.forEach { key ->
@@ -217,6 +245,15 @@ class SessionStore(
             }
         }
     }
+
+
+    data class ExpiredSession(
+        val sessionKey: Any,
+        val uuid: UUID,
+        val eventName: String,
+        val attributes: Attributes,
+        val durationSeconds: Int
+    )
 
     data class SessionEntry(
         val uuid: UUID,

@@ -7,7 +7,6 @@ import android.graphics.Color
 import android.os.Parcelable
 import android.support.annotation.ColorInt
 import android.util.DisplayMetrics
-import android.widget.TextView
 import io.rover.core.assets.AndroidAssetService
 import io.rover.core.assets.ImageDownloader
 import io.rover.core.data.graphql.GraphQlApiService
@@ -58,7 +57,6 @@ import io.rover.experiences.ui.blocks.concerns.layout.LayoutableView
 import io.rover.experiences.ui.blocks.concerns.layout.LayoutableViewModel
 import io.rover.experiences.ui.blocks.concerns.layout.Measurable
 import io.rover.experiences.ui.blocks.concerns.text.AndroidRichTextToSpannedTransformer
-import io.rover.experiences.ui.blocks.concerns.text.RichTextToSpannedTransformer
 import io.rover.experiences.ui.blocks.concerns.text.TextViewModel
 import io.rover.experiences.ui.blocks.image.ImageBlockView
 import io.rover.experiences.ui.blocks.image.ImageBlockViewModel

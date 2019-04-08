@@ -3,15 +3,10 @@ package io.rover.experiences.ui.navigation
 import android.arch.lifecycle.Lifecycle
 import android.arch.lifecycle.LifecycleObserver
 import android.arch.lifecycle.OnLifecycleEvent
-import android.arch.lifecycle.ViewModelProvider
 import android.os.Parcelable
-import io.rover.core.ViewModels
 import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
-import io.rover.experiences.data.domain.Experience
-import io.rover.experiences.data.domain.Screen
 import io.rover.core.events.EventEmitter
-import io.rover.core.events.EventEmitterInterface
 import io.rover.core.events.domain.Event
 import io.rover.core.logging.log
 import io.rover.core.platform.whenNotNull
@@ -21,7 +16,9 @@ import io.rover.core.streams.flatMap
 import io.rover.core.streams.map
 import io.rover.core.streams.shareHotAndReplay
 import io.rover.core.streams.subscribe
-import io.rover.core.tracking.SessionTrackerInterface
+import io.rover.core.tracking.SessionTracker
+import io.rover.experiences.data.domain.Experience
+import io.rover.experiences.data.domain.Screen
 import io.rover.experiences.data.domain.events.asAttributeValue
 import io.rover.experiences.ui.containers.ExperienceActivity
 import io.rover.experiences.ui.layout.screen.ScreenViewModelInterface
@@ -39,8 +36,8 @@ import org.reactivestreams.Publisher
  */
 open class ExperienceNavigationViewModel(
     private val experience: Experience,
-    private val eventEmitter: EventEmitterInterface,
-    private val sessionTracker: SessionTrackerInterface,
+    private val eventEmitter: EventEmitter,
+    private val sessionTracker: SessionTracker,
     private val resolveScreenViewModel: (screen: Screen) -> ScreenViewModelInterface,
     private val resolveToolbarViewModel: (configuration: ToolbarConfiguration) -> ExperienceToolbarViewModelInterface,
     activityLifecycle: Lifecycle,

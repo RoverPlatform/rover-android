@@ -1,4 +1,4 @@
-package io.rover.experiences.assets
+package io.rover.core.assets
 
 import io.rover.experiences.ui.BackgroundImageConfiguration
 import java.net.URI

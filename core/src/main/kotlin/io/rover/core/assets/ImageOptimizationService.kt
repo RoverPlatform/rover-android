@@ -1,24 +1,34 @@
-package io.rover.experiences.assets
+package io.rover.core.assets
 
 import android.graphics.Shader
+import io.rover.core.logging.log
+import io.rover.core.ui.PixelSize
 import io.rover.experiences.data.domain.Background
 import io.rover.experiences.data.domain.BackgroundContentMode
 import io.rover.experiences.data.domain.BackgroundScale
 import io.rover.experiences.data.domain.Block
 import io.rover.experiences.data.domain.Image
-import io.rover.core.logging.log
-import io.rover.core.ui.PixelSize
 import io.rover.experiences.ui.BackgroundImageConfiguration
 import io.rover.experiences.ui.Rect
 import io.rover.experiences.ui.dpAsPx
 import java.net.URI
 import kotlin.math.roundToInt
 
-open class ImageOptimizationService : ImageOptimizationServiceInterface {
+open class ImageOptimizationService  {
 
     private val urlOptimizationEnabled = true
 
-    override fun optimizeImageBackground(background: Background, targetViewPixelSize: PixelSize, density: Float): OptimizedImage? {
+    /**
+     * Take a given background and return a URI and image configuration that may be used to display
+     * it efficiently.  It may perform transforms on the URI and background image configuration to
+     * cut down retrieving and decoding an unnecessary larger image than needed for the context.
+     *
+     * Note that this does not actually perform any sort optimization operation locally.
+     *
+     * @return The optimized image configuration, which includes the URI with optimization
+     * parameters.  May be null if the background in question has no image.
+     */
+    open fun optimizeImageBackground(background: Background, targetViewPixelSize: PixelSize, density: Float): OptimizedImage? {
         return if (urlOptimizationEnabled) {
             imageConfigurationOptimizedByImgix(background, targetViewPixelSize, density)
         } else {
@@ -318,12 +328,17 @@ open class ImageOptimizationService : ImageOptimizationServiceInterface {
     }
 
     /**
+     * Take a given image block and return the URI with optimization parameters needed to display
+     * it.
+     *
      * We use a service called Imgix to do cloud-side transforms of our images. Here we're using it
      * for a scale down transform, if needed. On first usage the cloud service will execute the
      * transform and then cache the result, meaning that all other users on other devices viewing
      * the same image asset will get the previously processed bits.
+     *
+     * @return optimized URI.
      */
-    override fun optimizeImageBlock(
+    open fun optimizeImageBlock(
         image: Image,
         containingBlock: Block,
         targetViewPixelSize: PixelSize,

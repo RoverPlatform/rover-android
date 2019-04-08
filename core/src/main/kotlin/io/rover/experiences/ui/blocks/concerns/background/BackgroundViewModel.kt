@@ -1,13 +1,22 @@
 package io.rover.experiences.ui.blocks.concerns.background
 
 import io.rover.core.assets.AssetService
-import io.rover.experiences.assets.ImageOptimizationServiceInterface
-import io.rover.experiences.data.domain.Background
+import io.rover.core.assets.ImageOptimizationService
 import io.rover.core.logging.log
-import io.rover.core.streams.*
+import io.rover.core.streams.PublishSubject
+import io.rover.core.streams.Publishers
+import io.rover.core.streams.Scheduler
+import io.rover.core.streams.flatMap
+import io.rover.core.streams.map
+import io.rover.core.streams.observeOn
+import io.rover.core.streams.share
+import io.rover.core.streams.shareHotAndReplay
+import io.rover.core.streams.subscribe
+import io.rover.core.streams.timeout
 import io.rover.core.ui.PixelSize
-import io.rover.experiences.ui.asAndroidColor
 import io.rover.core.ui.concerns.MeasuredSize
+import io.rover.experiences.data.domain.Background
+import io.rover.experiences.ui.asAndroidColor
 import io.rover.experiences.ui.dpAsPx
 import org.reactivestreams.Publisher
 import java.util.concurrent.TimeUnit
@@ -15,7 +24,7 @@ import java.util.concurrent.TimeUnit
 class BackgroundViewModel(
     private val background: Background,
     private val assetService: AssetService,
-    private val imageOptimizationService: ImageOptimizationServiceInterface,
+    private val imageOptimizationService: ImageOptimizationService,
     mainScheduler: Scheduler
 ) : BackgroundViewModelInterface {
     override val backgroundColor: Int

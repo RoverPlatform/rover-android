@@ -1,23 +1,34 @@
 package io.rover.experiences.ui.blocks.image
 
-import io.rover.core.logging.log
-import org.reactivestreams.Publisher
 import io.rover.core.assets.AssetService
+import io.rover.core.assets.ImageOptimizationService
+import io.rover.core.logging.log
+import io.rover.core.streams.PublishSubject
+import io.rover.core.streams.Publishers
+import io.rover.core.streams.Scheduler
+import io.rover.core.streams.filterNulls
+import io.rover.core.streams.flatMap
+import io.rover.core.streams.map
+import io.rover.core.streams.observeOn
+import io.rover.core.streams.onErrorReturn
+import io.rover.core.streams.share
+import io.rover.core.streams.shareHotAndReplay
+import io.rover.core.streams.subscribe
+import io.rover.core.streams.timeout
+import io.rover.core.ui.PixelSize
+import io.rover.core.ui.concerns.MeasuredSize
 import io.rover.experiences.data.domain.Block
 import io.rover.experiences.data.domain.Image
-import io.rover.core.streams.*
-import io.rover.core.ui.PixelSize
 import io.rover.experiences.ui.RectF
-import io.rover.core.ui.concerns.MeasuredSize
 import io.rover.experiences.ui.dpAsPx
+import org.reactivestreams.Publisher
 import java.util.concurrent.TimeUnit
-import io.rover.experiences.assets.ImageOptimizationServiceInterface
 
 class ImageViewModel(
     private val image: Image?,
     private val block: Block,
     private val assetService: AssetService,
-    private val imageOptimizationService: ImageOptimizationServiceInterface,
+    private val imageOptimizationService: ImageOptimizationService,
     mainScheduler: Scheduler
 ) : ImageViewModelInterface {
 

@@ -24,7 +24,7 @@ import io.rover.core.tracking.SessionTracker
 import io.rover.experiences.AndroidMeasurementService
 import io.rover.experiences.BarcodeRenderingService
 import io.rover.experiences.MeasurementService
-import io.rover.experiences.assets.ImageOptimizationService
+import io.rover.core.assets.ImageOptimizationService
 import io.rover.experiences.data.domain.Background
 import io.rover.experiences.data.domain.Barcode
 import io.rover.experiences.data.domain.BarcodeBlock

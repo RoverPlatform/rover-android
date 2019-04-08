@@ -1,5 +1,6 @@
 package io.rover.experiences.assets
 
+import io.rover.core.assets.ImageOptimizationService
 import io.rover.experiences.data.domain.Background
 import io.rover.experiences.data.domain.BackgroundContentMode
 import io.rover.experiences.data.domain.BackgroundScale

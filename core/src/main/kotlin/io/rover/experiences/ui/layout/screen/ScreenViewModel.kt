@@ -1,22 +1,22 @@
 package io.rover.experiences.ui.layout.screen
 
-import io.rover.core.data.domain.AttributeValue
-import io.rover.experiences.data.domain.Screen
-import io.rover.experiences.data.domain.TitleBarButtons
-import io.rover.experiences.data.domain.Row
-import io.rover.experiences.ui.blocks.concerns.background.BackgroundViewModelInterface
-import io.rover.experiences.ui.blocks.concerns.layout.LayoutableViewModel
-import io.rover.experiences.ui.toolbar.ToolbarConfiguration
-import io.rover.experiences.ui.layout.DisplayItem
-import io.rover.experiences.ui.layout.Layout
-import io.rover.experiences.ui.RectF
-import io.rover.experiences.ui.asAndroidColor
-import io.rover.experiences.ui.layout.row.RowViewModelInterface
+import io.rover.core.data.domain.Attributes
 import io.rover.core.logging.log
 import io.rover.core.streams.asPublisher
 import io.rover.core.streams.flatMap
 import io.rover.core.streams.map
+import io.rover.experiences.data.domain.Row
+import io.rover.experiences.data.domain.Screen
+import io.rover.experiences.data.domain.TitleBarButtons
 import io.rover.experiences.data.domain.events.asAttributeValue
+import io.rover.experiences.ui.RectF
+import io.rover.experiences.ui.asAndroidColor
+import io.rover.experiences.ui.blocks.concerns.background.BackgroundViewModelInterface
+import io.rover.experiences.ui.blocks.concerns.layout.LayoutableViewModel
+import io.rover.experiences.ui.layout.DisplayItem
+import io.rover.experiences.ui.layout.Layout
+import io.rover.experiences.ui.layout.row.RowViewModelInterface
+import io.rover.experiences.ui.toolbar.ToolbarConfiguration
 import org.reactivestreams.Publisher
 
 class ScreenViewModel(
@@ -87,7 +87,7 @@ class ScreenViewModel(
             screen.statusBar.color.asAndroidColor()
         )
 
-    override val attributes: AttributeValue
+    override val attributes: Attributes
         get() = screen.asAttributeValue()
 
     override fun render(

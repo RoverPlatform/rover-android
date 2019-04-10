@@ -26,8 +26,6 @@ open class EventEmitter(
 
     open fun trackEvent(event: Event) {
         log.w("EVENT TRACKED (${event.name}), but event emission with an internal broadcast intent not yet implemented.")
-
-
     }
 
     open fun trackEvent(action: String, attributes: Map<String, Any>) {
@@ -35,9 +33,9 @@ open class EventEmitter(
             action
         )
         // ANDREW START HERE AND SERIALIZE.
-        intent.putExtra("attributes", JSONObject().pu)
+        intent.putExtra("attributes", JSONObject(attributes).toString())
 
-        localBroadcastManager.sendBroadcast()
+        localBroadcastManager.sendBroadcast(intent)
     }
 }
 

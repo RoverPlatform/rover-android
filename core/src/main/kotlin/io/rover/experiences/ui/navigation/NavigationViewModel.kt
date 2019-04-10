@@ -4,7 +4,6 @@ import android.arch.lifecycle.Lifecycle
 import android.arch.lifecycle.LifecycleObserver
 import android.arch.lifecycle.OnLifecycleEvent
 import android.os.Parcelable
-import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
 import io.rover.core.events.EventEmitter
 import io.rover.core.events.domain.Event
@@ -88,7 +87,7 @@ open class NavigationViewModel(
         class PressedClose : Action()
         class Navigate(
             val navigateTo: NavigateToFromBlock,
-            val rowAttributes: AttributeValue,
+            val rowAttributes: Attributes,
             val sourceScreenViewModel: ScreenViewModelInterface
         ) : Action()
     }

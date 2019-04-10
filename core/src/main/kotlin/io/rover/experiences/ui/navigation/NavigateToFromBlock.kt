@@ -1,6 +1,6 @@
 package io.rover.experiences.ui.navigation
 
-import io.rover.core.data.domain.AttributeValue
+import io.rover.core.data.domain.Attributes
 import java.net.URI
 
 /**
@@ -10,23 +10,23 @@ sealed class NavigateToFromBlock(
     /**
      * An [AttributeValue] to describe the source block that this navigation event came from.
      */
-    val blockAttributes: AttributeValue
+    val blockAttributes: Attributes
 ) {
     /**
      * Navigate to something external to the experience through the Rover URI [Router].
      */
     class External(
         val uri: URI,
-        blockAttributes: AttributeValue
+        blockAttributes: Attributes
     ) : NavigateToFromBlock(blockAttributes)
 
     class GoToScreenAction(
         val screenId: String,
-        blockAttributes: AttributeValue
+        blockAttributes: Attributes
     ) : NavigateToFromBlock(blockAttributes)
 
     class PresentWebsiteAction(
         val url: URI,
-        blockAttributes: AttributeValue
+        blockAttributes: Attributes
     ) : NavigateToFromBlock(blockAttributes)
 }

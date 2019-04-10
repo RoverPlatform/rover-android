@@ -1,18 +1,17 @@
 package io.rover.experiences.ui.layout.screen
 
-import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
+import io.rover.core.ui.concerns.BindableViewModel
 import io.rover.experiences.data.domain.Experience
 import io.rover.experiences.data.domain.Screen
 import io.rover.experiences.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.experiences.ui.blocks.concerns.layout.BlockViewModelInterface
 import io.rover.experiences.ui.blocks.concerns.layout.LayoutableViewModel
-import io.rover.core.ui.concerns.BindableViewModel
 import io.rover.experiences.ui.layout.BlockAndRowLayoutManager
-import io.rover.experiences.ui.layout.row.RowViewModelInterface
-import io.rover.experiences.ui.toolbar.ToolbarConfiguration
 import io.rover.experiences.ui.layout.Layout
+import io.rover.experiences.ui.layout.row.RowViewModelInterface
 import io.rover.experiences.ui.navigation.NavigateToFromBlock
+import io.rover.experiences.ui.toolbar.ToolbarConfiguration
 import org.reactivestreams.Publisher
 
 /**
@@ -61,12 +60,12 @@ interface ScreenViewModelInterface : BindableViewModel, BackgroundViewModelInter
     /**
      * Obtain [Attributes] describing this screen, suitable for inclusion in an [Event].
      */
-    val attributes: AttributeValue
+    val attributes: Attributes
 
     data class Event(
         val rowId: String,
         val blockId: String,
         val navigateTo: NavigateToFromBlock,
-        val rowAttributes: AttributeValue
+        val rowAttributes: Attributes
     )
 }

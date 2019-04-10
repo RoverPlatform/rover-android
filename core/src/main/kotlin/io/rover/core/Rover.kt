@@ -6,6 +6,7 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Parcelable
 import android.support.annotation.ColorInt
+import android.support.v4.content.LocalBroadcastManager
 import android.util.DisplayMetrics
 import io.rover.core.assets.AndroidAssetService
 import io.rover.core.assets.ImageDownloader
@@ -134,7 +135,7 @@ open class Rover(
 
     open val sessionStore: SessionStore = SessionStore(localStorage, dateFormatting),
 
-    open val eventEmitter: EventEmitter = EventEmitter(),
+    open val eventEmitter: EventEmitter = EventEmitter(LocalBroadcastManager.getInstance(application)),
 
     /**
      * Not for use by typical applications: present so OAuth/SSO with apps that log into the Rover web apps can use the SDK.  You can safely ignore this.

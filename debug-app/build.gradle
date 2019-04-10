@@ -1,6 +1,8 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'com.appspector.sdk'
+
 android {
     compileSdkVersion 28
 
@@ -53,6 +55,7 @@ dependencies {
     implementation 'com.uber.autodispose:autodispose-android-kotlin:0.8.0'
     implementation 'com.uber.autodispose:autodispose-android-archcomponents-kotlin:0.8.0'
     implementation 'com.jakewharton.timber:timber:4.7.1'
+    implementation "com.appspector:android-sdk:1.0.11"
 
     implementation 'com.android.support:design:28.0.0'
     implementation 'com.android.support:support-vector-drawable:28.0.0'

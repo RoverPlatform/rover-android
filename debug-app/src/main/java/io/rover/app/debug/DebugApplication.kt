@@ -13,6 +13,6 @@ class DebugApplication : Application() {
         }
 
         Rover.installSaneGlobalHttpCache(this)
-        Rover.initialize(this, "BLANK")
+        Rover.initialize(this, "6c546189dc45df1293bddc18c0b54786")
     }
 }

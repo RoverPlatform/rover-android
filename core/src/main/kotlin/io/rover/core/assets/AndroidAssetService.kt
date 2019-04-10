@@ -24,7 +24,6 @@ public open class AndroidAssetService(
     private val ioScheduler: Scheduler,
     private val mainThreadScheduler: Scheduler
 ) : AssetService {
-
     private val synchronousImagePipeline = BitmapWarmGpuCacheStage(
         InMemoryBitmapCacheStage(
             DecodeToBitmapStage(

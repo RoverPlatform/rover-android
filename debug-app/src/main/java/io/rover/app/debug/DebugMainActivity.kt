@@ -11,7 +11,7 @@ class DebugMainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_debug_main)
 
          startActivity(
-             RoverActivity.makeIntent(this, experienceId = "INSERT ME", campaignId = null)
+             RoverActivity.makeIntent(this, experienceId = "59e8b9d0d4459d00102c2958", campaignId = null)
          )
     }
 }

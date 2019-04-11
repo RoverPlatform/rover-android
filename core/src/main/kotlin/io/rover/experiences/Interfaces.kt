@@ -1,10 +1,9 @@
 package io.rover.experiences
 
 import android.graphics.Bitmap
-import io.rover.experiences.data.domain.BarcodeFormat
-import io.rover.experiences.ui.blocks.barcode.BarcodeViewModelInterface
-import io.rover.experiences.ui.blocks.concerns.text.Font
-import io.rover.experiences.ui.blocks.concerns.text.FontAppearance
+import io.rover.core.ui.blocks.barcode.BarcodeViewModelInterface
+import io.rover.core.ui.blocks.concerns.text.Font
+import io.rover.core.ui.blocks.concerns.text.FontAppearance
 
 interface BarcodeRenderingServiceInterface {
     /**

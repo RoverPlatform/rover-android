@@ -4,8 +4,9 @@ import io.rover.core.ViewModels
 import io.rover.core.logging.GlobalStaticLogHolder
 import io.rover.core.logging.JvmLogger
 import io.rover.core.logging.log
-import io.rover.experiences.data.domain.Experience
-import io.rover.experiences.data.graphql.operations.data.decodeJson
+import io.rover.core.data.domain.Experience
+import io.rover.core.data.operations.data.decodeJson
+import io.rover.core.ui.layout.Layout
 import org.amshove.kluent.mock
 import org.amshove.kluent.shouldBeLessThan
 import org.amshove.kluent.shouldEqual

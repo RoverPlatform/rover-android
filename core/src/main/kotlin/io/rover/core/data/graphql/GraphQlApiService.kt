@@ -7,8 +7,8 @@ import io.rover.core.data.http.HttpRequest
 import io.rover.core.data.http.HttpVerb
 import io.rover.core.logging.log
 import io.rover.core.streams.map
-import io.rover.experiences.data.domain.Experience
-import io.rover.experiences.data.graphql.operations.FetchExperienceRequest
+import io.rover.core.data.domain.Experience
+import io.rover.core.data.operations.FetchExperienceRequest
 import org.json.JSONException
 import org.reactivestreams.Publisher
 import java.io.IOException

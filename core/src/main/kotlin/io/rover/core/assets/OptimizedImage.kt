@@ -1,6 +1,6 @@
 package io.rover.core.assets
 
-import io.rover.experiences.ui.BackgroundImageConfiguration
+import io.rover.core.ui.BackgroundImageConfiguration
 import java.net.URI
 
 /**

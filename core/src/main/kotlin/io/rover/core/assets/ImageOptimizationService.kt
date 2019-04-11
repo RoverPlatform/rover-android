@@ -3,14 +3,14 @@ package io.rover.core.assets
 import android.graphics.Shader
 import io.rover.core.logging.log
 import io.rover.core.ui.PixelSize
-import io.rover.experiences.data.domain.Background
-import io.rover.experiences.data.domain.BackgroundContentMode
-import io.rover.experiences.data.domain.BackgroundScale
-import io.rover.experiences.data.domain.Block
-import io.rover.experiences.data.domain.Image
-import io.rover.experiences.ui.BackgroundImageConfiguration
-import io.rover.experiences.ui.Rect
-import io.rover.experiences.ui.dpAsPx
+import io.rover.core.data.domain.Background
+import io.rover.core.data.domain.BackgroundContentMode
+import io.rover.core.data.domain.BackgroundScale
+import io.rover.core.data.domain.Block
+import io.rover.core.data.domain.Image
+import io.rover.core.ui.BackgroundImageConfiguration
+import io.rover.core.ui.Rect
+import io.rover.core.ui.dpAsPx
 import java.net.URI
 import kotlin.math.roundToInt
 

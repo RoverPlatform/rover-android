@@ -2,7 +2,7 @@ package io.rover.core.events
 
 import android.content.Intent
 import android.support.v4.content.LocalBroadcastManager
-import io.rover.core.events.domain.Event
+import io.rover.core.data.domain.Attributes
 import io.rover.core.logging.log
 import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.share
@@ -22,20 +22,22 @@ open class EventEmitter(
 ) {
     protected open val eventSubject = PublishSubject<Event>()
 
-    open val trackedEvents: Publisher<Event> by lazy {  eventSubject.share() }
+    data class Event(
+        val action: String,
+        val attributes: Attributes
+    )
 
-    open fun trackEvent(event: Event) {
-        log.w("EVENT TRACKED (${event.name}), but event emission with an internal broadcast intent not yet implemented.")
-    }
+    open val trackedEvents: Publisher<Event> by lazy {  eventSubject.share() }
 
     open fun trackEvent(action: String, attributes: Map<String, Any>) {
         val intent = Intent(
             action
         )
-        // ANDREW START HERE AND SERIALIZE.
+
         intent.putExtra("attributes", JSONObject(attributes).toString())
 
         localBroadcastManager.sendBroadcast(intent)
+        log.v("Event broadcast: $action, ${JSONObject(attributes).toString(4)}")
     }
 }
 

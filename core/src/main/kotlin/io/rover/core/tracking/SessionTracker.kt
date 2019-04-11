@@ -2,16 +2,13 @@ package io.rover.core.tracking
 
 import android.os.Handler
 import android.os.Looper
-import io.rover.core.data.domain.AttributeValue
 import io.rover.core.data.domain.Attributes
 import io.rover.core.data.graphql.encodeJson
-import io.rover.core.data.graphql.toAttributesHash
 import io.rover.core.data.graphql.safeGetString
 import io.rover.core.data.graphql.safeOptInt
+import io.rover.core.data.graphql.toAttributesHash
 import io.rover.core.events.EventEmitter
-import io.rover.core.events.domain.Event
 import io.rover.core.logging.log
-import io.rover.core.platform.DateFormattingInterface
 import io.rover.core.platform.LocalStorage
 import io.rover.core.platform.whenNotNull
 import org.json.JSONObject
@@ -54,10 +51,8 @@ open class SessionTracker(
         sessionStore.enterSession(sessionKey, sessionEventName, attributes)
 
         eventEmitter.trackEvent(
-            Event(
-                sessionStartEventName,
-                attributes
-            )
+            sessionStartEventName,
+            attributes
         )
     }
 
@@ -83,12 +78,10 @@ open class SessionTracker(
         sessionStore.collectExpiredSessions(keepAliveTime).forEach { expiredSession ->
             log.v("Session closed: ${expiredSession.sessionKey}")
             eventEmitter.trackEvent(
-                Event(
-                    expiredSession.eventName,
-                    hashMapOf(
-                        Pair("duration", AttributeValue.Scalar.Integer(expiredSession.durationSeconds))
-                    ) + expiredSession.attributes
-                )
+                expiredSession.eventName,
+                hashMapOf(
+                    Pair("duration",expiredSession.durationSeconds)
+                ) + expiredSession.attributes
             )
         }
 
@@ -103,20 +96,14 @@ open class SessionTracker(
         log.v("Leaving session $sessionKey")
         sessionStore.leaveSession(sessionKey)
 
-        eventEmitter.trackEvent(
-            Event(
-                sessionEndEventName,
-                attributes
-            )
-        )
+        eventEmitter.trackEvent(sessionEndEventName, attributes)
 
         updateTimer()
     }
 }
 
 open class SessionStore(
-    localStorage: LocalStorage,
-    private val dateFormatting: DateFormattingInterface
+    localStorage: LocalStorage
 )  {
     private val store = localStorage.getKeyValueStorageFor(STORAGE_IDENTIFIER)
 
@@ -167,7 +154,7 @@ open class SessionStore(
     }
 
     private fun setEntry(sessionKey: Any, sessionEntry: SessionEntry) {
-        store[sessionKey.toString()] = sessionEntry.encodeJson(dateFormatting).toString()
+        store[sessionKey.toString()] = sessionEntry.encodeJson().toString()
     }
 
     /**
@@ -275,12 +262,12 @@ open class SessionStore(
          */
         val closedAt: Date?
     ) {
-        fun encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
+        fun encodeJson(): JSONObject {
             return JSONObject().apply {
                 put("uuid", uuid.toString())
                 put("session-event-name", sessionEventName)
                 put("started-at", startedAt.time / 1000)
-                put("session-attributes", sessionAttributes.encodeJson(dateFormatting))
+                put("session-attributes", sessionAttributes.encodeJson())
                 if (closedAt != null) {
                     put("closed-at", closedAt.time / 1000)
                 }

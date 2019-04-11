@@ -6,7 +6,6 @@ import android.arch.lifecycle.OnLifecycleEvent
 import android.os.Parcelable
 import io.rover.core.data.domain.Attributes
 import io.rover.core.events.EventEmitter
-import io.rover.core.events.domain.Event
 import io.rover.core.logging.log
 import io.rover.core.platform.whenNotNull
 import io.rover.core.streams.PublishSubject
@@ -134,12 +133,10 @@ open class NavigationViewModel(
                         Pair("row", action.rowAttributes)
                     )
 
-                    val event = Event(
-                        name = "Block Tapped",
-                        attributes = attributes
+                    eventEmitter.trackEvent(
+                        "io.rover.BlockTapped",
+                        attributes
                     )
-
-                    eventEmitter.trackEvent(event)
                 }
             }
         }
@@ -304,8 +301,8 @@ open class NavigationViewModel(
     protected fun trackEnterExperience(experience: Experience) {
         sessionTracker.enterSession(
             ExperienceSessionKey(experience.id.rawValue, experience.campaignId),
-            "Experience Presented",
-            "Experience Viewed",
+            "io.rover.ExperiencePresented",
+            "io.rover.ExperienceViewed",
             sessionExperienceEventAttributes(experience)
         )
     }
@@ -313,7 +310,7 @@ open class NavigationViewModel(
     protected fun trackLeaveExperience(experience: Experience) {
         sessionTracker.leaveSession(
             ExperienceSessionKey(experience.id.rawValue, experience.campaignId),
-            "Experience Dismissed",
+            "io.rover.ExperienceDismissed",
             sessionExperienceEventAttributes(experience)
         )
     }
@@ -330,7 +327,7 @@ open class NavigationViewModel(
             val screenViewModel = activeScreenViewModel()
             sessionTracker.leaveSession(
                 ExperienceScreenSessionKey(experience.id.rawValue, currentScreenId),
-                "Screen Dismissed",
+                "io.rover.ScreenDismissed",
                 sessionScreenEventAttributes(screenViewModel)
             )
         }
@@ -343,8 +340,8 @@ open class NavigationViewModel(
     protected fun trackEnterScreen(screenViewModel: ScreenViewModelInterface) {
         sessionTracker.enterSession(
             ExperienceScreenSessionKey(experience.id.rawValue, screenViewModel.screenId),
-            "Screen Presented",
-            "Screen Viewed",
+            "io.rover.ScreenPresented",
+            "io.rover.ScreenViewed",
             sessionScreenEventAttributes(screenViewModel)
         )
     }

@@ -3,15 +3,11 @@
 package io.rover.core.data.graphql
 
 import android.os.Build
-import io.rover.core.platform.DateFormattingInterface
-import io.rover.core.platform.whenNotNull
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import java.net.URI
 import java.net.URISyntaxException
-import java.text.ParseException
-import java.util.Date
 import kotlin.reflect.KProperty1
 
 /**
@@ -90,30 +86,6 @@ fun JSONObject.safeOptBoolean(name: String): Boolean? {
 
 fun JSONObject.safeOptInt(name: String): Int? {
     return if (isNull(name) || !this.has(name)) null else optInt(name)
-}
-
-fun JSONObject.getDate(name: String, dateFormatting: DateFormattingInterface, localTime: Boolean = false): Date {
-    try {
-        return dateFormatting.iso8601AsDate(getString(name), localTime)
-    } catch (e: ParseException) {
-        if (Build.VERSION.SDK_INT >= 27) {
-            throw JSONException("Unable to parse date.", e)
-        } else {
-            throw JSONException("Unable to parse date, because: ${e.message}")
-        }
-    }
-}
-
-fun JSONObject.safeOptDate(name: String, dateFormatting: DateFormattingInterface, localTime: Boolean = false): Date? {
-    try {
-        return if (isNull(name) || !this.has(name)) null else optString(name, null).whenNotNull { dateFormatting.iso8601AsDate(it, localTime) }
-    } catch (e: ParseException) {
-        if (Build.VERSION.SDK_INT >= 27) {
-            throw JSONException("Unable to parse date.", e)
-        } else {
-            throw JSONException("Unable to parse date, because: ${e.message}")
-        }
-    }
 }
 
 fun <T, R> JSONObject.putProp(obj: T, prop: KProperty1<T, R>, transform: ((R) -> Any?)? = null) {

@@ -10,11 +10,11 @@ import android.support.v4.content.LocalBroadcastManager
 import android.util.DisplayMetrics
 import io.rover.core.assets.AndroidAssetService
 import io.rover.core.assets.ImageDownloader
+import io.rover.core.assets.ImageOptimizationService
 import io.rover.core.data.graphql.GraphQlApiService
 import io.rover.core.data.http.HttpClient
 import io.rover.core.events.EventEmitter
 import io.rover.core.logging.log
-import io.rover.core.platform.DateFormatting
 import io.rover.core.platform.IoMultiplexingExecutor
 import io.rover.core.platform.LocalStorage
 import io.rover.core.streams.Scheduler
@@ -25,7 +25,6 @@ import io.rover.core.tracking.SessionTracker
 import io.rover.experiences.AndroidMeasurementService
 import io.rover.experiences.BarcodeRenderingService
 import io.rover.experiences.MeasurementService
-import io.rover.core.assets.ImageOptimizationService
 import io.rover.experiences.data.domain.Background
 import io.rover.experiences.data.domain.Barcode
 import io.rover.experiences.data.domain.BarcodeBlock
@@ -111,8 +110,6 @@ open class Rover(
 
     open val endpoint: String = "https://api.rover.io/graphql",
 
-    open val dateFormatting: DateFormatting = DateFormatting(),
-
     open val mainScheduler: Scheduler = Scheduler.forAndroidMainThread(),
 
     open val ioExecutor: Executor = IoMultiplexingExecutor.build("io"),
@@ -133,7 +130,7 @@ open class Rover(
 
     open val localStorage: LocalStorage = LocalStorage(application),
 
-    open val sessionStore: SessionStore = SessionStore(localStorage, dateFormatting),
+    open val sessionStore: SessionStore = SessionStore(localStorage),
 
     open val eventEmitter: EventEmitter = EventEmitter(LocalBroadcastManager.getInstance(application)),
 

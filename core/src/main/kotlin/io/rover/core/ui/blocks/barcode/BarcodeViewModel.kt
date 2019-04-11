@@ -1,6 +1,6 @@
 package io.rover.core.ui.blocks.barcode
 
-import io.rover.core.MeasurementService
+import io.rover.core.services.MeasurementService
 import io.rover.core.data.domain.Barcode
 import io.rover.core.data.domain.BarcodeFormat
 import io.rover.core.ui.RectF

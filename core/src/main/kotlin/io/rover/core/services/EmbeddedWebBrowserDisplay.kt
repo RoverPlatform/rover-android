@@ -1,4 +1,4 @@
-package io.rover.core
+package io.rover.core.services
 
 import android.content.Intent
 import android.graphics.Color

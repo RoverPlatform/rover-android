@@ -2,7 +2,7 @@ package io.rover.core.ui.blocks.concerns.text
 
 import android.graphics.Paint
 import android.graphics.Typeface
-import io.rover.core.MeasurementService
+import io.rover.core.services.MeasurementService
 import io.rover.core.data.domain.FontWeight
 import io.rover.core.data.domain.Text
 import io.rover.core.data.domain.TextAlignment

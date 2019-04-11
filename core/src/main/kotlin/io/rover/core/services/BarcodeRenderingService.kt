@@ -1,4 +1,4 @@
-package io.rover.core
+package io.rover.core.services
 
 import android.graphics.Bitmap
 import android.graphics.Canvas

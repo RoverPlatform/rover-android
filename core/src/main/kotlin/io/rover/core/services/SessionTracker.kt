@@ -1,4 +1,4 @@
-package io.rover.core.tracking
+package io.rover.core.services
 
 import android.os.Handler
 import android.os.Looper
@@ -7,7 +7,6 @@ import io.rover.core.data.graphql.encodeJson
 import io.rover.core.data.graphql.safeGetString
 import io.rover.core.data.graphql.safeOptInt
 import io.rover.core.data.graphql.toAttributesHash
-import io.rover.core.events.EventEmitter
 import io.rover.core.logging.log
 import io.rover.core.platform.LocalStorage
 import io.rover.core.platform.whenNotNull

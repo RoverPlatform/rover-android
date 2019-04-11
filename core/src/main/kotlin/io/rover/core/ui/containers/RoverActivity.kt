@@ -9,7 +9,7 @@ import android.os.Parcelable
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
-import io.rover.core.EmbeddedWebBrowserDisplay
+import io.rover.core.services.EmbeddedWebBrowserDisplay
 import io.rover.core.R
 import io.rover.core.Rover
 import io.rover.core.logging.log

@@ -3,7 +3,7 @@ package io.rover.core.ui.blocks.barcode
 import android.graphics.drawable.BitmapDrawable
 import android.support.v7.widget.AppCompatImageView
 import android.widget.ImageView
-import io.rover.core.BarcodeRenderingService
+import io.rover.core.services.BarcodeRenderingService
 import io.rover.core.Rover
 import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.ViewModelBinding

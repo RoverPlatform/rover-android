@@ -15,7 +15,7 @@ import io.rover.core.streams.observeOn
 import io.rover.core.streams.share
 import io.rover.core.streams.shareAndReplay
 import io.rover.core.streams.subscribe
-import io.rover.core.tracking.SessionTracker
+import io.rover.core.services.SessionTracker
 import io.rover.core.data.domain.Experience
 import io.rover.core.data.operations.FetchExperienceRequest
 import io.rover.core.ui.navigation.ExperienceExternalNavigationEvent

@@ -5,7 +5,7 @@ import android.arch.lifecycle.LifecycleObserver
 import android.arch.lifecycle.OnLifecycleEvent
 import android.os.Parcelable
 import io.rover.core.data.domain.Attributes
-import io.rover.core.events.EventEmitter
+import io.rover.core.services.EventEmitter
 import io.rover.core.logging.log
 import io.rover.core.platform.whenNotNull
 import io.rover.core.streams.PublishSubject
@@ -14,7 +14,7 @@ import io.rover.core.streams.flatMap
 import io.rover.core.streams.map
 import io.rover.core.streams.shareHotAndReplay
 import io.rover.core.streams.subscribe
-import io.rover.core.tracking.SessionTracker
+import io.rover.core.services.SessionTracker
 import io.rover.core.data.domain.Experience
 import io.rover.core.data.domain.Screen
 import io.rover.core.data.domain.events.asAttributeValue

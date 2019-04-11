@@ -1,4 +1,4 @@
-package io.rover.core
+package io.rover.core.services
 
 import android.annotation.SuppressLint
 import android.graphics.Paint

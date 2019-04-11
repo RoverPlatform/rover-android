@@ -1,4 +1,4 @@
-package io.rover.core.events
+package io.rover.core.services
 
 import android.content.Intent
 import android.support.v4.content.LocalBroadcastManager

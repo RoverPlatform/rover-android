@@ -2,10 +2,10 @@ package io.rover.core.ui.blocks.concerns.text
 
 import android.graphics.Paint
 import android.graphics.Typeface
+import io.rover.core.MeasurementService
 import io.rover.core.data.domain.FontWeight
 import io.rover.core.data.domain.Text
 import io.rover.core.data.domain.TextAlignment
-import io.rover.experiences.MeasurementService
 import io.rover.core.logging.log
 import io.rover.core.ui.RectF
 import io.rover.core.ui.asAndroidColor

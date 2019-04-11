@@ -4,9 +4,8 @@ import io.rover.core.ui.blocks.concerns.layout.BlockViewModelInterface
 import io.rover.core.ui.blocks.concerns.layout.CompositeBlockViewModelInterface
 import io.rover.core.ui.blocks.concerns.layout.LayoutableViewModel
 import io.rover.core.ui.blocks.concerns.layout.Measurable
-import io.rover.experiences.ui.blocks.concerns.layout.*
-import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.BindableViewModel
+import io.rover.core.ui.concerns.MeasuredBindableView
 
 interface ViewBarcodeInterface : MeasuredBindableView<BarcodeViewModelInterface>
 

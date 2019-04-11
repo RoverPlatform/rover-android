@@ -11,18 +11,6 @@ import android.util.DisplayMetrics
 import io.rover.core.assets.AndroidAssetService
 import io.rover.core.assets.ImageDownloader
 import io.rover.core.assets.ImageOptimizationService
-import io.rover.core.data.graphql.GraphQlApiService
-import io.rover.core.data.http.HttpClient
-import io.rover.core.events.EventEmitter
-import io.rover.core.logging.log
-import io.rover.core.platform.IoMultiplexingExecutor
-import io.rover.core.platform.LocalStorage
-import io.rover.core.streams.Scheduler
-import io.rover.core.streams.forAndroidMainThread
-import io.rover.core.streams.forExecutor
-import io.rover.core.tracking.SessionStore
-import io.rover.core.tracking.SessionTracker
-import io.rover.experiences.MeasurementService
 import io.rover.core.data.domain.Background
 import io.rover.core.data.domain.Barcode
 import io.rover.core.data.domain.BarcodeBlock
@@ -39,6 +27,17 @@ import io.rover.core.data.domain.Text
 import io.rover.core.data.domain.TextBlock
 import io.rover.core.data.domain.WebView
 import io.rover.core.data.domain.WebViewBlock
+import io.rover.core.data.graphql.GraphQlApiService
+import io.rover.core.data.http.HttpClient
+import io.rover.core.events.EventEmitter
+import io.rover.core.logging.log
+import io.rover.core.platform.IoMultiplexingExecutor
+import io.rover.core.platform.LocalStorage
+import io.rover.core.streams.Scheduler
+import io.rover.core.streams.forAndroidMainThread
+import io.rover.core.streams.forExecutor
+import io.rover.core.tracking.SessionStore
+import io.rover.core.tracking.SessionTracker
 import io.rover.core.ui.RoverViewModel
 import io.rover.core.ui.blocks.barcode.BarcodeBlockView
 import io.rover.core.ui.blocks.barcode.BarcodeBlockViewModel
@@ -145,7 +144,7 @@ open class Rover(
 
     open val barcodeRenderingService: BarcodeRenderingService = BarcodeRenderingService(),
 
-    open val measurementService: MeasurementService = AndroidMeasurementService(
+    open val measurementService: MeasurementService = MeasurementService(
         displayMetrics = application.resources.displayMetrics,
         richTextToSpannedTransformer = textFormatter,
         barcodeRenderingService = barcodeRenderingService

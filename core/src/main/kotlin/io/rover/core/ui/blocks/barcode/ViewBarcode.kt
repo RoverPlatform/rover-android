@@ -3,10 +3,10 @@ package io.rover.core.ui.blocks.barcode
 import android.graphics.drawable.BitmapDrawable
 import android.support.v7.widget.AppCompatImageView
 import android.widget.ImageView
+import io.rover.core.BarcodeRenderingService
 import io.rover.core.Rover
 import io.rover.core.ui.concerns.MeasuredBindableView
 import io.rover.core.ui.concerns.ViewModelBinding
-import io.rover.experiences.BarcodeRenderingServiceInterface
 
 /**
  * Mixin that binds a barcode view model to an [AppCompatImageView] by rendering the barcodes and
@@ -31,10 +31,10 @@ class ViewBarcode(
             val bitmap = barcodeRenderingService.renderBarcode(
                 viewModel.barcodeValue,
                 when(viewModel.barcodeType) {
-                    BarcodeViewModelInterface.BarcodeType.Aztec -> BarcodeRenderingServiceInterface.Format.Aztec
-                    BarcodeViewModelInterface.BarcodeType.Code128 -> BarcodeRenderingServiceInterface.Format.Code128
-                    BarcodeViewModelInterface.BarcodeType.PDF417 -> BarcodeRenderingServiceInterface.Format.Pdf417
-                    BarcodeViewModelInterface.BarcodeType.QrCode -> BarcodeRenderingServiceInterface.Format.QrCode
+                    BarcodeViewModelInterface.BarcodeType.Aztec -> BarcodeRenderingService.Format.Aztec
+                    BarcodeViewModelInterface.BarcodeType.Code128 -> BarcodeRenderingService.Format.Code128
+                    BarcodeViewModelInterface.BarcodeType.PDF417 -> BarcodeRenderingService.Format.Pdf417
+                    BarcodeViewModelInterface.BarcodeType.QrCode -> BarcodeRenderingService.Format.QrCode
                 }
             )
 

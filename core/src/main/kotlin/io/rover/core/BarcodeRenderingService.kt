@@ -7,16 +7,30 @@ import android.graphics.Matrix
 import android.graphics.Rect
 import android.graphics.RectF
 import io.rover.core.platform.toAndroidBitmap
-import io.rover.experiences.BarcodeRenderingServiceInterface
 import io.rover.shaded.zxing.com.google.zxing.BarcodeFormat
 import io.rover.shaded.zxing.com.google.zxing.EncodeHintType
 import io.rover.shaded.zxing.com.google.zxing.MultiFormatWriter
 import io.rover.shaded.zxing.com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 
-class BarcodeRenderingService: BarcodeRenderingServiceInterface {
-    override fun measureHeightNeededForBarcode(
+open class BarcodeRenderingService {
+    enum class Format {
+        Pdf417, Code128, Aztec, QrCode
+    }
+
+    /**
+     * Measure how much height a given bit of Unicode text will require if rendered as a barcode in
+     * the specified format, and then meant to be scaled to fit the given width.
+     *
+     * @param format specifies what format of barcode should be used.
+     *
+     * Note that what length and sort of text is valid depends on the Barcode format.
+     *
+     * Returns the height needed to accommodate the barcode, at the correct aspect, at the given
+     * width, in points.
+     */
+    open fun measureHeightNeededForBarcode(
         text: String,
-        format: BarcodeRenderingServiceInterface.Format,
+        format: Format,
         width: Float
     ): Float {
         val renderedBitmap = renderBarcode(text, format)
@@ -24,23 +38,28 @@ class BarcodeRenderingService: BarcodeRenderingServiceInterface {
         return (width / aspectRatio)
     }
 
-    override fun renderBarcode(
+    /**
+     * Render the given string as a Barcode in the given format, pixel exact (not scaled).
+     *
+     * Note that what length and sort of text is valid depends on the Barcode format.
+     */
+    open fun renderBarcode(
         text: String,
-        format: BarcodeRenderingServiceInterface.Format
+        format: Format
     ): Bitmap {
         return MultiFormatWriter().encode(
             text,
             when (format) {
-                BarcodeRenderingServiceInterface.Format.Pdf417 -> BarcodeFormat.PDF_417
-                BarcodeRenderingServiceInterface.Format.Code128 -> BarcodeFormat.CODE_128
-                BarcodeRenderingServiceInterface.Format.Aztec -> BarcodeFormat.AZTEC
-                BarcodeRenderingServiceInterface.Format.QrCode -> BarcodeFormat.QR_CODE
+                Format.Pdf417 -> BarcodeFormat.PDF_417
+                Format.Code128 -> BarcodeFormat.CODE_128
+                Format.Aztec -> BarcodeFormat.AZTEC
+                Format.QrCode -> BarcodeFormat.QR_CODE
             },
             // we want the minimum size, pixel exact.  we'll scale it later in the view layer.
             0,
             0,
             when(format) {
-                BarcodeRenderingServiceInterface.Format.Pdf417 -> hashMapOf<EncodeHintType, Any>(
+                Format.Pdf417 -> hashMapOf<EncodeHintType, Any>(
                     // We'll furnish our own margin (see contributedPadding).  Some -- but not all --
                     // of the barcode types look for this margin parameter and if they don't
                     // find it include their own (pretty massive) margin.
@@ -48,7 +67,7 @@ class BarcodeRenderingService: BarcodeRenderingServiceInterface {
                     Pair(EncodeHintType.ERROR_CORRECTION, 2),
                     Pair(EncodeHintType.PDF417_COMPACTION, "AUTO")
                 )
-                BarcodeRenderingServiceInterface.Format.Code128 -> hashMapOf<EncodeHintType, Any>(
+                Format.Code128 -> hashMapOf<EncodeHintType, Any>(
                     // We cannot use this to obtain a margin around the outside of a Code 128
                     // barcode, because it is rendered as 1D and therefore margin will only appear
                     // on the horizontal sides.  So, we'll post-process the bitmap to add it
@@ -56,19 +75,19 @@ class BarcodeRenderingService: BarcodeRenderingServiceInterface {
                     // instead of 1.
                     Pair(EncodeHintType.MARGIN, 0)
                 )
-                BarcodeRenderingServiceInterface.Format.Aztec -> hashMapOf<EncodeHintType, Any>(
+                Format.Aztec -> hashMapOf<EncodeHintType, Any>(
                     Pair(EncodeHintType.MARGIN, 1),
                     Pair(EncodeHintType.AZTEC_LAYERS, 0),
                     Pair(EncodeHintType.ERROR_CORRECTION, 33)
                 )
-                BarcodeRenderingServiceInterface.Format.QrCode -> hashMapOf<EncodeHintType, Any>(
+                Format.QrCode -> hashMapOf<EncodeHintType, Any>(
                     Pair(EncodeHintType.MARGIN, 1),
                     Pair(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M)
                 )
             }
         ).toAndroidBitmap().let { bitmap ->
             when(format) {
-                BarcodeRenderingServiceInterface.Format.Code128 -> {
+                Format.Code128 -> {
                     // post process to transform the barcode into 2D and add a 2px border around it to be consistent
                     // with the other formats, and also add margin on all sides.
 
@@ -102,7 +121,7 @@ class BarcodeRenderingService: BarcodeRenderingServiceInterface {
                     )
                     newBitmap
                 }
-                BarcodeRenderingServiceInterface.Format.Aztec -> {
+                Format.Aztec -> {
                     // post-process to add our own margin on all sides:
                     val margin = 2
 

@@ -8,22 +8,31 @@ import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.DisplayMetrics
-import io.rover.core.ui.dpAsPx
 import io.rover.core.ui.blocks.barcode.BarcodeViewModelInterface
 import io.rover.core.ui.blocks.concerns.text.Font
 import io.rover.core.ui.blocks.concerns.text.FontAppearance
 import io.rover.core.ui.blocks.concerns.text.RichTextToSpannedTransformer
+import io.rover.core.ui.dpAsPx
 import io.rover.core.ui.pxAsDp
-import io.rover.experiences.BarcodeRenderingServiceInterface
-import io.rover.experiences.MeasurementService
 
-class AndroidMeasurementService(
+open class MeasurementService(
     private val displayMetrics: DisplayMetrics,
     private val richTextToSpannedTransformer: RichTextToSpannedTransformer,
-    private val barcodeRenderingService: BarcodeRenderingServiceInterface
-) : MeasurementService {
+    private val barcodeRenderingService: BarcodeRenderingService
+) {
+    /**
+     * Measure how much height a given bit of Unicode [richText] (with optional HTML tags such as
+     * strong, italic, and underline) will require if soft wrapped to the given [width] and
+     * [fontAppearance] ultimately meant to be displayed using an Android View.
+     *
+     * [boldFontAppearance] provides any font size or font-family modifications that should be
+     * applied to bold text ( with no changes to colour or alignment).  This allows for nuanced
+     * control of bold span styling.
+     *
+     * Returns the height needed to accommodate the text at the given width, in dps.
+     */
     @SuppressLint("NewApi")
-    override fun measureHeightNeededForRichText(
+    open fun measureHeightNeededForRichText(
         richText: String,
         fontAppearance: FontAppearance,
         boldFontAppearance: Font,
@@ -82,7 +91,18 @@ class AndroidMeasurementService(
         return (layout.height + layout.topPadding + layout.bottomPadding).pxAsDp(displayMetrics)
     }
 
-    override fun measureHeightNeededForBarcode(
+    /**
+     * Measure how much height a given bit of Unicode [text] will require if rendered as a barcode
+     * in the given format.
+     *
+     * [type] specifies what format of barcode should be used, namely
+     * [BarcodeViewModelInterface.BarcodeType]. Note that what length and sort of text is valid
+     * depends on the type.
+     *
+     * Returns the height needed to accommodate the barcode, at the correct aspect, at the given
+     * width, in dps.
+     */
+    open fun measureHeightNeededForBarcode(
         text: String,
         type: BarcodeViewModelInterface.BarcodeType,
         width: Float
@@ -90,10 +110,10 @@ class AndroidMeasurementService(
         return barcodeRenderingService.measureHeightNeededForBarcode(
             text,
             when(type) {
-                BarcodeViewModelInterface.BarcodeType.Aztec -> BarcodeRenderingServiceInterface.Format.Aztec
-                BarcodeViewModelInterface.BarcodeType.Code128 -> BarcodeRenderingServiceInterface.Format.Code128
-                BarcodeViewModelInterface.BarcodeType.PDF417 -> BarcodeRenderingServiceInterface.Format.Pdf417
-                BarcodeViewModelInterface.BarcodeType.QrCode -> BarcodeRenderingServiceInterface.Format.QrCode
+                BarcodeViewModelInterface.BarcodeType.Aztec -> BarcodeRenderingService.Format.Aztec
+                BarcodeViewModelInterface.BarcodeType.Code128 -> BarcodeRenderingService.Format.Code128
+                BarcodeViewModelInterface.BarcodeType.PDF417 -> BarcodeRenderingService.Format.Pdf417
+                BarcodeViewModelInterface.BarcodeType.QrCode -> BarcodeRenderingService.Format.QrCode
             },
             width
         )

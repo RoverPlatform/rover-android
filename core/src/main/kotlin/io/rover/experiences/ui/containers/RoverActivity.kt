@@ -65,7 +65,7 @@ open class RoverActivity : AppCompatActivity() {
                 openUri(externalNavigationEvent.uri.asAndroidUri())
             }
             is ExperienceExternalNavigationEvent.PresentWebsite -> {
-                webDisplay.intentForViewingWebsiteViaEmbeddedBrowser(
+                webDisplay?.intentForViewingWebsiteViaEmbeddedBrowser(
                     externalNavigationEvent.url.toString()
                 ).whenNotNull { intent ->
                     ContextCompat.startActivity(
@@ -120,9 +120,16 @@ open class RoverActivity : AppCompatActivity() {
     /**
      * Provides a method for opening URIs with a Custom Chrome Tab.
      */
-    // TODO: go to new simple container, don't put it here like I did on iOS.
-    protected open val webDisplay: EmbeddedWebBrowserDisplay by lazy {
-        EmbeddedWebBrowserDisplay()
+//    // TODO: go to new simple container, don't put it here like I did on iOS.
+    protected open val webDisplay: EmbeddedWebBrowserDisplay? by lazy {
+        val rover = Rover.shared
+        if(rover == null) {
+            log.w("RoverActivity cannot work unless Rover has been initialized.")
+            finish()
+            null
+        } else {
+            rover.webBrowserDisplay
+        }
     }
 
     override fun onBackPressed() {

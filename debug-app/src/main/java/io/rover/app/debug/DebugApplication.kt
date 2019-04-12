@@ -20,6 +20,6 @@ class DebugApplication : Application() {
             .run("android_NWJhNTMwYTMtM2RlOS00MzFlLWEzMWMtMTU5YWUzNjBlZjdk");
 
         Rover.installSaneGlobalHttpCache(this)
-        Rover.initialize(this, "6c546189dc45df1293bddc18c0b54786")
+        Rover.initialize(this, "BLANK")
     }
 }

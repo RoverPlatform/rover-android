@@ -1,1 +1,1 @@
-include 'core', 'debug-app'
+include 'sdk', 'debug-app'

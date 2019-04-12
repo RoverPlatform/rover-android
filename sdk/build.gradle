@@ -148,7 +148,7 @@ task webDocsDokka (type: org.jetbrains.dokka.gradle.DokkaTask, overwrite: true) 
 
 ext {
     groupId = 'io.rover' // package name of the project
-    artifactId = "core" // module name of the library
+    artifactId = "sdk" // module name of the library
     libVersion = rover_sdk_version
 }
 

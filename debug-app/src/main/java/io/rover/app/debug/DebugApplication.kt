@@ -2,7 +2,7 @@ package io.rover.app.debug
 
 import android.app.Application
 import com.appspector.sdk.AppSpector
-import io.rover.core.Rover
+import io.rover.sdk.Rover
 import timber.log.Timber
 
 class DebugApplication : Application() {

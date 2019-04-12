@@ -1,13 +1,13 @@
 package io.rover.experiences.ui.layout
 
-import io.rover.core.ViewModels
-import io.rover.core.data.domain.Height
-import io.rover.core.data.domain.HorizontalAlignment
-import io.rover.core.data.domain.Position
-import io.rover.core.data.domain.VerticalAlignment
-import io.rover.core.ui.RectF
-import io.rover.core.ui.blocks.rectangle.RectangleBlockViewModelInterface
-import io.rover.core.ui.layout.row.RowViewModel
+import io.rover.sdk.ViewModels
+import io.rover.sdk.data.domain.Height
+import io.rover.sdk.data.domain.HorizontalAlignment
+import io.rover.sdk.data.domain.Position
+import io.rover.sdk.data.domain.VerticalAlignment
+import io.rover.sdk.ui.RectF
+import io.rover.sdk.ui.blocks.rectangle.RectangleBlockViewModelInterface
+import io.rover.sdk.ui.layout.row.RowViewModel
 import org.amshove.kluent.mock
 import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek

@@ -11,7 +11,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="io.rover.core.ui.containers.RoverActivity"
+            android:name="io.rover.sdk.ui.containers.RoverActivity"
             android:theme="@style/AppTheme.NoActionBar" />
 
         <activity

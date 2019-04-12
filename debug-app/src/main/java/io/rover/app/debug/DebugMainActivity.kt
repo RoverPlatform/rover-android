@@ -2,7 +2,7 @@ package io.rover.app.debug
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import io.rover.core.ui.containers.RoverActivity
+import io.rover.sdk.ui.containers.RoverActivity
 
 class DebugMainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

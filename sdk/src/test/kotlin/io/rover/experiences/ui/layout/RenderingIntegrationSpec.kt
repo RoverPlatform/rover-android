@@ -1,12 +1,12 @@
 package io.rover.experiences.ui.layout
 
-import io.rover.core.ViewModels
-import io.rover.core.logging.GlobalStaticLogHolder
-import io.rover.core.logging.JvmLogger
-import io.rover.core.logging.log
-import io.rover.core.data.domain.Experience
-import io.rover.core.data.operations.data.decodeJson
-import io.rover.core.ui.layout.Layout
+import io.rover.sdk.ViewModels
+import io.rover.sdk.logging.GlobalStaticLogHolder
+import io.rover.sdk.logging.JvmLogger
+import io.rover.sdk.logging.log
+import io.rover.sdk.data.domain.Experience
+import io.rover.sdk.data.operations.data.decodeJson
+import io.rover.sdk.ui.layout.Layout
 import org.amshove.kluent.mock
 import org.amshove.kluent.shouldBeLessThan
 import org.amshove.kluent.shouldEqual

@@ -1,12 +1,12 @@
 package io.rover.experiences.assets
 
-import io.rover.core.assets.ImageOptimizationService
-import io.rover.core.data.domain.Background
-import io.rover.core.data.domain.BackgroundContentMode
-import io.rover.core.data.domain.BackgroundScale
-import io.rover.core.data.domain.Color
-import io.rover.core.data.domain.Image
-import io.rover.core.ui.PixelSize
+import io.rover.sdk.assets.ImageOptimizationService
+import io.rover.sdk.data.domain.Background
+import io.rover.sdk.data.domain.BackgroundContentMode
+import io.rover.sdk.data.domain.BackgroundScale
+import io.rover.sdk.data.domain.Color
+import io.rover.sdk.data.domain.Image
+import io.rover.sdk.ui.PixelSize
 import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe

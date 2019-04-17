@@ -1,8 +1,0 @@
-<resources>
-    <string name="app_name">rover</string>
-    <string name="close">Close</string>
-    <string name="generic_problem">Oops, something went wrong.</string>
-
-    <string name="default_notification_channel_name">Default</string>
-    <string name="default_notification_description">Default</string>
-</resources>

@@ -11,63 +11,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar">
-        </activity>
-        <activity
-            android:name="io.rover.experiences.ui.containers.ExperienceActivity"
+            android:name="io.rover.sdk.ui.containers.RoverActivity"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name="io.rover.experiences.ui.TransientLinkLaunchActivity">
-
-            <!-- for deep links -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="rv-debug" />
-            </intent-filter>
-
-            <!-- for http universal links/app links -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="debug.rover.io"
-                    android:scheme="http" />
-            </intent-filter>
-
-            <!-- for https universal links/app links -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="debug.rover.io"
-                    android:scheme="https" />
-            </intent-filter>
-        </activity>
-
-        <service android:name=".fcm.FirebaseMessageReceiver">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
-        <service android:name=".fcm.FirebaseInstanceIdReceiver">
-            <intent-filter>
-                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
-            </intent-filter>
-        </service>
 
         <activity
             android:name=".DebugMainActivity"
-            android:label="@string/app_name" android:theme="@style/RoverDebugPreferencesActivityTheme">
+            android:label="@string/app_name">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -49,21 +49,28 @@ class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelInterface> 
             )
         }
 
-        val combined: Publisher<Pair<MeasuredBindableView.Binding<ScreenViewModelInterface>, MeasuredSize>> = Publishers.combineLatest(
+        val viewModelBindingAndSize: Publisher<Pair<MeasuredBindableView.Binding<ScreenViewModelInterface>, MeasuredSize>> = Publishers.combineLatest(
             viewModelSubject,
             vtoMeasuredSizeSubject.distinctUntilChanged()
         ) { viewModelBinding: MeasuredBindableView.Binding<ScreenViewModelInterface>, measured: MeasuredSize ->
             Pair(viewModelBinding, measured)
         }
 
-        combined
+        viewModelBindingAndSize
+            .androidLifecycleDispose(this)
+            .subscribe { (viewModelBinding: MeasuredBindableView.Binding<ScreenViewModelInterface>, measuredSize: MeasuredSize) ->
+                viewBackground.viewModelBinding = MeasuredBindableView.Binding(
+                        viewModelBinding.viewModel,
+                        measuredSize
+                )
+            }
+
+        viewModelBindingAndSize
+            .distinctUntilChanged { it.second.width }
             .androidLifecycleDispose(this)
             .subscribe { (viewModelBinding: MeasuredBindableView.Binding<ScreenViewModelInterface>, measuredSize: MeasuredSize) ->
                 log.v("View model and view measurements now both ready: $viewModelBinding and $measuredSize")
-                viewBackground.viewModelBinding = MeasuredBindableView.Binding(
-                    viewModelBinding.viewModel,
-                    measuredSize
-                )
+
                 val layout = viewModelBinding.viewModel.render(measuredSize.width)
 
                 val blockAndRowAdapter = rover.resolve(

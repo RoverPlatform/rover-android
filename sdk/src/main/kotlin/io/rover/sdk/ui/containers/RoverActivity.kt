@@ -179,8 +179,8 @@ open class RoverActivity : AppCompatActivity() {
         // obtain any possibly saved state for the experience view model.  See
         // onSaveInstanceState.
         val state: Parcelable? = savedInstanceState?.getParcelable("experienceState")
-        roverViewModel = when {
-            experienceId != null && campaignId == null -> experienceViewModel(
+        when {
+            experienceId != null && campaignId == null -> roverViewModel = experienceViewModel(
                 rover,
                 RoverViewModel.ExperienceRequest.ById(experienceId!!),
                 // obtain any possibly saved state for the experience view model.  See
@@ -188,20 +188,21 @@ open class RoverActivity : AppCompatActivity() {
                 state
             )
 
-            experienceId == null && campaignId != null -> experienceViewModel(
+            // This case will become deprecated in the new routing arrangement, pending backend changes:
+            experienceId == null && campaignId != null -> roverViewModel = experienceViewModel(
                 rover,
                 RoverViewModel.ExperienceRequest.ByCampaignId(campaignId!!),
                 state
             )
 
-            experienceUrl != null -> experienceViewModel(
+            experienceUrl != null -> roverViewModel = experienceViewModel(
                 rover,
                 RoverViewModel.ExperienceRequest.ByCampaignUrl(experienceUrl!!),
                 state
             )
-            else -> throw RuntimeException(
-                "Please pass either one of CAMPAIGN_ID/EXPERIENCE_ID or EXPERIENCE_URL. Consider using RoverActivity.makeIntent()"
-            )
+            else -> {
+                log.w("Please pass either one of CAMPAIGN_ID/EXPERIENCE_ID or EXPERIENCE_URL. Consider using RoverActivity.makeIntent()")
+            }
         }
     }
 

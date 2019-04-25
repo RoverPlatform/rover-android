@@ -4,7 +4,6 @@ import io.rover.sdk.data.domain.Attributes
 import org.json.JSONArray
 import org.json.JSONObject
 
-// TODO: move to another file, this shouldn't be Attributes.kt
 fun JSONObject.toStringHash(): Map<String, String> {
     return this.keys().asSequence().associate { key ->
         Pair(key, this.safeGetString(key))
@@ -13,7 +12,7 @@ fun JSONObject.toStringHash(): Map<String, String> {
 
 fun Attributes.encodeJson(): JSONObject {
     this.map { (_, value) ->
-        val newValue = when(value) {
+        @Suppress("UNCHECKED_CAST") val newValue = when(value) {
             is Map<*, *> -> (value as Attributes).encodeJson()
             is Collection<*> -> JSONArray(value)
             else -> value

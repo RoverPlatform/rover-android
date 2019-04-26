@@ -1,5 +1,0 @@
-<resources>
-    <string name="rover_endpoint">https://api.rover.io</string>
-    <!-- Put your own Rover API token here! -->
-    <string name="rover_api_token">BLANK</string>
-</resources>

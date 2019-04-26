@@ -239,7 +239,7 @@ open class RoverActivity : AppCompatActivity() {
     companion object {
         @JvmStatic
         @JvmOverloads
-        fun makeIntent(packageContext: Context, experienceId: String?, campaignId: String?, activityClass: Class<out Activity> = RoverActivity::class.java): Intent {
+        fun makeIntent(packageContext: Context, experienceId: String, campaignId: String? = null, activityClass: Class<out Activity> = RoverActivity::class.java): Intent {
             return Intent(packageContext, activityClass).apply {
                 putExtra("EXPERIENCE_ID", experienceId)
                 putExtra("CAMPAIGN_ID", campaignId)
@@ -248,9 +248,10 @@ open class RoverActivity : AppCompatActivity() {
 
         @JvmStatic
         @JvmOverloads
-        fun makeIntent(packageContext: Context, experienceUrl: String, activityClass: Class<out Activity> = RoverActivity::class.java): Intent {
+        fun makeIntent(packageContext: Context, experienceUrl: Uri, campaignId: String? = null, activityClass: Class<out Activity> = RoverActivity::class.java): Intent {
             return Intent(packageContext, activityClass).apply {
-                putExtra("EXPERIENCE_URL", experienceUrl)
+                putExtra("EXPERIENCE_URL", experienceUrl.toString())
+                putExtra("CAMPAIGN_ID", campaignId)
             }
         }
     }

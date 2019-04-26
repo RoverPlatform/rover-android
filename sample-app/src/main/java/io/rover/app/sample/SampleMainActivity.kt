@@ -13,7 +13,7 @@ class SampleMainActivity : AppCompatActivity() {
 
         // Example of manually starting an experience with an experienceId
         startActivity(
-             RoverActivity.makeIntent(this, experienceId = "59e8b9d0d4459d00102c2958", campaignId = null)
+             RoverActivity.makeIntent(this, experienceId = "my-experience-id", campaignId = null)
          )
 
 

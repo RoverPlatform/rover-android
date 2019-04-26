@@ -55,7 +55,6 @@ fun Experience.Companion.decodeJson(json: JSONObject): Experience {
             Screen.decodeJson(it)
         },
         keys = json.getJSONObject("keys").toStringHash(),
-        campaignId = json.safeOptString("campaignID"),
         tags = json.getJSONArray("tags").getStringIterable().toList(),
         name = json.safeGetString("name")
     )
@@ -67,7 +66,6 @@ internal fun Experience.encodeJson(): JSONObject {
         putProp(this@encodeJson, Experience::homeScreenId, "homeScreenID") { it.rawValue }
         putProp(this@encodeJson, Experience::screens) { JSONArray(it.map { it.encodeJson() }) }
         putProp(this@encodeJson, Experience::keys) { JSONObject(it) }
-        putProp(this@encodeJson, Experience::campaignId, "campaignID")
         putProp(this@encodeJson, Experience::tags, "tags") { JSONArray(it) }
         putProp(this@encodeJson, Experience::name, "name") { it }
     }

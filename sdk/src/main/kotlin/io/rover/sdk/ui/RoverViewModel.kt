@@ -74,7 +74,6 @@ class RoverViewModel(
         graphQlApiService.fetchExperience(
             when (experienceRequest) {
                 is ExperienceRequest.ByCampaignUrl -> FetchExperienceRequest.ExperienceQueryIdentifier.ByUniversalLink(experienceRequest.url)
-                is ExperienceRequest.ByCampaignId -> FetchExperienceRequest.ExperienceQueryIdentifier.ByCampaignId(experienceRequest.campaignId)
                 is ExperienceRequest.ById -> FetchExperienceRequest.ExperienceQueryIdentifier.ById(experienceRequest.experienceId)
             }).observeOn(mainThreadScheduler)
 
@@ -219,7 +218,6 @@ class RoverViewModel(
 
     sealed class ExperienceRequest {
         data class ByCampaignUrl(val url: String) : ExperienceRequest()
-        data class ByCampaignId(val campaignId: String) : ExperienceRequest()
         data class ById(val experienceId: String) : ExperienceRequest()
     }
 }

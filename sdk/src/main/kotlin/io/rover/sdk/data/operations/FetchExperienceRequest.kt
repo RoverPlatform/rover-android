@@ -17,8 +17,8 @@ class FetchExperienceRequest(
         get() = listOf("experienceFields")
 
     override val query: String = """
-        query FetchExperience(${"\$"}id: ID, ${"\$"}campaignID: ID, ${"\$"}campaignURL: String) {
-            experience(id: ${"\$"}id, campaignID: ${"\$"}campaignID, campaignURL: ${"\$"}campaignURL) {
+        query FetchExperience(${"\$"}id: ID, ${"\$"}campaignURL: String) {
+            experience(id: ${"\$"}id, campaignURL: ${"\$"}campaignURL) {
                 ...experienceFields
             }
         }
@@ -27,17 +27,10 @@ class FetchExperienceRequest(
         when (queryIdentifier) {
             is ExperienceQueryIdentifier.ById -> {
                 put("id", queryIdentifier.id)
-                put("campaignID", JSONObject.NULL)
-                put("campaignURL", JSONObject.NULL)
-            }
-            is ExperienceQueryIdentifier.ByCampaignId -> {
-                put("id", JSONObject.NULL)
-                put("campaignID", queryIdentifier.campaignId)
                 put("campaignURL", JSONObject.NULL)
             }
             is ExperienceQueryIdentifier.ByUniversalLink -> {
                 put("id", JSONObject.NULL)
-                put("campaignID", JSONObject.NULL)
                 put("campaignURL",  queryIdentifier.uri)
             }
         }
@@ -57,8 +50,6 @@ class FetchExperienceRequest(
          * progammatically.)
          */
         data class ById(val id: String) : ExperienceQueryIdentifier()
-
-        data class ByCampaignId(val campaignId: String) : ExperienceQueryIdentifier()
 
         /**
          * Experiences may be started from a universal link.  The link itself may ultimately, but

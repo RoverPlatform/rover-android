@@ -6,7 +6,7 @@ import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.domain.Row
 import io.rover.sdk.data.domain.Screen
 
-fun Experience.asAttributeValue(): Attributes {
+fun Experience.asAttributeValue(campaignId: String?): Attributes {
     return hashMapOf(
         Pair("id", id.rawValue),
         Pair("tags", tags),

@@ -239,7 +239,7 @@ open class ViewModels(
         return NavigationViewModel(
             experience,
             eventEmitter = eventEmitter,
-                campaignId = campaignId,
+            campaignId = campaignId,
             sessionTracker = sessionTracker,
             resolveScreenViewModel = { screen -> screenViewModel(screen) },
             resolveToolbarViewModel = { configuration -> experienceToolbarViewModel(configuration) },

@@ -34,6 +34,7 @@ import org.reactivestreams.Publisher
  */
 open class NavigationViewModel(
     private val experience: Experience,
+    private val campaignId: String?,
     private val eventEmitter: EventEmitter,
     private val sessionTracker: SessionTracker,
     private val resolveScreenViewModel: (screen: Screen) -> ScreenViewModelInterface,
@@ -127,7 +128,7 @@ open class NavigationViewModel(
             when (action) {
                 is Action.Navigate -> {
                     val attributes = hashMapOf(
-                        Pair("experience", experience.asAttributeValue()),
+                        Pair("experience", experience.asAttributeValue(campaignId)),
                         Pair("screen", action.sourceScreenViewModel.attributes),
                         Pair("block", action.navigateTo.blockAttributes),
                         Pair("row", action.rowAttributes)
@@ -227,7 +228,7 @@ open class NavigationViewModel(
         activityLifecycle.addObserver(object : LifecycleObserver {
             @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
             fun presented() {
-                trackEnterExperience(experience)
+                trackEnterExperience(experience, campaignId)
 
                 // if an experience screen is already active (which can happen if the containing
                 // Activity is resumed without having been entirely destroyed), then handle
@@ -242,7 +243,7 @@ open class NavigationViewModel(
             @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
             fun dismissed() {
                 trackLeaveScreen()
-                trackLeaveExperience(experience)
+                trackLeaveExperience(experience, campaignId)
             }
         })
     }
@@ -298,18 +299,18 @@ open class NavigationViewModel(
         } ?: closeExperience(state.backStack) // can't go any further back: backstack would be empty; instead emit Exit.
     }
 
-    protected fun trackEnterExperience(experience: Experience) {
+    protected fun trackEnterExperience(experience: Experience, campaignId: String?) {
         sessionTracker.enterSession(
-            ExperienceSessionKey(experience.id.rawValue, experience.campaignId),
+            ExperienceSessionKey(experience.id.rawValue, campaignId),
             "io.rover.ExperiencePresented",
             "io.rover.ExperienceViewed",
             sessionExperienceEventAttributes(experience)
         )
     }
 
-    protected fun trackLeaveExperience(experience: Experience) {
+    protected fun trackLeaveExperience(experience: Experience, campaignId: String?) {
         sessionTracker.leaveSession(
-            ExperienceSessionKey(experience.id.rawValue, experience.campaignId),
+            ExperienceSessionKey(experience.id.rawValue, campaignId),
             "io.rover.ExperienceDismissed",
             sessionExperienceEventAttributes(experience)
         )
@@ -392,15 +393,16 @@ open class NavigationViewModel(
 
     protected open fun sessionExperienceEventAttributes(experience: Experience): Attributes {
         return hashMapOf(
-            Pair("experience", experience.asAttributeValue())
+            Pair("experience", experience.asAttributeValue(campaignId))
         )
     }
 
     protected open fun sessionScreenEventAttributes(screenViewModel: ScreenViewModelInterface): Attributes {
         return hashMapOf(
-            Pair("experience", experience.asAttributeValue()),
+            Pair("experience", experience.asAttributeValue(campaignId)),
             Pair("screen", screenViewModel.attributes)
         )
+
     }
 
     @Parcelize

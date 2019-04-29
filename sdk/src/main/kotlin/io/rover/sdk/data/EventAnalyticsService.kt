@@ -2,7 +2,6 @@ package io.rover.sdk.data
 
 import android.os.Build
 import io.rover.sdk.data.graphql.ApiError
-import io.rover.sdk.data.graphql.ApiResultWithoutResponseBody
 import io.rover.sdk.data.http.HttpClient
 import io.rover.sdk.data.http.HttpClientResponse
 import io.rover.sdk.data.http.HttpRequest
@@ -41,7 +40,7 @@ open class EventAnalyticsService(
         return JSONObject().apply {
             put("event", eventInformation.name)
             put("timestamp", dateAsIso8601(Date()))
-            put("properties", JSONObject().apply { eventInformation.attributes.forEach { put(it.key, it.value) } })
+            put("properties", eventInformation.attributes)
         }.toString()
     }
 
@@ -79,4 +78,9 @@ open class EventAnalyticsService(
                 .replace(Regex("(\\d\\d)(\\d\\d)$"), "$1:$2")
         }
     }
+}
+
+sealed class ApiResultWithoutResponseBody {
+    data class Error(val throwable: Throwable) : ApiResultWithoutResponseBody()
+    object Success : ApiResultWithoutResponseBody()
 }

@@ -121,6 +121,13 @@ sealed class ApiResult<T> {
     data class Success<T>(val response: T) : ApiResult<T>()
 }
 
+sealed class ApiResultWithoutResponseBody {
+    data class Error(val throwable: Throwable) : ApiResultWithoutResponseBody()
+
+    object Success : ApiResultWithoutResponseBody()
+}
+
+
 sealed class ApiError(
     private val description: String
 ) : Exception(description) {

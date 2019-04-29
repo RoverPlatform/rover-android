@@ -2,10 +2,12 @@ package io.rover.sdk.services
 
 import android.content.Intent
 import android.support.v4.content.LocalBroadcastManager
+import io.rover.sdk.data.EventAnalyticsService
 import io.rover.sdk.data.domain.Attributes
 import io.rover.sdk.logging.log
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.share
+import io.rover.sdk.streams.subscribe
 import org.json.JSONObject
 import org.reactivestreams.Publisher
 
@@ -18,7 +20,8 @@ import org.reactivestreams.Publisher
  * to receive them that cannot otherwise link against types in this library.
  */
 open class EventEmitter(
-    private val localBroadcastManager: LocalBroadcastManager
+    private val localBroadcastManager: LocalBroadcastManager,
+    private val eventAnalyticsService: EventAnalyticsService
 ) {
     protected open val eventSubject = PublishSubject<Event>()
 
@@ -35,6 +38,8 @@ open class EventEmitter(
         )
 
         intent.putExtra("attributes", JSONObject(attributes).toString())
+
+        eventAnalyticsService.sendEventAnalytics().subscribe { }
 
         localBroadcastManager.sendBroadcast(intent)
         log.v("Event broadcast: $action, ${JSONObject(attributes).toString(4)}")

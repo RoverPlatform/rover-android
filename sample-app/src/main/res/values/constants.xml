@@ -1,3 +1,4 @@
+<!-- You'll set these fields during the Installation and Initialization steps of the documentation.-->
 <resources>
     <string name="rover_api_token">blank</string>
     <string name="uri_scheme">blank</string>

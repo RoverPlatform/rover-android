@@ -16,7 +16,6 @@ class SampleMainActivity : AppCompatActivity() {
              RoverActivity.makeIntent(this, experienceId = "my-experience-id", campaignId = null)
          )
 
-
         val uri : Uri? = intent.data
         // Tries to retrieve experienceId from last path segment
         val possibleExperienceId = uri?.lastPathSegment

@@ -6,24 +6,30 @@ import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.domain.Row
 import io.rover.sdk.data.domain.Screen
 
-fun Experience.asAttributeValue(campaignId: String?): Attributes {
+fun Experience.asAttributeValue(): Attributes {
     return hashMapOf(
-        Pair("experienceID", id.rawValue),
-        Pair("experienceName", name)
-    ) + if (campaignId != null) { hashMapOf(Pair("campaignID", campaignId)) } else hashMapOf()
+        Pair("id", id.rawValue),
+        Pair("tags", tags),
+        Pair("keys", keys),
+        Pair("name", name)
+    )
 }
 
 fun Screen.asAttributeValue(): Attributes {
     return hashMapOf(
-        Pair("screenID", id.rawValue),
-        Pair("screenName", name)
+        Pair("id", id.rawValue),
+        Pair("tags", tags),
+        Pair("keys", keys),
+        Pair("name", name)
     )
 }
 
 fun Block.asAttributeValue(): Attributes {
     return hashMapOf(
-        Pair("blockID", id.rawValue),
-        Pair("blockName", name)
+        Pair("id", id.rawValue),
+        Pair("keys", keys),
+        Pair("name", name),
+        Pair("tags", tags)
     )
 }
 

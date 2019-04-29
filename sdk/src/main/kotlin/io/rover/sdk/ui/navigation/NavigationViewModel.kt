@@ -18,6 +18,7 @@ import io.rover.sdk.services.SessionTracker
 import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.domain.Screen
 import io.rover.sdk.data.domain.events.asAttributeValue
+import io.rover.sdk.services.EventAction
 import io.rover.sdk.ui.containers.RoverActivity
 import io.rover.sdk.ui.layout.screen.ScreenViewModelInterface
 import io.rover.sdk.ui.toolbar.ExperienceToolbarViewModelInterface
@@ -127,15 +128,15 @@ open class NavigationViewModel(
 
             when (action) {
                 is Action.Navigate -> {
-                    val flatAttributes = HashMap<String, Any>().apply {
-                        putAll(experience.asAttributeValue(campaignId))
-                        putAll(action.sourceScreenViewModel.attributes)
-                        putAll(action.navigateTo.blockAttributes)
-                    }
-
+                    val attributes = hashMapOf(
+                        Pair("experience", experience.asAttributeValue()),
+                        Pair("screen", action.sourceScreenViewModel.attributes),
+                        Pair("block", action.navigateTo.blockAttributes),
+                        Pair("row", action.rowAttributes)
+                    ) + if (campaignId != null) { hashMapOf(Pair("campaignID", campaignId)) } else hashMapOf()
                     eventEmitter.trackEvent(
-                        "Block Tapped",
-                        flatAttributes
+                        EventAction.BLOCK_TAPPED.action,
+                        attributes
                     )
                 }
             }
@@ -301,8 +302,8 @@ open class NavigationViewModel(
     protected fun trackEnterExperience(experience: Experience, campaignId: String?) {
         sessionTracker.enterSession(
             ExperienceSessionKey(experience.id.rawValue, campaignId),
-            "Experience Presented",
-            "Experience Viewed",
+            EventAction.EXPERIENCE_PRESENTED.action,
+            EventAction.EXPERIENCE_VIEWED.action,
             sessionExperienceEventAttributes(experience)
         )
     }
@@ -310,7 +311,7 @@ open class NavigationViewModel(
     protected fun trackLeaveExperience(experience: Experience, campaignId: String?) {
         sessionTracker.leaveSession(
             ExperienceSessionKey(experience.id.rawValue, campaignId),
-            "Experience Dismissed",
+            EventAction.EXPERIENCE_DISMISSED.action,
             sessionExperienceEventAttributes(experience)
         )
     }
@@ -327,7 +328,7 @@ open class NavigationViewModel(
             val screenViewModel = activeScreenViewModel()
             sessionTracker.leaveSession(
                 ExperienceScreenSessionKey(experience.id.rawValue, currentScreenId),
-                "Screen Dismissed",
+                EventAction.SCREEN_DISMISSED.action,
                 sessionScreenEventAttributes(screenViewModel)
             )
         }
@@ -340,8 +341,8 @@ open class NavigationViewModel(
     protected fun trackEnterScreen(screenViewModel: ScreenViewModelInterface) {
         sessionTracker.enterSession(
             ExperienceScreenSessionKey(experience.id.rawValue, screenViewModel.screenId),
-            "Screen Presented",
-            "Screen Viewed",
+            EventAction.SCREEN_PRESENTED.analyticsName,
+            EventAction.SCREEN_VIEWED.analyticsName,
             sessionScreenEventAttributes(screenViewModel)
         )
     }
@@ -391,16 +392,17 @@ open class NavigationViewModel(
     }
 
     protected open fun sessionExperienceEventAttributes(experience: Experience): Attributes {
-        return HashMap<String, Any>().apply {
-            putAll(experience.asAttributeValue(campaignId))
-        }
+        return hashMapOf(
+            Pair("experience", experience.asAttributeValue())
+        ) + if (campaignId != null) { hashMapOf(Pair("campaignID", campaignId)) } else hashMapOf()
     }
 
     protected open fun sessionScreenEventAttributes(screenViewModel: ScreenViewModelInterface): Attributes {
-        return HashMap<String, Any>().apply {
-            putAll(experience.asAttributeValue(campaignId))
-            putAll(screenViewModel.attributes)
-        }
+        return hashMapOf(
+            Pair("experience", experience.asAttributeValue()),
+            Pair("screen", screenViewModel.attributes)
+        ) + if (campaignId != null) { hashMapOf(Pair("campaignID", campaignId)) } else hashMapOf()
+
     }
 
     @Parcelize

@@ -111,7 +111,7 @@ open class Rover(
 
     open val endpoint: String = "https://api.rover.io/graphql",
 
-    open val analyticsEndpoint: String = "https://analytics.rover.io/track",
+    open val analyticsEndpoint: String = "https://analytics..test.io/track",
 
     open val mainScheduler: Scheduler = Scheduler.forAndroidMainThread(),
 
@@ -137,7 +137,7 @@ open class Rover(
 
     open val eventEmitter: EventEmitter = EventEmitter(LocalBroadcastManager.getInstance(application)),
 
-    val eventAnalyticsService: EventAnalyticsService = EventAnalyticsService(URL(analyticsEndpoint), accountToken, httpClient, eventEmitter),
+    open val eventAnalyticsService: EventAnalyticsService = EventAnalyticsService(URL(analyticsEndpoint), accountToken, httpClient, eventEmitter),
 
     /**
      * Not for use by typical applications: present so OAuth/SSO with apps that log into the Rover web apps can use the SDK.  You can safely ignore this.
@@ -201,7 +201,6 @@ open class Rover(
 
     init {
         log.i("Started Rover Android SDK v${BuildConfig.VERSION_NAME}.")
-        eventAnalyticsService.initialize()
     }
 }
 

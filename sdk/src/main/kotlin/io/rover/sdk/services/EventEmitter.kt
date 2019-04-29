@@ -20,8 +20,7 @@ import org.reactivestreams.Publisher
  * to receive them that cannot otherwise link against types in this library.
  */
 open class EventEmitter(
-    private val localBroadcastManager: LocalBroadcastManager,
-    private val eventAnalyticsService: EventAnalyticsService
+    private val localBroadcastManager: LocalBroadcastManager
 ) {
     protected open val eventSubject = PublishSubject<Event>()
 
@@ -38,8 +37,6 @@ open class EventEmitter(
         )
 
         intent.putExtra("attributes", JSONObject(attributes).toString())
-
-        eventAnalyticsService.sendEventAnalytics().subscribe { }
 
         localBroadcastManager.sendBroadcast(intent)
         log.v("Event broadcast: $action, ${JSONObject(attributes).toString(4)}")

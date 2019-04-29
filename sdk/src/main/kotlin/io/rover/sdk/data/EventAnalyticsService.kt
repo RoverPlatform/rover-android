@@ -2,6 +2,7 @@ package io.rover.sdk.data
 
 import android.os.Build
 import io.rover.sdk.data.graphql.ApiError
+import io.rover.sdk.data.graphql.encodeJson
 import io.rover.sdk.data.http.HttpClient
 import io.rover.sdk.data.http.HttpClientResponse
 import io.rover.sdk.data.http.HttpRequest
@@ -38,9 +39,10 @@ open class EventAnalyticsService(
 
     private fun encodeBody(eventInformation: EventEmitter.Event): String {
         return JSONObject().apply {
+            put("anonymousID", "")
             put("event", eventInformation.name)
             put("timestamp", dateAsIso8601(Date()))
-            put("properties", eventInformation.attributes)
+            put("properties", eventInformation.attributes.encodeJson())
         }.toString()
     }
 

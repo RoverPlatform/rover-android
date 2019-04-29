@@ -64,6 +64,6 @@ open class EventAnalyticsService(
     open fun sendEventAnalytics(event: EventEmitter.Event) = sendRequest(event)
 
     fun initialize() {
-        eventEmitter.trackedEvents.flatMap { event -> sendEventAnalytics(event) }.subscribe {  }
+        eventEmitter.trackedEvents.subscribe { sendEventAnalytics(it).subscribe {  } }
     }
 }

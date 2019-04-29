@@ -127,16 +127,15 @@ open class NavigationViewModel(
 
             when (action) {
                 is Action.Navigate -> {
-                    val attributes = hashMapOf(
-                        Pair("experience", experience.asAttributeValue(campaignId)),
-                        Pair("screen", action.sourceScreenViewModel.attributes),
-                        Pair("block", action.navigateTo.blockAttributes),
-                        Pair("row", action.rowAttributes)
-                    )
+                    val flatAttributes = HashMap<String, Any>().apply {
+                        putAll(experience.asAttributeValue(campaignId))
+                        putAll(action.sourceScreenViewModel.attributes)
+                        putAll(action.navigateTo.blockAttributes)
+                    }
 
                     eventEmitter.trackEvent(
-                        "io.rover.BlockTapped",
-                        attributes
+                        "Block Tapped",
+                        flatAttributes
                     )
                 }
             }
@@ -302,8 +301,8 @@ open class NavigationViewModel(
     protected fun trackEnterExperience(experience: Experience, campaignId: String?) {
         sessionTracker.enterSession(
             ExperienceSessionKey(experience.id.rawValue, campaignId),
-            "io.rover.ExperiencePresented",
-            "io.rover.ExperienceViewed",
+            "Experience Presented",
+            "Experience Viewed",
             sessionExperienceEventAttributes(experience)
         )
     }
@@ -311,7 +310,7 @@ open class NavigationViewModel(
     protected fun trackLeaveExperience(experience: Experience, campaignId: String?) {
         sessionTracker.leaveSession(
             ExperienceSessionKey(experience.id.rawValue, campaignId),
-            "io.rover.ExperienceDismissed",
+            "Experience Dismissed",
             sessionExperienceEventAttributes(experience)
         )
     }
@@ -328,7 +327,7 @@ open class NavigationViewModel(
             val screenViewModel = activeScreenViewModel()
             sessionTracker.leaveSession(
                 ExperienceScreenSessionKey(experience.id.rawValue, currentScreenId),
-                "io.rover.ScreenDismissed",
+                "Screen Dismissed",
                 sessionScreenEventAttributes(screenViewModel)
             )
         }
@@ -341,8 +340,8 @@ open class NavigationViewModel(
     protected fun trackEnterScreen(screenViewModel: ScreenViewModelInterface) {
         sessionTracker.enterSession(
             ExperienceScreenSessionKey(experience.id.rawValue, screenViewModel.screenId),
-            "io.rover.ScreenPresented",
-            "io.rover.ScreenViewed",
+            "Screen Presented",
+            "Screen Viewed",
             sessionScreenEventAttributes(screenViewModel)
         )
     }
@@ -392,17 +391,16 @@ open class NavigationViewModel(
     }
 
     protected open fun sessionExperienceEventAttributes(experience: Experience): Attributes {
-        return hashMapOf(
-            Pair("experience", experience.asAttributeValue(campaignId))
-        )
+        return HashMap<String, Any>().apply {
+            putAll(experience.asAttributeValue(campaignId))
+        }
     }
 
     protected open fun sessionScreenEventAttributes(screenViewModel: ScreenViewModelInterface): Attributes {
-        return hashMapOf(
-            Pair("experience", experience.asAttributeValue(campaignId)),
-            Pair("screen", screenViewModel.attributes)
-        )
-
+        return HashMap<String, Any>().apply {
+            putAll(experience.asAttributeValue(campaignId))
+            putAll(screenViewModel.attributes)
+        }
     }
 
     @Parcelize

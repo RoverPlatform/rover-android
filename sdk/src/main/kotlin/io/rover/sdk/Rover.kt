@@ -28,6 +28,7 @@ import io.rover.sdk.data.domain.Text
 import io.rover.sdk.data.domain.TextBlock
 import io.rover.sdk.data.domain.WebView
 import io.rover.sdk.data.domain.WebViewBlock
+import io.rover.sdk.data.events.InstallationIdentification
 import io.rover.sdk.data.graphql.GraphQlApiService
 import io.rover.sdk.data.http.HttpClient
 import io.rover.sdk.services.EventEmitter
@@ -137,10 +138,13 @@ open class Rover(
 
     open val eventEmitter: EventEmitter = EventEmitter(LocalBroadcastManager.getInstance(application)),
 
+    open val installationIdentification: InstallationIdentification = InstallationIdentification(application.applicationContext),
+
     open val eventAnalyticsService: EventAnalyticsService = EventAnalyticsService(
         URL(analyticsEndpoint),
         accountToken,
         httpClient,
+        installationIdentification,
         eventEmitter
     ),
 

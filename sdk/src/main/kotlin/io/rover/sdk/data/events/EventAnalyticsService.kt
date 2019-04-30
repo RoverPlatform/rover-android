@@ -27,6 +27,7 @@ open class EventAnalyticsService(
     private val endpoint: URL,
     private val accountToken: String?,
     private val httpClient: HttpClient,
+    private val installationIdentification: InstallationIdentification,
     eventEmitter: EventEmitter
 ) {
     private fun buildRequest(endpoint: URL, accountToken: String?): HttpRequest {
@@ -39,7 +40,7 @@ open class EventAnalyticsService(
 
     private fun encodeBody(eventInformation: EventEmitter.Event): String {
         return JSONObject().apply {
-            put("anonymousID", "")
+            put("anonymousID", installationIdentification.installationIdentifier)
             put("event", eventInformation.name)
             put("timestamp", dateAsIso8601(Date()))
             put("properties", eventInformation.attributes.encodeJson())

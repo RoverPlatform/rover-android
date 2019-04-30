@@ -13,7 +13,6 @@ data class Experience(
     val homeScreenId: ID,
     val screens: List<Screen>,
     val keys: Map<String, String>,
-    val campaignId: String?,
     val tags: List<String>,
     val name: String
 ) {

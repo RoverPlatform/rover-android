@@ -212,6 +212,7 @@ open class ViewModels(
 ) {
     open fun experienceViewModel(
         experienceRequest: RoverViewModel.ExperienceRequest,
+        campaignId: String?,
         activityLifecycle: Lifecycle
     ): RoverViewModel {
         return RoverViewModel(
@@ -220,7 +221,7 @@ open class ViewModels(
             mainThreadScheduler = mainScheduler,
             sessionTracker = sessionTracker,
             resolveNavigationViewModel = { experience, icicle ->
-                experienceNavigationViewModel(experience, activityLifecycle, icicle)
+                experienceNavigationViewModel(experience, campaignId, activityLifecycle, icicle)
             }
         )
     }
@@ -231,12 +232,14 @@ open class ViewModels(
 
     open fun experienceNavigationViewModel(
         experience: Experience,
+        campaignId: String?,
         activityLifecycle: Lifecycle,
         icicle: Parcelable? = null
     ): NavigationViewModel {
         return NavigationViewModel(
             experience,
             eventEmitter = eventEmitter,
+            campaignId = campaignId,
             sessionTracker = sessionTracker,
             resolveScreenViewModel = { screen -> screenViewModel(screen) },
             resolveToolbarViewModel = { configuration -> experienceToolbarViewModel(configuration) },

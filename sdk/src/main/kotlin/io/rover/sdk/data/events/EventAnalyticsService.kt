@@ -1,4 +1,4 @@
-package io.rover.sdk.data
+package io.rover.sdk.data.events
 
 import android.os.Build
 import io.rover.sdk.data.graphql.ApiError
@@ -48,12 +48,21 @@ open class EventAnalyticsService(
 
     private fun onResponse(httpResponse: HttpClientResponse): ApiResultWithoutResponseBody {
         return when (httpResponse) {
-            is HttpClientResponse.ConnectionFailure -> ApiResultWithoutResponseBody.Error(httpResponse.reason)
+            is HttpClientResponse.ConnectionFailure -> ApiResultWithoutResponseBody.Error(
+                httpResponse.reason
+            )
             is HttpClientResponse.ApplicationError -> {
                 log.w("Given EventAnalytics error reason: ${httpResponse.reportedReason}")
-                ApiResultWithoutResponseBody.Error(ApiError.InvalidStatusCode(httpResponse.responseCode, httpResponse.reportedReason))
+                ApiResultWithoutResponseBody.Error(
+                    ApiError.InvalidStatusCode(
+                        httpResponse.responseCode,
+                        httpResponse.reportedReason
+                    )
+                )
             }
-            is HttpClientResponse.Success -> { ApiResultWithoutResponseBody.Success }
+            is HttpClientResponse.Success -> {
+                ApiResultWithoutResponseBody.Success
+            }
         }
     }
 

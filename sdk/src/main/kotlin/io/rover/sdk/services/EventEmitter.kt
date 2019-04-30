@@ -2,12 +2,10 @@ package io.rover.sdk.services
 
 import android.content.Intent
 import android.support.v4.content.LocalBroadcastManager
-import io.rover.sdk.data.EventAnalyticsService
 import io.rover.sdk.data.domain.Attributes
 import io.rover.sdk.logging.log
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.share
-import io.rover.sdk.streams.subscribe
 import org.json.JSONObject
 import org.reactivestreams.Publisher
 
@@ -36,7 +34,9 @@ open class EventEmitter(
             action
         )
 
-        EventAction.getAnalyticsNameFromAction(action)?.let {
+        val analyticsName = EventAction.values().find { it.action == action }?.analyticsName
+
+        analyticsName?.let {
             eventSubject.onNext(Event(it, attributes))
         }
 
@@ -55,9 +55,5 @@ enum class EventAction(val action: String, val analyticsName: String) {
     SCREEN_DISMISSED("io.rover.ScreenDismissed", "Screen Dismissed"),
     SCREEN_VIEWED("io.rover.ScreenViewed","Screen Viewed"),
     BLOCK_TAPPED("io.rover.BlockTapped", "Block Tapped");
-
-    companion object {
-        fun getAnalyticsNameFromAction(action: String) = values().find { it.action == action }?.analyticsName
-    }
 }
 

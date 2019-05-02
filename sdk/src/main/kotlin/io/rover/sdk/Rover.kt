@@ -138,7 +138,6 @@ open class Rover(
     open val eventAnalyticsService: EventAnalyticsService = EventAnalyticsService(
         application,
         accountToken,
-        httpClient,
         eventEmitter
     ),
 

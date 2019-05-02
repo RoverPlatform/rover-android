@@ -12,24 +12,45 @@ class SampleMainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_sample_main)
 
         // Example of manually starting an experience with an experienceId
-        startActivity(
-             RoverActivity.makeIntent(this, experienceId = "my-experience-id", campaignId = null)
-         )
+        // startActivity(
+        //     RoverActivity.makeIntent(this, experienceId = "my-experience-id", campaignId = null)
+        // )
 
-        val uri : Uri? = intent.data
-        // Tries to retrieve experienceId from last path segment
-        val possibleExperienceId = uri?.lastPathSegment
+        val uri : Uri = intent.data ?: return
 
-        // Tries to retrieve campaignId query parameter
-        val possibleCampaignId = uri?.getQueryParameter("campaignID")
+        // You will need to setup a specific URL structure to be used for presenting Rover
+        // experiences in your app. The simplest approach is to use a specific URL path/host and
+        // include the experience ID and (optional) campaign ID as query parameters. The manifest
+        // included with this sample app and below example code demonstrates how to route URLs in
+        // the format `example://experience?id=<EXPERIENCE_ID>&campaignID=<CAMPAIGN_ID>` to a Rover
+        // experience.
 
-        // A simple routing example follows:
-        // Your app can handle the intent data as it prefers - here, we're handling a simple deep
-        // link scheme and a universal link domain as defined in the manifest.
-        if (uri?.scheme == getString(R.string.uri_scheme) && uri?.host == "presentExperience" && possibleExperienceId != null) {
-            startActivity(RoverActivity.makeIntent(packageContext = this, experienceId = possibleExperienceId, campaignId = possibleCampaignId))
-        } else if(uri?.scheme in listOf("http", "https") && uri != null && uri.host == getString(R.string.associated_domain)) {
-            startActivity(RoverActivity.makeIntent(packageContext = this, experienceUrl = uri, campaignId = possibleCampaignId))
+        // Tries to retrieve experienceId query parameter:
+        val queryExperienceId = uri.getQueryParameter("id")
+
+        // Tries to retrieve campaignId query parameter:
+        val queryCampaignId = uri.getQueryParameter("campaignID")
+        if (uri.scheme == getString(R.string.uri_scheme) && uri.host == "experience" && queryExperienceId != null) {
+            startActivity(RoverActivity.makeIntent(packageContext = this, experienceId = queryExperienceId, campaignId = queryCampaignId))
+            return
+        }
+
+        // If the standard approach above does not meet your needs you can setup any arbitrary URL to launch a Rover
+        // experience as long as you can extract the experience ID from it. For example you could use a path based
+        // approach which includes the experience ID and optional campaign ID as path components instead of query
+        // string parameters. The below example demonstrates how to route URLs in the format
+        // `example://experience/<EXPERIENCE_ID>/<CAMPAIGN_ID>` to a Rover experience.
+        // Tries to retrieve experienceId query parameter:
+        if(uri.scheme == getString(R.string.uri_scheme) && uri.host == "experience" && uri.pathSegments[0] != null) {
+            val pathExperienceId: String = uri.pathSegments[0]
+            val pathCampaignId: String? = uri.pathSegments.getOrNull(1)
+            startActivity(RoverActivity.makeIntent(packageContext = this, experienceId = pathExperienceId, campaignId = pathCampaignId))
+        }
+
+        // Universal links are handled similarly:
+        // Pass entire URL along to Rover as a universal link to an experience
+        if(uri.scheme ?: "" in listOf("http", "https") && uri.host == getString(R.string.associated_domain)) {
+            startActivity(RoverActivity.makeIntent(packageContext = this, experienceUrl = uri, campaignId = queryCampaignId))
         }
     }
 }

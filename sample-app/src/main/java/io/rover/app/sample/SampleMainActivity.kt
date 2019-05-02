@@ -29,7 +29,7 @@ class SampleMainActivity : AppCompatActivity() {
         if (uri?.scheme == getString(R.string.uri_scheme) && uri?.host == "presentExperience" && possibleExperienceId != null) {
             startActivity(RoverActivity.makeIntent(packageContext = this, experienceId = possibleExperienceId, campaignId = possibleCampaignId))
         } else if(uri?.scheme in listOf("http", "https") && uri != null && uri.host == getString(R.string.associated_domain)) {
-            startActivity(RoverActivity.makeIntent(packageContext = this, experienceUrl = uri))
+            startActivity(RoverActivity.makeIntent(packageContext = this, experienceUrl = uri, campaignId = possibleCampaignId))
         }
     }
 }

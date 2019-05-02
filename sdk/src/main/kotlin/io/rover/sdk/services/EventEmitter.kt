@@ -23,7 +23,7 @@ open class EventEmitter(
     protected open val eventSubject = PublishSubject<Event>()
 
     data class Event(
-        val action: String,
+        val eventAction: EventAction,
         val attributes: Attributes
     )
 
@@ -34,10 +34,26 @@ open class EventEmitter(
             action
         )
 
+        val analyticsName = EventAction.values().find { it.action == action }
+
+        analyticsName?.let {
+            eventSubject.onNext(Event(it, attributes))
+        }
+
         intent.putExtra("attributes", JSONObject(attributes).toString())
 
         localBroadcastManager.sendBroadcast(intent)
         log.v("Event broadcast: $action, ${JSONObject(attributes).toString(4)}")
     }
+}
+
+enum class EventAction(val action: String) {
+    EXPERIENCE_PRESENTED("io.rover.ExperiencePresented"),
+    EXPERIENCE_DISMISSED("io.rover.ExperienceDismissed"),
+    EXPERIENCE_VIEWED("io.rover.ExperienceViewed"),
+    SCREEN_PRESENTED("io.rover.ScreenPresented"),
+    SCREEN_DISMISSED("io.rover.ScreenDismissed"),
+    SCREEN_VIEWED("io.rover.ScreenViewed"),
+    BLOCK_TAPPED("io.rover.BlockTapped");
 }
 

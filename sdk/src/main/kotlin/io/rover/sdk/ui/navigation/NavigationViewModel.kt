@@ -341,8 +341,8 @@ open class NavigationViewModel(
     protected fun trackEnterScreen(screenViewModel: ScreenViewModelInterface) {
         sessionTracker.enterSession(
             ExperienceScreenSessionKey(experience.id.rawValue, screenViewModel.screenId),
-            EventAction.SCREEN_PRESENTED.analyticsName,
-            EventAction.SCREEN_VIEWED.analyticsName,
+            EventAction.SCREEN_PRESENTED.action,
+            EventAction.SCREEN_VIEWED.action,
             sessionScreenEventAttributes(screenViewModel)
         )
     }

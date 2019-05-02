@@ -11,7 +11,7 @@ import android.util.DisplayMetrics
 import io.rover.sdk.assets.AndroidAssetService
 import io.rover.sdk.assets.ImageDownloader
 import io.rover.sdk.assets.ImageOptimizationService
-import io.rover.sdk.data.events.EventAnalyticsService
+import io.rover.sdk.data.events.AnalyticsService
 import io.rover.sdk.data.domain.Background
 import io.rover.sdk.data.domain.Barcode
 import io.rover.sdk.data.domain.BarcodeBlock
@@ -135,7 +135,7 @@ open class Rover(
 
     open val eventEmitter: EventEmitter = EventEmitter(LocalBroadcastManager.getInstance(application)),
 
-    val eventAnalyticsService: EventAnalyticsService = EventAnalyticsService(
+    val analyticsService: AnalyticsService = AnalyticsService(
         application,
         accountToken,
         eventEmitter

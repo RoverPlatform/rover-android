@@ -4,29 +4,17 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.AsyncTask
 import android.os.Build
-import io.rover.sdk.data.graphql.ApiError
 import io.rover.sdk.data.graphql.encodeJson
-import io.rover.sdk.data.http.HttpClient
-import io.rover.sdk.data.http.HttpClientResponse
 import io.rover.sdk.data.http.HttpRequest
 import io.rover.sdk.data.http.HttpVerb
 import io.rover.sdk.logging.log
+import io.rover.sdk.services.EventAction
 import io.rover.sdk.services.EventEmitter
-import io.rover.sdk.streams.Publishers
-import io.rover.sdk.streams.Scheduler
-import io.rover.sdk.streams.flatMap
-import io.rover.sdk.streams.map
 import io.rover.sdk.streams.subscribe
-import io.rover.sdk.streams.subscribeOn
 import org.json.JSONObject
-import org.reactivestreams.Publisher
 import java.io.DataOutputStream
-import java.io.IOException
-import java.lang.IllegalStateException
-import java.lang.RuntimeException
 import java.net.HttpURLConnection
 import java.net.URL
-import java.net.UnknownServiceException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -35,7 +23,7 @@ import java.util.UUID
 /**
  * Responsible for dispatching Analytics events.
  */
-class EventAnalyticsService(
+class AnalyticsService(
     context: Context,
     private val accountToken: String?,
     eventEmitter: EventEmitter
@@ -69,9 +57,19 @@ class EventAnalyticsService(
     }
 
     private fun encodeBody(eventInformation: EventEmitter.Event): String {
+        val eventName = when(eventInformation.eventAction) {
+            EventAction.EXPERIENCE_PRESENTED -> "Experience Presented"
+            EventAction.EXPERIENCE_DISMISSED -> "Experience Dismissed"
+            EventAction.EXPERIENCE_VIEWED -> "Experience Viewed"
+            EventAction.SCREEN_PRESENTED -> "Screen Presented"
+            EventAction.SCREEN_DISMISSED -> "Screen Dismissed"
+            EventAction.SCREEN_VIEWED -> "Screen Viewed"
+            EventAction.BLOCK_TAPPED -> "Block Tapped"
+        }
+
         return JSONObject().apply {
             put("anonymousID", installationIdentifier)
-            put("event", eventInformation.name)
+            put("event", eventName)
             put("timestamp", dateAsIso8601(Date()))
             put("properties", eventInformation.attributes.encodeJson())
         }.toString()
@@ -122,7 +120,7 @@ class EventAnalyticsService(
                     }
                 }
             } catch (e: Exception) {
-                this@EventAnalyticsService.log.w("$request : event analytics request failed ${e.message}")
+                this@AnalyticsService.log.w("$request : event analytics request failed ${e.message}")
             }
         }
     }

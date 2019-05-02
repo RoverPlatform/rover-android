@@ -48,6 +48,7 @@ class SampleMainActivity : AppCompatActivity() {
         }
 
         // Universal links are handled similarly:
+        // Pass entire URL along to Rover as a universal link to an experience
         if(uri.scheme ?: "" in listOf("http", "https") && uri.host == getString(R.string.associated_domain)) {
             startActivity(RoverActivity.makeIntent(packageContext = this, experienceUrl = uri, campaignId = queryCampaignId))
         }

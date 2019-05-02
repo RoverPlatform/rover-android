@@ -11,6 +11,7 @@ import android.util.DisplayMetrics
 import io.rover.sdk.assets.AndroidAssetService
 import io.rover.sdk.assets.ImageDownloader
 import io.rover.sdk.assets.ImageOptimizationService
+import io.rover.sdk.data.events.EventAnalyticsService
 import io.rover.sdk.data.domain.Background
 import io.rover.sdk.data.domain.Barcode
 import io.rover.sdk.data.domain.BarcodeBlock
@@ -133,6 +134,13 @@ open class Rover(
     open val sessionStore: SessionStore = SessionStore(localStorage),
 
     open val eventEmitter: EventEmitter = EventEmitter(LocalBroadcastManager.getInstance(application)),
+
+    open val eventAnalyticsService: EventAnalyticsService = EventAnalyticsService(
+        application,
+        accountToken,
+        httpClient,
+        eventEmitter
+    ),
 
     /**
      * Not for use by typical applications: present so OAuth/SSO with apps that log into the Rover web apps can use the SDK.  You can safely ignore this.

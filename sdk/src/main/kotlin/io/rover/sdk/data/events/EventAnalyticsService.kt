@@ -22,8 +22,11 @@ import org.json.JSONObject
 import org.reactivestreams.Publisher
 import java.io.DataOutputStream
 import java.io.IOException
+import java.lang.IllegalStateException
+import java.lang.RuntimeException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.UnknownServiceException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -32,14 +35,14 @@ import java.util.UUID
 /**
  * Responsible for dispatching Analytics events.
  */
-
-open class EventAnalyticsService(
+class EventAnalyticsService(
     context: Context,
     private val accountToken: String?,
     eventEmitter: EventEmitter
 ) {
 
-    private val prefs: SharedPreferences? = context.getSharedPreferences(BASE_CONTEXT_NAME, Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences? =
+        context.getSharedPreferences(BASE_CONTEXT_NAME, Context.MODE_PRIVATE)
 
     private val installationIdentifier by lazy {
         // if persisted UUID not present then generate and persist a new one. Memoize it in memory.
@@ -53,7 +56,8 @@ open class EventAnalyticsService(
     }
 
     private fun createNewUUID(): String {
-        return UUID.randomUUID().toString().apply { prefs?.edit()?.putString(STORAGE_IDENTIFIER, this)?.apply() }
+        return UUID.randomUUID().toString()
+            .apply { prefs?.edit()?.putString(STORAGE_IDENTIFIER, this)?.apply() }
     }
 
     private fun buildRequest(endpoint: URL, accountToken: String?): HttpRequest {
@@ -95,15 +99,16 @@ open class EventAnalyticsService(
         }
     }
 
-    open fun request(
+    fun request(
         request: HttpRequest,
         bodyData: String
     ) {
         AsyncTask.execute {
-            val connection = request.url.openConnection() as HttpURLConnection
-            val requestBody = bodyData.toByteArray(Charsets.UTF_8)
+            try {
+                val connection = request.url.openConnection() as HttpURLConnection
+                val requestBody = bodyData.toByteArray(Charsets.UTF_8)
 
-            connection.apply {
+                connection.apply {
                     setFixedLengthStreamingMode(requestBody.size)
                     request.headers.onEach { (field, value) -> setRequestProperty(field, value) }
 
@@ -111,14 +116,13 @@ open class EventAnalyticsService(
                     requestMethod = request.verb.wireFormat
                 }
 
-            try {
                 connection.outputStream.use { stream ->
                     DataOutputStream(stream).use { dataOutputStream ->
                         dataOutputStream.write(requestBody)
                     }
                 }
-            } catch (e: IOException) {
-                return@execute
+            } catch (e: Exception) {
+                this@EventAnalyticsService.log.w("$request : event analytics request failed ${e.message}")
             }
         }
     }

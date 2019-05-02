@@ -135,7 +135,7 @@ open class Rover(
 
     open val eventEmitter: EventEmitter = EventEmitter(LocalBroadcastManager.getInstance(application)),
 
-    open val eventAnalyticsService: EventAnalyticsService = EventAnalyticsService(
+    val eventAnalyticsService: EventAnalyticsService = EventAnalyticsService(
         application,
         accountToken,
         eventEmitter

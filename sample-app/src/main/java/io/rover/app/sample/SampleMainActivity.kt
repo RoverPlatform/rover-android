@@ -12,9 +12,9 @@ class SampleMainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_sample_main)
 
         // Example of manually starting an experience with an experienceId
-        startActivity(
-             RoverActivity.makeIntent(this, experienceId = "my-experience-id", campaignId = null)
-         )
+        // startActivity(
+        //     RoverActivity.makeIntent(this, experienceId = "my-experience-id", campaignId = null)
+        // )
 
         val uri : Uri = intent.data ?: return
 

@@ -529,6 +529,52 @@ fun <T : Any> Publisher<T>.distinctUntilChanged(): Publisher<T> {
 }
 
 /**
+ * Will filter out sequences of identitical (by comparison) items.  An item will not be
+ * emitted if it is the same as the prior.
+ */
+fun <T : Any, K> Publisher<T>.distinctUntilChanged(selector: (T) -> K): Publisher<T> {
+    return Publisher { subscriber ->
+
+        var lastSeen: LastSeen<T> = LastSeen.NoneYet()
+        var sourceSubscriber: Subscriber<T>?
+
+        subscriber.onSubscribe(
+            object : Subscription {
+                override fun cancel() {
+                    // TODO gotta pass subscription through
+                }
+
+                override fun request(n: Long) {
+                    // subscribe to prior
+                    @Suppress("UNCHECKED_CAST") // suppressed due to erasure/variance issues.
+                    sourceSubscriber = object : Subscriber<T> by subscriber as Subscriber<T> {
+                        override fun onNext(item: T) {
+                            // atomically copy lastSeen so smart cast below can work.
+                            val lastSeenCaptured = lastSeen
+                            when (lastSeenCaptured) {
+                                is LastSeen.NoneYet -> {
+                                    subscriber.onNext(item)
+                                }
+                                is LastSeen.Seen<T> -> {
+                                    if (selector(lastSeenCaptured.value) != selector(item)) {
+                                        subscriber.onNext(item)
+                                    }
+                                }
+                            }
+                            lastSeen = LastSeen.Seen(item)
+                        }
+                    }
+
+                    this@distinctUntilChanged.subscribe(
+                        sourceSubscriber!!
+                    )
+                }
+            }
+        )
+    }
+}
+
+/**
  * A maybe type just because our maybe value itself could be null.
  */
 sealed class LastSeen<T : Any> {

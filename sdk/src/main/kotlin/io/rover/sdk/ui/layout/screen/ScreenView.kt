@@ -25,12 +25,17 @@ import java.lang.RuntimeException
 class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
-    constructor(context: Context?, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle)
+    constructor(context: Context?, attrs: AttributeSet?, defStyle: Int) : super(
+        context,
+        attrs,
+        defStyle
+    )
 
     private val viewComposition = ViewComposition()
     private val viewBackground = ViewBackground(this)
 
-    private val viewModelSubject = PublishSubject<MeasuredBindableView.Binding<ScreenViewModelInterface>>()
+    private val viewModelSubject =
+        PublishSubject<MeasuredBindableView.Binding<ScreenViewModelInterface>>()
     private val vtoMeasuredSizeSubject = PublishSubject<MeasuredSize>()
 
     init {
@@ -44,29 +49,43 @@ class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelInterface> 
             )
         }
 
-        val combined: Publisher<Pair<MeasuredBindableView.Binding<ScreenViewModelInterface>, MeasuredSize>> = Publishers.combineLatest(
-            viewModelSubject,
-            vtoMeasuredSizeSubject.distinctUntilChanged()
-        ) { viewModelBinding: MeasuredBindableView.Binding<ScreenViewModelInterface>, measured: MeasuredSize ->
-            Pair(viewModelBinding, measured)
-        }
+        val viewModelBindingAndSize: Publisher<Pair<MeasuredBindableView.Binding<ScreenViewModelInterface>, MeasuredSize>> =
+            Publishers.combineLatest(
+                viewModelSubject,
+                vtoMeasuredSizeSubject.distinctUntilChanged()
+            ) { viewModelBinding: MeasuredBindableView.Binding<ScreenViewModelInterface>, measured: MeasuredSize ->
+                Pair(viewModelBinding, measured)
+            }
 
-        combined
+        viewModelBindingAndSize
             .androidLifecycleDispose(this)
             .subscribe { (viewModelBinding: MeasuredBindableView.Binding<ScreenViewModelInterface>, measuredSize: MeasuredSize) ->
-                log.v("View model and view measurements now both ready: $viewModelBinding and $measuredSize")
                 viewBackground.viewModelBinding = MeasuredBindableView.Binding(
                     viewModelBinding.viewModel,
                     measuredSize
                 )
+            }
+
+        viewModelBindingAndSize
+            .distinctUntilChanged { it.second.width }
+            .androidLifecycleDispose(this)
+            .subscribe { (viewModelBinding: MeasuredBindableView.Binding<ScreenViewModelInterface>, measuredSize: MeasuredSize) ->
+                log.v("View model and view measurements now both ready: $viewModelBinding and $measuredSize")
+
                 val layout = viewModelBinding.viewModel.render(measuredSize.width)
 
-                val blockAndRowAdapter = Rover.shared?.views?.blockAndRowRecyclerAdapter(layout, resources.displayMetrics) ?: throw RuntimeException("Rover not usable until Rover.initialize has been called.")
+                val blockAndRowAdapter = Rover.shared?.views?.blockAndRowRecyclerAdapter(
+                    layout,
+                    resources.displayMetrics
+                )
+                    ?: throw RuntimeException("Rover not usable until Rover.initialize has been called.")
 
                 // set up the Experience layout manager for the RecyclerView.  Unlike a typical
                 // RecyclerView layout manager, in our system our layout is indeed data, so the
                 // layout manager needs the Screen view model.
-                layoutManager = Rover.shared?.views?.blockAndRowLayoutManager(layout, resources.displayMetrics) ?: throw RuntimeException("Rover not usable until Rover.initialize has been called.")
+                layoutManager =
+                    Rover.shared?.views?.blockAndRowLayoutManager(layout, resources.displayMetrics)
+                        ?: throw RuntimeException("Rover not usable until Rover.initialize has been called.")
 
                 // and then setup the adapter itself.
                 adapter = blockAndRowAdapter
@@ -78,9 +97,11 @@ class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelInterface> 
                     .filter { it.viewModel is PrefetchAfterMeasure }
                     .forEach { displayItem ->
                         (displayItem.viewModel as PrefetchAfterMeasure)
-                            .measuredSizeReadyForPrefetch(displayItem.position.toMeasuredSize(
-                                resources.displayMetrics.density
-                            ))
+                            .measuredSizeReadyForPrefetch(
+                                displayItem.position.toMeasuredSize(
+                                    resources.displayMetrics.density
+                                )
+                            )
                     }
             }
     }

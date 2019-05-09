@@ -299,7 +299,7 @@ open class NavigationViewModel(
         sessionTracker.enterSession(
             ExperienceSessionKey(experience.id.rawValue, campaignId),
             RoverEvent.ExperiencePresented(experience, campaignId),
-            RoverEvent.ExperienceViewed(experience, 0, campaignId)
+            RoverEvent.ExperienceViewed(experience, campaignId)
         )
     }
 
@@ -335,7 +335,7 @@ open class NavigationViewModel(
         sessionTracker.enterSession(
             ExperienceScreenSessionKey(experience.id.rawValue, screenViewModel.screenId),
             RoverEvent.ScreenPresented(experience, screenViewModel.screen, campaignId),
-            RoverEvent.ScreenViewed(experience, screenViewModel.screen, 0, campaignId)
+            RoverEvent.ScreenViewed(experience, screenViewModel.screen, campaignId)
         )
     }
 

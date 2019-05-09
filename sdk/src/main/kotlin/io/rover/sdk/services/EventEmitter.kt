@@ -1,12 +1,8 @@
 package io.rover.sdk.services
 
-import android.content.Intent
-import android.support.v4.content.LocalBroadcastManager
-import io.rover.sdk.data.domain.Attributes
-import io.rover.sdk.logging.log
+import io.rover.sdk.data.events.RoverEvent
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.share
-import org.json.JSONObject
 import org.reactivestreams.Publisher
 
 /**
@@ -17,43 +13,51 @@ import org.reactivestreams.Publisher
  * Alternatively, this service emits them as local Android broadcast intents.  This allows consumers
  * to receive them that cannot otherwise link against types in this library.
  */
-open class EventEmitter(
-    private val localBroadcastManager: LocalBroadcastManager
-) {
-    protected open val eventSubject = PublishSubject<Event>()
+open class EventEmitter {
+    protected open val eventSubject = PublishSubject<RoverEvent>()
 
-    data class Event(
-        val eventAction: EventAction,
-        val attributes: Attributes
-    )
+    open val trackedEvents: Publisher<RoverEvent> by lazy {  eventSubject.share() }
 
-    open val trackedEvents: Publisher<Event> by lazy {  eventSubject.share() }
+    open fun trackEvent(roverEvent: RoverEvent) {
+            eventSubject.onNext(roverEvent)
+            when(roverEvent) {
+                is RoverEvent.BlockTapped -> listeners.forEach { it.onBlockTapped(roverEvent) }
+                is RoverEvent.ExperienceDismissed -> listeners.forEach { it.onExperienceDismissed(roverEvent) }
+                is RoverEvent.ScreenDismissed -> listeners.forEach { it.onScreenDismissed(roverEvent) }
+                is RoverEvent.ExperiencePresented -> listeners.forEach { it.onExperiencePresented(roverEvent) }
+                is RoverEvent.ExperienceViewed -> listeners.forEach { it.onExperienceViewed(roverEvent) }
+                is RoverEvent.ScreenViewed -> listeners.forEach { it.onScreenViewed(roverEvent) }
+                is RoverEvent.ScreenPresented -> listeners.forEach { it.onScreenPresented(roverEvent) }
+            }
+    }
 
-    open fun trackEvent(action: String, attributes: Map<String, Any>) {
-        val intent = Intent(
-            action
-        )
+    private val listeners: MutableList<RoverEventListener> = mutableListOf()
 
-        val analyticsName = EventAction.values().find { it.action == action }
+    fun addEventListener(listener: RoverEventListener) {
+        listeners.add(listener)
+    }
 
-        analyticsName?.let {
-            eventSubject.onNext(Event(it, attributes))
-        }
+    fun removeEventListener(listener: RoverEventListener) {
+        listeners.remove(listener)
+    }
 
-        intent.putExtra("attributes", JSONObject(attributes).toString())
-
-        localBroadcastManager.sendBroadcast(intent)
-        log.v("Event broadcast: $action, ${JSONObject(attributes).toString(4)}")
+    fun removeAllListeners() {
+        listeners.clear()
     }
 }
 
-enum class EventAction(val action: String) {
-    EXPERIENCE_PRESENTED("io.rover.ExperiencePresented"),
-    EXPERIENCE_DISMISSED("io.rover.ExperienceDismissed"),
-    EXPERIENCE_VIEWED("io.rover.ExperienceViewed"),
-    SCREEN_PRESENTED("io.rover.ScreenPresented"),
-    SCREEN_DISMISSED("io.rover.ScreenDismissed"),
-    SCREEN_VIEWED("io.rover.ScreenViewed"),
-    BLOCK_TAPPED("io.rover.BlockTapped");
-}
+interface RoverEventListener {
+    fun onBlockTapped(event: RoverEvent.BlockTapped) {}
 
+    fun onExperienceDismissed(event: RoverEvent.ExperienceDismissed) {}
+
+    fun onScreenDismissed(event: RoverEvent.ScreenDismissed) {}
+
+    fun onExperiencePresented(event: RoverEvent.ExperiencePresented) {}
+
+    fun onExperienceViewed(event: RoverEvent.ExperienceViewed) {}
+
+    fun onScreenViewed(event: RoverEvent.ScreenViewed) {}
+
+    fun onScreenPresented(event: RoverEvent.ScreenPresented) {}
+}

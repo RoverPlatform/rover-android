@@ -8,7 +8,6 @@ import io.rover.sdk.streams.map
 import io.rover.sdk.data.domain.Row
 import io.rover.sdk.data.domain.Screen
 import io.rover.sdk.data.domain.TitleBarButtons
-import io.rover.sdk.data.domain.events.asAttributeValue
 import io.rover.sdk.ui.RectF
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundViewModelInterface
@@ -20,7 +19,7 @@ import io.rover.sdk.ui.toolbar.ToolbarConfiguration
 import org.reactivestreams.Publisher
 
 class ScreenViewModel(
-    private val screen: Screen,
+    override val screen: Screen,
     private val backgroundViewModel: BackgroundViewModelInterface,
     private val resolveRowViewModel: (row: Row) -> RowViewModelInterface
 ) : ScreenViewModelInterface, BackgroundViewModelInterface by backgroundViewModel {
@@ -65,7 +64,7 @@ class ScreenViewModel(
                     rowId,
                     rowEvent.blockId,
                     rowEvent.navigateTo,
-                    row.asAttributeValue()
+                    row
                 )
             }
         }
@@ -86,9 +85,6 @@ class ScreenViewModel(
             screen.titleBar.buttons == TitleBarButtons.Both || screen.titleBar.buttons == TitleBarButtons.Close,
             screen.statusBar.color.asAndroidColor()
         )
-
-    override val attributes: Attributes
-        get() = screen.asAttributeValue()
 
     override fun render(
         widthDp: Float

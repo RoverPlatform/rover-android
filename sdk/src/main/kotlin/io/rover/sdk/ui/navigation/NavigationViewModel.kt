@@ -4,7 +4,6 @@ import android.arch.lifecycle.Lifecycle
 import android.arch.lifecycle.LifecycleObserver
 import android.arch.lifecycle.OnLifecycleEvent
 import android.os.Parcelable
-import io.rover.sdk.data.domain.Attributes
 import io.rover.sdk.services.EventEmitter
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.whenNotNull
@@ -16,9 +15,9 @@ import io.rover.sdk.streams.shareHotAndReplay
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.services.SessionTracker
 import io.rover.sdk.data.domain.Experience
+import io.rover.sdk.data.domain.Row
 import io.rover.sdk.data.domain.Screen
-import io.rover.sdk.data.domain.events.asAttributeValue
-import io.rover.sdk.services.EventAction
+import io.rover.sdk.data.events.RoverEvent
 import io.rover.sdk.ui.containers.RoverActivity
 import io.rover.sdk.ui.layout.screen.ScreenViewModelInterface
 import io.rover.sdk.ui.toolbar.ExperienceToolbarViewModelInterface
@@ -88,7 +87,7 @@ open class NavigationViewModel(
         class PressedClose : Action()
         class Navigate(
             val navigateTo: NavigateToFromBlock,
-            val rowAttributes: Attributes,
+            val row: Row,
             val sourceScreenViewModel: ScreenViewModelInterface
         ) : Action()
     }
@@ -119,7 +118,7 @@ open class NavigationViewModel(
             .subscribe({ (screenViewModel, screenEvent) ->
                 // filter out the the events that are not meant for the currently active screen:
                 if (activeScreenViewModel() == screenViewModel) {
-                    actions.onNext(Action.Navigate(screenEvent.navigateTo, screenEvent.rowAttributes, screenViewModel))
+                    actions.onNext(Action.Navigate(screenEvent.navigateTo, screenEvent.row, screenViewModel))
                 }
             }, { error -> actions.onError(error) })
 
@@ -128,15 +127,12 @@ open class NavigationViewModel(
 
             when (action) {
                 is Action.Navigate -> {
-                    val attributes = hashMapOf(
-                        Pair("experience", experience.asAttributeValue()),
-                        Pair("screen", action.sourceScreenViewModel.attributes),
-                        Pair("block", action.navigateTo.blockAttributes),
-                        Pair("row", action.rowAttributes)
-                    ) + if (campaignId != null) { hashMapOf(Pair("campaignID", campaignId)) } else hashMapOf()
                     eventEmitter.trackEvent(
-                        EventAction.BLOCK_TAPPED.action,
-                        attributes
+                        RoverEvent.BlockTapped(experience,
+                            action.sourceScreenViewModel.screen,
+                            action.navigateTo.block,
+                            action.row,
+                        campaignId)
                     )
                 }
             }
@@ -302,17 +298,15 @@ open class NavigationViewModel(
     protected fun trackEnterExperience(experience: Experience, campaignId: String?) {
         sessionTracker.enterSession(
             ExperienceSessionKey(experience.id.rawValue, campaignId),
-            EventAction.EXPERIENCE_PRESENTED.action,
-            EventAction.EXPERIENCE_VIEWED.action,
-            sessionExperienceEventAttributes(experience)
+            RoverEvent.ExperiencePresented(experience, campaignId),
+            RoverEvent.ExperienceViewed(experience, 0, campaignId)
         )
     }
 
     protected fun trackLeaveExperience(experience: Experience, campaignId: String?) {
         sessionTracker.leaveSession(
             ExperienceSessionKey(experience.id.rawValue, campaignId),
-            EventAction.EXPERIENCE_DISMISSED.action,
-            sessionExperienceEventAttributes(experience)
+            RoverEvent.ExperienceDismissed(experience, campaignId)
         )
     }
 
@@ -328,8 +322,7 @@ open class NavigationViewModel(
             val screenViewModel = activeScreenViewModel()
             sessionTracker.leaveSession(
                 ExperienceScreenSessionKey(experience.id.rawValue, currentScreenId),
-                EventAction.SCREEN_DISMISSED.action,
-                sessionScreenEventAttributes(screenViewModel)
+                RoverEvent.ScreenDismissed(experience, screenViewModel.screen, campaignId)
             )
         }
     }
@@ -341,9 +334,8 @@ open class NavigationViewModel(
     protected fun trackEnterScreen(screenViewModel: ScreenViewModelInterface) {
         sessionTracker.enterSession(
             ExperienceScreenSessionKey(experience.id.rawValue, screenViewModel.screenId),
-            EventAction.SCREEN_PRESENTED.action,
-            EventAction.SCREEN_VIEWED.action,
-            sessionScreenEventAttributes(screenViewModel)
+            RoverEvent.ScreenPresented(experience, screenViewModel.screen, campaignId),
+            RoverEvent.ScreenViewed(experience, screenViewModel.screen, 0, campaignId)
         )
     }
 
@@ -389,20 +381,6 @@ open class NavigationViewModel(
         toolbarSubject.onNext(
             resolveToolbarViewModel(screenViewModel.appBarConfiguration)
         )
-    }
-
-    protected open fun sessionExperienceEventAttributes(experience: Experience): Attributes {
-        return hashMapOf(
-            Pair("experience", experience.asAttributeValue())
-        ) + if (campaignId != null) { hashMapOf(Pair("campaignID", campaignId)) } else hashMapOf()
-    }
-
-    protected open fun sessionScreenEventAttributes(screenViewModel: ScreenViewModelInterface): Attributes {
-        return hashMapOf(
-            Pair("experience", experience.asAttributeValue()),
-            Pair("screen", screenViewModel.attributes)
-        ) + if (campaignId != null) { hashMapOf(Pair("campaignID", campaignId)) } else hashMapOf()
-
     }
 
     @Parcelize

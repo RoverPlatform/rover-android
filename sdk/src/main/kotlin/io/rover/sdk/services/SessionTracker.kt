@@ -2,11 +2,9 @@ package io.rover.sdk.services
 
 import android.os.Handler
 import android.os.Looper
-import io.rover.sdk.data.domain.Attributes
-import io.rover.sdk.data.graphql.encodeJson
+import io.rover.sdk.data.events.RoverEvent
 import io.rover.sdk.data.graphql.safeGetString
 import io.rover.sdk.data.graphql.safeOptInt
-import io.rover.sdk.data.graphql.toAttributesHash
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.LocalStorage
 import io.rover.sdk.platform.whenNotNull
@@ -42,16 +40,14 @@ open class SessionTracker(
      */
     open fun enterSession(
         sessionKey: Any,
-        sessionStartEventName: String,
-        sessionEventName: String,
-        attributes: Attributes
+        sessionStartEvent: RoverEvent,
+        sessionEvent: RoverEvent
     ) {
         log.v("Entering session $sessionKey")
-        sessionStore.enterSession(sessionKey, sessionEventName, attributes)
+        sessionStore.enterSession(sessionKey, sessionEvent)
 
         eventEmitter.trackEvent(
-            sessionStartEventName,
-            attributes
+            sessionStartEvent
         )
     }
 
@@ -76,12 +72,14 @@ open class SessionTracker(
         log.v("Emitting events for expired sessions.")
         sessionStore.collectExpiredSessions(keepAliveTime).forEach { expiredSession ->
             log.v("Session closed: ${expiredSession.sessionKey}")
-            eventEmitter.trackEvent(
-                expiredSession.eventName,
-                hashMapOf(
-                    Pair("duration",expiredSession.durationSeconds)
-                ) + expiredSession.attributes
-            )
+
+            val eventToSend: RoverEvent = when (val event = expiredSession.sessionEvent) {
+                is RoverEvent.ScreenViewed -> { event.copy(duration = expiredSession.durationSeconds) }
+                is RoverEvent.ExperienceViewed -> { event.copy(duration = expiredSession.durationSeconds)}
+                else -> event
+            }
+
+            eventEmitter.trackEvent(eventToSend)
         }
 
         updateTimer()
@@ -89,13 +87,12 @@ open class SessionTracker(
 
     open fun leaveSession(
         sessionKey: Any,
-        sessionEndEventName: String,
-        attributes: Attributes
+        sessionEndEvent: RoverEvent
     ) {
         log.v("Leaving session $sessionKey")
         sessionStore.leaveSession(sessionKey)
 
-        eventEmitter.trackEvent(sessionEndEventName, attributes)
+        eventEmitter.trackEvent(sessionEndEvent)
 
         updateTimer()
     }
@@ -115,15 +112,14 @@ open class SessionStore(
      *
      * Returns the new session's UUID, or, if a session is already active, null.
      */
-    open fun enterSession(sessionKey: Any, sessionEventName: String, attributes: Attributes) {
+    open fun enterSession(sessionKey: Any, sessionEvent: RoverEvent) {
         val session = getEntry(sessionKey)?.copy(
             // clear closedAt to avoid expiring the session if it is being re-opened.
             closedAt = null
         ) ?: SessionEntry(
             UUID.randomUUID(),
-            sessionEventName,
             Date(),
-            attributes,
+            sessionEvent,
             null
         )
 
@@ -207,8 +203,7 @@ open class SessionStore(
             ExpiredSession(
                 key,
                 entry.uuid,
-                entry.sessionEventName,
-                entry.sessionAttributes,
+                entry.sessionEvent,
                 ((entry.closedAt?.time!! - entry.startedAt.time) / 1000L).toInt()
             )
         }
@@ -236,15 +231,12 @@ open class SessionStore(
     data class ExpiredSession(
         val sessionKey: Any,
         val uuid: UUID,
-        val eventName: String,
-        val attributes: Attributes,
+        val sessionEvent: RoverEvent,
         val durationSeconds: Int
     )
 
     data class SessionEntry(
         val uuid: UUID,
-
-        val sessionEventName: String,
 
         /**
          * When was this session started?
@@ -254,7 +246,7 @@ open class SessionStore(
         /**
          * Any other attributes to include with the session event.
          */
-        val sessionAttributes: Attributes,
+        val sessionEvent: RoverEvent,
 
         /**
          * When was the session closed?
@@ -264,9 +256,8 @@ open class SessionStore(
         fun encodeJson(): JSONObject {
             return JSONObject().apply {
                 put("uuid", uuid.toString())
-                put("session-event-name", sessionEventName)
                 put("started-at", startedAt.time / 1000)
-                put("session-attributes", sessionAttributes.encodeJson())
+                put("session-attributes", sessionEvent.encodeJson())
                 if (closedAt != null) {
                     put("closed-at", closedAt.time / 1000)
                 }
@@ -277,9 +268,8 @@ open class SessionStore(
             fun decodeJson(jsonObject: JSONObject): SessionEntry {
                 return SessionEntry(
                     UUID.fromString(jsonObject.safeGetString("uuid")),
-                    jsonObject.safeGetString("session-event-name"),
                     Date(jsonObject.getInt("started-at") * 1000L),
-                    jsonObject.getJSONObject("session-attributes").toAttributesHash(),
+                    RoverEvent.decodeJson(jsonObject.getJSONObject("session-attributes")),
                     jsonObject.safeOptInt("closed-at").whenNotNull { Date(it * 1000L) }
                 )
             }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.AsyncTask
 import android.os.Build
+import io.rover.sdk.data.domain.Attributes
 import io.rover.sdk.data.graphql.encodeJson
 import io.rover.sdk.data.http.HttpRequest
 import io.rover.sdk.data.http.HttpVerb
@@ -56,21 +57,21 @@ class AnalyticsService(
     }
 
     private fun encodeBody(eventInformation: RoverEvent): String {
-        val eventName = when(eventInformation) {
-            is RoverEvent.ExperiencePresented-> "Experience Presented"
-            is RoverEvent.ExperienceDismissed -> "Experience Dismissed"
-            is RoverEvent.ExperienceViewed -> "Experience Viewed"
-            is RoverEvent.ScreenPresented -> "Screen Presented"
-            is RoverEvent.ScreenDismissed -> "Screen Dismissed"
-            is RoverEvent.ScreenViewed -> "Screen Viewed"
-            is RoverEvent.BlockTapped -> "Block Tapped"
+        val (eventName, flatEvent) = when(eventInformation) {
+            is RoverEvent.ExperiencePresented -> "Experience Presented" to eventInformation.toFlat()
+            is RoverEvent.ExperienceDismissed -> "Experience Dismissed" to eventInformation.toFlat()
+            is RoverEvent.ExperienceViewed -> "Experience Viewed" to eventInformation.toFlat()
+            is RoverEvent.ScreenPresented -> "Screen Presented" to eventInformation.toFlat()
+            is RoverEvent.ScreenDismissed -> "Screen Dismissed" to eventInformation.toFlat()
+            is RoverEvent.ScreenViewed -> "Screen Viewed" to eventInformation.toFlat()
+            is RoverEvent.BlockTapped -> "Block Tapped" to eventInformation.toFlat()
         }
 
         return JSONObject().apply {
             put("anonymousID", installationIdentifier)
             put("event", eventName)
             put("timestamp", dateAsIso8601(Date()))
-            put("properties", flattenEvent(eventInformation).encodeJson())
+            put("properties", flatEvent.encodeJson())
         }.toString()
     }
 
@@ -80,8 +81,6 @@ class AnalyticsService(
 
         request(urlRequest, bodyData)
     }
-
-    private fun flattenEvent(roverEvent: RoverEvent) = mapOf<String, Any>()
 
     init {
         eventEmitter.trackedEvents.subscribe { sendRequest(it) }
@@ -125,4 +124,77 @@ class AnalyticsService(
             }
         }
     }
+}
+
+private fun RoverEvent.ExperiencePresented.toFlat(): Attributes {
+    return hashMapOf(
+        "experienceID" to experience.id,
+        "experienceName" to experience.name,
+        "experienceTags" to experience.tags
+    ) + if (campaignId != null) hashMapOf("campaignID" to campaignId) else hashMapOf()
+}
+
+private fun RoverEvent.ExperienceDismissed.toFlat(): Attributes {
+    return hashMapOf(
+        "experienceID" to experience.id,
+        "experienceName" to experience.name,
+        "experienceTags" to experience.tags
+    ) + if (campaignId != null) hashMapOf("campaignID" to campaignId) else hashMapOf()
+}
+
+private fun RoverEvent.ExperienceViewed.toFlat(): Attributes {
+    return hashMapOf(
+        "experienceID" to experience.id,
+        "experienceName" to experience.name,
+        "experienceTags" to experience.tags,
+        "duration" to duration
+    ) + if (campaignId != null) hashMapOf("campaignID" to campaignId) else hashMapOf()
+}
+
+private fun RoverEvent.ScreenPresented.toFlat(): Attributes {
+    return hashMapOf(
+        "experienceID" to experience.id,
+        "experienceName" to experience.name,
+        "experienceTags" to experience.tags,
+        "screenName" to screen.name,
+        "screenID" to screen.id,
+        "screenTags" to screen.tags
+    ) + if (campaignId != null) hashMapOf("campaignID" to campaignId) else hashMapOf()
+}
+
+private fun RoverEvent.ScreenDismissed.toFlat(): Attributes {
+    return hashMapOf(
+        "experienceID" to experience.id,
+        "experienceName" to experience.name,
+        "experienceTags" to experience.tags,
+        "screenName" to screen.name,
+        "screenID" to screen.id,
+        "screenTags" to screen.tags
+    ) + if (campaignId != null) hashMapOf("campaignID" to campaignId) else hashMapOf()
+}
+
+private fun RoverEvent.ScreenViewed.toFlat(): Attributes {
+    return hashMapOf(
+        "experienceID" to experience.id,
+        "experienceName" to experience.name,
+        "experienceTags" to experience.tags,
+        "screenName" to screen.name,
+        "screenID" to screen.id,
+        "screenTags" to screen.tags,
+        "duration" to duration
+    ) + if (campaignId != null) hashMapOf("campaignID" to campaignId) else hashMapOf()
+}
+
+private fun RoverEvent.BlockTapped.toFlat(): Attributes {
+    return hashMapOf(
+        "experienceID" to experience.id,
+        "experienceName" to experience.name,
+        "experienceTags" to experience.tags,
+        "screenName" to screen.name,
+        "screenID" to screen.id,
+        "screenTags" to screen.tags,
+        "blockID" to block.id,
+        "blockName" to block.name,
+        "blockTags" to block.tags
+    ) + if (campaignId != null) hashMapOf("campaignID" to campaignId) else hashMapOf()
 }

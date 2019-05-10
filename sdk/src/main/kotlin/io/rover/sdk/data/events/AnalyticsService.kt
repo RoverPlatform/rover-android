@@ -9,6 +9,7 @@ import io.rover.sdk.data.graphql.encodeJson
 import io.rover.sdk.data.http.HttpRequest
 import io.rover.sdk.data.http.HttpVerb
 import io.rover.sdk.logging.log
+import io.rover.sdk.platform.dateAsIso8601
 import io.rover.sdk.services.EventEmitter
 import io.rover.sdk.streams.subscribe
 import org.json.JSONObject
@@ -70,7 +71,7 @@ class AnalyticsService(
         return JSONObject().apply {
             put("anonymousID", installationIdentifier)
             put("event", eventName)
-            put("timestamp", dateAsIso8601(Date()))
+            put("timestamp", Date().dateAsIso8601())
             put("properties", flatEvent.encodeJson())
         }.toString()
     }
@@ -84,17 +85,6 @@ class AnalyticsService(
 
     init {
         eventEmitter.trackedEvents.subscribe { sendRequest(it) }
-    }
-
-    private fun dateAsIso8601(date: Date): String {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US).format(date)
-        } else {
-            // On legacy Android, we are using the RFC 822 (email) vs ISO 8601 date format, and
-            // we use the following regex to transform it to something 8601 compatible.
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US).format(date)
-                .replace(Regex("(\\d\\d)(\\d\\d)$"), "$1:$2")
-        }
     }
 
     fun request(
@@ -126,75 +116,87 @@ class AnalyticsService(
     }
 }
 
+private const val EXPERIENCE_ID = "experienceID"
+private const val EXPERIENCE_NAME = "experienceName"
+private const val EXPERIENCE_TAGS = "experienceTags"
+private const val CAMPAIGN_ID = "campaignID"
+private const val DURATION = "duration"
+private const val SCREEN_NAME = "screenName"
+private const val SCREEN_ID = "screenID"
+private const val SCREEN_TAGS = "screenTags"
+private const val BLOCK_ID = "blockID"
+private const val BLOCK_NAME = "blockName"
+private const val BLOCK_TAGS = "blockTags"
+
 private fun RoverEvent.ExperiencePresented.toFlat(): Attributes {
     return hashMapOf(
-        "experienceID" to experience.id,
-        "experienceName" to experience.name,
-        "experienceTags" to experience.tags
-    ) + if (campaignId != null) hashMapOf("campaignID" to campaignId) else hashMapOf()
+        EXPERIENCE_ID to experience.id,
+        EXPERIENCE_NAME to experience.name,
+        EXPERIENCE_TAGS to experience.tags
+    ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
 }
 
 private fun RoverEvent.ExperienceDismissed.toFlat(): Attributes {
     return hashMapOf(
-        "experienceID" to experience.id,
-        "experienceName" to experience.name,
-        "experienceTags" to experience.tags
-    ) + if (campaignId != null) hashMapOf("campaignID" to campaignId) else hashMapOf()
+        EXPERIENCE_ID to experience.id,
+        EXPERIENCE_NAME to experience.name,
+        EXPERIENCE_TAGS to experience.tags
+    ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
 }
 
 private fun RoverEvent.ExperienceViewed.toFlat(): Attributes {
     return hashMapOf(
-        "experienceID" to experience.id,
-        "experienceName" to experience.name,
-        "experienceTags" to experience.tags,
-        "duration" to duration
-    ) + if (campaignId != null) hashMapOf("campaignID" to campaignId) else hashMapOf()
+        EXPERIENCE_ID to experience.id,
+        EXPERIENCE_NAME to experience.name,
+        EXPERIENCE_TAGS to experience.tags,
+        DURATION to duration
+    ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
 }
 
 private fun RoverEvent.ScreenPresented.toFlat(): Attributes {
     return hashMapOf(
-        "experienceID" to experience.id,
-        "experienceName" to experience.name,
-        "experienceTags" to experience.tags,
-        "screenName" to screen.name,
-        "screenID" to screen.id,
-        "screenTags" to screen.tags
-    ) + if (campaignId != null) hashMapOf("campaignID" to campaignId) else hashMapOf()
+        EXPERIENCE_ID to experience.id,
+        EXPERIENCE_NAME to experience.name,
+        EXPERIENCE_TAGS to experience.tags,
+        SCREEN_NAME to screen.name,
+        SCREEN_ID to screen.id,
+        SCREEN_TAGS to screen.tags
+    ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
 }
 
 private fun RoverEvent.ScreenDismissed.toFlat(): Attributes {
     return hashMapOf(
-        "experienceID" to experience.id,
-        "experienceName" to experience.name,
-        "experienceTags" to experience.tags,
-        "screenName" to screen.name,
-        "screenID" to screen.id,
-        "screenTags" to screen.tags
-    ) + if (campaignId != null) hashMapOf("campaignID" to campaignId) else hashMapOf()
+        EXPERIENCE_ID to experience.id,
+        EXPERIENCE_NAME to experience.name,
+        EXPERIENCE_TAGS to experience.tags,
+        SCREEN_NAME to screen.name,
+        SCREEN_ID to screen.id,
+        SCREEN_TAGS to screen.tags
+    ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
 }
 
 private fun RoverEvent.ScreenViewed.toFlat(): Attributes {
     return hashMapOf(
-        "experienceID" to experience.id,
-        "experienceName" to experience.name,
-        "experienceTags" to experience.tags,
-        "screenName" to screen.name,
-        "screenID" to screen.id,
-        "screenTags" to screen.tags,
-        "duration" to duration
-    ) + if (campaignId != null) hashMapOf("campaignID" to campaignId) else hashMapOf()
+        EXPERIENCE_ID to experience.id,
+        EXPERIENCE_NAME to experience.name,
+        EXPERIENCE_TAGS to experience.tags,
+        SCREEN_NAME to screen.name,
+        SCREEN_ID to screen.id,
+        SCREEN_TAGS to screen.tags,
+        DURATION to duration
+    ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
 }
 
 private fun RoverEvent.BlockTapped.toFlat(): Attributes {
     return hashMapOf(
-        "experienceID" to experience.id,
-        "experienceName" to experience.name,
-        "experienceTags" to experience.tags,
-        "screenName" to screen.name,
-        "screenID" to screen.id,
-        "screenTags" to screen.tags,
-        "blockID" to block.id,
-        "blockName" to block.name,
-        "blockTags" to block.tags
-    ) + if (campaignId != null) hashMapOf("campaignID" to campaignId) else hashMapOf()
+        EXPERIENCE_ID to experience.id,
+        EXPERIENCE_NAME to experience.name,
+        EXPERIENCE_TAGS to experience.tags,
+        SCREEN_NAME to screen.name,
+        SCREEN_ID to screen.id,
+        SCREEN_TAGS to screen.tags,
+        BLOCK_ID to block.id,
+        BLOCK_NAME to block.name,
+        BLOCK_TAGS to block.tags
+    ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
 }

@@ -27,7 +27,7 @@ import java.util.UUID
 class AnalyticsService(
     context: Context,
     private val accountToken: String?,
-    eventEmitter: EventEmitter
+    private val eventEmitter: EventEmitter
 ) {
 
     private val prefs: SharedPreferences? =
@@ -83,7 +83,7 @@ class AnalyticsService(
         request(urlRequest, bodyData)
     }
 
-    init {
+    fun enable() {
         eventEmitter.trackedEvents.subscribe { sendRequest(it) }
     }
 
@@ -130,7 +130,7 @@ private const val BLOCK_TAGS = "blockTags"
 
 private fun RoverEvent.ExperiencePresented.toFlat(): Attributes {
     return hashMapOf(
-        EXPERIENCE_ID to experience.id,
+        EXPERIENCE_ID to experience.id.rawValue,
         EXPERIENCE_NAME to experience.name,
         EXPERIENCE_TAGS to experience.tags
     ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
@@ -138,7 +138,7 @@ private fun RoverEvent.ExperiencePresented.toFlat(): Attributes {
 
 private fun RoverEvent.ExperienceDismissed.toFlat(): Attributes {
     return hashMapOf(
-        EXPERIENCE_ID to experience.id,
+        EXPERIENCE_ID to experience.id.rawValue,
         EXPERIENCE_NAME to experience.name,
         EXPERIENCE_TAGS to experience.tags
     ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
@@ -146,7 +146,7 @@ private fun RoverEvent.ExperienceDismissed.toFlat(): Attributes {
 
 private fun RoverEvent.ExperienceViewed.toFlat(): Attributes {
     return hashMapOf(
-        EXPERIENCE_ID to experience.id,
+        EXPERIENCE_ID to experience.id.rawValue,
         EXPERIENCE_NAME to experience.name,
         EXPERIENCE_TAGS to experience.tags,
         DURATION to duration
@@ -155,33 +155,33 @@ private fun RoverEvent.ExperienceViewed.toFlat(): Attributes {
 
 private fun RoverEvent.ScreenPresented.toFlat(): Attributes {
     return hashMapOf(
-        EXPERIENCE_ID to experience.id,
+        EXPERIENCE_ID to experience.id.rawValue,
         EXPERIENCE_NAME to experience.name,
         EXPERIENCE_TAGS to experience.tags,
         SCREEN_NAME to screen.name,
-        SCREEN_ID to screen.id,
+        SCREEN_ID to screen.id.rawValue,
         SCREEN_TAGS to screen.tags
     ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
 }
 
 private fun RoverEvent.ScreenDismissed.toFlat(): Attributes {
     return hashMapOf(
-        EXPERIENCE_ID to experience.id,
+        EXPERIENCE_ID to experience.id.rawValue,
         EXPERIENCE_NAME to experience.name,
         EXPERIENCE_TAGS to experience.tags,
         SCREEN_NAME to screen.name,
-        SCREEN_ID to screen.id,
+        SCREEN_ID to screen.id.rawValue,
         SCREEN_TAGS to screen.tags
     ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
 }
 
 private fun RoverEvent.ScreenViewed.toFlat(): Attributes {
     return hashMapOf(
-        EXPERIENCE_ID to experience.id,
+        EXPERIENCE_ID to experience.id.rawValue,
         EXPERIENCE_NAME to experience.name,
         EXPERIENCE_TAGS to experience.tags,
         SCREEN_NAME to screen.name,
-        SCREEN_ID to screen.id,
+        SCREEN_ID to screen.id.rawValue,
         SCREEN_TAGS to screen.tags,
         DURATION to duration
     ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
@@ -189,13 +189,13 @@ private fun RoverEvent.ScreenViewed.toFlat(): Attributes {
 
 private fun RoverEvent.BlockTapped.toFlat(): Attributes {
     return hashMapOf(
-        EXPERIENCE_ID to experience.id,
+        EXPERIENCE_ID to experience.id.rawValue,
         EXPERIENCE_NAME to experience.name,
         EXPERIENCE_TAGS to experience.tags,
         SCREEN_NAME to screen.name,
-        SCREEN_ID to screen.id,
+        SCREEN_ID to screen.id.rawValue,
         SCREEN_TAGS to screen.tags,
-        BLOCK_ID to block.id,
+        BLOCK_ID to block.id.rawValue,
         BLOCK_NAME to block.name,
         BLOCK_TAGS to block.tags
     ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()

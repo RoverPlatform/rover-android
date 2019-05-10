@@ -56,8 +56,8 @@ class AnalyticsService(
     }
 
     private fun encodeBody(eventInformation: RoverEvent): String {
-        val eventName = when(eventInformation) {
-            is RoverEvent.ExperiencePresented-> "Experience Presented"
+        val eventName = when (eventInformation) {
+            is RoverEvent.ExperiencePresented -> "Experience Presented"
             is RoverEvent.ExperienceDismissed -> "Experience Dismissed"
             is RoverEvent.ExperienceViewed -> "Experience Viewed"
             is RoverEvent.ScreenPresented -> "Screen Presented"

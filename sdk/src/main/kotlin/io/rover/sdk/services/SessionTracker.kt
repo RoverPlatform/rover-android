@@ -23,7 +23,7 @@ open class SessionTracker(
      * temporarily.
      */
     private val keepAliveTime: Int
-)  {
+) {
     private val timerHandler = Handler(Looper.getMainLooper())
 
     /**
@@ -74,8 +74,12 @@ open class SessionTracker(
             log.v("Session closed: ${expiredSession.sessionKey}")
 
             val eventToSend: RoverEvent = when (val event = expiredSession.sessionEvent) {
-                is RoverEvent.ScreenViewed -> { event.copy(duration = expiredSession.durationSeconds) }
-                is RoverEvent.ExperienceViewed -> { event.copy(duration = expiredSession.durationSeconds)}
+                is RoverEvent.ScreenViewed -> {
+                    event.copy(duration = expiredSession.durationSeconds)
+                }
+                is RoverEvent.ExperienceViewed -> {
+                    event.copy(duration = expiredSession.durationSeconds)
+                }
                 else -> event
             }
 
@@ -100,7 +104,7 @@ open class SessionTracker(
 
 open class SessionStore(
     localStorage: LocalStorage
-)  {
+) {
     private val store = localStorage.getKeyValueStorageFor(STORAGE_IDENTIFIER)
 
     init {
@@ -131,21 +135,25 @@ open class SessionStore(
 
         if (existingEntry != null) {
             // there is indeed a session open for the given key, mark it as expiring.
-            setEntry(sessionKey, existingEntry.copy(
-                closedAt = Date()
-            ))
+            setEntry(
+                sessionKey, existingEntry.copy(
+                    closedAt = Date()
+                )
+            )
         }
     }
 
     private fun getEntry(sessionKey: Any): SessionEntry? {
         val entryJson = store[sessionKey.toString()].whenNotNull { JSONObject(it) }
 
-        return entryJson.whenNotNull { try {
-            SessionEntry.decodeJson(it)
-        } catch (exception: Exception) {
-            log.w("Invalid JSON appeared in Session Store, ignoring: ${exception.message}")
-            null
-        } }
+        return entryJson.whenNotNull {
+            try {
+                SessionEntry.decodeJson(it)
+            } catch (exception: Exception) {
+                log.w("Invalid JSON appeared in Session Store, ignoring: ${exception.message}")
+                null
+            }
+        }
     }
 
     private fun setEntry(sessionKey: Any, sessionEntry: SessionEntry) {
@@ -170,9 +178,9 @@ open class SessionStore(
         // if there's a negative number, return 0 because there's already expired entries that need
         // to be dealt with now.
 
-       return earliestExpiry.whenNotNull { earliest ->
-           max(earliest, 0)
-       }
+        return earliestExpiry.whenNotNull { earliest ->
+            max(earliest, 0)
+        }
     }
 
     /**

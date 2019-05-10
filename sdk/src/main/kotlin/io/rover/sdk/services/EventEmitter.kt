@@ -10,25 +10,32 @@ import org.reactivestreams.Publisher
  *
  * You can subscribe to the [trackedEvents] Publisher to be informed of them.
  *
- * Alternatively, this service emits them as local Android broadcast intents.  This allows consumers
- * to receive them that cannot otherwise link against types in this library.
+ * Alternatively, you can add a [RoverEventListener] to receive event updates
  */
 open class EventEmitter {
     protected open val eventSubject = PublishSubject<RoverEvent>()
 
-    open val trackedEvents: Publisher<RoverEvent> by lazy {  eventSubject.share() }
+    open val trackedEvents: Publisher<RoverEvent> by lazy { eventSubject.share() }
 
     open fun trackEvent(roverEvent: RoverEvent) {
-            eventSubject.onNext(roverEvent)
-            when(roverEvent) {
-                is RoverEvent.BlockTapped -> listeners.forEach { it.onBlockTapped(roverEvent) }
-                is RoverEvent.ExperienceDismissed -> listeners.forEach { it.onExperienceDismissed(roverEvent) }
-                is RoverEvent.ScreenDismissed -> listeners.forEach { it.onScreenDismissed(roverEvent) }
-                is RoverEvent.ExperiencePresented -> listeners.forEach { it.onExperiencePresented(roverEvent) }
-                is RoverEvent.ExperienceViewed -> listeners.forEach { it.onExperienceViewed(roverEvent) }
-                is RoverEvent.ScreenViewed -> listeners.forEach { it.onScreenViewed(roverEvent) }
-                is RoverEvent.ScreenPresented -> listeners.forEach { it.onScreenPresented(roverEvent) }
+        eventSubject.onNext(roverEvent)
+        when (roverEvent) {
+            is RoverEvent.BlockTapped -> listeners.forEach { it.onBlockTapped(roverEvent) }
+            is RoverEvent.ExperienceDismissed -> listeners.forEach {
+                it.onExperienceDismissed(
+                    roverEvent
+                )
             }
+            is RoverEvent.ScreenDismissed -> listeners.forEach { it.onScreenDismissed(roverEvent) }
+            is RoverEvent.ExperiencePresented -> listeners.forEach {
+                it.onExperiencePresented(
+                    roverEvent
+                )
+            }
+            is RoverEvent.ExperienceViewed -> listeners.forEach { it.onExperienceViewed(roverEvent) }
+            is RoverEvent.ScreenViewed -> listeners.forEach { it.onScreenViewed(roverEvent) }
+            is RoverEvent.ScreenPresented -> listeners.forEach { it.onScreenPresented(roverEvent) }
+        }
     }
 
     private val listeners: MutableList<RoverEventListener> = mutableListOf()

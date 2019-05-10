@@ -15,11 +15,13 @@ import org.json.JSONObject
 sealed class RoverEvent {
     abstract fun encodeJson(): JSONObject
 
-    data class BlockTapped(val experience: Experience,
-                           val screen: Screen,
-                           val block: Block,
-                           val row: Row,
-                           val campaignId: String?) : RoverEvent() {
+    data class BlockTapped(
+        val experience: Experience,
+        val screen: Screen,
+        val block: Block,
+        val row: Row,
+        val campaignId: String?
+    ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {
                 putOpt(ANALYTICS_EVENT_TYPE, BLOCK_TAPPED_CODE)
@@ -44,12 +46,17 @@ sealed class RoverEvent {
         }
     }
 
-    data class ExperienceDismissed(val experience: Experience,
-                                   val campaignId: String?) : RoverEvent() {
+    data class ExperienceDismissed(
+        val experience: Experience,
+        val campaignId: String?
+    ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
-           return JSONObject().apply {
+            return JSONObject().apply {
                 putOpt(ANALYTICS_EVENT_TYPE, EXPERIENCE_DISMISSED_CODE)
-                putProp(this@ExperienceDismissed, ExperienceDismissed::experience) { experience.encodeJson() }
+                putProp(
+                    this@ExperienceDismissed,
+                    ExperienceDismissed::experience
+                ) { experience.encodeJson() }
                 putProp(this@ExperienceDismissed, ExperienceDismissed::campaignId) { campaignId }
             }
         }
@@ -64,13 +71,18 @@ sealed class RoverEvent {
         }
     }
 
-    data class ScreenDismissed(val experience: Experience,
-                               val screen: Screen,
-                               val campaignId: String?) : RoverEvent() {
+    data class ScreenDismissed(
+        val experience: Experience,
+        val screen: Screen,
+        val campaignId: String?
+    ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {
                 putOpt(ANALYTICS_EVENT_TYPE, SCREEN_DISMISSED_CODE)
-                putProp(this@ScreenDismissed, ScreenDismissed::experience) { experience.encodeJson() }
+                putProp(
+                    this@ScreenDismissed,
+                    ScreenDismissed::experience
+                ) { experience.encodeJson() }
                 putProp(this@ScreenDismissed, ScreenDismissed::screen) { screen.encodeJson() }
                 putProp(this@ScreenDismissed, ScreenDismissed::campaignId) { campaignId }
             }
@@ -87,12 +99,17 @@ sealed class RoverEvent {
         }
     }
 
-    data class ExperiencePresented(val experience: Experience,
-                                   val campaignId: String?) : RoverEvent() {
+    data class ExperiencePresented(
+        val experience: Experience,
+        val campaignId: String?
+    ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {
                 putOpt(ANALYTICS_EVENT_TYPE, EXPERIENCE_PRESENTED_CODE)
-                putProp(this@ExperiencePresented, ExperiencePresented::experience) { experience.encodeJson() }
+                putProp(
+                    this@ExperiencePresented,
+                    ExperiencePresented::experience
+                ) { experience.encodeJson() }
                 putProp(this@ExperiencePresented, ExperiencePresented::campaignId) { campaignId }
             }
         }
@@ -107,13 +124,18 @@ sealed class RoverEvent {
         }
     }
 
-    data class ExperienceViewed(val experience: Experience,
-                                val campaignId: String?,
-                                val duration: Int = 0) : RoverEvent() {
+    data class ExperienceViewed(
+        val experience: Experience,
+        val campaignId: String?,
+        val duration: Int = 0
+    ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {
                 putOpt(ANALYTICS_EVENT_TYPE, EXPERIENCE_VIEWED_CODE)
-                putProp(this@ExperienceViewed, ExperienceViewed::experience) { experience.encodeJson() }
+                putProp(
+                    this@ExperienceViewed,
+                    ExperienceViewed::experience
+                ) { experience.encodeJson() }
                 putProp(this@ExperienceViewed, ExperienceViewed::campaignId) { campaignId }
                 putProp(this@ExperienceViewed, ExperienceViewed::duration) { duration }
             }
@@ -130,10 +152,12 @@ sealed class RoverEvent {
         }
     }
 
-    data class ScreenViewed(val experience: Experience,
-                            val screen: Screen,
-                            val campaignId: String?,
-                            val duration: Int = 0) : RoverEvent() {
+    data class ScreenViewed(
+        val experience: Experience,
+        val screen: Screen,
+        val campaignId: String?,
+        val duration: Int = 0
+    ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {
                 putOpt(ANALYTICS_EVENT_TYPE, SCREEN_VIEWED_CODE)
@@ -156,13 +180,18 @@ sealed class RoverEvent {
         }
     }
 
-    data class ScreenPresented(val experience: Experience,
-                               val screen: Screen,
-                               val campaignId: String?) : RoverEvent() {
+    data class ScreenPresented(
+        val experience: Experience,
+        val screen: Screen,
+        val campaignId: String?
+    ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {
                 putOpt(ANALYTICS_EVENT_TYPE, SCREEN_PRESENTED_CODE)
-                putProp(this@ScreenPresented, ScreenPresented::experience) { experience.encodeJson() }
+                putProp(
+                    this@ScreenPresented,
+                    ScreenPresented::experience
+                ) { experience.encodeJson() }
                 putProp(this@ScreenPresented, ScreenPresented::screen) { screen.encodeJson() }
                 putProp(this@ScreenPresented, ScreenPresented::campaignId) { campaignId }
             }
@@ -190,14 +219,28 @@ sealed class RoverEvent {
         private const val ANALYTICS_EVENT_TYPE = "ANALYTICS_EVENT_TYPE"
 
         fun decodeJson(jsonObject: JSONObject): RoverEvent {
-           return when (jsonObject.safeGetString(ANALYTICS_EVENT_TYPE)) {
-                BLOCK_TAPPED_CODE -> { BlockTapped.decodeJson(jsonObject) }
-                EXPERIENCE_DISMISSED_CODE -> { ExperienceDismissed.decodeJson(jsonObject)}
-                SCREEN_DISMISSED_CODE -> { ScreenDismissed.decodeJson(jsonObject)}
-                EXPERIENCE_PRESENTED_CODE -> { ExperiencePresented.decodeJson(jsonObject) }
-                EXPERIENCE_VIEWED_CODE -> { ExperienceViewed.decodeJson(jsonObject) }
-                SCREEN_VIEWED_CODE -> { ScreenViewed.decodeJson(jsonObject) }
-                else -> { ScreenPresented.decodeJson(jsonObject) }
+            return when (jsonObject.safeGetString(ANALYTICS_EVENT_TYPE)) {
+                BLOCK_TAPPED_CODE -> {
+                    BlockTapped.decodeJson(jsonObject)
+                }
+                EXPERIENCE_DISMISSED_CODE -> {
+                    ExperienceDismissed.decodeJson(jsonObject)
+                }
+                SCREEN_DISMISSED_CODE -> {
+                    ScreenDismissed.decodeJson(jsonObject)
+                }
+                EXPERIENCE_PRESENTED_CODE -> {
+                    ExperiencePresented.decodeJson(jsonObject)
+                }
+                EXPERIENCE_VIEWED_CODE -> {
+                    ExperienceViewed.decodeJson(jsonObject)
+                }
+                SCREEN_VIEWED_CODE -> {
+                    ScreenViewed.decodeJson(jsonObject)
+                }
+                else -> {
+                    ScreenPresented.decodeJson(jsonObject)
+                }
             }
         }
     }

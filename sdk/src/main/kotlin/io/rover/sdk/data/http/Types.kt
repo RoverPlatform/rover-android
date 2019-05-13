@@ -3,19 +3,19 @@ package io.rover.sdk.data.http
 import java.io.BufferedInputStream
 import java.net.URL
 
-enum class HttpVerb(
+internal enum class HttpVerb(
     val wireFormat: String
 ) {
     GET("GET"), POST("POST"), PUT("PUT"), DELETE("DELETE")
 }
 
-data class HttpRequest(
+internal data class HttpRequest(
     val url: URL,
     val headers: HashMap<String, String>,
     val verb: HttpVerb
 )
 
-sealed class HttpClientResponse {
+internal sealed class HttpClientResponse {
     class Success(
         /**
          * The HTTP request has gotten a successful reply, and now the server is streaming the

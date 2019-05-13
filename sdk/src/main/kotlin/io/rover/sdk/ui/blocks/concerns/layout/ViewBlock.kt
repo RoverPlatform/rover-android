@@ -6,7 +6,7 @@ import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.ViewModelBinding
 import io.rover.sdk.ui.dpAsPx
 
-class ViewBlock(
+internal class ViewBlock(
     override val view: View
 ) : ViewBlockInterface {
     override var viewModelBinding: MeasuredBindableView.Binding<BlockViewModelInterface>? by ViewModelBinding { binding, _ ->

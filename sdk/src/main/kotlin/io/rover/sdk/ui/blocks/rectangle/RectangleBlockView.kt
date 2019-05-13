@@ -16,7 +16,7 @@ import io.rover.sdk.ui.blocks.concerns.border.ViewBorder
 import io.rover.sdk.ui.blocks.concerns.layout.LayoutableView
 import io.rover.sdk.ui.blocks.concerns.layout.ViewBlock
 
-class RectangleBlockView : View, LayoutableView<RectangleBlockViewModelInterface> {
+internal class RectangleBlockView : View, LayoutableView<RectangleBlockViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)

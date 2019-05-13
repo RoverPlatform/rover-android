@@ -6,7 +6,7 @@ package io.rover.sdk.ui
  * Somewhat equivalent to [android.graphics.RectF], but immutable and decoupled from the Android
  * API.
  */
-data class RectF(
+internal data class RectF(
     val left: Float,
     val top: Float,
     val right: Float,

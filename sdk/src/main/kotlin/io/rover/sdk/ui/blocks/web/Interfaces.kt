@@ -9,14 +9,14 @@ import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.BindableViewModel
 import java.net.URL
 
-interface ViewWebInterface : MeasuredBindableView<WebViewModelInterface>
+internal interface ViewWebInterface : MeasuredBindableView<WebViewModelInterface>
 
-interface WebViewModelInterface : BindableViewModel {
+internal interface WebViewModelInterface : BindableViewModel {
     val url: URL
     val scrollingEnabled: Boolean
 }
 
-interface WebViewBlockViewModelInterface :
+internal interface WebViewBlockViewModelInterface :
     CompositeBlockViewModelInterface,
     LayoutableViewModel,
     BlockViewModelInterface,

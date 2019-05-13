@@ -8,7 +8,7 @@ import org.reactivestreams.Subscription
  * These methods create a new [Publisher] from scratch.  Often used as the root of a publisher
  * chain.
  */
-object Publishers {
+internal object Publishers {
     fun <T> just(item: T): Publisher<T> {
         return Publisher { subscriber ->
             var completed = false

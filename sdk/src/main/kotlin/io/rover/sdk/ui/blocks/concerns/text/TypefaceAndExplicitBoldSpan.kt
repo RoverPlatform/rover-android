@@ -13,7 +13,7 @@ import io.rover.sdk.logging.log
  * this one instead allows you to specify it explicitly.  It will honour existing italic paint
  * style, but it always overrides the bold setting.
  */
-class TypefaceAndExplicitBoldSpan(
+internal class TypefaceAndExplicitBoldSpan(
     private val fontFamily: String,
     private val fontStyle: Int
 ) : TypefaceSpan(fontFamily) {

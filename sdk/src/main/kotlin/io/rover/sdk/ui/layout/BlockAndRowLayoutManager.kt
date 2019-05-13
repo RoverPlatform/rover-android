@@ -20,7 +20,7 @@ import io.rover.sdk.ui.layout.screen.ScreenViewModelInterface
  *
  * This layout manager is perhaps a bit unusual compared to the stock ones: it's driven by data.
  */
-class BlockAndRowLayoutManager(
+internal class BlockAndRowLayoutManager(
     private val layout: Layout,
     private val displayMetrics: DisplayMetrics
 ) : RecyclerView.LayoutManager() {

@@ -9,7 +9,7 @@ import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
 import java.util.concurrent.Executor
 
-interface Scheduler {
+internal interface Scheduler {
     fun execute(runnable: () -> Unit)
 
     companion object
@@ -18,7 +18,7 @@ interface Scheduler {
 /**
  * Generate a [Scheduler] for the Android main thread/looper.
  */
-fun Scheduler.Companion.forAndroidMainThread(): Scheduler {
+internal fun Scheduler.Companion.forAndroidMainThread(): Scheduler {
     val handler = Handler(Looper.getMainLooper())
     return object : Scheduler {
         override fun execute(runnable: () -> Unit) {
@@ -27,7 +27,7 @@ fun Scheduler.Companion.forAndroidMainThread(): Scheduler {
     }
 }
 
-fun Scheduler.Companion.forExecutor(executor: Executor): Scheduler {
+internal fun Scheduler.Companion.forExecutor(executor: Executor): Scheduler {
     return object : Scheduler {
         override fun execute(runnable: () -> Unit) {
             executor.execute(runnable)
@@ -35,7 +35,7 @@ fun Scheduler.Companion.forExecutor(executor: Executor): Scheduler {
     }
 }
 
-fun <T> Publisher<T>.observeOn(scheduler: Scheduler): Publisher<T> {
+internal fun <T> Publisher<T>.observeOn(scheduler: Scheduler): Publisher<T> {
     return Publisher { subscriber ->
         this@observeOn.subscribe(object : Subscriber<T> {
             override fun onComplete() {

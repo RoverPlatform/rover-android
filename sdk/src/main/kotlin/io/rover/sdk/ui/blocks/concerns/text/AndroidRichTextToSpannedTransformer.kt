@@ -5,7 +5,7 @@ import android.text.Spanned
 import android.text.style.StyleSpan
 import io.rover.sdk.platform.roverTextHtmlAsSpanned
 
-class AndroidRichTextToSpannedTransformer : RichTextToSpannedTransformer {
+internal class AndroidRichTextToSpannedTransformer : RichTextToSpannedTransformer {
     override fun transform(string: String, boldRelativeToBlockWeight: Font): Spanned {
         val spanned = string.roverTextHtmlAsSpanned()
 

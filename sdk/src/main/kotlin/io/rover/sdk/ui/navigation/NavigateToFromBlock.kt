@@ -6,7 +6,7 @@ import java.net.URI
 /**
  * Should navigate to the given URL or Screen.
  */
-sealed class NavigateToFromBlock(
+internal sealed class NavigateToFromBlock(
     val block: Block
 ) {
     /**

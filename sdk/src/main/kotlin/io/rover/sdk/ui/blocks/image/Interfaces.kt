@@ -16,9 +16,9 @@ import org.reactivestreams.Publisher
 // ViewImage mixin is binding against ImageBlockViewModelInterface instead of
 // ImageViewModelInterface in order to discover the block's opacity for use in an animation.  This
 // is a hack and should be solved properly.
-interface ViewImageInterface : MeasuredBindableView<ImageBlockViewModelInterface>
+internal interface ViewImageInterface : MeasuredBindableView<ImageBlockViewModelInterface>
 
-interface ImageViewModelInterface : Measurable, BindableViewModel, PrefetchAfterMeasure {
+internal interface ImageViewModelInterface : Measurable, BindableViewModel, PrefetchAfterMeasure {
     /**
      * Subscribe to be informed of the image becoming ready.
      */
@@ -40,13 +40,10 @@ interface ImageViewModelInterface : Measurable, BindableViewModel, PrefetchAfter
     )
 }
 
-interface ImageBlockViewModelInterface :
+internal interface ImageBlockViewModelInterface :
     CompositeBlockViewModelInterface,
     LayoutableViewModel,
     BlockViewModelInterface,
     BackgroundViewModelInterface,
     BorderViewModelInterface,
     ImageViewModelInterface
-
-@Deprecated("Use MeasuredSize passed in through the view model Binding.")
-typealias DimensionCallback = (width: Int, height: Int) -> Unit

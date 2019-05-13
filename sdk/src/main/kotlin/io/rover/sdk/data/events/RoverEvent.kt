@@ -13,7 +13,7 @@ import io.rover.sdk.data.operations.data.encodeJson
 import org.json.JSONObject
 
 sealed class RoverEvent {
-    abstract fun encodeJson(): JSONObject
+    internal abstract fun encodeJson(): JSONObject
 
     data class BlockTapped(
         val experience: Experience,
@@ -33,7 +33,7 @@ sealed class RoverEvent {
             }
         }
 
-        companion object {
+        internal companion object {
             fun decodeJson(jsonObject: JSONObject): BlockTapped {
                 return BlockTapped(
                     experience = Experience.decodeJson(jsonObject.getJSONObject(BlockTapped::experience.name)),
@@ -61,7 +61,7 @@ sealed class RoverEvent {
             }
         }
 
-        companion object {
+        internal companion object {
             fun decodeJson(jsonObject: JSONObject): ExperienceDismissed {
                 return ExperienceDismissed(
                     experience = Experience.decodeJson(jsonObject.getJSONObject(ExperienceDismissed::experience.name)),
@@ -88,7 +88,7 @@ sealed class RoverEvent {
             }
         }
 
-        companion object {
+        internal companion object {
             fun decodeJson(jsonObject: JSONObject): ScreenDismissed {
                 return ScreenDismissed(
                     experience = Experience.decodeJson(jsonObject.getJSONObject(ScreenDismissed::experience.name)),
@@ -114,7 +114,7 @@ sealed class RoverEvent {
             }
         }
 
-        companion object {
+        internal companion object {
             fun decodeJson(jsonObject: JSONObject): ExperiencePresented {
                 return ExperiencePresented(
                     experience = Experience.decodeJson(jsonObject.getJSONObject(ExperiencePresented::experience.name)),
@@ -141,7 +141,7 @@ sealed class RoverEvent {
             }
         }
 
-        companion object {
+        internal companion object {
             fun decodeJson(jsonObject: JSONObject, duration: Int = 0): ExperienceViewed {
                 return ExperienceViewed(
                     experience = Experience.decodeJson(jsonObject.getJSONObject(ScreenDismissed::experience.name)),
@@ -168,7 +168,7 @@ sealed class RoverEvent {
             }
         }
 
-        companion object {
+        internal companion object {
             fun decodeJson(jsonObject: JSONObject, duration: Int = 0): ScreenViewed {
                 return ScreenViewed(
                     experience = Experience.decodeJson(jsonObject.getJSONObject(BlockTapped::experience.name)),
@@ -197,7 +197,7 @@ sealed class RoverEvent {
             }
         }
 
-        companion object {
+        internal companion object {
             fun decodeJson(jsonObject: JSONObject): ScreenPresented {
                 return ScreenPresented(
                     experience = Experience.decodeJson(jsonObject.getJSONObject(ScreenPresented::experience.name)),
@@ -208,7 +208,7 @@ sealed class RoverEvent {
         }
     }
 
-    companion object {
+    internal companion object {
         private const val BLOCK_TAPPED_CODE = "BLOCK TAPPED"
         private const val EXPERIENCE_DISMISSED_CODE = "EXPERIENCE DISMISSED"
         private const val SCREEN_DISMISSED_CODE = "SCREEN DISMISSED"

@@ -19,7 +19,7 @@ import io.rover.sdk.platform.whenNotNull
  * - LayoutableViewModel probably needs to split, because we want to be able to delegate the frame()
  *   method to the new mixin version of BlockViewModel but obviously it should not specify view type
  */
-class BlockViewModel(
+internal class BlockViewModel(
     private val block: Block,
     private val paddingDeflections: Set<LayoutPaddingDeflection> = emptySet(),
     private val measurable: Measurable? = null

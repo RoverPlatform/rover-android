@@ -12,7 +12,7 @@ import io.rover.sdk.ui.concerns.ViewModelBinding
  * Mixin that binds a barcode view model to an [AppCompatImageView] by rendering the barcodes and
  * displaying them in the image view.
  */
-class ViewBarcode(
+internal class ViewBarcode(
     private val barcodeView: AppCompatImageView
 ) : ViewBarcodeInterface {
     init {

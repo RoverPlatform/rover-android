@@ -15,7 +15,7 @@ import java.util.concurrent.Executor
 /**
  * A simple HTTP downloader.
  */
-class ImageDownloader(
+internal class ImageDownloader(
     private val ioExecutor: Executor
 ) {
     /**

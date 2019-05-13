@@ -5,7 +5,7 @@ import android.graphics.Typeface
 /**
  * A specific font in the font-family and style tuple appropriate for Android.
  */
-data class Font(
+internal data class Font(
     /**
      * A font family name.
      */

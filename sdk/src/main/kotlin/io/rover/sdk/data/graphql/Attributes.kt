@@ -4,13 +4,13 @@ import io.rover.sdk.data.domain.Attributes
 import org.json.JSONArray
 import org.json.JSONObject
 
-fun JSONObject.toStringHash(): Map<String, String> {
+internal fun JSONObject.toStringHash(): Map<String, String> {
     return this.keys().asSequence().associate { key ->
         Pair(key, this.safeGetString(key))
     }
 }
 
-fun Attributes.encodeJson(): JSONObject {
+internal fun Attributes.encodeJson(): JSONObject {
     this.map { (_, value) ->
         @Suppress("UNCHECKED_CAST") val newValue = when(value) {
             is Map<*, *> -> (value as Attributes).encodeJson()
@@ -22,7 +22,7 @@ fun Attributes.encodeJson(): JSONObject {
     return JSONObject(this)
 }
 
-fun JSONObject.toAttributesHash(): Attributes {
+internal fun JSONObject.toAttributesHash(): Attributes {
     return this.keys().asSequence().map { key ->
         val value = get(key)
         if (value is JSONObject) {

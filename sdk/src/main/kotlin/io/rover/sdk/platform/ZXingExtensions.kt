@@ -27,7 +27,7 @@ import io.rover.shaded.zxing.com.google.zxing.common.BitMatrix
 /**
  * Convert a [BitMatrix] bitmap from ZXing to an Android [Bitmap].
  */
-fun BitMatrix.toAndroidBitmap(): Bitmap {
+internal fun BitMatrix.toAndroidBitmap(): Bitmap {
     // More or less obtained from zxing/client/android/encode/QRCodeEncoder.java
     val pixels = IntArray(width * height)
     for (y in 0 until height) {

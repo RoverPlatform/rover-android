@@ -12,12 +12,12 @@ import org.reactivestreams.Publisher
  *
  * Alternatively, you can add a [RoverEventListener] to receive event updates
  */
-open class EventEmitter {
-    protected open val eventSubject = PublishSubject<RoverEvent>()
+class EventEmitter {
+    private val eventSubject = PublishSubject<RoverEvent>()
 
-    open val trackedEvents: Publisher<RoverEvent> by lazy { eventSubject.share() }
+    val trackedEvents: Publisher<RoverEvent> by lazy { eventSubject.share() }
 
-    open fun trackEvent(roverEvent: RoverEvent) {
+    internal fun trackEvent(roverEvent: RoverEvent) {
         eventSubject.onNext(roverEvent)
         when (roverEvent) {
             is RoverEvent.BlockTapped -> listeners.forEach { it.onBlockTapped(roverEvent) }

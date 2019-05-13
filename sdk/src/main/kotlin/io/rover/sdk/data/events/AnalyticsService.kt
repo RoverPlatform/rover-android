@@ -3,7 +3,6 @@ package io.rover.sdk.data.events
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.AsyncTask
-import android.os.Build
 import io.rover.sdk.data.domain.Attributes
 import io.rover.sdk.data.graphql.encodeJson
 import io.rover.sdk.data.http.HttpRequest
@@ -16,18 +15,16 @@ import org.json.JSONObject
 import java.io.DataOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
-import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 import java.util.UUID
 
 /**
  * Responsible for dispatching Analytics events.
  */
-class AnalyticsService(
+internal class AnalyticsService(
     context: Context,
     private val accountToken: String?,
-    private val eventEmitter: EventEmitter
+    eventEmitter: EventEmitter
 ) {
 
     private val prefs: SharedPreferences? =
@@ -83,11 +80,14 @@ class AnalyticsService(
         request(urlRequest, bodyData)
     }
 
-    fun enable() {
+    /**
+     * Initiates the [AnalyticsService] sending of analytics events.
+     */
+    init {
         eventEmitter.trackedEvents.subscribe { sendRequest(it) }
     }
 
-    fun request(
+    internal fun request(
         request: HttpRequest,
         bodyData: String
     ) {

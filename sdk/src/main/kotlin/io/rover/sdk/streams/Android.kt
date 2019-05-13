@@ -9,7 +9,7 @@ import android.view.View
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscription
 
-sealed class ViewEvent {
+internal sealed class ViewEvent {
     class Attach : ViewEvent()
     class Detach : ViewEvent()
 }
@@ -17,7 +17,7 @@ sealed class ViewEvent {
 /**
  * Observe attach and detach events from the given Android [View].
  */
-fun View.attachEvents(): Publisher<ViewEvent> {
+internal fun View.attachEvents(): Publisher<ViewEvent> {
     return Publisher { subscriber ->
         var requested = false
         val listener = object : View.OnAttachStateChangeListener {
@@ -45,7 +45,7 @@ fun View.attachEvents(): Publisher<ViewEvent> {
     }
 }
 
-fun LifecycleOwner.asPublisher(): Publisher<Lifecycle.Event> {
+internal fun LifecycleOwner.asPublisher(): Publisher<Lifecycle.Event> {
     return Publisher { subscriber ->
         var requested = false
         val observer = GenericLifecycleObserver { _, event -> subscriber.onNext(event) }
@@ -68,7 +68,7 @@ fun LifecycleOwner.asPublisher(): Publisher<Lifecycle.Event> {
 /**
  * Returns a [Publisher] that is unsubscribed from [this] when the given [View] is detached.
  */
-fun <T> Publisher<T>.androidLifecycleDispose(view: View): Publisher<T> {
+internal fun <T> Publisher<T>.androidLifecycleDispose(view: View): Publisher<T> {
     return this.takeUntil(
         view.attachEvents().filter { it is ViewEvent.Detach }
     )
@@ -78,7 +78,7 @@ fun <T> Publisher<T>.androidLifecycleDispose(view: View): Publisher<T> {
  * Returns a [Publisher] that is unsubscribed from [this] when the given [LifecycleOwner] (Fragment
  * or Activity) goes out-of-lifecycle.
  */
-fun <T> Publisher<T>.androidLifecycleDispose(lifecycleOwner: LifecycleOwner): Publisher<T> {
+internal fun <T> Publisher<T>.androidLifecycleDispose(lifecycleOwner: LifecycleOwner): Publisher<T> {
     return this.takeUntil(
         lifecycleOwner.asPublisher().filter { it == Lifecycle.Event.ON_DESTROY }
     )

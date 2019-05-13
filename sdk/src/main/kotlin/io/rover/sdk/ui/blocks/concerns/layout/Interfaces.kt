@@ -10,7 +10,7 @@ import org.reactivestreams.Publisher
  *
  * This is responsible for setting padding and anything else relating to block layout.
  */
-interface ViewBlockInterface : MeasuredBindableView<BlockViewModelInterface>
+internal interface ViewBlockInterface : MeasuredBindableView<BlockViewModelInterface>
 
 /**
  * Exposed by a view model that may need to contribute to the Android view padding around the
@@ -23,14 +23,14 @@ interface ViewBlockInterface : MeasuredBindableView<BlockViewModelInterface>
  * Note that this should not be added to a view model's interface; it that is done it will be mixed
  * into any surrounding view block, where it is not used and will be misleading.
  */
-interface LayoutPaddingDeflection {
+internal interface LayoutPaddingDeflection {
     val paddingDeflection: Padding
 }
 
 /**
  * Padding values surrounding a rectilinear UI item, in dp.
  */
-data class Padding(
+internal data class Padding(
     val left: Int,
     val top: Int,
     val right: Int,
@@ -49,7 +49,7 @@ data class Padding(
 /**
  * Can vertically measure its content for stacked/autoheight purposes.
  */
-interface Measurable {
+internal interface Measurable {
     /**
      * Measure the "natural" height for the content contained in this block (for
      * example, a wrapped block of text will consume up to some height depending on content and
@@ -65,13 +65,13 @@ interface Measurable {
  * level concerns shared by all blocks, but has its own mixin implementation -- BlockViewModel --
  * that would cause an ambiguity a category for the fully block objects themselves.
   */
-interface CompositeBlockViewModelInterface : BlockViewModelInterface
+internal interface CompositeBlockViewModelInterface : BlockViewModelInterface
 
 /**
  * A view model for Blocks (particularly, the dynamic layout concerns thereof) that can
  * be laid out in a Rover experience.
  */
-interface BlockViewModelInterface : LayoutableViewModel {
+internal interface BlockViewModelInterface : LayoutableViewModel {
 
     /**
      * The full amount contributed by this block (including its own height and offsets) to the

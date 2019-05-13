@@ -36,9 +36,9 @@ import android.view.View
  *
  * @hide
  */
-open class DrawableWrapper(drawable: Drawable) : Drawable(), Drawable.Callback {
+internal open class DrawableWrapper(drawable: Drawable) : Drawable(), Drawable.Callback {
 
-    var wrappedDrawable: Drawable? = null
+    private var wrappedDrawable: Drawable? = null
         set(drawable) {
             if (wrappedDrawable != null) {
                 wrappedDrawable!!.callback = null

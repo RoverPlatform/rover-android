@@ -13,7 +13,7 @@ import java.util.Date
 import java.util.UUID
 import kotlin.math.max
 
-open class SessionTracker(
+internal class SessionTracker(
     private val eventEmitter: EventEmitter,
 
     private val sessionStore: SessionStore,
@@ -38,7 +38,7 @@ open class SessionTracker(
      * A [sessionEventName] must be provided so that the Session Tracker can emit session viewed
      * after the timeout completes.
      */
-    open fun enterSession(
+    fun enterSession(
         sessionKey: Any,
         sessionStartEvent: RoverEvent,
         sessionEvent: RoverEvent
@@ -89,7 +89,7 @@ open class SessionTracker(
         updateTimer()
     }
 
-    open fun leaveSession(
+    fun leaveSession(
         sessionKey: Any,
         sessionEndEvent: RoverEvent
     ) {
@@ -102,7 +102,7 @@ open class SessionTracker(
     }
 }
 
-open class SessionStore(
+internal class SessionStore(
     localStorage: LocalStorage
 ) {
     private val store = localStorage.getKeyValueStorageFor(STORAGE_IDENTIFIER)
@@ -116,7 +116,7 @@ open class SessionStore(
      *
      * Returns the new session's UUID, or, if a session is already active, null.
      */
-    open fun enterSession(sessionKey: Any, sessionEvent: RoverEvent) {
+    fun enterSession(sessionKey: Any, sessionEvent: RoverEvent) {
         val session = getEntry(sessionKey)?.copy(
             // clear closedAt to avoid expiring the session if it is being re-opened.
             closedAt = null
@@ -130,7 +130,7 @@ open class SessionStore(
         setEntry(sessionKey, session)
     }
 
-    open fun leaveSession(sessionKey: Any) {
+    fun leaveSession(sessionKey: Any) {
         val existingEntry = getEntry(sessionKey)
 
         if (existingEntry != null) {
@@ -163,7 +163,7 @@ open class SessionStore(
     /**
      * Returns the soonest time that a session is going to expire.
      */
-    open fun soonestExpiryInSeconds(keepAliveSeconds: Int): Int? {
+    fun soonestExpiryInSeconds(keepAliveSeconds: Int): Int? {
         // gather stale expiring session entries that have passed.
         val earliestExpiry = store.keys
             .mapNotNull { key -> getEntry(key) }
@@ -188,7 +188,7 @@ open class SessionStore(
      *
      * Such sessions will only be returned once; they are deleted.
      */
-    open fun collectExpiredSessions(keepAliveSeconds: Int): List<ExpiredSession> {
+    fun collectExpiredSessions(keepAliveSeconds: Int): List<ExpiredSession> {
         val expiringEntries = store.keys
             .mapNotNull { key ->
                 getEntry(key).whenNotNull { Pair(key, it) }
@@ -217,7 +217,7 @@ open class SessionStore(
         }
     }
 
-    open fun gc() {
+    private fun gc() {
         log.v("Garbage collecting any expired sessions.")
 
         store.keys.forEach { key ->

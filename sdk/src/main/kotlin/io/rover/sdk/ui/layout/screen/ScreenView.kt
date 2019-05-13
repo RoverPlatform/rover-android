@@ -22,7 +22,7 @@ import io.rover.sdk.ui.toMeasuredSize
 import org.reactivestreams.Publisher
 import java.lang.RuntimeException
 
-class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelInterface> {
+internal class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyle: Int) : super(

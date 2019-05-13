@@ -8,7 +8,7 @@ import java.net.URL
  *
  * This is effectively the first layer of cache.
  */
-class BitmapWarmGpuCacheStage(
+internal class BitmapWarmGpuCacheStage(
     private val nextStage: SynchronousPipelineStage<URL, Bitmap>
 ) : SynchronousPipelineStage<URL, Bitmap> {
     override fun request(input: URL): PipelineStageResult<Bitmap> {

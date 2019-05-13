@@ -22,7 +22,7 @@ import io.rover.sdk.ui.layout.screen.ScreenViewModelInterface
 /**
  * Navigation behaviour between screens of an Experience.
  */
-class NavigationView : FrameLayout, MeasuredBindableView<NavigationViewModelInterface> {
+internal class NavigationView : FrameLayout, MeasuredBindableView<NavigationViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)

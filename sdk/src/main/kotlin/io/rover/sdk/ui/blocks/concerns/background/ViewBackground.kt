@@ -14,7 +14,7 @@ import io.rover.sdk.platform.DrawableWrapper
 import io.rover.sdk.ui.concerns.ViewModelBinding
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 
-class ViewBackground(
+internal class ViewBackground(
     override val view: View
 ) : ViewBackgroundInterface {
     private val shortAnimationDuration = view.resources.getInteger(
@@ -86,7 +86,7 @@ class ViewBackground(
     }
 }
 
-class BackgroundColorDrawableWrapper(
+internal class BackgroundColorDrawableWrapper(
     private val backgroundColor: Int,
     private val drawableOnTopOfColor: Drawable
 ) : DrawableWrapper(drawableOnTopOfColor) {

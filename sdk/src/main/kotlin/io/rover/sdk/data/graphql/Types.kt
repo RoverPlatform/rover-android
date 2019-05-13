@@ -8,7 +8,7 @@ import org.json.JSONObject
  *
  * @param TInput This is the type of the reply you expect to arrive back from the cloud API.
  */
-interface GraphQlRequest<out TInput> {
+internal interface GraphQlRequest<out TInput> {
     /**
      * A GraphQL operation name that should be selected out of the query.  Optional.
      */
@@ -105,7 +105,7 @@ interface GraphQlRequest<out TInput> {
  * A network response.  Optionally either a success (with requested payload), or a failure (with the
  * reason why, and whether or not the caller ought to attempt to repeat the request.
  */
-sealed class ApiResult<T> {
+internal sealed class ApiResult<T> {
     data class Error<T>(
         val throwable: Throwable,
 
@@ -121,7 +121,7 @@ sealed class ApiResult<T> {
     data class Success<T>(val response: T) : ApiResult<T>()
 }
 
-sealed class ApiError(
+internal sealed class ApiError(
     private val description: String
 ) : Exception(description) {
     class EmptyResponseData : ApiError("Empty response data")
@@ -136,6 +136,6 @@ sealed class ApiError(
     }
 }
 
-class APIException(
+internal class APIException(
     val errors: List<Exception>
 ) : Exception("Rover API reported: ${errors.map { it.message }.joinToString(", ")}")

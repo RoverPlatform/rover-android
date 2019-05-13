@@ -3,7 +3,7 @@ package io.rover.sdk.ui.toolbar
 /**
  * Tool bar configuration.  Colour overrides, text, text colour, and status bar settings.
  */
-data class ToolbarConfiguration(
+internal data class ToolbarConfiguration(
     val useExistingStyle: Boolean,
 
     val appBarText: String,

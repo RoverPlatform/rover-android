@@ -12,11 +12,11 @@ import io.rover.sdk.data.domain.Color
  * See "Converting DP Units to Pixel Units" on
  * https://developer.android.com/guide/practices/screens_support.html
  */
-fun Float.dpAsPx(displayMetrics: DisplayMetrics): Int {
+internal fun Float.dpAsPx(displayMetrics: DisplayMetrics): Int {
     return this.dpAsPx(displayMetrics.density)
 }
 
-fun Float.dpAsPx(displayDensity: Float): Int {
+internal fun Float.dpAsPx(displayDensity: Float): Int {
     // TODO change to: TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this, metrics)
     return (this * displayDensity + 0.5f).toInt()
 }
@@ -26,20 +26,20 @@ fun Float.dpAsPx(displayDensity: Float): Int {
  *
  * See [Converting DP Units to Pixel Units](https://developer.android.com/guide/practices/screens_support.html)
  */
-fun Int.dpAsPx(displayMetrics: DisplayMetrics): Int {
+internal fun Int.dpAsPx(displayMetrics: DisplayMetrics): Int {
     return dpAsPx(displayMetrics.density)
 }
 
-fun Int.dpAsPx(displayDensity: Float): Int {
+internal fun Int.dpAsPx(displayDensity: Float): Int {
     // TODO change to: TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this, metrics)
     return (this * displayDensity + 0.5f).toInt()
 }
 
-fun Int.pxAsDp(displayMetrics: DisplayMetrics): Float {
+internal fun Int.pxAsDp(displayMetrics: DisplayMetrics): Float {
     return pxAsDp(displayMetrics.density)
 }
 
-fun Int.pxAsDp(displayDensity: Float): Float {
+internal fun Int.pxAsDp(displayDensity: Float): Float {
     return this / displayDensity
 }
 
@@ -49,7 +49,7 @@ fun Int.pxAsDp(displayDensity: Float): Float {
  * See "Converting DP Units to Pixel Units" on
  * https://developer.android.com/guide/practices/screens_support.html
  */
-fun RectF.dpAsPx(displayMetrics: DisplayMetrics): Rect {
+internal fun RectF.dpAsPx(displayMetrics: DisplayMetrics): Rect {
     return Rect(
         left.dpAsPx(displayMetrics),
         top.dpAsPx(displayMetrics),
@@ -58,11 +58,11 @@ fun RectF.dpAsPx(displayMetrics: DisplayMetrics): Rect {
     )
 }
 
-fun Color.asAndroidColor(): Int {
+internal fun Color.asAndroidColor(): Int {
     return (alpha * 255).toInt() shl 24 or (red shl 16) or (green shl 8) or blue
 }
 
-fun RectF.toMeasuredSize(density: Float): MeasuredSize {
+internal fun RectF.toMeasuredSize(density: Float): MeasuredSize {
     return MeasuredSize(
         width(),
         height(),

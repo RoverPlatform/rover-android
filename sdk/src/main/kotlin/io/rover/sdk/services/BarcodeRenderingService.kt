@@ -12,7 +12,7 @@ import io.rover.shaded.zxing.com.google.zxing.EncodeHintType
 import io.rover.shaded.zxing.com.google.zxing.MultiFormatWriter
 import io.rover.shaded.zxing.com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 
-open class BarcodeRenderingService {
+internal class BarcodeRenderingService {
     enum class Format {
         Pdf417, Code128, Aztec, QrCode
     }
@@ -28,7 +28,7 @@ open class BarcodeRenderingService {
      * Returns the height needed to accommodate the barcode, at the correct aspect, at the given
      * width, in points.
      */
-    open fun measureHeightNeededForBarcode(
+    fun measureHeightNeededForBarcode(
         text: String,
         format: Format,
         width: Float
@@ -43,7 +43,7 @@ open class BarcodeRenderingService {
      *
      * Note that what length and sort of text is valid depends on the Barcode format.
      */
-    open fun renderBarcode(
+    fun renderBarcode(
         text: String,
         format: Format
     ): Bitmap {

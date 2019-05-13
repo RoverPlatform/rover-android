@@ -22,7 +22,7 @@ import io.rover.sdk.ui.blocks.concerns.text.ViewText
 // to pick up.
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 @SuppressLint("NewApi")
-class ButtonBlockView : AppCompatTextView, LayoutableView<ButtonBlockViewModelInterface> {
+internal class ButtonBlockView : AppCompatTextView, LayoutableView<ButtonBlockViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)

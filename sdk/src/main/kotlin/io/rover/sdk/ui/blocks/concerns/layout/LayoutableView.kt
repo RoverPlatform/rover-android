@@ -11,4 +11,4 @@ import io.rover.sdk.ui.concerns.MeasuredBindableView
  * interface rather than an abstract [View] subclass in order to allow implementers to inherit from
  * various different [View] subclasses.
  */
-interface LayoutableView<VM : LayoutableViewModel> : MeasuredBindableView<VM>
+internal interface LayoutableView<VM : LayoutableViewModel> : MeasuredBindableView<VM>

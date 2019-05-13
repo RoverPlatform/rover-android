@@ -9,7 +9,7 @@ import android.graphics.Shader
  * The method these are specified with is a bit idiosyncratic on account of Android implementation
  * details and the combination of Drawables the view uses to achieve the effect.
  */
-class BackgroundImageConfiguration(
+internal class BackgroundImageConfiguration(
     /**
      * Bounds in pixels, in *relative insets from their respective edges*.
      *

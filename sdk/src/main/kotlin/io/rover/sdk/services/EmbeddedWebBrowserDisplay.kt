@@ -17,7 +17,7 @@ interface EmbeddedWebBrowserDisplayInterface {
     fun intentForViewingWebsiteViaEmbeddedBrowser(url: String): Intent
 }
 
-class EmbeddedWebBrowserDisplay(
+internal class EmbeddedWebBrowserDisplay(
     /**
      * Set the background colour for the Chrome Custom tab's title bar.
      *

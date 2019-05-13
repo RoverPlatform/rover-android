@@ -7,7 +7,7 @@ import java.util.concurrent.Executors
 /**
  * A very simple facade wrapped around the Android logger using Kotlin extension methods.
  */
-interface LogReceiver {
+internal interface LogReceiver {
     fun e(message: String)
     fun w(message: String)
     fun v(message: String)
@@ -15,7 +15,7 @@ interface LogReceiver {
     fun d(message: String)
 }
 
-interface LogEmitter {
+internal interface LogEmitter {
     fun e(logTag: String, message: String)
     fun w(logTag: String, message: String)
     fun v(logTag: String, message: String)
@@ -23,7 +23,7 @@ interface LogEmitter {
     fun d(logTag: String, message: String)
 }
 
-class GlobalStaticLogHolder {
+internal class GlobalStaticLogHolder {
     companion object {
         // This is the only example of a global scope, mutable, allocated-at-runtime value.  This is
         // to avoid the complexity of trying to inject a logger into all and sundry location.
@@ -35,7 +35,7 @@ class GlobalStaticLogHolder {
     }
 }
 
-val Any.log: LogReceiver
+internal val Any.log: LogReceiver
     get() {
         val receiver = GlobalStaticLogHolder.globalLogEmitter ?: AndroidLogger() // default to a simple Android logger if logger not configured.
 
@@ -65,7 +65,7 @@ val Any.log: LogReceiver
         }
     }
 
-class AndroidLogger : LogEmitter {
+internal class AndroidLogger : LogEmitter {
     override fun e(logTag: String, message: String) {
         Log.e(logTag, message)
     }
@@ -87,7 +87,7 @@ class AndroidLogger : LogEmitter {
     }
 }
 
-class JvmLogger : LogEmitter {
+internal class JvmLogger : LogEmitter {
     override fun e(logTag: String, message: String) {
         System.out.println("E/$logTag $message")
     }
@@ -114,7 +114,7 @@ class JvmLogger : LogEmitter {
  * [bufferLineSize] of those log messages such that they can be retrieved, perhaps to include with a
  * crash report or similar.
  */
-class LogBuffer(
+internal class LogBuffer(
     private val nextLogger: LogEmitter,
     private val bufferLineSize: Int = 40
 ) : LogEmitter by nextLogger {

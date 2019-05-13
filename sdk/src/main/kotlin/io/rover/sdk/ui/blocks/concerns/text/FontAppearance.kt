@@ -5,7 +5,7 @@ import android.graphics.Paint
 /**
  * A selected [Font] with a size, colour, and alignment to be drawn.
  */
-data class FontAppearance(
+internal data class FontAppearance(
     /**
      * Font size, in Android Scalable Pixels.
      */

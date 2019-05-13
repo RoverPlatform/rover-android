@@ -12,7 +12,7 @@ import io.rover.sdk.ui.blocks.concerns.layout.LayoutableView
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.ViewModelBinding
 
-class RowView : View, LayoutableView<RowViewModelInterface> {
+internal class RowView : View, LayoutableView<RowViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)

@@ -7,7 +7,7 @@ import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.ViewModelBinding
 
 @SuppressLint("SetJavaScriptEnabled")
-class ViewWeb(
+internal class ViewWeb(
     private val webView: WebView
 ) : ViewWebInterface {
 

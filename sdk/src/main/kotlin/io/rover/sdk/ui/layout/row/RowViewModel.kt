@@ -18,7 +18,7 @@ import io.rover.sdk.streams.flatMap
 import io.rover.sdk.streams.share
 import org.reactivestreams.Publisher
 
-class RowViewModel(
+internal class RowViewModel(
     private val row: Row,
     private val blockViewModelResolver: (block: Block) -> CompositeBlockViewModelInterface,
     private val backgroundViewModel: BackgroundViewModelInterface

@@ -49,12 +49,12 @@ import org.reactivestreams.Publisher
  *
  * See [RoverActivity] for an example of how to integrate.
  */
-class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewModelInterface> {
+internal class RoverView : CoordinatorLayout {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    override var viewModelBinding: MeasuredBindableView.Binding<RoverViewModelInterface>? by ViewModelBinding(false) { binding, subscriptionCallback ->
+    var viewModelBinding: MeasuredBindableView.Binding<RoverViewModelInterface>? by ViewModelBinding(false) { binding, subscriptionCallback ->
         // sadly have to set rebindingAllowed to be false because of complexity dealing with the
         // toolbar; the toolbar may not be configured twice.
         val viewModel = binding?.viewModel
@@ -144,19 +144,14 @@ class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewModelInterfac
         }
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-
-    }
-
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         toolbarHost = null
     }
 
-    protected var progressIndicatorView: View? = null
+    private var progressIndicatorView: View? = null
 
-    protected fun setUpProgressIndicator() {
+    private fun setUpProgressIndicator() {
         val drawable = CircularProgressDrawable(context)
         drawable.start()
         val imageView = AppCompatImageView(
@@ -173,11 +168,11 @@ class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewModelInterfac
         }
     }
 
-    protected fun turnOnProgressIndicator() {
+    private fun turnOnProgressIndicator() {
         progressIndicatorView?.visibility = View.VISIBLE
     }
 
-    protected fun turnOffProgressIndicator() {
+    private fun turnOffProgressIndicator() {
         progressIndicatorView?.visibility = View.GONE
     }
 

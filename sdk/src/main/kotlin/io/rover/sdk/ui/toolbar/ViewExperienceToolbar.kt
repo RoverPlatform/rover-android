@@ -22,7 +22,7 @@ import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.RoverView
 import org.reactivestreams.Subscription
 
-class ViewExperienceToolbar(
+internal class ViewExperienceToolbar(
     private val hostView: View,
     hostWindowForStatusBar: Window,
     private val context: Context,

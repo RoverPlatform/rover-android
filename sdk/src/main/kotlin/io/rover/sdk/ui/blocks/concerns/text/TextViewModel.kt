@@ -13,7 +13,7 @@ import io.rover.sdk.ui.asAndroidColor
 /**
  * Text styling and size concerns.
  */
-class TextViewModel(
+internal class TextViewModel(
     private val styledText: Text,
     private val measurementService: MeasurementService,
     override val singleLine: Boolean = false,

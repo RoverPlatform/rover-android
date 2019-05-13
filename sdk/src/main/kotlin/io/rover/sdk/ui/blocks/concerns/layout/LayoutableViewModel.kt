@@ -15,7 +15,7 @@ import io.rover.sdk.ui.Rect
  * (View models that do not implement this interface are typically used in a compositional way
  * as a part of other view models that do implement [LayoutableViewModel].
  */
-interface LayoutableViewModel : BindableViewModel {
+internal interface LayoutableViewModel : BindableViewModel {
     /**
      * Measures and returns a [RectF] of the placement the view model (with origin being the
      * bounds).

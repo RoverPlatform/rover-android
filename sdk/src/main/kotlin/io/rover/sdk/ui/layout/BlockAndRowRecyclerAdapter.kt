@@ -13,7 +13,7 @@ import io.rover.sdk.ui.blocks.concerns.layout.LayoutableViewModel
 /**
  * The RecyclerView adapter for Experience layouts.
  */
-open class BlockAndRowRecyclerAdapter(
+internal class BlockAndRowRecyclerAdapter(
     private val layout: Layout,
     private val displayMetrics: DisplayMetrics,
     private val blockViewFactory: (viewType: ViewType, context: Context) -> LayoutableView<out LayoutableViewModel>

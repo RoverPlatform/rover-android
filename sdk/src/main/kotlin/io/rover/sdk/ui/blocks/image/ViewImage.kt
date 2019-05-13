@@ -10,7 +10,7 @@ import io.rover.sdk.ui.concerns.MeasuredBindableView
 /**
  * Mixin that binds an image block view model to the relevant parts of an [ImageView].
  */
-class ViewImage(
+internal class ViewImage(
     private val imageView: AppCompatImageView
 ) : ViewImageInterface {
     private val shortAnimationDuration = imageView.resources.getInteger(

@@ -15,7 +15,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 
-fun <T> Publisher<out T>.subscribe(
+internal fun <T> Publisher<out T>.subscribe(
     onNext: (item: T) -> Unit,
     onError: (throwable: Throwable) -> Unit,
     subscriptionReceiver: ((Subscription) -> Unit)? = null
@@ -36,7 +36,7 @@ fun <T> Publisher<out T>.subscribe(
     })
 }
 
-fun <T> Publisher<T>.subscribe(onNext: (item: T) -> Unit) {
+internal fun <T> Publisher<T>.subscribe(onNext: (item: T) -> Unit) {
     this.subscribe(object : Subscriber<T> {
         override fun onComplete() { }
 
@@ -52,7 +52,7 @@ fun <T> Publisher<T>.subscribe(onNext: (item: T) -> Unit) {
     })
 }
 
-fun <T, R> Publisher<T>.map(transform: (T) -> R): Publisher<R> {
+internal fun <T, R> Publisher<T>.map(transform: (T) -> R): Publisher<R> {
     val prior = this
     return Publisher { subscriber ->
         prior.subscribe(
@@ -95,7 +95,7 @@ fun <T, R> Publisher<T>.map(transform: (T) -> R): Publisher<R> {
     }
 }
 
-fun <T> Publisher<T>.filter(predicate: (T) -> Boolean): Publisher<T> {
+internal fun <T> Publisher<T>.filter(predicate: (T) -> Boolean): Publisher<T> {
     return Publisher { subscriber ->
         this@filter.subscribe(object : Subscriber<T> {
             override fun onComplete() {
@@ -137,11 +137,11 @@ fun <T> Publisher<T>.filter(predicate: (T) -> Boolean): Publisher<T> {
  * that will be ignored.
  */
 @Suppress("UNCHECKED_CAST") // Suppression because of variance issues.
-inline fun <reified TSub : T, reified T : Any> Publisher<T>.filterForSubtype(): Publisher<TSub> {
+internal inline fun <reified TSub : T, reified T : Any> Publisher<T>.filterForSubtype(): Publisher<TSub> {
     return this.filter { TSub::class.java.isAssignableFrom(it::class.java) } as Publisher<TSub>
 }
 
-fun <T, R> Publisher<T>.flatMap(transform: (T) -> Publisher<out R>): Publisher<R> {
+internal fun <T, R> Publisher<T>.flatMap(transform: (T) -> Publisher<out R>): Publisher<R> {
     val prior = this
     return Publisher { subscriber ->
         val outstanding: ConcurrentHashMap<Subscriber<*>, Boolean> = ConcurrentHashMap()
@@ -230,7 +230,7 @@ fun <T, R> Publisher<T>.flatMap(transform: (T) -> Publisher<out R>): Publisher<R
  *
  * NB. This operator is not yet thread safe.
  */
-fun <T> Publisher<T>.share(): Publisher<T> {
+internal fun <T> Publisher<T>.share(): Publisher<T> {
     val multicastTo: MutableSet<Subscriber<in T>> = mutableSetOf()
 
     var subscribedToSource = false
@@ -288,7 +288,7 @@ fun <T> Publisher<T>.share(): Publisher<T> {
  *
  * NB. This operator is not yet thread safe.
  */
-fun <T> Publisher<T>.shareHotAndReplay(count: Int): Publisher<T> {
+internal fun <T> Publisher<T>.shareHotAndReplay(count: Int): Publisher<T> {
     val buffer = ArrayDeque<T>(count)
 
     val multicastTo: MutableSet<Subscriber<in T>> = mutableSetOf()
@@ -350,7 +350,7 @@ fun <T> Publisher<T>.shareHotAndReplay(count: Int): Publisher<T> {
  *
  * Not thread safe.
  */
-fun <T> Publisher<T>.shareAndReplay(count: Int): Publisher<T> {
+internal fun <T> Publisher<T>.shareAndReplay(count: Int): Publisher<T> {
     val buffer = ArrayDeque<T>(count)
 
     // this set is of subscribers that subscribed before we ourselves managed to complete
@@ -440,7 +440,7 @@ fun <T> Publisher<T>.shareAndReplay(count: Int): Publisher<T> {
 }
 
 @Suppress("UNCHECKED_CAST") // Suppression because of variance issues.
-fun <T : Any> Publisher<T>.first(): Publisher<T> {
+internal fun <T : Any> Publisher<T>.first(): Publisher<T> {
     return Publisher { subscriber ->
         var sourceSubscription: Subscription? = null
 
@@ -486,7 +486,7 @@ fun <T : Any> Publisher<T>.first(): Publisher<T> {
  * Will filter out sequences of identitical (by comparison) items.  An item will not be
  * emitted if it is the same as the prior.
  */
-fun <T : Any> Publisher<T>.distinctUntilChanged(): Publisher<T> {
+internal fun <T : Any> Publisher<T>.distinctUntilChanged(): Publisher<T> {
     return Publisher { subscriber ->
 
         var lastSeen: LastSeen<T> = LastSeen.NoneYet()
@@ -532,7 +532,7 @@ fun <T : Any> Publisher<T>.distinctUntilChanged(): Publisher<T> {
  * Will filter out sequences of identitical (by comparison) items.  An item will not be
  * emitted if it is the same as the prior.
  */
-fun <T : Any, K> Publisher<T>.distinctUntilChanged(selector: (T) -> K): Publisher<T> {
+internal fun <T : Any, K> Publisher<T>.distinctUntilChanged(selector: (T) -> K): Publisher<T> {
     return Publisher { subscriber ->
 
         var lastSeen: LastSeen<T> = LastSeen.NoneYet()
@@ -577,7 +577,7 @@ fun <T : Any, K> Publisher<T>.distinctUntilChanged(selector: (T) -> K): Publishe
 /**
  * A maybe type just because our maybe value itself could be null.
  */
-sealed class LastSeen<T : Any> {
+internal sealed class LastSeen<T : Any> {
     class NoneYet<T : Any> : LastSeen<T>()
     class Seen<T : Any>(val value: T) : LastSeen<T>()
 }
@@ -591,7 +591,7 @@ sealed class LastSeen<T : Any> {
  *
  * Not thread safe.
  */
-fun <T : Any> Publisher<out T>.shareAndReplayTypesOnResubscribe(vararg types: Class<out T>): Publisher<T> {
+internal fun <T : Any> Publisher<out T>.shareAndReplayTypesOnResubscribe(vararg types: Class<out T>): Publisher<T> {
     val lastSeen: MutableMap<Class<out T>, T?> = types.associate { Pair(it, null) }.toMutableMap()
 
     val shared = this.share()
@@ -646,7 +646,7 @@ fun <T : Any> Publisher<out T>.shareAndReplayTypesOnResubscribe(vararg types: Cl
 }
 
 @Suppress("UNCHECKED_CAST") // Suppression because of variance issues.
-fun <T> Publisher<T>.doOnSubscribe(behaviour: () -> Unit): Publisher<T> {
+internal fun <T> Publisher<T>.doOnSubscribe(behaviour: () -> Unit): Publisher<T> {
     return Publisher { subscriber ->
         val wrappedSubscriber = object : Subscriber<T> by subscriber as Subscriber<T> {
             override fun onSubscribe(subscription: Subscription) {
@@ -659,7 +659,7 @@ fun <T> Publisher<T>.doOnSubscribe(behaviour: () -> Unit): Publisher<T> {
 }
 
 @Suppress("UNCHECKED_CAST") // Suppression because of variance issues.
-fun <T> Publisher<T>.doOnRequest(behaviour: () -> Unit): Publisher<T> {
+internal fun <T> Publisher<T>.doOnRequest(behaviour: () -> Unit): Publisher<T> {
     return Publisher { subscriber ->
         val wrappedSubscriber = object : Subscriber<T> by subscriber as Subscriber<T> {
             override fun onSubscribe(subscription: Subscription) {
@@ -685,7 +685,7 @@ fun <T> Publisher<T>.doOnRequest(behaviour: () -> Unit): Publisher<T> {
  * Execute the given block when the subscription is cancelled.
  */
 @Suppress("UNCHECKED_CAST") // Warning suppression needed because of variance issues.
-fun <T> Publisher<T>.doOnUnsubscribe(behaviour: () -> Unit): Publisher<T> {
+internal fun <T> Publisher<T>.doOnUnsubscribe(behaviour: () -> Unit): Publisher<T> {
     return Publisher { subscriber ->
         val wrappedSubscriber = object : Subscriber<T> by subscriber as Subscriber<T> {
             override fun onSubscribe(subscription: Subscription) {
@@ -714,7 +714,7 @@ fun <T> Publisher<T>.doOnUnsubscribe(behaviour: () -> Unit): Publisher<T> {
     }
 }
 
-interface Subject<T> : Processor<T, T>
+internal interface Subject<T> : Processor<T, T>
 
 /**
  * Simultaneously a [Subscriber] and a [Publisher] at the same time.  Thus allows you to encapsulate
@@ -722,7 +722,7 @@ interface Subject<T> : Processor<T, T>
  *
  * Supports multiple [Subscriber]s.
  */
-class PublishSubject<T> : Subject<T> {
+internal class PublishSubject<T> : Subject<T> {
     private var subscribers: MutableSet<Subscriber<in T>> = mutableSetOf()
 
     override fun subscribe(subscriber: Subscriber<in T>) {
@@ -767,7 +767,7 @@ class PublishSubject<T> : Subject<T> {
  * and emission on the Android main thread.  Thus will break tests.
  */
 @Suppress("UNCHECKED_CAST") // Suppression because of variance issues.
-fun <T> Publisher<T>.timeout(interval: Long, unit: TimeUnit): Publisher<T> {
+internal fun <T> Publisher<T>.timeout(interval: Long, unit: TimeUnit): Publisher<T> {
 
     class TimeoutPublisher : Publisher<T> {
         @Volatile
@@ -836,7 +836,7 @@ fun <T> Publisher<T>.timeout(interval: Long, unit: TimeUnit): Publisher<T> {
     return TimeoutPublisher()
 }
 
-fun <T> Collection<T>.asPublisher(): Publisher<T> {
+internal fun <T> Collection<T>.asPublisher(): Publisher<T> {
     return Publisher { subscriber ->
         var requested = false
         val subscription = object : Subscription {
@@ -858,7 +858,7 @@ fun <T> Collection<T>.asPublisher(): Publisher<T> {
  * Execute a side-effect whenever an item is emitted by the Publisher.
  */
 @Suppress("UNCHECKED_CAST") // Suppression because of variance issues.
-fun <T> Publisher<T>.doOnNext(callback: (item: T) -> Unit): Publisher<T> {
+internal fun <T> Publisher<T>.doOnNext(callback: (item: T) -> Unit): Publisher<T> {
     val prior = this
     return Publisher { subscriber ->
         prior.subscribe(
@@ -881,7 +881,7 @@ fun <T> Publisher<T>.doOnNext(callback: (item: T) -> Unit): Publisher<T> {
  * Execute a side-effect whenever an error is emitted by the Publisher.
  */
 @Suppress("UNCHECKED_CAST") // Suppression because of variance issues.
-fun <T> Publisher<T>.doOnError(callback: (error: Throwable) -> Unit): Publisher<T> {
+internal fun <T> Publisher<T>.doOnError(callback: (error: Throwable) -> Unit): Publisher<T> {
     val prior = this
     return Publisher { subscriber ->
         prior.subscribe(
@@ -904,7 +904,7 @@ fun <T> Publisher<T>.doOnError(callback: (error: Throwable) -> Unit): Publisher<
  * Execute a side-effect whenever when the Publisher completes.
  */
 @Suppress("UNCHECKED_CAST") // Suppression needed because of variance issues.
-fun <T> Publisher<T>.doOnComplete(callback: () -> Unit): Publisher<T> {
+internal fun <T> Publisher<T>.doOnComplete(callback: () -> Unit): Publisher<T> {
     val prior = this
     return Publisher { subscriber ->
         prior.subscribe(
@@ -927,7 +927,7 @@ fun <T> Publisher<T>.doOnComplete(callback: () -> Unit): Publisher<T> {
  * Transform any emitted errors into in-band values.
  */
 @Suppress("UNCHECKED_CAST") // Suppression because of variance issues.
-fun <T, R> Publisher<T>.onErrorReturn(callback: (throwable: Throwable) -> R): Publisher<R> {
+internal fun <T, R> Publisher<T>.onErrorReturn(callback: (throwable: Throwable) -> R): Publisher<R> {
     val prior = this
     return Publisher { subscriber ->
         prior.subscribe(object : Subscriber<T> by subscriber as Subscriber<T> {
@@ -941,13 +941,13 @@ fun <T, R> Publisher<T>.onErrorReturn(callback: (throwable: Throwable) -> R): Pu
 // TODO: At such time as we set Android Min SDK to at least 24, change to use Optional here and at
 // the usage sites instead (on account of the Reactive Streams spec not actually allowing for
 // nulls, although the Java interfaces do allow for them at the moment).
-fun <T> Publisher<T?>.filterNulls(): Publisher<T> = filter { it != null }.map { it!! }
+internal fun <T> Publisher<T?>.filterNulls(): Publisher<T> = filter { it != null }.map { it!! }
 
 /**
  * Republish emissions from the Publisher until such time as the provider [Publisher] given as
  * [stopper] emits completion, error, or an emission.
  */
-fun <T, S> Publisher<T>.takeUntil(stopper: Publisher<S>): Publisher<T> {
+internal fun <T, S> Publisher<T>.takeUntil(stopper: Publisher<S>): Publisher<T> {
     return Publisher { subscriber ->
 
         var stopperSubscription: Subscription? = null
@@ -1020,7 +1020,7 @@ fun <T, S> Publisher<T>.takeUntil(stopper: Publisher<S>): Publisher<T> {
  * This will subscribe to Publisher `this` when it is subscribed to itself.  It will execute
  * subscription on the given executor.
  */
-fun <T> Publisher<T>.subscribeOn(executor: Executor): Publisher<T> {
+internal fun <T> Publisher<T>.subscribeOn(executor: Executor): Publisher<T> {
     return Publisher { subscriber ->
         executor.execute {
             // TODO: should we run unsubsriptions on the executor as well?
@@ -1060,7 +1060,7 @@ fun <T> Publisher<T>.subscribeOn(executor: Executor): Publisher<T> {
  * This will subscribe to Publisher `this` when it is subscribed to itself.  It will execute
  * subscription on the given executor.
  */
-fun <T> Publisher<T>.subscribeOn(scheduler: Scheduler): Publisher<T> {
+internal fun <T> Publisher<T>.subscribeOn(scheduler: Scheduler): Publisher<T> {
     return Publisher { subscriber ->
         scheduler.execute {
             // TODO: should we run unsubscriptions on the executor as well?
@@ -1102,7 +1102,7 @@ fun <T> Publisher<T>.subscribeOn(scheduler: Scheduler): Publisher<T> {
  * Note that the thread you call .subscribe() on remains important: be sure all subscriptions to set
  * up a given Publisher chain are all on a single thread.  Use
  */
-fun <T> Publisher<T>.observeOn(executor: Executor): Publisher<T> {
+internal fun <T> Publisher<T>.observeOn(executor: Executor): Publisher<T> {
     return Publisher { subscriber ->
         this@observeOn.subscribe(object : Subscriber<T> {
             override fun onComplete() {
@@ -1137,7 +1137,7 @@ fun <T> Publisher<T>.observeOn(executor: Executor): Publisher<T> {
  *
  * All emitted items are buffered into a list that is then returned.
  */
-fun <T> Publisher<T>.blockForResult(
+internal fun <T> Publisher<T>.blockForResult(
     timeoutSeconds: Int = 10,
     afterSubscribe: () -> Unit = {}
 ): List<T> {

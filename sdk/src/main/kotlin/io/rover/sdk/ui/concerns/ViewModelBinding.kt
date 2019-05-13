@@ -13,7 +13,7 @@ import kotlin.reflect.KProperty
  * will provide you with a callback you can call for whenever a subscription for a subscriber you
  * created becomes ready.
  */
-class ViewModelBinding<VM : Any>(
+internal class ViewModelBinding<VM : Any>(
     private val rebindingAllowed: Boolean = true,
     private val binding: (viewModel: VM?, subscriptionCallback: (Subscription) -> Unit) -> Unit
 ) {

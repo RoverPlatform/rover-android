@@ -21,7 +21,7 @@ import javax.net.ssl.HttpsURLConnection
  * HTTP client (used for both Rover API access and other tasks), powered by Android's stock
  * [HttpsURLConnection].
  */
-open class HttpClient(
+internal class HttpClient(
     private val ioScheduler: Scheduler
 )  {
     /**
@@ -31,7 +31,7 @@ open class HttpClient(
      * Thus, it is called on the background worker thread to allow for client code to read those
      * streams, safely away from the Android main UI thread.
      */
-    open fun request(
+    fun request(
         request: HttpRequest,
         bodyData: String?
     ): Publisher<HttpClientResponse> {

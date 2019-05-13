@@ -11,7 +11,7 @@ import io.rover.sdk.ui.blocks.concerns.ViewComposition
 import io.rover.sdk.ui.blocks.concerns.layout.LayoutableView
 import io.rover.sdk.ui.blocks.concerns.layout.ViewBlock
 
-class BarcodeBlockView : AppCompatImageView, LayoutableView<BarcodeBlockViewModelInterface> {
+internal class BarcodeBlockView : AppCompatImageView, LayoutableView<BarcodeBlockViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)

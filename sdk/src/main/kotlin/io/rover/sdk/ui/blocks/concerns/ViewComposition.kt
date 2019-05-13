@@ -8,7 +8,7 @@ import android.view.View
  * changes that are only exposed by Android with a template pattern and not a callback registration
  * pattern.
  */
-class ViewComposition : ViewCompositionInterface {
+internal class ViewComposition : ViewCompositionInterface {
     private val beforeDraws: MutableList<(Canvas) -> Unit> = mutableListOf()
     private val afterDraws: MutableList<(Canvas) -> Unit> = mutableListOf()
     private val onSizeChangedCallbacks: MutableList<(width: Int, height: Int, oldWidth: Int, oldHeight: Int) -> Unit> = mutableListOf()

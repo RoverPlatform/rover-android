@@ -7,9 +7,9 @@ import io.rover.sdk.ui.blocks.concerns.layout.Measurable
 import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 
-interface ViewBarcodeInterface : MeasuredBindableView<BarcodeViewModelInterface>
+internal interface ViewBarcodeInterface : MeasuredBindableView<BarcodeViewModelInterface>
 
-interface BarcodeViewModelInterface : Measurable, BindableViewModel {
+internal interface BarcodeViewModelInterface : Measurable, BindableViewModel {
     val barcodeType: BarcodeType
 
     val barcodeValue: String
@@ -19,7 +19,7 @@ interface BarcodeViewModelInterface : Measurable, BindableViewModel {
     }
 }
 
-interface BarcodeBlockViewModelInterface :
+internal interface BarcodeBlockViewModelInterface :
     CompositeBlockViewModelInterface,
     LayoutableViewModel,
     BlockViewModelInterface,

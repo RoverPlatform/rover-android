@@ -3,7 +3,7 @@ package io.rover.sdk.ui.toolbar
 import android.support.v7.widget.Toolbar
 import org.reactivestreams.Publisher
 
-interface ViewExperienceToolbarInterface {
+internal interface ViewExperienceToolbarInterface {
     /**
      * Set the toolbar view model.  However, uncharacteristically of the other bindable view mixins,
      * this one is a method that returns a new [Toolbar] view.  This must be done because
@@ -16,7 +16,7 @@ interface ViewExperienceToolbarInterface {
     ): Toolbar
 }
 
-interface ExperienceToolbarViewModelInterface {
+internal interface ExperienceToolbarViewModelInterface {
     val toolbarEvents: Publisher<Event>
 
     val configuration: ToolbarConfiguration

@@ -3,7 +3,7 @@ package io.rover.sdk.ui.layout
 /**
  * The output of a Rover layout pass.
  */
-data class Layout(
+internal data class Layout(
     /**
      * All of the items that must be displayed, all laid out into a coordinate space (constrained
      * by a width that was given to the rendering process that yielded this [Layout]).

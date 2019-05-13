@@ -7,7 +7,7 @@ import android.content.SharedPreferences
 /**
  * Very simple hash-like storage of keys and values.
  */
-interface KeyValueStorage {
+internal interface KeyValueStorage {
     /**
      * Get the current value of the given key, or null if unset.
      */
@@ -29,12 +29,13 @@ interface KeyValueStorage {
 /**
  *  Obtain a persistent key-value named persistent storage area using Android's [SharedPreferences].
  */
-open class LocalStorage(
+internal class LocalStorage(
     private val androidContext: Context,
     private val baseContextName: String = "io.rover.localstorage"
-)  {
-    open fun getKeyValueStorageFor(namedContext: String): KeyValueStorage {
-        val prefs = androidContext.getSharedPreferences("$baseContextName.$namedContext", MODE_PRIVATE)
+) {
+    fun getKeyValueStorageFor(namedContext: String): KeyValueStorage {
+        val prefs =
+            androidContext.getSharedPreferences("$baseContextName.$namedContext", MODE_PRIVATE)
         return object : KeyValueStorage {
             override fun get(key: String): String? = prefs.getString(key, null)
 

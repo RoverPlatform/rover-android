@@ -15,7 +15,7 @@ import io.rover.sdk.ui.concerns.ViewModelBinding
 import io.rover.sdk.ui.dpAsPx
 import io.rover.sdk.ui.blocks.concerns.ViewCompositionInterface
 
-class ViewBorder(
+internal class ViewBorder(
     override val view: View,
     viewComposition: ViewCompositionInterface
 ) : ViewBorderInterface {

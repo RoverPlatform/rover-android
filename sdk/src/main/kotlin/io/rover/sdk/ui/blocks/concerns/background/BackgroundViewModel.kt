@@ -21,7 +21,7 @@ import io.rover.sdk.ui.dpAsPx
 import org.reactivestreams.Publisher
 import java.util.concurrent.TimeUnit
 
-class BackgroundViewModel(
+internal class BackgroundViewModel(
     private val background: Background,
     private val assetService: AssetService,
     private val imageOptimizationService: ImageOptimizationService,

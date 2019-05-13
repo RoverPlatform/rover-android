@@ -12,7 +12,7 @@ interface BindableViewModel
  * of what their measured size is, so they can perhaps do some sort of asynchronous background
  * update behaviour.
  */
-interface PrefetchAfterMeasure {
+internal interface PrefetchAfterMeasure {
     fun measuredSizeReadyForPrefetch(
         measuredSize: MeasuredSize
     )

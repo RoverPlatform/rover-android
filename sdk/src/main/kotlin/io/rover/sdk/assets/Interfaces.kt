@@ -13,16 +13,16 @@ import java.net.URL
  * Stages should not block to do computation-type work, however; the asset pipeline is
  * run on a thread pool optimized for I/O multiplexing and not computation.
  */
-interface SynchronousPipelineStage<in TInput, TOutput> {
+internal interface SynchronousPipelineStage<in TInput, TOutput> {
     fun request(input: TInput): PipelineStageResult<TOutput>
 }
 
-sealed class PipelineStageResult<TOutput> {
+internal sealed class PipelineStageResult<TOutput> {
     class Successful<TOutput>(val output: TOutput) : PipelineStageResult<TOutput>()
     class Failed<TOutput>(val reason: Throwable) : PipelineStageResult<TOutput>()
 }
 
-interface AssetService {
+internal interface AssetService {
     /**
      * Subscribe to any updates for the image at URL, fully decoded and ready for display.
      *

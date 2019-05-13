@@ -11,7 +11,7 @@ import org.reactivestreams.Publisher
 /**
  * View model for Rover UI blocks.
  */
-interface RowViewModelInterface : LayoutableViewModel, BackgroundViewModelInterface {
+internal interface RowViewModelInterface : LayoutableViewModel, BackgroundViewModelInterface {
     val blockViewModels: List<BlockViewModelInterface>
 
     /**

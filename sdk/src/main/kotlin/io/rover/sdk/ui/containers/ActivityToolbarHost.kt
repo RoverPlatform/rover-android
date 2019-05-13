@@ -22,7 +22,7 @@ import org.reactivestreams.Publisher
  *
  * TODO: include direction about either setting the ActionBar feature to off in code or by style.
  */
-class ActivityToolbarHost(private val activity: AppCompatActivity) : RoverView.ToolbarHost {
+internal class ActivityToolbarHost(private val activity: AppCompatActivity) : RoverView.ToolbarHost {
     var menu: Menu? = null
         set(newMenu) {
             field = newMenu

@@ -8,7 +8,7 @@ import io.rover.sdk.ui.RectF
  * A sequence of [LayoutableViewModel]s in two-dimensional space, with optional clips,
  * as an output of a layout pass.
  */
-data class DisplayItem(
+internal data class DisplayItem(
     /**
      * Where in absolute space (both position and dimensions) for the entire [ScreenViewModel]
      * this item should be placed.

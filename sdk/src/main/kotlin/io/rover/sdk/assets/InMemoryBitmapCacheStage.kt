@@ -11,7 +11,7 @@ import java.net.URL
  *
  * This is the second layer of cache.
  */
-class InMemoryBitmapCacheStage(
+internal class InMemoryBitmapCacheStage(
     private val faultTo: SynchronousPipelineStage<URL, Bitmap>
 ) : SynchronousPipelineStage<URL, Bitmap> {
 

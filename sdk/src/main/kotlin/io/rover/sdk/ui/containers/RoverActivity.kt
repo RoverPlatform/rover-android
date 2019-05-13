@@ -30,11 +30,11 @@ import io.rover.sdk.ui.navigation.ExperienceExternalNavigationEvent
  * a Rover [RoverView] in your own Activities.
  */
 open class RoverActivity : AppCompatActivity() {
-    protected open val experienceId: String? by lazy { this.intent.getStringExtra("EXPERIENCE_ID") }
+    private val experienceId: String? by lazy { this.intent.getStringExtra("EXPERIENCE_ID") }
 
-    protected open val experienceUrl: String? by lazy { this.intent.getStringExtra("EXPERIENCE_URL") }
+    private val experienceUrl: String? by lazy { this.intent.getStringExtra("EXPERIENCE_URL") }
 
-    protected val campaignId: String?
+    private val campaignId: String?
         get() = this.intent.getStringExtra("CAMPAIGN_ID")
 
     /***
@@ -51,12 +51,8 @@ open class RoverActivity : AppCompatActivity() {
      * events emitted by an Experience that "break out" of the Experience's intrinsic navigation
      * flow (ie., moving back and forth amongst Screens).  The default implementation handles
      * exiting the Activity and opening up a web browser.
-     *
-     * You may override this in a subclass if you want to handle the
-     * [ExperienceExternalNavigationEvent.Custom] event you may have emitted in view model subclass,
-     * to do some other sort of external behaviour in your app, such as open a native login screen.
      */
-    protected open fun dispatchExternalNavigationEvent(externalNavigationEvent: ExperienceExternalNavigationEvent) {
+    private fun dispatchExternalNavigationEvent(externalNavigationEvent: ExperienceExternalNavigationEvent) {
         when (externalNavigationEvent) {
             is ExperienceExternalNavigationEvent.Exit -> {
                 finish()
@@ -83,9 +79,9 @@ open class RoverActivity : AppCompatActivity() {
 
     /**
      * [RoverViewModel] is responsible for describing the appearance and behaviour of the
-     * experience contents.  If you customize it, you must return your customized version here.
+     * experience contents.
      */
-    protected open val experiencesView by lazy { RoverView(this) }
+    private val experiencesView by lazy { RoverView(this) }
 
     /**
      * Holds the currently set view model, including side-effect behaviour for binding it to the
@@ -120,7 +116,7 @@ open class RoverActivity : AppCompatActivity() {
     /**
      * Provides a method for opening URIs with a Custom Chrome Tab.
      */
-    protected open val webDisplay: EmbeddedWebBrowserDisplay? by lazy {
+    private val webDisplay: EmbeddedWebBrowserDisplay? by lazy {
         val rover = Rover.shared
         if(rover == null) {
             log.w("RoverActivity cannot work unless Rover has been initialized.")
@@ -205,10 +201,7 @@ open class RoverActivity : AppCompatActivity() {
         experiencesView.toolbarHost = null
     }
 
-    /**
-     * This method If you customize it, you must return your customized version here.
-     */
-    protected open fun experienceViewModel(
+    private fun experienceViewModel(
         rover: Rover,
         experienceRequest: RoverViewModel.ExperienceRequest,
         campaignId: String?,

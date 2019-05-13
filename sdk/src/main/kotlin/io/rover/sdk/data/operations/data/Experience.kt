@@ -47,7 +47,7 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 
-fun Experience.Companion.decodeJson(json: JSONObject): Experience {
+internal fun Experience.Companion.decodeJson(json: JSONObject): Experience {
     return Experience(
         id = ID(json.safeGetString("id")),
         homeScreenId = ID(json.safeGetString("homeScreenID")),
@@ -410,7 +410,7 @@ internal fun Image.encodeJson(): JSONObject {
     }
 }
 
-fun Background.Companion.decodeJson(json: JSONObject): Background {
+internal fun Background.Companion.decodeJson(json: JSONObject): Background {
     return Background(
         color = Color.decodeJson(json.getJSONObject("color")),
         contentMode = BackgroundContentMode.decodeJSON(json.safeGetString("contentMode")),
@@ -419,7 +419,7 @@ fun Background.Companion.decodeJson(json: JSONObject): Background {
     )
 }
 
-fun Border.Companion.decodeJson(json: JSONObject): Border {
+internal fun Border.Companion.decodeJson(json: JSONObject): Border {
     return Border(
         color = Color.decodeJson(json.getJSONObject("color")),
         radius = json.getInt("radius"),
@@ -427,7 +427,7 @@ fun Border.Companion.decodeJson(json: JSONObject): Border {
     )
 }
 
-fun Text.Companion.decodeJson(json: JSONObject): Text {
+internal fun Text.Companion.decodeJson(json: JSONObject): Text {
     return Text(
         rawValue = json.safeGetString("rawValue"),
         alignment = TextAlignment.decodeJson(json.safeGetString("alignment")),

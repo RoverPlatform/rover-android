@@ -6,7 +6,7 @@ import android.os.Build
 import android.text.Html
 import android.text.SpannableStringBuilder
 
-fun String.roverTextHtmlAsSpanned(): SpannableStringBuilder {
+internal fun String.roverTextHtmlAsSpanned(): SpannableStringBuilder {
     return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
         @Suppress("DEPRECATION")
         val spannedBuilder = Html.fromHtml(this) as SpannableStringBuilder
@@ -38,14 +38,4 @@ fun String.roverTextHtmlAsSpanned(): SpannableStringBuilder {
     } else {
         Html.fromHtml(this, Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH) as SpannableStringBuilder
     }
-}
-
-/**
- * Parse the given string as URI query parameters.
- */
-fun String.parseAsQueryParameters(): Map<String, String> {
-    return split("&").map {
-        val keyAndValue = it.split("=")
-        Pair(keyAndValue.first(), keyAndValue[1])
-    }.associate { it }
 }

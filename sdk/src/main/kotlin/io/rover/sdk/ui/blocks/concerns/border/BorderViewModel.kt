@@ -3,7 +3,7 @@ package io.rover.sdk.ui.blocks.concerns.border
 import io.rover.sdk.data.domain.Border
 import io.rover.sdk.ui.asAndroidColor
 
-class BorderViewModel(
+internal class BorderViewModel(
     val border: Border
 ) : BorderViewModelInterface {
     override val borderColor: Int

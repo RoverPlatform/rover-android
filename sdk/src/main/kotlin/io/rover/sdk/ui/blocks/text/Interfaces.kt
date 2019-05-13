@@ -11,7 +11,7 @@ import io.rover.sdk.ui.blocks.concerns.text.TextViewModelInterface
  * View Model for a block that contains rich text content (decorated with strong, italic, and
  * underline HTML tags).
  */
-interface TextBlockViewModelInterface :
+internal interface TextBlockViewModelInterface :
     CompositeBlockViewModelInterface,
     LayoutableViewModel,
     BlockViewModelInterface,

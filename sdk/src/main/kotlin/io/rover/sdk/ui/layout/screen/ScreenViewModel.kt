@@ -18,7 +18,7 @@ import io.rover.sdk.ui.layout.row.RowViewModelInterface
 import io.rover.sdk.ui.toolbar.ToolbarConfiguration
 import org.reactivestreams.Publisher
 
-class ScreenViewModel(
+internal class ScreenViewModel(
     override val screen: Screen,
     private val backgroundViewModel: BackgroundViewModelInterface,
     private val resolveRowViewModel: (row: Row) -> RowViewModelInterface

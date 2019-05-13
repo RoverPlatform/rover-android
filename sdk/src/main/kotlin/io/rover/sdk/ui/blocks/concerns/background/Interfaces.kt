@@ -14,13 +14,13 @@ import io.rover.sdk.ui.concerns.PrefetchAfterMeasure
  *
  * Backgrounds can specify a background colour or image.
  */
-interface ViewBackgroundInterface : MeasuredBindableView<BackgroundViewModelInterface>
+internal interface ViewBackgroundInterface : MeasuredBindableView<BackgroundViewModelInterface>
 
 /**
  * This interface is exposed by View Models that have support for a background.  Equivalent to
  * the [Background] domain model interface.
  */
-interface BackgroundViewModelInterface : BindableViewModel, PrefetchAfterMeasure {
+internal interface BackgroundViewModelInterface : BindableViewModel, PrefetchAfterMeasure {
     val backgroundColor: Int
 
     /**

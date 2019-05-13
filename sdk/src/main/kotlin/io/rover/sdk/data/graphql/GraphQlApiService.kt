@@ -17,10 +17,9 @@ import java.net.URL
 /**
  * Responsible for providing access the Rover cloud API, powered by GraphQL.
  */
-open class GraphQlApiService(
+internal class GraphQlApiService(
     private val endpoint: URL,
     private val accountToken: String?,
-    private val bearerToken: String?,
     private val httpClient: HttpClient
 ) {
     private fun urlRequest(mutation: Boolean, queryParams: Map<String, String>): HttpRequest {
@@ -37,7 +36,6 @@ open class GraphQlApiService(
 
                 when {
                     accountToken != null -> this["x-rover-account-token"] = accountToken
-                    bearerToken != null -> this["authorization"] = "Bearer $bearerToken"
                 }
 
                 this.entries.forEach { (key, value) ->
@@ -119,7 +117,7 @@ open class GraphQlApiService(
     /**
      * Performs the given [GraphQlRequest] when subscribed and yields the result to the subscriber.
      */
-    open fun <TEntity> operation(request: GraphQlRequest<TEntity>): Publisher<ApiResult<TEntity>> {
+    fun <TEntity> operation(request: GraphQlRequest<TEntity>): Publisher<ApiResult<TEntity>> {
         // TODO: once we change urlRequest() to use query parameters and GET for non-mutation
         // requests, replace true `below` with `request.mutation`.
         val urlRequest = urlRequest(request.mutation, request.encodeQueryParameters())
@@ -135,7 +133,7 @@ open class GraphQlApiService(
     /**
      * Retrieves the experience when subscribed and yields it to the subscriber.
      */
-    open fun fetchExperience(
+    fun fetchExperience(
         query: FetchExperienceRequest.ExperienceQueryIdentifier
     ): Publisher<ApiResult<Experience>> {
         return this.operation(

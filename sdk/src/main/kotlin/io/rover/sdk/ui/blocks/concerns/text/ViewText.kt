@@ -12,7 +12,7 @@ import io.rover.sdk.ui.concerns.ViewModelBinding
 /**
  * Mixin that binds a text block view model to the relevant parts of a [TextView].
  */
-class ViewText(
+internal class ViewText(
     private val textView: TextView,
     private val textToSpannedTransformer: RichTextToSpannedTransformer
 ) : ViewTextInterface {

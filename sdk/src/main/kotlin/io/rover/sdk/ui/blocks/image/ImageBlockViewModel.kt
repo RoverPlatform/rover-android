@@ -6,7 +6,7 @@ import io.rover.sdk.ui.blocks.concerns.layout.BlockViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.border.BorderViewModelInterface
 import io.rover.sdk.ui.concerns.MeasuredSize
 
-class ImageBlockViewModel(
+internal class ImageBlockViewModel(
     private val blockViewModel: BlockViewModelInterface,
     private val backgroundViewModel: BackgroundViewModelInterface,
     private val imageViewModel: ImageViewModelInterface,

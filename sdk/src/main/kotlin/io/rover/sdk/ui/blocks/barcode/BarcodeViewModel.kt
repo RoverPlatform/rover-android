@@ -8,7 +8,7 @@ import io.rover.sdk.ui.RectF
 /**
  * Barcode display view model.
  */
-class BarcodeViewModel(
+internal class BarcodeViewModel(
     private val barcode: Barcode,
     private val measurementService: MeasurementService
 ) : BarcodeViewModelInterface {

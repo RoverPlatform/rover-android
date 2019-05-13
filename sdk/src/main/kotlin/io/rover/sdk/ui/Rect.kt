@@ -23,7 +23,7 @@ package io.rover.sdk.ui
  * Somewhat equivalent to [android.graphics.Rect], but immutable and decoupled from the Android
  * API.
  */
-data class Rect(
+internal data class Rect(
     val left: Int,
     val top: Int,
     val right: Int,

@@ -9,13 +9,13 @@ import io.rover.sdk.ui.concerns.BindableViewModel
  *
  * Borders can specify a border of arbitrary width, with optional rounded corners.
  */
-interface ViewBorderInterface : MeasuredBindableView<BorderViewModelInterface>
+internal interface ViewBorderInterface : MeasuredBindableView<BorderViewModelInterface>
 
 /**
  * This interface is exposed by View Models that have support for a border (of arbitrary width and
  * possibly rounded with a radius).  Equivalent to the [Border] domain model interface.
  */
-interface BorderViewModelInterface : BindableViewModel {
+internal interface BorderViewModelInterface : BindableViewModel {
     /**
      * An Android color ARGB int of the border color.
      */

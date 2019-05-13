@@ -49,7 +49,7 @@ import org.reactivestreams.Publisher
  *
  * See [RoverActivity] for an example of how to integrate.
  */
-class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewModelInterface> {
+internal class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
@@ -144,19 +144,14 @@ class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewModelInterfac
         }
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-
-    }
-
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         toolbarHost = null
     }
 
-    protected var progressIndicatorView: View? = null
+    private var progressIndicatorView: View? = null
 
-    protected fun setUpProgressIndicator() {
+    private fun setUpProgressIndicator() {
         val drawable = CircularProgressDrawable(context)
         drawable.start()
         val imageView = AppCompatImageView(
@@ -173,11 +168,11 @@ class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewModelInterfac
         }
     }
 
-    protected fun turnOnProgressIndicator() {
+    private fun turnOnProgressIndicator() {
         progressIndicatorView?.visibility = View.VISIBLE
     }
 
-    protected fun turnOffProgressIndicator() {
+    private fun turnOffProgressIndicator() {
         progressIndicatorView?.visibility = View.GONE
     }
 

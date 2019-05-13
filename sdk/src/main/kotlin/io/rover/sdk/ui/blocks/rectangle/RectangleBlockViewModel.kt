@@ -5,7 +5,7 @@ import io.rover.sdk.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.layout.BlockViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.border.BorderViewModelInterface
 
-class RectangleBlockViewModel(
+internal class RectangleBlockViewModel(
     blockViewModel: BlockViewModelInterface,
     backgroundViewModel: BackgroundViewModelInterface,
     borderViewModel: BorderViewModelInterface

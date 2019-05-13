@@ -31,7 +31,7 @@ import org.reactivestreams.Publisher
  *
  * Primarily used by [BlockAndRowLayoutManager].
  */
-interface ScreenViewModelInterface : BindableViewModel, BackgroundViewModelInterface {
+internal interface ScreenViewModelInterface : BindableViewModel, BackgroundViewModelInterface {
     /**
      * Do the computationally expensive operation of laying out the entire graph of UI view models.
      */

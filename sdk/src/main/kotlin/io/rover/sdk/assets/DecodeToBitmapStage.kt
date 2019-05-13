@@ -11,7 +11,7 @@ import java.net.URL
  * auto-detects) any image format that Android supports). We guarantee support for the image formats
  * used by Rover, specifically, GIF, JPEG and PNG.
  */
-class DecodeToBitmapStage(
+internal class DecodeToBitmapStage(
     private val priorStage: SynchronousPipelineStage<URL, BufferedInputStream>
 ) : SynchronousPipelineStage<URL, Bitmap> {
     override fun request(input: URL): PipelineStageResult<Bitmap> {

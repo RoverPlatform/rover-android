@@ -5,7 +5,7 @@ import io.rover.sdk.data.graphql.GraphQlRequest
 import io.rover.sdk.data.operations.data.decodeJson
 import org.json.JSONObject
 
-class FetchExperienceRequest(
+internal class FetchExperienceRequest(
     private val queryIdentifier: ExperienceQueryIdentifier
 ) : GraphQlRequest<Experience> {
     override val operationName: String = "FetchExperience"

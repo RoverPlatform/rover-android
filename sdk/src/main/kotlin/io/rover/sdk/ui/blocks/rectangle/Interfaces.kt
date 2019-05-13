@@ -10,4 +10,4 @@ import io.rover.sdk.ui.blocks.concerns.layout.LayoutableViewModel
  * View Model for a block that contains no content (other than its own border and
  * background).
  */
-interface RectangleBlockViewModelInterface : CompositeBlockViewModelInterface, LayoutableViewModel, BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface
+internal interface RectangleBlockViewModelInterface : CompositeBlockViewModelInterface, LayoutableViewModel, BlockViewModelInterface, BackgroundViewModelInterface, BorderViewModelInterface

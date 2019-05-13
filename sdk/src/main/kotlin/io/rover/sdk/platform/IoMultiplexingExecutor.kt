@@ -11,10 +11,8 @@ import java.util.concurrent.TimeUnit
 /**
  * A builder that will produce an [Executor] suitable for multiplexing across many blocking I/O
  * operations.
- *
- * TODO make internal again after DI fixes.
  */
-class IoMultiplexingExecutor {
+internal class IoMultiplexingExecutor {
     companion object {
         /**
          * This will produce an [Executor] tuned for multiplexing I/O, not for computation.

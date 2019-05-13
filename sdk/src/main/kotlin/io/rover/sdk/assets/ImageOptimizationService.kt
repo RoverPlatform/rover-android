@@ -14,7 +14,7 @@ import io.rover.sdk.ui.dpAsPx
 import java.net.URI
 import kotlin.math.roundToInt
 
-open class ImageOptimizationService  {
+internal class ImageOptimizationService  {
 
     private val urlOptimizationEnabled = true
 
@@ -28,7 +28,7 @@ open class ImageOptimizationService  {
      * @return The optimized image configuration, which includes the URI with optimization
      * parameters.  May be null if the background in question has no image.
      */
-    open fun optimizeImageBackground(background: Background, targetViewPixelSize: PixelSize, density: Float): OptimizedImage? {
+    fun optimizeImageBackground(background: Background, targetViewPixelSize: PixelSize, density: Float): OptimizedImage? {
         return if (urlOptimizationEnabled) {
             imageConfigurationOptimizedByImgix(background, targetViewPixelSize, density)
         } else {
@@ -338,7 +338,7 @@ open class ImageOptimizationService  {
      *
      * @return optimized URI.
      */
-    open fun optimizeImageBlock(
+    fun optimizeImageBlock(
         image: Image,
         containingBlock: Block,
         targetViewPixelSize: PixelSize,

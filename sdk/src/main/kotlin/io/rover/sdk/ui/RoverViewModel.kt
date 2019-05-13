@@ -25,11 +25,10 @@ import io.rover.sdk.ui.toolbar.ToolbarConfiguration
 import kotlinx.android.parcel.Parcelize
 import org.reactivestreams.Publisher
 
-class RoverViewModel(
+internal class RoverViewModel(
     private val experienceRequest: ExperienceRequest,
     private val graphQlApiService: GraphQlApiService,
     private val mainThreadScheduler: Scheduler,
-    private val sessionTracker: SessionTracker,
     private val resolveNavigationViewModel: (experience: Experience, icicle: Parcelable?) -> NavigationViewModelInterface,
     private val icicle: Parcelable? = null
 ) : RoverViewModelInterface {

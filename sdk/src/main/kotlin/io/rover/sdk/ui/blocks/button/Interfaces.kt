@@ -15,9 +15,9 @@ import io.rover.sdk.ui.concerns.BindableViewModel
  * Note that if you're looking for the Click event/handling itself, that is handled in
  * [BlockViewModel].
  */
-interface ButtonViewModelInterface : BindableViewModel
+internal interface ButtonViewModelInterface : BindableViewModel
 
-interface ButtonBlockViewModelInterface :
+internal interface ButtonBlockViewModelInterface :
     CompositeBlockViewModelInterface,
     LayoutableViewModel,
     BlockViewModelInterface,

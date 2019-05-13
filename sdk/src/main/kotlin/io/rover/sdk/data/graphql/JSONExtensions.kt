@@ -16,7 +16,7 @@ import kotlin.reflect.KProperty1
  *
  * This method returns an optional Kotlin boxed [Int] value.
  */
-fun JSONObject.optIntOrNull(name: String): Int? {
+internal fun JSONObject.optIntOrNull(name: String): Int? {
     val value = opt(name)
     return when (value) {
         is Int -> value
@@ -41,7 +41,7 @@ fun JSONObject.optIntOrNull(name: String): Int? {
  *
  * See [Android Bug #36924550](https://issuetracker.google.com/issues/36924550).
  */
-fun JSONObject.safeOptString(name: String): String? {
+internal fun JSONObject.safeOptString(name: String): String? {
     return if (isNull(name)) null else optString(name, null)
 }
 
@@ -54,14 +54,14 @@ fun JSONObject.safeOptString(name: String): String? {
  *
  * See [Android Bug #36924550](https://issuetracker.google.com/issues/36924550).
  */
-fun JSONObject.safeGetString(name: String): String {
+internal fun JSONObject.safeGetString(name: String): String {
     if (isNull(name)) {
         throw JSONException("Field '$name' is null instead of string")
     }
     return getString(name)
 }
 
-fun JSONObject.safeGetUri(name: String): URI {
+internal fun JSONObject.safeGetUri(name: String): URI {
     val field = this.safeGetString(name)
 //    if(field == "") {
 //        throw JSONException("Invalid URI.  Must not be an empty string.")
@@ -80,22 +80,22 @@ fun JSONObject.safeGetUri(name: String): URI {
 /**
  * The stock [JSONObject.optBoolean] method cannot tell you if the value was unset or not present.
  */
-fun JSONObject.safeOptBoolean(name: String): Boolean? {
+internal fun JSONObject.safeOptBoolean(name: String): Boolean? {
     return if (isNull(name) || !this.has(name)) null else optBoolean(name)
 }
 
-fun JSONObject.safeOptInt(name: String): Int? {
+internal fun JSONObject.safeOptInt(name: String): Int? {
     return if (isNull(name) || !this.has(name)) null else optInt(name)
 }
 
-fun <T, R> JSONObject.putProp(obj: T, prop: KProperty1<T, R>, transform: ((R) -> Any?)? = null) {
+internal fun <T, R> JSONObject.putProp(obj: T, prop: KProperty1<T, R>, transform: ((R) -> Any?)? = null) {
     put(
         prop.name,
         if (transform != null) transform(prop.get(obj)) else prop.get(obj)
     )
 }
 
-fun <T, R> JSONObject.putProp(obj: T, prop: KProperty1<T, R>, name: String, transform: ((R) -> Any?)? = null) {
+internal fun <T, R> JSONObject.putProp(obj: T, prop: KProperty1<T, R>, name: String, transform: ((R) -> Any?)? = null) {
     put(
         name,
         if (transform != null) transform(prop.get(obj)) else prop.get(obj)
@@ -105,15 +105,15 @@ fun <T, R> JSONObject.putProp(obj: T, prop: KProperty1<T, R>, name: String, tran
 /**
  * Get an [Iterable] over a [JSONArray], assuming/coercing all within to be strings.
  */
-fun JSONArray.getStringIterable(): Iterable<String> = getIterable()
+internal fun JSONArray.getStringIterable(): Iterable<String> = getIterable()
 
 /**
  * Get an [Iterable] over a [JSONArray], assuming/coercing all within to be [JSONObject]s.
  */
-fun JSONArray.getObjectIterable(): Iterable<JSONObject> = getIterable()
+internal fun JSONArray.getObjectIterable(): Iterable<JSONObject> = getIterable()
 
 @Suppress("UNCHECKED_CAST")
-fun <T> JSONArray.getIterable(): Iterable<T> {
+internal fun <T> JSONArray.getIterable(): Iterable<T> {
     return object : Iterable<T> {
         private var counter = 0
         override fun iterator(): Iterator<T> {

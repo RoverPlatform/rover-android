@@ -83,85 +83,77 @@ import java.util.concurrent.Executor
 
 /**
  * Entry point for the Rover SDK.
- *
- * The Rover SDK consists of several discrete modules, which each offer a major vertical
- * (eg. Experiences and Location) of the Rover Platform.  It's up to you to select which
- * are appropriate to activate in your app.
- *
- * Serves as a dependency injection container (a sort of backplane) for the various components of
- * the Rover SDK.
  */
+
 open class Rover(
     /**
      * When initializing Rover you must give it a reference
      */
-    open val application: Application,
+    private val application: Application,
 
     /**
      * Set your Rover Account Token (API Key) here.
      */
-    open var accountToken: String? = null,
+    private var accountToken: String,
 
     /**
      * Set the background colour for the Custom Chrome tabs that are used for presenting web content
      * in a web browser.
      */
-    open val chromeTabBackgroundColor: Int,
+    private val chromeTabBackgroundColor: Int
+) {
+    private val endpoint: String = "https://api.rover.io/graphql"
 
-    open val endpoint: String = "https://api.rover.io/graphql",
+    private val mainScheduler: Scheduler = Scheduler.forAndroidMainThread()
 
-    open val mainScheduler: Scheduler = Scheduler.forAndroidMainThread(),
+    private val ioExecutor: Executor = IoMultiplexingExecutor.build("io")
 
-    open val ioExecutor: Executor = IoMultiplexingExecutor.build("io"),
-
-    open val ioScheduler: Scheduler = Scheduler.forExecutor(
+    private val ioScheduler: Scheduler = Scheduler.forExecutor(
         ioExecutor
-    ),
+    )
 
-    open val imageDownloader: ImageDownloader = ImageDownloader(ioExecutor),
+    private val imageDownloader: ImageDownloader = ImageDownloader(ioExecutor)
 
-    open val assetService: AndroidAssetService = AndroidAssetService(imageDownloader, ioScheduler, mainScheduler),
+    private val assetService: AndroidAssetService = AndroidAssetService(imageDownloader, ioScheduler, mainScheduler)
 
-    open val imageOptimizationService: ImageOptimizationService = ImageOptimizationService(),
+    private val imageOptimizationService: ImageOptimizationService = ImageOptimizationService()
 
-    open val httpClient: HttpClient = HttpClient(ioScheduler),
+    private val httpClient: HttpClient = HttpClient(ioScheduler)
 
-    open val webBrowserDisplay: EmbeddedWebBrowserDisplay = EmbeddedWebBrowserDisplay(chromeTabBackgroundColor),
+    internal val webBrowserDisplay: EmbeddedWebBrowserDisplay = EmbeddedWebBrowserDisplay(chromeTabBackgroundColor)
 
-    open val localStorage: LocalStorage = LocalStorage(application),
+    private val localStorage: LocalStorage = LocalStorage(application)
 
-    open val sessionStore: SessionStore = SessionStore(localStorage),
+    private val sessionStore: SessionStore = SessionStore(localStorage)
 
-    open val eventEmitter: EventEmitter = EventEmitter(),
+    /**
+     * Public in order to be accessible for capturing events for analytics and automation.
+     */
+    val eventEmitter: EventEmitter = EventEmitter()
 
-    val analyticsService: AnalyticsService = AnalyticsService(
+    private val analyticsService: AnalyticsService = AnalyticsService(
         application,
         accountToken,
         eventEmitter
-    ),
+    )
 
-    /**
-     * Not for use by typical applications: present so OAuth/SSO with apps that log into the Rover web apps can use the SDK.  You can safely ignore this.
-     */
-    open var bearerToken: String? = null,
+    private val apiService: GraphQlApiService = GraphQlApiService(URL(endpoint), accountToken, httpClient)
 
-    open val apiService: GraphQlApiService = GraphQlApiService(URL(endpoint), accountToken, bearerToken, httpClient),
+    private val sessionTracker: SessionTracker = SessionTracker(eventEmitter, sessionStore, 60)
 
-    open val sessionTracker: SessionTracker = SessionTracker(eventEmitter, sessionStore, 60),
+    private val textFormatter: AndroidRichTextToSpannedTransformer = AndroidRichTextToSpannedTransformer()
 
-    open val textFormatter: AndroidRichTextToSpannedTransformer = AndroidRichTextToSpannedTransformer(),
+    internal val barcodeRenderingService: BarcodeRenderingService = BarcodeRenderingService()
 
-    open val barcodeRenderingService: BarcodeRenderingService = BarcodeRenderingService(),
-
-    open val measurementService: MeasurementService = MeasurementService(
+    private val measurementService: MeasurementService = MeasurementService(
         displayMetrics = application.resources.displayMetrics,
         richTextToSpannedTransformer = textFormatter,
         barcodeRenderingService = barcodeRenderingService
-    ),
+    )
 
-    open val views: Views = Views()
-) {
-    open val viewModels: ViewModels by lazy {
+    internal val views: Views = Views()
+
+    internal val viewModels: ViewModels by lazy {
         ViewModels(
             apiService,
             mainScheduler,
@@ -206,17 +198,16 @@ open class Rover(
 }
 
 // TODO: consider moving entire class into appropriate sub-package
-open class ViewModels(
-//    protected open val rover: Rover
-    protected val apiService: GraphQlApiService,
-    protected val mainScheduler: Scheduler,
-    protected val eventEmitter: EventEmitter,
-    protected val sessionTracker: SessionTracker,
-    protected val imageOptimizationService: ImageOptimizationService,
-    protected val assetService: AndroidAssetService,
-    protected val measurementService: MeasurementService
+internal class ViewModels(
+    private val apiService: GraphQlApiService,
+    private val mainScheduler: Scheduler,
+    private val eventEmitter: EventEmitter,
+    private val sessionTracker: SessionTracker,
+    private val imageOptimizationService: ImageOptimizationService,
+    private val assetService: AndroidAssetService,
+    private val measurementService: MeasurementService
 ) {
-    open fun experienceViewModel(
+    fun experienceViewModel(
         experienceRequest: RoverViewModel.ExperienceRequest,
         campaignId: String?,
         activityLifecycle: Lifecycle
@@ -225,18 +216,17 @@ open class ViewModels(
             experienceRequest = experienceRequest,
             graphQlApiService = apiService,
             mainThreadScheduler = mainScheduler,
-            sessionTracker = sessionTracker,
             resolveNavigationViewModel = { experience, icicle ->
                 experienceNavigationViewModel(experience, campaignId, activityLifecycle, icicle)
             }
         )
     }
 
-    open fun experienceToolbarViewModel(toolbarConfiguration: ToolbarConfiguration): ExperienceToolbarViewModel {
+    private fun experienceToolbarViewModel(toolbarConfiguration: ToolbarConfiguration): ExperienceToolbarViewModel {
         return ExperienceToolbarViewModel(toolbarConfiguration)
     }
 
-    open fun experienceNavigationViewModel(
+    private fun experienceNavigationViewModel(
         experience: Experience,
         campaignId: String?,
         activityLifecycle: Lifecycle,
@@ -254,7 +244,7 @@ open class ViewModels(
         )
     }
 
-    open fun screenViewModel(
+    fun screenViewModel(
         screen: Screen
     ): ScreenViewModel {
         return ScreenViewModel(
@@ -264,7 +254,7 @@ open class ViewModels(
         )
     }
 
-    open fun backgroundViewModel(
+    private fun backgroundViewModel(
         background: Background
     ): BackgroundViewModel {
         return BackgroundViewModel(
@@ -275,7 +265,7 @@ open class ViewModels(
         )
     }
 
-    open fun rowViewModel(
+    fun rowViewModel(
         row: Row
     ): RowViewModel {
         return RowViewModel(
@@ -287,7 +277,7 @@ open class ViewModels(
         )
     }
 
-    open fun blockContentsViewModel(
+    private fun blockContentsViewModel(
         block: Block
     ): CompositeBlockViewModelInterface {
         when (block) {
@@ -345,7 +335,7 @@ open class ViewModels(
         }
     }
 
-    open fun blockViewModel(
+    private fun blockViewModel(
         block: Block,
         paddingDeflections: Set<LayoutPaddingDeflection>,
         measurable: Measurable?
@@ -357,13 +347,13 @@ open class ViewModels(
         )
     }
 
-    open fun borderViewModel(
+    private fun borderViewModel(
         border: Border
     ): BorderViewModel {
         return BorderViewModel(border)
     }
 
-    open fun textViewModel(
+    private fun textViewModel(
         text: Text,
         singleLine: Boolean
     ): TextViewModel {
@@ -374,7 +364,7 @@ open class ViewModels(
         )
     }
 
-    open fun imageViewModel(
+    private fun imageViewModel(
         image: Image?,
         containingBlock: Block
     ): ImageViewModel {
@@ -387,13 +377,13 @@ open class ViewModels(
         )
     }
 
-    open fun webViewModel(
+    private fun webViewModel(
         webView: WebView
     ): WebViewModel {
         return WebViewModel(webView)
     }
 
-    open fun barcodeViewModel(
+    private fun barcodeViewModel(
         barcode: Barcode
     ): BarcodeViewModel {
         return BarcodeViewModel(
@@ -403,7 +393,7 @@ open class ViewModels(
     }
 }
 
-open class Views {
+internal class Views {
     // TODO: consider moving into RoverView
     fun blockAndRowLayoutManager(
         layout: Layout,
@@ -415,7 +405,7 @@ open class Views {
         )
     }
 
-    open fun blockView(
+    private fun blockView(
         viewType: ViewType,
         context: Context
     ): LayoutableView<out LayoutableViewModel> {

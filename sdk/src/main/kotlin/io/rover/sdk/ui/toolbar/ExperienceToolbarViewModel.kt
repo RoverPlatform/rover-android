@@ -3,7 +3,7 @@ package io.rover.sdk.ui.toolbar
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.share
 
-class ExperienceToolbarViewModel(
+internal class ExperienceToolbarViewModel(
     override val configuration: ToolbarConfiguration
 ) : ExperienceToolbarViewModelInterface {
 

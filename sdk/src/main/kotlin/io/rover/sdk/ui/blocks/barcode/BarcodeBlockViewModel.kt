@@ -3,7 +3,7 @@ package io.rover.sdk.ui.blocks.barcode
 import io.rover.sdk.ui.blocks.concerns.layout.BlockViewModelInterface
 import io.rover.sdk.ui.layout.ViewType
 
-class BarcodeBlockViewModel(
+internal class BarcodeBlockViewModel(
     private val blockViewModel: BlockViewModelInterface,
     private val barcodeViewModel: BarcodeViewModelInterface
 ) : BarcodeBlockViewModelInterface,

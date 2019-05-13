@@ -32,7 +32,7 @@ import org.reactivestreams.Publisher
  * state persistence, WebView-like canGoBack/goBack methods, and exposing an API for customizing
  * flow behaviour.
  */
-open class NavigationViewModel(
+internal class NavigationViewModel(
     private val experience: Experience,
     private val campaignId: String?,
     private val eventEmitter: EventEmitter,
@@ -53,17 +53,17 @@ open class NavigationViewModel(
 
     override fun canGoBack(): Boolean = state.backStack.size > 1
 
-    final override val externalNavigationEvents: PublishSubject<ExperienceExternalNavigationEvent> =
+    override val externalNavigationEvents: PublishSubject<ExperienceExternalNavigationEvent> =
         PublishSubject()
 
     private val toolbarSubject = PublishSubject<ExperienceToolbarViewModelInterface>()
-    final override val toolbar: Publisher<ExperienceToolbarViewModelInterface> = toolbarSubject.shareHotAndReplay(1)
+    override val toolbar: Publisher<ExperienceToolbarViewModelInterface> = toolbarSubject.shareHotAndReplay(1)
 
     private val screenSubject = PublishSubject<NavigationViewModelInterface.ScreenUpdate>()
-    final override val screen: Publisher<NavigationViewModelInterface.ScreenUpdate> = screenSubject.shareHotAndReplay(1)
+    override val screen: Publisher<NavigationViewModelInterface.ScreenUpdate> = screenSubject.shareHotAndReplay(1)
 
     private val backlightSubject = PublishSubject<Boolean>()
-    final override val backlight: Publisher<Boolean> = backlightSubject.shareHotAndReplay(1)
+    override val backlight: Publisher<Boolean> = backlightSubject.shareHotAndReplay(1)
 
     private val actions: PublishSubject<Action> = PublishSubject()
 
@@ -75,7 +75,7 @@ open class NavigationViewModel(
         resolveScreenViewModel(it.value)
     }
 
-    protected sealed class Action {
+    private sealed class Action {
         /**
          * The user has opened the navigation and wishes to begin viewing it.
          */
@@ -92,7 +92,7 @@ open class NavigationViewModel(
         ) : Action()
     }
 
-    final override var state = if (icicle != null) {
+    override var state = if (icicle != null) {
         icicle as State
     } else {
         // the default starting state.  An empty backstack, which the reactive epic below
@@ -101,7 +101,7 @@ open class NavigationViewModel(
             listOf()
         )
     }
-        protected set
+        private set
 
     init {
         // wire up subscribers to connect our input PublishSubjects to the output Publishers through
@@ -170,7 +170,7 @@ open class NavigationViewModel(
                     }
                 }
                 is Action.PressedClose -> {
-                    closeExperience(state.backStack)
+                    closeExperience()
                 }
                 is Action.Begin -> {
                     if (state.backStack.isEmpty()) {
@@ -253,7 +253,7 @@ open class NavigationViewModel(
      * [RoverActivity]), and perform your custom behaviour, such as launching an
      * app login screen.
      */
-    protected open fun navigateToScreen(
+    private fun navigateToScreen(
         screen: Screen,
         screenViewModel: ScreenViewModelInterface,
         currentBackStack: List<BackStackFrame>,
@@ -279,7 +279,7 @@ open class NavigationViewModel(
     /**
      * Navigate backwards, if possible, or exit entirely if the backstack has been exhausted.
      */
-    protected open fun goBack() {
+    private fun goBack() {
         val possiblePreviousScreenId = state.backStack.getOrNull(state.backStack.lastIndex - 1)?.screenId
         possiblePreviousScreenId.whenNotNull { previousScreenId ->
             val screenViewModel = screenViewModelsById[previousScreenId]
@@ -292,10 +292,10 @@ open class NavigationViewModel(
                 }
                 else -> navigateToScreen(screen, screenViewModel, state.backStack, false)
             }
-        } ?: closeExperience(state.backStack) // can't go any further back: backstack would be empty; instead emit Exit.
+        } ?: closeExperience() // can't go any further back: backstack would be empty; instead emit Exit.
     }
 
-    protected fun trackEnterExperience(experience: Experience, campaignId: String?) {
+    private fun trackEnterExperience(experience: Experience, campaignId: String?) {
         sessionTracker.enterSession(
             ExperienceSessionKey(experience.id.rawValue, campaignId),
             RoverEvent.ExperiencePresented(experience, campaignId),
@@ -303,7 +303,7 @@ open class NavigationViewModel(
         )
     }
 
-    protected fun trackLeaveExperience(experience: Experience, campaignId: String?) {
+    private fun trackLeaveExperience(experience: Experience, campaignId: String?) {
         sessionTracker.leaveSession(
             ExperienceSessionKey(experience.id.rawValue, campaignId),
             RoverEvent.ExperienceDismissed(experience, campaignId)
@@ -314,7 +314,7 @@ open class NavigationViewModel(
      * Called when leaving an Experience screen.  Add any side-effects here, such as tracking the
      * session.
      */
-    protected fun trackLeaveScreen() {
+    private fun trackLeaveScreen() {
         // peek the state to determine if a screen view model is active.
         val currentScreenId = state.backStack.lastOrNull()?.screenId
 
@@ -331,7 +331,7 @@ open class NavigationViewModel(
      * Called when entering an Experience screen.  Add any side-effects here, such as tracking the
      * session.
      */
-    protected fun trackEnterScreen(screenViewModel: ScreenViewModelInterface) {
+    private fun trackEnterScreen(screenViewModel: ScreenViewModelInterface) {
         sessionTracker.enterSession(
             ExperienceScreenSessionKey(experience.id.rawValue, screenViewModel.screenId),
             RoverEvent.ScreenPresented(experience, screenViewModel.screen, campaignId),
@@ -347,9 +347,7 @@ open class NavigationViewModel(
      * [ExperienceExternalNavigationEvent.Custom] to inform your main Activity to instead perform no
      * effect at all.
      */
-    protected open fun closeExperience(
-        currentBackStack: List<BackStackFrame>
-    ) {
+    private fun closeExperience() {
         externalNavigationEvents.onNext(
             ExperienceExternalNavigationEvent.Exit()
         )

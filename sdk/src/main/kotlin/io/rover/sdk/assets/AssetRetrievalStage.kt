@@ -14,7 +14,7 @@ import java.net.URL
  *
  * This never faults to anything further down in the pipeline; it always retrieves from the API.
  */
-class AssetRetrievalStage(
+internal class AssetRetrievalStage(
     private val imageDownloader: ImageDownloader
 ) : SynchronousPipelineStage<URL, BufferedInputStream> {
     /**

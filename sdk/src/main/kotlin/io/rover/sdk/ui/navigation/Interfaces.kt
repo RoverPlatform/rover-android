@@ -11,7 +11,7 @@ import io.rover.sdk.ui.concerns.BindableViewModel
 import org.reactivestreams.Publisher
 import java.net.URI
 
-interface NavigationViewModelInterface : BindableViewModel {
+internal interface NavigationViewModelInterface : BindableViewModel {
     /**
      * Emits when the user should be navigated away to some other piece of content external to the
      * Experience.

@@ -6,7 +6,7 @@ import io.rover.sdk.ui.blocks.concerns.layout.BlockViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.border.BorderViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.text.TextViewModelInterface
 
-class TextBlockViewModel(
+internal class TextBlockViewModel(
     private val blockViewModel: BlockViewModelInterface,
     private val textViewModel: TextViewModelInterface,
     private val backgroundViewModel: BackgroundViewModelInterface,

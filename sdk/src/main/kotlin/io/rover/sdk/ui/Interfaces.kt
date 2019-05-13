@@ -2,6 +2,7 @@ package io.rover.sdk.ui
 
 import android.os.Parcelable
 import android.view.WindowManager
+import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.ui.navigation.ExperienceExternalNavigationEvent
 import io.rover.sdk.ui.navigation.NavigationViewModelInterface
 import io.rover.sdk.ui.toolbar.ExperienceToolbarViewModelInterface
@@ -13,7 +14,7 @@ import org.reactivestreams.Publisher
  * Responsible for fetching and displaying an Experience, with the appropriate Android toolbar along
  * the top.
  */
-interface RoverViewModelInterface : BindableViewModel {
+internal interface RoverViewModelInterface : BindableViewModel {
     /**
      * Emits view models that should be bound to the toolbar (which itself should be a
      * [ViewExperienceToolbar]).

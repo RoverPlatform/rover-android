@@ -24,7 +24,7 @@ import io.rover.sdk.ui.dpAsPx
 import org.reactivestreams.Publisher
 import java.util.concurrent.TimeUnit
 
-class ImageViewModel(
+internal class ImageViewModel(
     private val image: Image?,
     private val block: Block,
     private val assetService: AssetService,

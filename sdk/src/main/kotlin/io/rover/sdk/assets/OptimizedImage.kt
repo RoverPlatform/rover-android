@@ -6,7 +6,7 @@ import java.net.URI
 /**
  * A retrieval URI and configuration needed for displaying an image.
  */
-data class OptimizedImage(
+internal data class OptimizedImage(
     /**
      * The (potentially) modified URI.
      */

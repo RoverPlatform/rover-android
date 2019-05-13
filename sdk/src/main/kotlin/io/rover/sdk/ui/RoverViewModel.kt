@@ -76,8 +76,6 @@ internal class RoverViewModel(
                 is ExperienceRequest.ById -> FetchExperienceRequest.ExperienceQueryIdentifier.ById(experienceRequest.experienceId)
             }).observeOn(mainThreadScheduler)
 
-
-
     /**
      * Hold on to a reference to the navigation view model so that it can contribute to the Android
      * state restore parcelable.

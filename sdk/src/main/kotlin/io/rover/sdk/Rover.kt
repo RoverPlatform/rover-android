@@ -94,7 +94,7 @@ open class Rover(
     /**
      * Set your Rover Account Token (API Key) here.
      */
-    private var accountToken: String? = null,
+    private var accountToken: String,
 
     /**
      * Set the background colour for the Custom Chrome tabs that are used for presenting web content

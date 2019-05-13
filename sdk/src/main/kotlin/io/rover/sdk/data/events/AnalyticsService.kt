@@ -87,7 +87,7 @@ internal class AnalyticsService(
         eventEmitter.trackedEvents.subscribe { sendRequest(it) }
     }
 
-    internal fun request(
+    private fun request(
         request: HttpRequest,
         bodyData: String
     ) {

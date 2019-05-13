@@ -21,7 +21,7 @@ internal class IoMultiplexingExecutor {
          */
         @SuppressLint("NewApi")
         @JvmStatic
-        internal fun build(executorName: String): Executor {
+        fun build(executorName: String): Executor {
             val alwaysUseLegacyThreadPool = false
 
             val cpuCount = Runtime.getRuntime().availableProcessors()

@@ -49,12 +49,12 @@ import org.reactivestreams.Publisher
  *
  * See [RoverActivity] for an example of how to integrate.
  */
-internal class RoverView : CoordinatorLayout {
+internal class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewModelInterface> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    var viewModelBinding: MeasuredBindableView.Binding<RoverViewModelInterface>? by ViewModelBinding(false) { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<RoverViewModelInterface>? by ViewModelBinding(false) { binding, subscriptionCallback ->
         // sadly have to set rebindingAllowed to be false because of complexity dealing with the
         // toolbar; the toolbar may not be configured twice.
         val viewModel = binding?.viewModel

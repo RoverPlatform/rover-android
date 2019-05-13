@@ -4,10 +4,12 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.AsyncTask
 import android.os.Build
+import io.rover.sdk.data.domain.Attributes
 import io.rover.sdk.data.graphql.encodeJson
 import io.rover.sdk.data.http.HttpRequest
 import io.rover.sdk.data.http.HttpVerb
 import io.rover.sdk.logging.log
+import io.rover.sdk.platform.dateAsIso8601
 import io.rover.sdk.services.EventEmitter
 import io.rover.sdk.streams.subscribe
 import org.json.JSONObject
@@ -25,7 +27,7 @@ import java.util.UUID
 class AnalyticsService(
     context: Context,
     private val accountToken: String?,
-    eventEmitter: EventEmitter
+    private val eventEmitter: EventEmitter
 ) {
 
     private val prefs: SharedPreferences? =
@@ -56,21 +58,21 @@ class AnalyticsService(
     }
 
     private fun encodeBody(eventInformation: RoverEvent): String {
-        val eventName = when (eventInformation) {
-            is RoverEvent.ExperiencePresented -> "Experience Presented"
-            is RoverEvent.ExperienceDismissed -> "Experience Dismissed"
-            is RoverEvent.ExperienceViewed -> "Experience Viewed"
-            is RoverEvent.ScreenPresented -> "Screen Presented"
-            is RoverEvent.ScreenDismissed -> "Screen Dismissed"
-            is RoverEvent.ScreenViewed -> "Screen Viewed"
-            is RoverEvent.BlockTapped -> "Block Tapped"
+        val (eventName, flatEvent) = when(eventInformation) {
+            is RoverEvent.ExperiencePresented -> "Experience Presented" to eventInformation.toFlat()
+            is RoverEvent.ExperienceDismissed -> "Experience Dismissed" to eventInformation.toFlat()
+            is RoverEvent.ExperienceViewed -> "Experience Viewed" to eventInformation.toFlat()
+            is RoverEvent.ScreenPresented -> "Screen Presented" to eventInformation.toFlat()
+            is RoverEvent.ScreenDismissed -> "Screen Dismissed" to eventInformation.toFlat()
+            is RoverEvent.ScreenViewed -> "Screen Viewed" to eventInformation.toFlat()
+            is RoverEvent.BlockTapped -> "Block Tapped" to eventInformation.toFlat()
         }
 
         return JSONObject().apply {
             put("anonymousID", installationIdentifier)
             put("event", eventName)
-            put("timestamp", dateAsIso8601(Date()))
-            put("properties", flattenEvent(eventInformation).encodeJson())
+            put("timestamp", Date().dateAsIso8601())
+            put("properties", flatEvent.encodeJson())
         }.toString()
     }
 
@@ -81,21 +83,8 @@ class AnalyticsService(
         request(urlRequest, bodyData)
     }
 
-    private fun flattenEvent(roverEvent: RoverEvent) = mapOf<String, Any>()
-
-    init {
+    fun enable() {
         eventEmitter.trackedEvents.subscribe { sendRequest(it) }
-    }
-
-    private fun dateAsIso8601(date: Date): String {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US).format(date)
-        } else {
-            // On legacy Android, we are using the RFC 822 (email) vs ISO 8601 date format, and
-            // we use the following regex to transform it to something 8601 compatible.
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US).format(date)
-                .replace(Regex("(\\d\\d)(\\d\\d)$"), "$1:$2")
-        }
     }
 
     fun request(
@@ -125,4 +114,89 @@ class AnalyticsService(
             }
         }
     }
+}
+
+private const val EXPERIENCE_ID = "experienceID"
+private const val EXPERIENCE_NAME = "experienceName"
+private const val EXPERIENCE_TAGS = "experienceTags"
+private const val CAMPAIGN_ID = "campaignID"
+private const val DURATION = "duration"
+private const val SCREEN_NAME = "screenName"
+private const val SCREEN_ID = "screenID"
+private const val SCREEN_TAGS = "screenTags"
+private const val BLOCK_ID = "blockID"
+private const val BLOCK_NAME = "blockName"
+private const val BLOCK_TAGS = "blockTags"
+
+private fun RoverEvent.ExperiencePresented.toFlat(): Attributes {
+    return hashMapOf(
+        EXPERIENCE_ID to experience.id.rawValue,
+        EXPERIENCE_NAME to experience.name,
+        EXPERIENCE_TAGS to experience.tags
+    ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
+}
+
+private fun RoverEvent.ExperienceDismissed.toFlat(): Attributes {
+    return hashMapOf(
+        EXPERIENCE_ID to experience.id.rawValue,
+        EXPERIENCE_NAME to experience.name,
+        EXPERIENCE_TAGS to experience.tags
+    ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
+}
+
+private fun RoverEvent.ExperienceViewed.toFlat(): Attributes {
+    return hashMapOf(
+        EXPERIENCE_ID to experience.id.rawValue,
+        EXPERIENCE_NAME to experience.name,
+        EXPERIENCE_TAGS to experience.tags,
+        DURATION to duration
+    ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
+}
+
+private fun RoverEvent.ScreenPresented.toFlat(): Attributes {
+    return hashMapOf(
+        EXPERIENCE_ID to experience.id.rawValue,
+        EXPERIENCE_NAME to experience.name,
+        EXPERIENCE_TAGS to experience.tags,
+        SCREEN_NAME to screen.name,
+        SCREEN_ID to screen.id.rawValue,
+        SCREEN_TAGS to screen.tags
+    ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
+}
+
+private fun RoverEvent.ScreenDismissed.toFlat(): Attributes {
+    return hashMapOf(
+        EXPERIENCE_ID to experience.id.rawValue,
+        EXPERIENCE_NAME to experience.name,
+        EXPERIENCE_TAGS to experience.tags,
+        SCREEN_NAME to screen.name,
+        SCREEN_ID to screen.id.rawValue,
+        SCREEN_TAGS to screen.tags
+    ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
+}
+
+private fun RoverEvent.ScreenViewed.toFlat(): Attributes {
+    return hashMapOf(
+        EXPERIENCE_ID to experience.id.rawValue,
+        EXPERIENCE_NAME to experience.name,
+        EXPERIENCE_TAGS to experience.tags,
+        SCREEN_NAME to screen.name,
+        SCREEN_ID to screen.id.rawValue,
+        SCREEN_TAGS to screen.tags,
+        DURATION to duration
+    ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
+}
+
+private fun RoverEvent.BlockTapped.toFlat(): Attributes {
+    return hashMapOf(
+        EXPERIENCE_ID to experience.id.rawValue,
+        EXPERIENCE_NAME to experience.name,
+        EXPERIENCE_TAGS to experience.tags,
+        SCREEN_NAME to screen.name,
+        SCREEN_ID to screen.id.rawValue,
+        SCREEN_TAGS to screen.tags,
+        BLOCK_ID to block.id.rawValue,
+        BLOCK_NAME to block.name,
+        BLOCK_TAGS to block.tags
+    ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
 }

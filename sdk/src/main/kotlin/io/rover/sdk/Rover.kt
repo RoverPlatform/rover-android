@@ -83,13 +83,6 @@ import java.util.concurrent.Executor
 
 /**
  * Entry point for the Rover SDK.
- *
- * The Rover SDK consists of several discrete modules, which each offer a major vertical
- * (eg. Experiences and Location) of the Rover Platform.  It's up to you to select which
- * are appropriate to activate in your app.
- *
- * Serves as a dependency injection container (a sort of backplane) for the various components of
- * the Rover SDK.
  */
 
 open class Rover(

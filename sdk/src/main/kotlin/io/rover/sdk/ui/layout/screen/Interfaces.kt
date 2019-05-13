@@ -3,6 +3,7 @@ package io.rover.sdk.ui.layout.screen
 import io.rover.sdk.data.domain.Attributes
 import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.data.domain.Experience
+import io.rover.sdk.data.domain.Row
 import io.rover.sdk.data.domain.Screen
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.layout.BlockViewModelInterface
@@ -57,15 +58,12 @@ interface ScreenViewModelInterface : BindableViewModel, BackgroundViewModelInter
 
     val screenId: String
 
-    /**
-     * Obtain [Attributes] describing this screen, suitable for inclusion in an [Event].
-     */
-    val attributes: Attributes
+    val screen: Screen
 
     data class Event(
         val rowId: String,
         val blockId: String,
         val navigateTo: NavigateToFromBlock,
-        val rowAttributes: Attributes
+        val row: Row
     )
 }

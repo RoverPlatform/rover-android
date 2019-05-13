@@ -6,12 +6,10 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Parcelable
 import android.support.annotation.ColorInt
-import android.support.v4.content.LocalBroadcastManager
 import android.util.DisplayMetrics
 import io.rover.sdk.assets.AndroidAssetService
 import io.rover.sdk.assets.ImageDownloader
 import io.rover.sdk.assets.ImageOptimizationService
-import io.rover.sdk.data.events.AnalyticsService
 import io.rover.sdk.data.domain.Background
 import io.rover.sdk.data.domain.Barcode
 import io.rover.sdk.data.domain.BarcodeBlock
@@ -28,20 +26,21 @@ import io.rover.sdk.data.domain.Text
 import io.rover.sdk.data.domain.TextBlock
 import io.rover.sdk.data.domain.WebView
 import io.rover.sdk.data.domain.WebViewBlock
+import io.rover.sdk.data.events.AnalyticsService
 import io.rover.sdk.data.graphql.GraphQlApiService
 import io.rover.sdk.data.http.HttpClient
-import io.rover.sdk.services.EventEmitter
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.IoMultiplexingExecutor
 import io.rover.sdk.platform.LocalStorage
 import io.rover.sdk.services.BarcodeRenderingService
 import io.rover.sdk.services.EmbeddedWebBrowserDisplay
+import io.rover.sdk.services.EventEmitter
 import io.rover.sdk.services.MeasurementService
+import io.rover.sdk.services.SessionStore
+import io.rover.sdk.services.SessionTracker
 import io.rover.sdk.streams.Scheduler
 import io.rover.sdk.streams.forAndroidMainThread
 import io.rover.sdk.streams.forExecutor
-import io.rover.sdk.services.SessionStore
-import io.rover.sdk.services.SessionTracker
 import io.rover.sdk.ui.RoverViewModel
 import io.rover.sdk.ui.blocks.barcode.BarcodeBlockView
 import io.rover.sdk.ui.blocks.barcode.BarcodeBlockViewModel
@@ -133,7 +132,7 @@ open class Rover(
 
     open val sessionStore: SessionStore = SessionStore(localStorage),
 
-    open val eventEmitter: EventEmitter = EventEmitter(LocalBroadcastManager.getInstance(application)),
+    open val eventEmitter: EventEmitter = EventEmitter(),
 
     val analyticsService: AnalyticsService = AnalyticsService(
         application,

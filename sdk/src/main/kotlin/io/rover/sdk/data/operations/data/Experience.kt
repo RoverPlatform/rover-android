@@ -165,7 +165,7 @@ internal fun Position.Companion.decodeJson(json: JSONObject): Position {
 internal fun Position.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Position::horizontalAlignment, "horizontalAlignment") { it.encodeJson() }
-        putProp(this@encodeJson, Position::verticalAlignment, "horizontalAlignment") { it.encodeJson() }
+        putProp(this@encodeJson, Position::verticalAlignment, "verticalAlignment") { it.encodeJson() }
     }
 }
 
@@ -224,12 +224,12 @@ internal fun VerticalAlignment.encodeJson(): JSONObject {
     return JSONObject().apply {
         put("__typename", when (this@encodeJson) {
             is VerticalAlignment.Bottom -> {
-                putProp(this@encodeJson, VerticalAlignment.Bottom::height, "height")
+                putProp(this@encodeJson, VerticalAlignment.Bottom::height, "height") { it.encodeJson() }
                 putProp(this@encodeJson, VerticalAlignment.Bottom::offset, "offset")
                 "VerticalAlignmentBottom"
             }
             is VerticalAlignment.Middle -> {
-                putProp(this@encodeJson, VerticalAlignment.Middle::height, "height")
+                putProp(this@encodeJson, VerticalAlignment.Middle::height, "height") { it.encodeJson() }
                 putProp(this@encodeJson, VerticalAlignment.Middle::offset, "offset")
                 "VerticalAlignmentMiddle"
             }
@@ -240,12 +240,12 @@ internal fun VerticalAlignment.encodeJson(): JSONObject {
             }
             is VerticalAlignment.Stacked -> {
                 putProp(this@encodeJson, VerticalAlignment.Stacked::bottomOffset, "bottomOffset")
-                putProp(this@encodeJson, VerticalAlignment.Stacked::height, "height")
+                putProp(this@encodeJson, VerticalAlignment.Stacked::height, "height") { it.encodeJson() }
                 putProp(this@encodeJson, VerticalAlignment.Stacked::topOffset, "topOffset")
                 "VerticalAlignmentStacked"
             }
             is VerticalAlignment.Top -> {
-                putProp(this@encodeJson, VerticalAlignment.Top::height, "height")
+                putProp(this@encodeJson, VerticalAlignment.Top::height, "height") { it.encodeJson() }
                 putProp(this@encodeJson, VerticalAlignment.Top::offset, "bottomOffset")
                 "VerticalAlignmentTop"
             }
@@ -502,6 +502,13 @@ internal fun ImageBlock.encodeJson(): JSONObject {
     return encodeSharedJson().apply {
         put("__typename", "ImageBlock")
         putProp(this@encodeJson, ImageBlock::image, "image") { it?.encodeJson() ?: JSONObject.NULL }
+    }
+}
+
+internal fun ButtonBlock.encodeJson(): JSONObject {
+    return encodeSharedJson().apply {
+        put("__typename", "ButtonBlock")
+        putProp(this@encodeJson, ButtonBlock::text, "text") { it.encodeJson() }
     }
 }
 

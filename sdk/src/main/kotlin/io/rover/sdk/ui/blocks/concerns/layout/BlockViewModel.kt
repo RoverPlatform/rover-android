@@ -12,7 +12,6 @@ import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.share
 import io.rover.sdk.ui.RectF
 import io.rover.sdk.platform.whenNotNull
-import io.rover.sdk.data.domain.events.asAttributeValue
 
 /**
  * A mixin used by all blocks that contains the block layout and positioning concerns.
@@ -154,9 +153,9 @@ class BlockViewModel(
         val tapBehavior = block.tapBehavior
 
         val navigateTo = when (tapBehavior) {
-            is Block.TapBehavior.GoToScreen -> { NavigateToFromBlock.GoToScreenAction(tapBehavior.screenId.rawValue, block.asAttributeValue()) }
-            is Block.TapBehavior.OpenUri -> { NavigateToFromBlock.External(tapBehavior.uri, block.asAttributeValue()) }
-            is Block.TapBehavior.PresentWebsite -> { NavigateToFromBlock.PresentWebsiteAction(tapBehavior.url, block.asAttributeValue()) }
+            is Block.TapBehavior.GoToScreen -> { NavigateToFromBlock.GoToScreenAction(tapBehavior.screenId.rawValue, block) }
+            is Block.TapBehavior.OpenUri -> { NavigateToFromBlock.External(tapBehavior.uri, block) }
+            is Block.TapBehavior.PresentWebsite -> { NavigateToFromBlock.PresentWebsiteAction(tapBehavior.url, block) }
             is Block.TapBehavior.None -> return
         }
 

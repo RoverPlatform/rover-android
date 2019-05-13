@@ -8,7 +8,6 @@ import io.rover.sdk.data.graphql.encodeJson
 import io.rover.sdk.data.http.HttpRequest
 import io.rover.sdk.data.http.HttpVerb
 import io.rover.sdk.logging.log
-import io.rover.sdk.services.EventAction
 import io.rover.sdk.services.EventEmitter
 import io.rover.sdk.streams.subscribe
 import org.json.JSONObject
@@ -56,31 +55,33 @@ class AnalyticsService(
         return HttpRequest(endpoint, headersMap, HttpVerb.POST)
     }
 
-    private fun encodeBody(eventInformation: EventEmitter.Event): String {
-        val eventName = when(eventInformation.eventAction) {
-            EventAction.EXPERIENCE_PRESENTED -> "Experience Presented"
-            EventAction.EXPERIENCE_DISMISSED -> "Experience Dismissed"
-            EventAction.EXPERIENCE_VIEWED -> "Experience Viewed"
-            EventAction.SCREEN_PRESENTED -> "Screen Presented"
-            EventAction.SCREEN_DISMISSED -> "Screen Dismissed"
-            EventAction.SCREEN_VIEWED -> "Screen Viewed"
-            EventAction.BLOCK_TAPPED -> "Block Tapped"
+    private fun encodeBody(eventInformation: RoverEvent): String {
+        val eventName = when (eventInformation) {
+            is RoverEvent.ExperiencePresented -> "Experience Presented"
+            is RoverEvent.ExperienceDismissed -> "Experience Dismissed"
+            is RoverEvent.ExperienceViewed -> "Experience Viewed"
+            is RoverEvent.ScreenPresented -> "Screen Presented"
+            is RoverEvent.ScreenDismissed -> "Screen Dismissed"
+            is RoverEvent.ScreenViewed -> "Screen Viewed"
+            is RoverEvent.BlockTapped -> "Block Tapped"
         }
 
         return JSONObject().apply {
             put("anonymousID", installationIdentifier)
             put("event", eventName)
             put("timestamp", dateAsIso8601(Date()))
-            put("properties", eventInformation.attributes.encodeJson())
+            put("properties", flattenEvent(eventInformation).encodeJson())
         }.toString()
     }
 
-    private fun sendRequest(eventInformation: EventEmitter.Event) {
+    private fun sendRequest(eventInformation: RoverEvent) {
         val urlRequest = buildRequest(URL(ANALYTICS_ENDPOINT), accountToken)
         val bodyData = encodeBody(eventInformation)
 
         request(urlRequest, bodyData)
     }
+
+    private fun flattenEvent(roverEvent: RoverEvent) = mapOf<String, Any>()
 
     init {
         eventEmitter.trackedEvents.subscribe { sendRequest(it) }

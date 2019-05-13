@@ -25,7 +25,7 @@ import io.rover.sdk.ui.toolbar.ToolbarConfiguration
 import kotlinx.android.parcel.Parcelize
 import org.reactivestreams.Publisher
 
-class RoverViewModel(
+open class RoverViewModel(
     private val experienceRequest: ExperienceRequest,
     private val graphQlApiService: GraphQlApiService,
     private val mainThreadScheduler: Scheduler,
@@ -33,6 +33,13 @@ class RoverViewModel(
     private val resolveNavigationViewModel: (experience: Experience, icicle: Parcelable?) -> NavigationViewModelInterface,
     private val icicle: Parcelable? = null
 ) : RoverViewModelInterface {
+
+    /**
+     * Override this method to allow you to modify the experience before it is displayed.
+     */
+    open fun transformExperience(experience: Experience): Experience {
+        return experience
+    }
 
     override val state: Parcelable
         get() {
@@ -76,6 +83,8 @@ class RoverViewModel(
                 is ExperienceRequest.ByCampaignUrl -> FetchExperienceRequest.ExperienceQueryIdentifier.ByUniversalLink(experienceRequest.url)
                 is ExperienceRequest.ById -> FetchExperienceRequest.ExperienceQueryIdentifier.ById(experienceRequest.experienceId)
             }).observeOn(mainThreadScheduler)
+
+
 
     /**
      * Hold on to a reference to the navigation view model so that it can contribute to the Android
@@ -147,7 +156,9 @@ class RoverViewModel(
                    ))
                }
                is ApiResult.Success -> {
-                   experiences.onNext(networkResult.response)
+                   experiences.onNext(
+                       transformExperience(networkResult.response)
+                   )
                }
            }
         }

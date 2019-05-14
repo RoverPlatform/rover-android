@@ -1,4 +1,4 @@
-package io.rover.experiences.ui.layout
+package io.rover.sdk.ui
 
 import io.rover.sdk.data.domain.Background
 import io.rover.sdk.data.domain.BackgroundContentMode
@@ -19,7 +19,6 @@ import io.rover.sdk.data.domain.StatusBarStyle
 import io.rover.sdk.data.domain.TitleBar
 import io.rover.sdk.data.domain.TitleBarButtons
 import io.rover.sdk.data.domain.VerticalAlignment
-import io.rover.sdk.ui.RectF
 import io.rover.sdk.ui.blocks.concerns.layout.LayoutableViewModel
 import io.rover.sdk.ui.layout.DisplayItem
 import org.amshove.kluent.shouldBeInstanceOf
@@ -116,7 +115,7 @@ internal class ModelFactories {
     }
 }
 
-fun DisplayItem.shouldMatch(
+internal fun DisplayItem.shouldMatch(
     position: RectF,
     type: Class<out LayoutableViewModel>,
     clip: RectF? = null

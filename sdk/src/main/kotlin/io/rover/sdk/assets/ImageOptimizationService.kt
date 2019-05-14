@@ -14,7 +14,7 @@ import io.rover.sdk.ui.dpAsPx
 import java.net.URI
 import kotlin.math.roundToInt
 
-internal class ImageOptimizationService  {
+internal open class ImageOptimizationService  {
 
     private val urlOptimizationEnabled = true
 

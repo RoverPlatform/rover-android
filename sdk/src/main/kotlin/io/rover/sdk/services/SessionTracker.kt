@@ -13,7 +13,7 @@ import java.util.Date
 import java.util.UUID
 import kotlin.math.max
 
-internal class SessionTracker(
+internal open class SessionTracker(
     private val eventEmitter: EventEmitter,
 
     private val sessionStore: SessionStore,

@@ -1,11 +1,10 @@
-package io.rover.experiences.ui.layout
+package io.rover.sdk.ui
 
 import io.rover.sdk.ViewModels
 import io.rover.sdk.data.domain.Height
 import io.rover.sdk.data.domain.HorizontalAlignment
 import io.rover.sdk.data.domain.Position
 import io.rover.sdk.data.domain.VerticalAlignment
-import io.rover.sdk.ui.RectF
 import io.rover.sdk.ui.blocks.rectangle.RectangleBlockViewModelInterface
 import io.rover.sdk.ui.layout.row.RowViewModel
 import org.amshove.kluent.mock
@@ -26,8 +25,7 @@ object RowViewModelSpec : Spek({
         )
 
         context("an autoheight row with stacked blocks") {
-            val emptyRow = ModelFactories
-                .emptyRow()
+            val emptyRow = ModelFactories.emptyRow()
 
             val exampleRow = emptyRow.copy(
                 height = Height.Intrinsic(),
@@ -119,8 +117,7 @@ object RowViewModelSpec : Spek({
         }
 
         context("a non-autoheight row with a floating block that extends outside the top of the row") {
-            val exampleRow = ModelFactories
-                .emptyRow()
+            val exampleRow = ModelFactories.emptyRow()
                 .copy(
                     height = Height.Static(20.0),
                     blocks = listOf(
@@ -165,8 +162,7 @@ object RowViewModelSpec : Spek({
         }
 
         context("a non-autoheight row with a floating block that extends outside the bottom of the row") {
-            val exampleRow = ModelFactories
-                .emptyRow()
+            val exampleRow = ModelFactories.emptyRow()
                 .copy(
                     height = Height.Static(20.0),
                     blocks = listOf(
@@ -220,8 +216,7 @@ object RowViewModelSpec : Spek({
                 verticalAlignment: VerticalAlignment,
                 horizontalAlignment: HorizontalAlignment
             ): RowViewModel {
-                val exampleRow = ModelFactories
-                    .emptyRow()
+                val exampleRow = ModelFactories.emptyRow()
                     .copy(
                         height = Height.Static(rowHeight),
                         blocks = listOf(

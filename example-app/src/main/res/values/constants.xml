@@ -1,0 +1,7 @@
+<!-- You'll set these fields during the Installation and Initialization steps of the documentation.-->
+<resources>
+    <string name="rover_api_token">e3dbd6b561249d2d073b94afafc61404b25dc58d</string>
+    <string name="uri_scheme">rv-sam</string>
+    <string name="associated_domain">sam.rover.io</string>
+    <string name="experience_id">blank</string>
+</resources>

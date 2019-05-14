@@ -1,9 +1,9 @@
-package io.rover.app.sample
+package io.rover.app.example
 
 import android.app.Application
 import io.rover.sdk.Rover
 
-class SampleApplication : Application() {
+class ExampleApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         // initialize Rover SDK:

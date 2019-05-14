@@ -1,15 +1,15 @@
-package io.rover.app.sample
+package io.rover.app.example
 
 import android.net.Uri
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import io.rover.sdk.ui.containers.RoverActivity
 
-class SampleMainActivity : AppCompatActivity() {
+class ExampleMainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setContentView(R.layout.activity_sample_main)
+        setContentView(R.layout.activity_example_main)
 
         // Example of manually starting an experience with an experienceId
         // startActivity(

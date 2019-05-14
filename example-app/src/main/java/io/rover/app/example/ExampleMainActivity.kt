@@ -21,7 +21,7 @@ class ExampleMainActivity : AppCompatActivity() {
         // You will need to setup a specific URL structure to be used for presenting Rover
         // experiences in your app. The simplest approach is to use a specific URL path/host and
         // include the experience ID and (optional) campaign ID as query parameters. The manifest
-        // included with this sample app and below example code demonstrates how to route URLs in
+        // included with this example app and below example code demonstrates how to route URLs in
         // the format `example://experience?id=<EXPERIENCE_ID>&campaignID=<CAMPAIGN_ID>` to a Rover
         // experience.
 

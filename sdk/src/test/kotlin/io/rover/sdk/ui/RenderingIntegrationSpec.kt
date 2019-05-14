@@ -1,4 +1,4 @@
-package io.rover.experiences.ui.layout
+package io.rover.sdk.ui
 
 import io.rover.sdk.ViewModels
 import io.rover.sdk.logging.GlobalStaticLogHolder

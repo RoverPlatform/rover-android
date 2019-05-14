@@ -15,7 +15,7 @@ import io.rover.sdk.ui.blocks.concerns.text.RichTextToSpannedTransformer
 import io.rover.sdk.ui.dpAsPx
 import io.rover.sdk.ui.pxAsDp
 
-internal class MeasurementService(
+internal open class MeasurementService(
     private val displayMetrics: DisplayMetrics,
     private val richTextToSpannedTransformer: RichTextToSpannedTransformer,
     private val barcodeRenderingService: BarcodeRenderingService
@@ -32,7 +32,7 @@ internal class MeasurementService(
      * Returns the height needed to accommodate the text at the given width, in dps.
      */
     @SuppressLint("NewApi")
-    fun measureHeightNeededForRichText(
+    open fun measureHeightNeededForRichText(
         richText: String,
         fontAppearance: FontAppearance,
         boldFontAppearance: Font,
@@ -102,7 +102,7 @@ internal class MeasurementService(
      * Returns the height needed to accommodate the barcode, at the correct aspect, at the given
      * width, in dps.
      */
-    fun measureHeightNeededForBarcode(
+    open fun measureHeightNeededForBarcode(
         text: String,
         type: BarcodeViewModelInterface.BarcodeType,
         width: Float

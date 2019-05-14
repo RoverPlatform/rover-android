@@ -246,7 +246,7 @@ internal fun VerticalAlignment.encodeJson(): JSONObject {
             }
             is VerticalAlignment.Top -> {
                 putProp(this@encodeJson, VerticalAlignment.Top::height, "height") { it.encodeJson() }
-                putProp(this@encodeJson, VerticalAlignment.Top::offset, "bottomOffset")
+                putProp(this@encodeJson, VerticalAlignment.Top::offset, "offset")
                 "VerticalAlignmentTop"
             }
         })
@@ -620,7 +620,7 @@ internal fun Block.TapBehavior.encodeJson(): JSONObject {
     return JSONObject().apply {
         put("__typename", when (this@encodeJson) {
             is Block.TapBehavior.GoToScreen -> {
-                putProp(this@encodeJson, Block.TapBehavior.GoToScreen::screenId, "screenID") { it.toString() }
+                putProp(this@encodeJson, Block.TapBehavior.GoToScreen::screenId, "screenID") { it.rawValue }
                 "GoToScreenBlockTapBehavior"
             }
             is Block.TapBehavior.OpenUri -> {

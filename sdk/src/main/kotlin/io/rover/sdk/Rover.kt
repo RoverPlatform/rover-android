@@ -311,7 +311,7 @@ internal class ViewModels(
                     blockViewModel = blockViewModel(block, emptySet(), null),
                     borderViewModel = borderViewModel(block.border),
                     backgroundViewModel = backgroundViewModel(block.background),
-                    textViewModel = textViewModel(block.text, singleLine = true)
+                    textViewModel = textViewModel(block.text, singleLine = true, centerVertically = true)
                 )
             }
             is WebViewBlock -> {
@@ -355,12 +355,14 @@ internal class ViewModels(
 
     private fun textViewModel(
         text: Text,
-        singleLine: Boolean
+        singleLine: Boolean,
+        centerVertically: Boolean = false
     ): TextViewModel {
         return TextViewModel(
             styledText = text,
             measurementService = measurementService,
-            singleLine = singleLine
+            singleLine = singleLine,
+            centerVertically = centerVertically
         )
     }
 

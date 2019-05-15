@@ -3,12 +3,11 @@ package io.rover.sdk.ui
 import io.rover.sdk.data.domain.Background
 import io.rover.sdk.data.domain.BackgroundContentMode
 import io.rover.sdk.data.domain.BackgroundScale
+import io.rover.sdk.data.domain.Block
 import io.rover.sdk.data.domain.Border
 import io.rover.sdk.data.domain.Color
 import io.rover.sdk.data.domain.Height
 import io.rover.sdk.data.domain.HorizontalAlignment
-import io.rover.sdk.data.domain.ID
-import io.rover.sdk.data.domain.Block
 import io.rover.sdk.data.domain.Insets
 import io.rover.sdk.data.domain.Position
 import io.rover.sdk.data.domain.RectangleBlock
@@ -37,7 +36,7 @@ internal class ModelFactories {
                     image = null,
                     scale = BackgroundScale.X1
                 ),
-                id = ID("0"),
+                id = "0",
                 isStretchyHeaderEnabled = false,
                 rows = listOf(),
                 statusBar = StatusBar(
@@ -70,7 +69,7 @@ internal class ModelFactories {
                     scale = BackgroundScale.X1
                 ),
                 blocks = listOf(),
-                id = ID("0"),
+                id = "0",
                 keys = emptyMap(),
                 name = "Row 1",
                 tags = emptyList()
@@ -99,7 +98,7 @@ internal class ModelFactories {
                     radius = 0,
                     width = 1
                 ),
-                id = ID(""),
+                id = "",
                 insets = Insets(0, 0, 0, 0),
                 opacity = 1.0,
                 keys = emptyMap(),

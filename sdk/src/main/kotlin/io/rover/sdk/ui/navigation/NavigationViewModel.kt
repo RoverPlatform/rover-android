@@ -67,7 +67,7 @@ internal class NavigationViewModel(
 
     private val actions: PublishSubject<Action> = PublishSubject()
 
-    private val screensById = experience.screens.associateBy { it.id.rawValue }
+    private val screensById = experience.screens.associateBy { it.id }
 
     // TODO: right now we bring up viewmodels for the *entire* experience (ie., all the screens at
     // once).  This is unnecessary.  It should be lazy instead.
@@ -162,7 +162,7 @@ internal class NavigationViewModel(
 
                             when {
                                 screenViewModel == null || screen == null -> {
-                                    log.w("Screen by id ${action.navigateTo.screenId} missing from Experience with id ${experience.id.rawValue}.")
+                                    log.w("Screen by id ${action.navigateTo.screenId} missing from Experience with id ${experience.id}.")
                                 }
                                 else -> navigateToScreen(screen, screenViewModel, state.backStack, true)
                             }
@@ -177,8 +177,8 @@ internal class NavigationViewModel(
                         // backstack is empty, so we're just starting out.  Navigate forward to the
                         // home screen in the experience!
 
-                        val homeScreen = screensById[experience.homeScreenId.rawValue] ?: throw RuntimeException("Home screen id is dangling.")
-                        val screenViewModel = screenViewModelsById[experience.homeScreenId.rawValue] ?: throw RuntimeException("Home screen id is dangling.")
+                        val homeScreen = screensById[experience.homeScreenId] ?: throw RuntimeException("Home screen id is dangling.")
+                        val screenViewModel = screenViewModelsById[experience.homeScreenId] ?: throw RuntimeException("Home screen id is dangling.")
 
                         navigateToScreen(
                             homeScreen,
@@ -269,7 +269,7 @@ internal class NavigationViewModel(
 
         state = State(
             if (forwards) {
-                currentBackStack + listOf(BackStackFrame(screen.id.rawValue))
+                currentBackStack + listOf(BackStackFrame(screen.id))
             } else {
                 currentBackStack.subList(0, currentBackStack.lastIndex)
             }
@@ -287,7 +287,7 @@ internal class NavigationViewModel(
 
             when {
                 screenViewModel == null || screen == null -> {
-                    log.e("Screen by id $previousScreenId missing from Experience with id ${experience.id.rawValue}.")
+                    log.e("Screen by id $previousScreenId missing from Experience with id ${experience.id}.")
                     null
                 }
                 else -> navigateToScreen(screen, screenViewModel, state.backStack, false)
@@ -297,7 +297,7 @@ internal class NavigationViewModel(
 
     private fun trackEnterExperience(experience: Experience, campaignId: String?) {
         sessionTracker.enterSession(
-            ExperienceSessionKey(experience.id.rawValue, campaignId),
+            ExperienceSessionKey(experience.id, campaignId),
             RoverEvent.ExperiencePresented(experience, campaignId),
             RoverEvent.ExperienceViewed(experience, campaignId)
         )
@@ -305,7 +305,7 @@ internal class NavigationViewModel(
 
     private fun trackLeaveExperience(experience: Experience, campaignId: String?) {
         sessionTracker.leaveSession(
-            ExperienceSessionKey(experience.id.rawValue, campaignId),
+            ExperienceSessionKey(experience.id, campaignId),
             RoverEvent.ExperienceDismissed(experience, campaignId)
         )
     }
@@ -321,7 +321,7 @@ internal class NavigationViewModel(
         if (currentScreenId != null) {
             val screenViewModel = activeScreenViewModel()
             sessionTracker.leaveSession(
-                ExperienceScreenSessionKey(experience.id.rawValue, currentScreenId),
+                ExperienceScreenSessionKey(experience.id, currentScreenId),
                 RoverEvent.ScreenDismissed(experience, screenViewModel.screen, campaignId)
             )
         }
@@ -333,7 +333,7 @@ internal class NavigationViewModel(
      */
     private fun trackEnterScreen(screenViewModel: ScreenViewModelInterface) {
         sessionTracker.enterSession(
-            ExperienceScreenSessionKey(experience.id.rawValue, screenViewModel.screenId),
+            ExperienceScreenSessionKey(experience.id, screenViewModel.screenId),
             RoverEvent.ScreenPresented(experience, screenViewModel.screen, campaignId),
             RoverEvent.ScreenViewed(experience, screenViewModel.screen, campaignId)
         )

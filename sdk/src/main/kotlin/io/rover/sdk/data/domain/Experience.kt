@@ -9,8 +9,8 @@ import java.net.URL
  * A Rover experience.
  */
 data class Experience(
-    val id: ID,
-    val homeScreenId: ID,
+    val id: String,
+    val homeScreenId: String,
     val screens: List<Screen>,
     val keys: Map<String, String>,
     val tags: List<String>,
@@ -84,7 +84,7 @@ interface Block {
     val tapBehavior: TapBehavior
     val background: Background
     val border: Border
-    val id: ID
+    val id: String
     val insets: Insets
     val opacity: Double
     val position: Position
@@ -96,7 +96,7 @@ interface Block {
         /**
          * Tapping the block should navigate to the given screen in the experience.
          */
-        data class GoToScreen(val screenId: ID) : TapBehavior()
+        data class GoToScreen(val screenId: String) : TapBehavior()
 
         /**
          * Tapping the block should open the following URI.  The URI may be a Rover deep link URI,
@@ -117,7 +117,7 @@ interface Block {
 
 data class BarcodeBlock(
     override val tapBehavior: Block.TapBehavior,
-    override val id: ID,
+    override val id: String,
     override val insets: Insets,
     override val opacity: Double,
     override val position: Position,
@@ -134,7 +134,7 @@ data class BarcodeBlock(
 }
 
 data class ButtonBlock(
-    override val id: ID,
+    override val id: String,
     override val insets: Insets,
     override val opacity: Double,
     override val position: Position,
@@ -151,7 +151,7 @@ data class ButtonBlock(
 
 data class ImageBlock(
     override val tapBehavior: Block.TapBehavior,
-    override val id: ID,
+    override val id: String,
     override val insets: Insets,
     override val opacity: Double,
     override val position: Position,
@@ -167,7 +167,7 @@ data class ImageBlock(
 
 data class RectangleBlock(
     override val tapBehavior: Block.TapBehavior,
-    override val id: ID,
+    override val id: String,
     override val insets: Insets,
     override val opacity: Double,
     override val position: Position,
@@ -182,7 +182,7 @@ data class RectangleBlock(
 
 data class TextBlock(
     override val tapBehavior: Block.TapBehavior,
-    override val id: ID,
+    override val id: String,
     override val insets: Insets,
     override val opacity: Double,
     override val position: Position,
@@ -198,7 +198,7 @@ data class TextBlock(
 
 data class WebViewBlock(
     override val tapBehavior: Block.TapBehavior,
-    override val id: ID,
+    override val id: String,
     override val insets: Insets,
     override val opacity: Double,
     override val position: Position,
@@ -355,7 +355,7 @@ data class Row(
     val blocks: List<Block>,
     val height: Height,
     val keys: Map<String, String>,
-    val id: ID,
+    val id: String,
     val name: String,
     val tags: List<String>
 ) {
@@ -381,7 +381,7 @@ data class TitleBar(
 }
 
 data class Screen(
-    val id: ID,
+    val id: String,
     val isStretchyHeaderEnabled: Boolean,
     val rows: List<Row>,
     val background: Background,

@@ -26,7 +26,7 @@ internal class ScreenViewModel(
 
     // TODO: remember (State) scroll position
 
-    private val rowsById: Map<String, Row> = screen.rows.associateBy { it.id.rawValue }.let { rowsById ->
+    private val rowsById: Map<String, Row> = screen.rows.associateBy { it.id }.let { rowsById ->
         if (rowsById.size != screen.rows.size) {
             log.w("Duplicate screen IDs appeared in screen $screenId.")
             emptyMap()
@@ -133,5 +133,5 @@ internal class ScreenViewModel(
     }
 
     override val screenId: String
-        get() = screen.id.rawValue
+        get() = screen.id
 }

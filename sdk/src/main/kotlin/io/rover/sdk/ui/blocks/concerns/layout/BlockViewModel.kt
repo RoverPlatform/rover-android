@@ -153,7 +153,7 @@ internal class BlockViewModel(
         val tapBehavior = block.tapBehavior
 
         val navigateTo = when (tapBehavior) {
-            is Block.TapBehavior.GoToScreen -> { NavigateToFromBlock.GoToScreenAction(tapBehavior.screenId.rawValue, block) }
+            is Block.TapBehavior.GoToScreen -> { NavigateToFromBlock.GoToScreenAction(tapBehavior.screenId, block) }
             is Block.TapBehavior.OpenUri -> { NavigateToFromBlock.External(tapBehavior.uri, block) }
             is Block.TapBehavior.PresentWebsite -> { NavigateToFromBlock.PresentWebsiteAction(tapBehavior.url, block) }
             is Block.TapBehavior.None -> return
@@ -161,20 +161,20 @@ internal class BlockViewModel(
 
         navigateTo.whenNotNull {
             eventSource.onNext(
-                BlockViewModelInterface.Event.Clicked(it, block.id.rawValue)
+                BlockViewModelInterface.Event.Clicked(it, block.id)
             )
         }
     }
 
     override fun touched() {
         eventSource.onNext(
-            BlockViewModelInterface.Event.Touched(block.id.rawValue)
+            BlockViewModelInterface.Event.Touched(block.id)
         )
     }
 
     override fun released() {
         eventSource.onNext(
-            BlockViewModelInterface.Event.Released(block.id.rawValue)
+            BlockViewModelInterface.Event.Released(block.id)
         )
     }
 

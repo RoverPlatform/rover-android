@@ -2,14 +2,6 @@
 
 package io.rover.sdk.data.operations.data
 
-import io.rover.sdk.data.domain.ID
-import io.rover.sdk.data.graphql.getObjectIterable
-import io.rover.sdk.data.graphql.getStringIterable
-import io.rover.sdk.data.graphql.toStringHash
-import io.rover.sdk.data.graphql.putProp
-import io.rover.sdk.data.graphql.safeGetString
-import io.rover.sdk.data.graphql.safeGetUri
-import io.rover.sdk.data.graphql.safeOptString
 import io.rover.sdk.data.domain.Background
 import io.rover.sdk.data.domain.BackgroundContentMode
 import io.rover.sdk.data.domain.BackgroundScale
@@ -43,14 +35,20 @@ import io.rover.sdk.data.domain.UnitOfMeasure
 import io.rover.sdk.data.domain.VerticalAlignment
 import io.rover.sdk.data.domain.WebView
 import io.rover.sdk.data.domain.WebViewBlock
+import io.rover.sdk.data.graphql.getObjectIterable
+import io.rover.sdk.data.graphql.getStringIterable
+import io.rover.sdk.data.graphql.putProp
+import io.rover.sdk.data.graphql.safeGetString
+import io.rover.sdk.data.graphql.safeGetUri
+import io.rover.sdk.data.graphql.toStringHash
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 
 internal fun Experience.Companion.decodeJson(json: JSONObject): Experience {
     return Experience(
-        id = ID(json.safeGetString("id")),
-        homeScreenId = ID(json.safeGetString("homeScreenID")),
+        id = json.safeGetString("id"),
+        homeScreenId = json.safeGetString("homeScreenID"),
         screens = json.getJSONArray("screens").getObjectIterable().map {
             Screen.decodeJson(it)
         },
@@ -62,8 +60,8 @@ internal fun Experience.Companion.decodeJson(json: JSONObject): Experience {
 
 internal fun Experience.encodeJson(): JSONObject {
     return JSONObject().apply {
-        putProp(this@encodeJson, Experience::id) { it.rawValue }
-        putProp(this@encodeJson, Experience::homeScreenId, "homeScreenID") { it.rawValue }
+        putProp(this@encodeJson, Experience::id) { it }
+        putProp(this@encodeJson, Experience::homeScreenId, "homeScreenID") { it }
         putProp(this@encodeJson, Experience::screens) { JSONArray(it.map { it.encodeJson() }) }
         putProp(this@encodeJson, Experience::keys) { JSONObject(it) }
         putProp(this@encodeJson, Experience::tags, "tags") { JSONArray(it) }
@@ -363,7 +361,7 @@ internal fun BarcodeBlock.Companion.decodeJson(json: JSONObject): BarcodeBlock {
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         background = Background.decodeJson(json.getJSONObject("background")),
         border = Border.decodeJson(json.getJSONObject("border")),
-        id = ID(json.safeGetString("id")),
+        id = json.safeGetString("id"),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getJSONObject("position")),
@@ -452,7 +450,7 @@ internal fun Block.encodeJson(): JSONObject {
 internal fun Block.encodeSharedJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeSharedJson, Block::tapBehavior, "tapBehavior") { it.encodeJson() }
-        putProp(this@encodeSharedJson, Block::id, "id") { it.rawValue }
+        putProp(this@encodeSharedJson, Block::id, "id") { it }
         putProp(this@encodeSharedJson, Block::insets, "insets") { it.encodeJson() }
         putProp(this@encodeSharedJson, Block::opacity, "opacity")
         putProp(this@encodeSharedJson, Block::position, "position") { it.encodeJson() }
@@ -517,7 +515,7 @@ internal fun ButtonBlock.Companion.decodeJson(json: JSONObject): ButtonBlock {
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         background = Background.decodeJson(json.getJSONObject("background")),
         border = Border.decodeJson(json.getJSONObject("border")),
-        id = ID(json.safeGetString("id")),
+        id = json.safeGetString("id"),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getJSONObject("position")),
@@ -533,7 +531,7 @@ internal fun RectangleBlock.Companion.decodeJson(json: JSONObject): RectangleBlo
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         background = Background.decodeJson(json.getJSONObject("background")),
         border = Border.decodeJson(json.getJSONObject("border")),
-        id = ID(json.safeGetString("id")),
+        id = json.safeGetString("id"),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getJSONObject("position")),
@@ -548,7 +546,7 @@ internal fun WebViewBlock.Companion.decodeJson(json: JSONObject): WebViewBlock {
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         background = Background.decodeJson(json.getJSONObject("background")),
         border = Border.decodeJson(json.getJSONObject("border")),
-        id = ID(json.safeGetString("id")),
+        id = json.safeGetString("id"),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getJSONObject("position")),
@@ -571,7 +569,7 @@ internal fun TextBlock.Companion.decodeJson(json: JSONObject): TextBlock {
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         background = Background.decodeJson(json.getJSONObject("background")),
         border = Border.decodeJson(json.getJSONObject("border")),
-        id = ID(json.safeGetString("id")),
+        id = json.safeGetString("id"),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getJSONObject("position")),
@@ -587,7 +585,7 @@ internal fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         background = Background.decodeJson(json.getJSONObject("background")),
         border = Border.decodeJson(json.getJSONObject("border")),
-        id = ID(json.safeGetString("id")),
+        id = json.safeGetString("id"),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getJSONObject("position")),
@@ -607,7 +605,7 @@ internal fun Block.TapBehavior.Companion.decodeJson(json: JSONObject): Block.Tap
             uri = json.safeGetUri("url")
         )
         "GoToScreenBlockTapBehavior" -> Block.TapBehavior.GoToScreen(
-            screenId = ID(json.getString("screenID"))
+            screenId = json.getString("screenID")
         )
         "PresentWebsiteBlockTapBehavior" -> Block.TapBehavior.PresentWebsite(
             url = json.safeGetUri("url")
@@ -620,7 +618,7 @@ internal fun Block.TapBehavior.encodeJson(): JSONObject {
     return JSONObject().apply {
         put("__typename", when (this@encodeJson) {
             is Block.TapBehavior.GoToScreen -> {
-                putProp(this@encodeJson, Block.TapBehavior.GoToScreen::screenId, "screenID") { it.rawValue }
+                putProp(this@encodeJson, Block.TapBehavior.GoToScreen::screenId, "screenID") { it }
                 "GoToScreenBlockTapBehavior"
             }
             is Block.TapBehavior.OpenUri -> {
@@ -667,7 +665,7 @@ internal fun Row.Companion.decodeJSON(json: JSONObject): Row {
         blocks = json.getJSONArray("blocks").getObjectIterable().map { Block.decodeJson(it) },
         height = Height.decodeJson(json.getJSONObject("height")),
         keys = json.getJSONObject("keys").toStringHash(),
-        id = ID(json.safeGetString("id")),
+        id = json.safeGetString("id"),
         name = json.safeGetString("name"),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
@@ -678,7 +676,7 @@ internal fun Row.encodeJson(): JSONObject {
         putProp(this@encodeJson, Row::background, "background") { it.encodeJson() }
         putProp(this@encodeJson, Row::blocks, "blocks") { JSONArray(it.map { it.encodeJson() }) }
         putProp(this@encodeJson, Row::height, "height") { it.encodeJson() }
-        putProp(this@encodeJson, Row::id, "id") { it.rawValue }
+        putProp(this@encodeJson, Row::id, "id") { it }
         putProp(this@encodeJson, Row::keys) { JSONObject(it) }
         putProp(this@encodeJson, Row::name, "name") { it }
         putProp(this@encodeJson, Row::tags) { JSONArray(it) }
@@ -706,7 +704,7 @@ internal fun TitleBar.Companion.decodeJson(json: JSONObject): TitleBar {
 internal fun Screen.Companion.decodeJson(json: JSONObject): Screen {
     return Screen(
         background = Background.decodeJson(json.getJSONObject("background")),
-        id = ID(json.safeGetString("id")),
+        id = json.safeGetString("id"),
         isStretchyHeaderEnabled = json.getBoolean("isStretchyHeaderEnabled"),
         rows = json.getJSONArray("rows").getObjectIterable().map {
             Row.decodeJSON(it)
@@ -723,7 +721,7 @@ internal fun Screen.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Screen::isStretchyHeaderEnabled, "isStretchyHeaderEnabled")
         putProp(this@encodeJson, Screen::background, "background") { it.encodeJson() }
-        putProp(this@encodeJson, Screen::id) { it.rawValue }
+        putProp(this@encodeJson, Screen::id) { it }
         putProp(this@encodeJson, Screen::rows) { JSONArray(it.map { it.encodeJson() }) }
         putProp(this@encodeJson, Screen::statusBar, "statusBar") { it.encodeJson() }
         putProp(this@encodeJson, Screen::titleBar, "titleBar") { it.encodeJson() }

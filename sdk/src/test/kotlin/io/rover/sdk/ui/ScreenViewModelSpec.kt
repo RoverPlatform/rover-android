@@ -1,7 +1,6 @@
 package io.rover.sdk.ui
 
 import io.rover.sdk.ViewModels
-import io.rover.sdk.data.domain.ID
 import io.rover.sdk.data.domain.Height
 import io.rover.sdk.data.domain.HorizontalAlignment
 import io.rover.sdk.data.domain.Position
@@ -66,7 +65,7 @@ object ScreenViewModelSpec : Spek({
             val screen = ModelFactories.emptyScreen().copy(
                 rows = listOf(
                     ModelFactories.emptyRow().copy(
-                        id = ID("1"),
+                        id = "1",
                         height = Height.Static(10.0),
                         blocks = listOf(
                             ModelFactories.emptyRectangleBlock().copy(
@@ -78,7 +77,7 @@ object ScreenViewModelSpec : Spek({
                         )
                     ),
                     ModelFactories.emptyRow().copy(
-                        id = ID("2"),
+                        id = "2",
                         height = Height.Static(42.0)
                     )
                 )
@@ -115,7 +114,7 @@ object ScreenViewModelSpec : Spek({
             val screen = ModelFactories.emptyScreen().copy(
                 rows = listOf(
                     ModelFactories.emptyRow().copy(
-                        id = ID("1"),
+                        id = "1",
                         height = Height.Static(100.0),
                         blocks = listOf(
                             ModelFactories.emptyRectangleBlock().copy(
@@ -133,7 +132,7 @@ object ScreenViewModelSpec : Spek({
                         )
                     ),
                     ModelFactories.emptyRow().copy(
-                        id = ID("2"),
+                        id = "2",
                         height = Height.Static(42.0)
                     )
                 )

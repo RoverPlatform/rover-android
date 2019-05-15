@@ -1,6 +1,5 @@
 # Rover Android SDK
 
-
 ## Rover Android SDK 3.0
 
 The first step is to add the library dependencies.  We’ll start with a default
@@ -28,7 +27,7 @@ block.
 ```groovy
 dependencies {
     // ...
-    implementation "io.rover:sdk:3.0.0"
+    implementation "io.rover:sdk:3.0.0-beta.1"
 }
 ```
 

@@ -139,7 +139,7 @@ open class Rover(
 
     private val apiService: GraphQlApiService = GraphQlApiService(URL(endpoint), accountToken, httpClient)
 
-    private val sessionTracker: SessionTracker = SessionTracker(eventEmitter, sessionStore, 60)
+    private val sessionTracker: SessionTracker = SessionTracker(eventEmitter, sessionStore, 10)
 
     private val textFormatter: AndroidRichTextToSpannedTransformer = AndroidRichTextToSpannedTransformer()
 

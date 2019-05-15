@@ -38,7 +38,7 @@ internal class AnalyticsService(
     companion object {
         private const val STORAGE_IDENTIFIER = "device-identification"
         private const val BASE_CONTEXT_NAME: String = "io.rover.sdk.local-storage"
-        private const val ANALYTICS_ENDPOINT: String = "https://analytics.rover.io/track"
+        private const val ANALYTICS_ENDPOINT: String = "https://analytics.rover.io/"
     }
 
     private fun createNewUUID(): String {

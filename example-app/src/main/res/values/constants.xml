@@ -1,0 +1,7 @@
+<!-- You'll set these fields during the Installation and Initialization steps of the documentation.-->
+<resources>
+    <string name="rover_api_token">blank</string>
+    <string name="uri_scheme">example</string>
+    <string name="associated_domain">blank</string>
+    <string name="experience_id">blank</string>
+</resources>

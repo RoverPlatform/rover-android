@@ -102,6 +102,27 @@ open class Rover(
      */
     private val chromeTabBackgroundColor: Int
 ) {
+    var experienceTransformer: ((Experience) -> Experience)? = null
+        private set
+
+    /**
+     * Sets an experience transformer on the [Rover] object enabling retrieved experiences to be altered
+     * in the desired way. The transformer is called on the UI thread so the transformer shouldn't block
+     * the thread.
+     */
+    fun setExperienceTransformer(experienceTransformer: (Experience) -> Experience) {
+        this.experienceTransformer = experienceTransformer
+    }
+
+    fun removeExperienceTransformer() {
+        experienceTransformer = null
+    }
+
+    /**
+     * Public in order to be accessible for capturing events for analytics and automation.
+     */
+    val eventEmitter: EventEmitter = EventEmitter()
+
     private val endpoint: String = "https://api.rover.io/graphql"
 
     private val mainScheduler: Scheduler = Scheduler.forAndroidMainThread()
@@ -125,11 +146,6 @@ open class Rover(
     private val localStorage: LocalStorage = LocalStorage(application)
 
     private val sessionStore: SessionStore = SessionStore(localStorage)
-
-    /**
-     * Public in order to be accessible for capturing events for analytics and automation.
-     */
-    val eventEmitter: EventEmitter = EventEmitter()
 
     private val analyticsService: AnalyticsService = AnalyticsService(
         application,
@@ -180,6 +196,8 @@ open class Rover(
             HttpClient.installSaneGlobalHttpCache(applicationContext)
         }
 
+        @JvmStatic
+        @JvmOverloads
         fun initialize(application: Application, accountToken: String, @ColorInt chromeTabColor: Int = Color.BLACK) {
             shared = Rover(application = application, accountToken = accountToken, chromeTabBackgroundColor = chromeTabColor)
         }
@@ -210,7 +228,8 @@ internal class ViewModels(
     fun experienceViewModel(
         experienceRequest: RoverViewModel.ExperienceRequest,
         campaignId: String?,
-        activityLifecycle: Lifecycle
+        activityLifecycle: Lifecycle,
+        experienceTransformer: ((Experience) -> Experience)? = Rover.shared?.experienceTransformer
     ): RoverViewModel {
         return RoverViewModel(
             experienceRequest = experienceRequest,
@@ -218,7 +237,8 @@ internal class ViewModels(
             mainThreadScheduler = mainScheduler,
             resolveNavigationViewModel = { experience, icicle ->
                 experienceNavigationViewModel(experience, campaignId, activityLifecycle, icicle)
-            }
+            },
+            experienceTransformer = experienceTransformer
         )
     }
 

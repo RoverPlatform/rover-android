@@ -30,7 +30,8 @@ internal class RoverViewModel(
     private val graphQlApiService: GraphQlApiService,
     private val mainThreadScheduler: Scheduler,
     private val resolveNavigationViewModel: (experience: Experience, icicle: Parcelable?) -> NavigationViewModelInterface,
-    private val icicle: Parcelable? = null
+    private val icicle: Parcelable? = null,
+    private val experienceTransformer: ((Experience) -> Experience)? = null
 ) : RoverViewModelInterface {
 
     override val state: Parcelable
@@ -154,8 +155,10 @@ internal class RoverViewModel(
         // yields an experience navigation view model. used by both our view and some of the
         // internal subscribers below.
         navigationViewModel = experiences.map { experience ->
+            val transformedExperience = experienceTransformer?.invoke(experience) ?: experience
+
             resolveNavigationViewModel(
-                experience,
+                transformedExperience,
                 // allow it to restore from state if there is any.
                 (state as State).navigationState
             ).apply {

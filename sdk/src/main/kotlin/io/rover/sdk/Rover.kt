@@ -165,6 +165,9 @@ open class Rover(
         )
     }
 
+    var experienceTransformer: ((Experience) -> Experience)? = null
+    private set
+
     companion object {
         /**
          * Be sure to always call this before [Rover.initialize] in your Application's onCreate()!
@@ -182,6 +185,19 @@ open class Rover(
 
         fun initialize(application: Application, accountToken: String, @ColorInt chromeTabColor: Int = Color.BLACK) {
             shared = Rover(application = application, accountToken = accountToken, chromeTabBackgroundColor = chromeTabColor)
+        }
+
+        /**
+         * Sets an experience transformer on the [Rover] object enabling retrieved experiences to be altered
+         * in the desired way. The transformer is called on the UI thread so the transformer shouldn't block
+         * the thread.
+         */
+        fun setExperienceTransformer(experienceTransformer: (Experience) -> Experience) {
+            shared?.let { it.experienceTransformer = experienceTransformer } ?: log.w("Rover should be initialised before setting experience transformer.")
+        }
+
+        fun removeExperienceTransformer() {
+            shared?.experienceTransformer = null
         }
 
         /**
@@ -210,7 +226,8 @@ internal class ViewModels(
     fun experienceViewModel(
         experienceRequest: RoverViewModel.ExperienceRequest,
         campaignId: String?,
-        activityLifecycle: Lifecycle
+        activityLifecycle: Lifecycle,
+        experienceTransformer: ((Experience) -> Experience)? = Rover.shared?.experienceTransformer
     ): RoverViewModel {
         return RoverViewModel(
             experienceRequest = experienceRequest,
@@ -218,7 +235,8 @@ internal class ViewModels(
             mainThreadScheduler = mainScheduler,
             resolveNavigationViewModel = { experience, icicle ->
                 experienceNavigationViewModel(experience, campaignId, activityLifecycle, icicle)
-            }
+            },
+            experienceTransformer = experienceTransformer
         )
     }
 

@@ -183,6 +183,8 @@ open class Rover(
             HttpClient.installSaneGlobalHttpCache(applicationContext)
         }
 
+        @JvmStatic
+        @JvmOverloads
         fun initialize(application: Application, accountToken: String, @ColorInt chromeTabColor: Int = Color.BLACK) {
             shared = Rover(application = application, accountToken = accountToken, chromeTabBackgroundColor = chromeTabColor)
         }
@@ -192,10 +194,12 @@ open class Rover(
          * in the desired way. The transformer is called on the UI thread so the transformer shouldn't block
          * the thread.
          */
+        @JvmStatic
         fun setExperienceTransformer(experienceTransformer: (Experience) -> Experience) {
             shared?.let { it.experienceTransformer = experienceTransformer } ?: log.w("Rover should be initialised before setting experience transformer.")
         }
 
+        @JvmStatic
         fun removeExperienceTransformer() {
             shared?.experienceTransformer = null
         }

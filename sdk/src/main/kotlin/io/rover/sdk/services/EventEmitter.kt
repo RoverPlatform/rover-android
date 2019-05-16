@@ -12,7 +12,7 @@ import org.reactivestreams.Publisher
  *
  * Alternatively, you can add a [RoverEventListener] to receive event updates
  */
-open class EventEmitter {
+class EventEmitter {
     private val eventSubject = PublishSubject<RoverEvent>()
 
     val trackedEvents: Publisher<RoverEvent> by lazy { eventSubject.share() }

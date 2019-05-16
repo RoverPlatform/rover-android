@@ -1,5 +1,8 @@
 package io.rover.sdk.ui
 
+import com.nhaarman.mockitokotlin2.mock
+import io.rover.helpers.shouldBeLessThan
+import io.rover.helpers.shouldEqual
 import io.rover.sdk.ViewModels
 import io.rover.sdk.logging.GlobalStaticLogHolder
 import io.rover.sdk.logging.JvmLogger
@@ -7,9 +10,6 @@ import io.rover.sdk.logging.log
 import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.operations.data.decodeJson
 import io.rover.sdk.ui.layout.Layout
-import org.amshove.kluent.mock
-import org.amshove.kluent.shouldBeLessThan
-import org.amshove.kluent.shouldEqual
 import org.json.JSONObject
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -20,7 +20,7 @@ class RenderingIntegrationSpec : Spek({
         context("test suite run") {
             val parsedJson = JSONObject("""{"a": 42}""")
             it("can parse a value out of JSON") {
-                parsedJson.getInt("a").shouldEqual(42)
+                parsedJson.getInt("a") shouldEqual 42
             }
         }
     }
@@ -62,7 +62,7 @@ class RenderingIntegrationSpec : Spek({
             log.v("Took $renderTimeMs ms to render all ${experience.screens.count()} screens.")
 
             it("should have taken") {
-                renderTimeMs.shouldBeLessThan(200)
+                renderTimeMs shouldBeLessThan 200
             }
         }
     }

@@ -1,5 +1,7 @@
 package io.rover.sdk.ui
 
+import com.nhaarman.mockitokotlin2.mock
+import io.rover.helpers.shouldEqual
 import io.rover.sdk.ViewModels
 import io.rover.sdk.data.domain.Height
 import io.rover.sdk.data.domain.HorizontalAlignment
@@ -7,8 +9,6 @@ import io.rover.sdk.data.domain.Position
 import io.rover.sdk.data.domain.VerticalAlignment
 import io.rover.sdk.ui.blocks.rectangle.RectangleBlockViewModelInterface
 import io.rover.sdk.ui.layout.row.RowViewModel
-import org.amshove.kluent.mock
-import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -61,7 +61,7 @@ object RowViewModelSpec : Spek({
                 val frame = rowViewModel.frame(RectF(0f, 0f, 60f, 0f))
 
                 it("expands its height to contain the blocks") {
-                    frame.bottom.shouldEqual(90f)
+                    frame.bottom shouldEqual 90f
                 }
             }
 
@@ -69,7 +69,7 @@ object RowViewModelSpec : Spek({
                 val frame = rowViewModel.frame(RectF(0f, 0f, 0f, 0f))
 
                 it("expands its height to contain the blocks") {
-                    frame.bottom.shouldEqual(90f)
+                    frame.bottom shouldEqual 90f
                 }
             }
 
@@ -141,7 +141,7 @@ object RowViewModelSpec : Spek({
                 // for either setting their own height or measuring their stacked auto-height.
                 val frame = rowViewModel.frame(RectF(0f, 0f, 60f, 0f))
                 it("sets its height as the given value") {
-                    frame.bottom.shouldEqual(20f)
+                    frame.bottom shouldEqual 20f
                 }
             }
 
@@ -187,7 +187,7 @@ object RowViewModelSpec : Spek({
                 // for either setting their own height or measuring their stacked auto-height.
                 val frame = rowViewModel.frame(RectF(0f, 0f, 60f, 0f))
                 it("sets its height as the given value") {
-                    frame.bottom.shouldEqual(20f)
+                    frame.bottom shouldEqual 20f
                 }
             }
 

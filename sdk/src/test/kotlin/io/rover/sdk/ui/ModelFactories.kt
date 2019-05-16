@@ -1,5 +1,7 @@
 package io.rover.sdk.ui
 
+import io.rover.helpers.shouldBeInstanceOf
+import io.rover.helpers.shouldEqual
 import io.rover.sdk.data.domain.Background
 import io.rover.sdk.data.domain.BackgroundContentMode
 import io.rover.sdk.data.domain.BackgroundScale
@@ -20,8 +22,6 @@ import io.rover.sdk.data.domain.TitleBarButtons
 import io.rover.sdk.data.domain.VerticalAlignment
 import io.rover.sdk.ui.blocks.concerns.layout.LayoutableViewModel
 import io.rover.sdk.ui.layout.DisplayItem
-import org.amshove.kluent.shouldBeInstanceOf
-import org.amshove.kluent.shouldEqual
 
 internal class ModelFactories {
     companion object {
@@ -119,7 +119,7 @@ internal fun DisplayItem.shouldMatch(
     type: Class<out LayoutableViewModel>,
     clip: RectF? = null
 ) {
-    this.position.shouldEqual(position)
-    this.viewModel.shouldBeInstanceOf(type)
-    this.clip.shouldEqual(clip)
+    this.position shouldEqual position
+    this.viewModel shouldBeInstanceOf type
+    this.clip shouldEqual clip
 }

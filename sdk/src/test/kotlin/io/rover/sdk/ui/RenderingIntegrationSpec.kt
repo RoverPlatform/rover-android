@@ -20,7 +20,7 @@ class RenderingIntegrationSpec : Spek({
         context("test suite run") {
             val parsedJson = JSONObject("""{"a": 42}""")
             it("can parse a value out of JSON") {
-                parsedJson.getInt("a").shouldEqual(42)
+                parsedJson.getInt("a") shouldEqual 42
             }
         }
     }
@@ -62,7 +62,7 @@ class RenderingIntegrationSpec : Spek({
             log.v("Took $renderTimeMs ms to render all ${experience.screens.count()} screens.")
 
             it("should have taken") {
-                renderTimeMs.shouldBeLessThan(200)
+                renderTimeMs shouldBeLessThan 200
             }
         }
     }

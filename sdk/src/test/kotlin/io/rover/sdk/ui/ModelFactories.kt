@@ -119,7 +119,7 @@ internal fun DisplayItem.shouldMatch(
     type: Class<out LayoutableViewModel>,
     clip: RectF? = null
 ) {
-    this.position.shouldEqual(position)
-    this.viewModel.shouldBeInstanceOf(type)
-    this.clip.shouldEqual(clip)
+    this.position shouldEqual position
+    this.viewModel shouldBeInstanceOf type
+    this.clip shouldEqual clip
 }

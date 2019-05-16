@@ -61,7 +61,7 @@ object RowViewModelSpec : Spek({
                 val frame = rowViewModel.frame(RectF(0f, 0f, 60f, 0f))
 
                 it("expands its height to contain the blocks") {
-                    frame.bottom.shouldEqual(90f)
+                    frame.bottom shouldEqual 90f
                 }
             }
 
@@ -69,7 +69,7 @@ object RowViewModelSpec : Spek({
                 val frame = rowViewModel.frame(RectF(0f, 0f, 0f, 0f))
 
                 it("expands its height to contain the blocks") {
-                    frame.bottom.shouldEqual(90f)
+                    frame.bottom shouldEqual 90f
                 }
             }
 
@@ -141,7 +141,7 @@ object RowViewModelSpec : Spek({
                 // for either setting their own height or measuring their stacked auto-height.
                 val frame = rowViewModel.frame(RectF(0f, 0f, 60f, 0f))
                 it("sets its height as the given value") {
-                    frame.bottom.shouldEqual(20f)
+                    frame.bottom shouldEqual 20f
                 }
             }
 
@@ -187,7 +187,7 @@ object RowViewModelSpec : Spek({
                 // for either setting their own height or measuring their stacked auto-height.
                 val frame = rowViewModel.frame(RectF(0f, 0f, 60f, 0f))
                 it("sets its height as the given value") {
-                    frame.bottom.shouldEqual(20f)
+                    frame.bottom shouldEqual 20f
                 }
             }
 

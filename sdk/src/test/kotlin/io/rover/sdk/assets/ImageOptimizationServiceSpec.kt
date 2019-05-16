@@ -46,8 +46,8 @@ object ImageOptimizationServiceSpec : Spek({
             val decodedParams = decodeUriParams(uri)
 
             it("it should ask imgix for a no-op scale") {
-                decodedParams["w"].shouldEqual("120")
-                decodedParams["h"].shouldEqual("100")
+                decodedParams["w"] shouldEqual "120"
+                decodedParams["h"] shouldEqual "100"
             }
         }
 
@@ -62,8 +62,8 @@ object ImageOptimizationServiceSpec : Spek({
             val decodedParams = decodeUriParams(uri)
 
             it("it should ask imgix to scale down by half") {
-                decodedParams["w"].shouldEqual("60")
-                decodedParams["h"].shouldEqual("50")
+                decodedParams["w"] shouldEqual "60"
+                decodedParams["h"] shouldEqual "50"
             }
         }
 
@@ -77,8 +77,8 @@ object ImageOptimizationServiceSpec : Spek({
             val decodedParams = decodeUriParams(uri)
 
             it("it should ask imgix to scale down") {
-                decodedParams["w"].shouldEqual("34")
-                decodedParams["h"].shouldEqual("29")
+                decodedParams["w"] shouldEqual "34"
+                decodedParams["h"] shouldEqual "29"
             }
         }
 
@@ -94,8 +94,8 @@ object ImageOptimizationServiceSpec : Spek({
             val decodedParams = decodeUriParams(uri)
 
             it("it should scale down the smaller dimension but not scale up the greater one") {
-                decodedParams["w"].shouldEqual("120")
-                decodedParams["h"].shouldEqual("90")
+                decodedParams["w"] shouldEqual "120"
+                decodedParams["h"] shouldEqual "90"
             }
         }
     }
@@ -129,19 +129,19 @@ object ImageOptimizationServiceSpec : Spek({
             val decodedParams = decodeUriParams(uri)
 
             it("asks imgix for a no-op crop") {
-                decodedParams["rect"].shouldEqual("0,0,120,100")
+                decodedParams["rect"] shouldEqual "0,0,120,100"
             }
 
             it("asks imgix for a no-op scale") {
-                decodedParams["w"].shouldEqual("120")
-                decodedParams["h"].shouldEqual("100")
+                decodedParams["w"] shouldEqual "120"
+                decodedParams["h"] shouldEqual "100"
             }
 
             it("sets exactly fitting insets") {
-                optimizedConfiguration.insets.left.shouldEqual(0)
-                optimizedConfiguration.insets.top.shouldEqual(0)
-                optimizedConfiguration.insets.right.shouldEqual(0)
-                optimizedConfiguration.insets.bottom.shouldEqual(0)
+                optimizedConfiguration.insets.left shouldEqual 0
+                optimizedConfiguration.insets.top shouldEqual 0
+                optimizedConfiguration.insets.right shouldEqual 0
+                optimizedConfiguration.insets.bottom shouldEqual 0
             }
         }
 
@@ -156,7 +156,7 @@ object ImageOptimizationServiceSpec : Spek({
 
             it("asks imgix for a no-op crop") {
                 // we wouldn't want imgix to scale up for us, that would be a waste.
-                decodedParams["rect"].shouldEqual("0,0,120,100")
+                decodedParams["rect"] shouldEqual "0,0,120,100"
             }
 
             it("asks imgix for a no-op scale") {
@@ -165,10 +165,10 @@ object ImageOptimizationServiceSpec : Spek({
             }
 
             it("sets exactly fitting insets") {
-                optimizedConfiguration.insets.left.shouldEqual(0)
-                optimizedConfiguration.insets.top.shouldEqual(0)
-                optimizedConfiguration.insets.right.shouldEqual(0)
-                optimizedConfiguration.insets.bottom.shouldEqual(0)
+                optimizedConfiguration.insets.left shouldEqual 0
+                optimizedConfiguration.insets.top shouldEqual 0
+                optimizedConfiguration.insets.right shouldEqual 0
+                optimizedConfiguration.insets.bottom shouldEqual 0
             }
         }
 
@@ -182,19 +182,19 @@ object ImageOptimizationServiceSpec : Spek({
             val decodedParams = decodeUriParams(uri)
 
             it("asks imgix for a no-op crop") {
-                decodedParams["rect"].shouldEqual("0,0,120,100")
+                decodedParams["rect"] shouldEqual "0,0,120,100"
             }
 
             it("asks imgix for a no-op scale") {
-                decodedParams["w"].shouldEqual("120")
-                decodedParams["h"].shouldEqual("100")
+                decodedParams["w"] shouldEqual "120"
+                decodedParams["h"] shouldEqual "100"
             }
 
             it("sets horizontal insets") {
-                optimizedConfiguration.insets.left.shouldEqual(10)
-                optimizedConfiguration.insets.right.shouldEqual(10)
-                optimizedConfiguration.insets.top.shouldEqual(0)
-                optimizedConfiguration.insets.bottom.shouldEqual(0)
+                optimizedConfiguration.insets.left shouldEqual 10
+                optimizedConfiguration.insets.right shouldEqual 10
+                optimizedConfiguration.insets.top shouldEqual 0
+                optimizedConfiguration.insets.bottom shouldEqual 0
             }
         }
 
@@ -209,19 +209,19 @@ object ImageOptimizationServiceSpec : Spek({
 
             it("asks imgix for a no-op crop") {
                 // we wouldn't want imgix to scale up for us, that would be a waste.
-                decodedParams["rect"].shouldEqual("0,0,120,100")
+                decodedParams["rect"] shouldEqual "0,0,120,100"
             }
 
             it("asks imgix for a no-op scale") {
-                decodedParams["w"].shouldEqual("120")
-                decodedParams["h"].shouldEqual("100")
+                decodedParams["w"] shouldEqual "120"
+                decodedParams["h"] shouldEqual "100"
             }
 
             it("sets horizontal insets") {
-                optimizedConfiguration.insets.left.shouldEqual(11) // TODO: maybe should be 12? rounding accumulation
-                optimizedConfiguration.insets.right.shouldEqual(11)
-                optimizedConfiguration.insets.top.shouldEqual(0)
-                optimizedConfiguration.insets.bottom.shouldEqual(0)
+                optimizedConfiguration.insets.left shouldEqual 11 // TODO: maybe should be 12? rounding accumulation
+                optimizedConfiguration.insets.right shouldEqual 11
+                optimizedConfiguration.insets.top shouldEqual 0
+                optimizedConfiguration.insets.bottom shouldEqual 0
             }
         }
 
@@ -235,19 +235,19 @@ object ImageOptimizationServiceSpec : Spek({
             val decodedParams = decodeUriParams(uri)
 
             it("asks imgix to crop the sides") {
-                decodedParams["rect"].shouldEqual("10,0,100,100")
+                decodedParams["rect"] shouldEqual "10,0,100,100"
             }
 
             it("asks imgix for a no-op scale") {
-                decodedParams["w"].shouldEqual("100")
-                decodedParams["h"].shouldEqual("100")
+                decodedParams["w"] shouldEqual "100"
+                decodedParams["h"] shouldEqual "100"
             }
 
             it("sets zero insets for the width dimension because the crop was done for us by imgix") {
-                optimizedConfiguration.insets.left.shouldEqual(0)
-                optimizedConfiguration.insets.right.shouldEqual(0)
-                optimizedConfiguration.insets.top.shouldEqual(0)
-                optimizedConfiguration.insets.bottom.shouldEqual(0)
+                optimizedConfiguration.insets.left shouldEqual 0
+                optimizedConfiguration.insets.right shouldEqual 0
+                optimizedConfiguration.insets.top shouldEqual 0
+                optimizedConfiguration.insets.bottom shouldEqual 0
             }
         }
 
@@ -262,19 +262,19 @@ object ImageOptimizationServiceSpec : Spek({
 
             it("asks imgix for a crop") {
                 // we wouldn't want imgix to scale up for us, that would be a waste.
-                decodedParams["rect"].shouldEqual("10,0,100,100")
+                decodedParams["rect"] shouldEqual "10,0,100,100"
             }
 
             it("asks imgix for a no-op scale") {
-                decodedParams["w"].shouldEqual("100")
-                decodedParams["h"].shouldEqual("100")
+                decodedParams["w"] shouldEqual "100"
+                decodedParams["h"] shouldEqual "100"
             }
 
             it("sets zero insets for the width dimension because the crop was done for us by imgix") {
-                optimizedConfiguration.insets.left.shouldEqual(0)
-                optimizedConfiguration.insets.right.shouldEqual(0)
-                optimizedConfiguration.insets.top.shouldEqual(0)
-                optimizedConfiguration.insets.bottom.shouldEqual(0)
+                optimizedConfiguration.insets.left shouldEqual 0
+                optimizedConfiguration.insets.right shouldEqual 0
+                optimizedConfiguration.insets.top shouldEqual 0
+                optimizedConfiguration.insets.bottom shouldEqual 0
             }
         }
 
@@ -288,19 +288,19 @@ object ImageOptimizationServiceSpec : Spek({
             val decodedParams = decodeUriParams(uri)
 
             it("asks imgix for a no-op crop") {
-                decodedParams["rect"].shouldEqual("0,0,120,100")
+                decodedParams["rect"] shouldEqual "0,0,120,100"
             }
 
             it("asks imgix to scale down by a factor of three ") {
-                decodedParams["w"].shouldEqual("40")
-                decodedParams["h"].shouldEqual("33")
+                decodedParams["w"] shouldEqual "40"
+                decodedParams["h"] shouldEqual "33"
             }
 
             it("sets exactly fitting insets") {
-                optimizedConfiguration.insets.left.shouldEqual(0)
-                optimizedConfiguration.insets.top.shouldEqual(0)
-                optimizedConfiguration.insets.right.shouldEqual(0)
-                optimizedConfiguration.insets.bottom.shouldEqual(0)
+                optimizedConfiguration.insets.left shouldEqual 0
+                optimizedConfiguration.insets.top shouldEqual 0
+                optimizedConfiguration.insets.right shouldEqual 0
+                optimizedConfiguration.insets.bottom shouldEqual 0
             }
         }
 
@@ -314,19 +314,19 @@ object ImageOptimizationServiceSpec : Spek({
             val decodedParams = decodeUriParams(uri)
 
             it("asks imgix for a crop") {
-                decodedParams["rect"].shouldEqual("10,0,100,100")
+                decodedParams["rect"] shouldEqual "10,0,100,100"
             }
 
             it("asks imgix to scale down") {
-                decodedParams["w"].shouldEqual("33")
-                decodedParams["h"].shouldEqual("33")
+                decodedParams["w"] shouldEqual "33"
+                decodedParams["h"] shouldEqual "33"
             }
 
             it("sets exactly fitting insets") {
-                optimizedConfiguration.insets.left.shouldEqual(0)
-                optimizedConfiguration.insets.top.shouldEqual(0)
-                optimizedConfiguration.insets.right.shouldEqual(0)
-                optimizedConfiguration.insets.bottom.shouldEqual(0)
+                optimizedConfiguration.insets.left shouldEqual 0
+                optimizedConfiguration.insets.top shouldEqual 0
+                optimizedConfiguration.insets.right shouldEqual 0
+                optimizedConfiguration.insets.bottom shouldEqual 0
             }
         }
 
@@ -340,19 +340,19 @@ object ImageOptimizationServiceSpec : Spek({
             val decodedParams = decodeUriParams(uri)
 
             it("asks imgix for a no-op crop") {
-                decodedParams["rect"].shouldEqual("0,0,120,100")
+                decodedParams["rect"] shouldEqual "0,0,120,100"
             }
 
             it("asks imgix to scale down") {
-                decodedParams["w"].shouldEqual("40")
-                decodedParams["h"].shouldEqual("33")
+                decodedParams["w"] shouldEqual "40"
+                decodedParams["h"] shouldEqual "33"
             }
 
             it("sets horizontal insets") {
-                optimizedConfiguration.insets.left.shouldEqual(3)
-                optimizedConfiguration.insets.right.shouldEqual(3)
-                optimizedConfiguration.insets.top.shouldEqual(0)
-                optimizedConfiguration.insets.bottom.shouldEqual(0)
+                optimizedConfiguration.insets.left shouldEqual 3
+                optimizedConfiguration.insets.right shouldEqual 3
+                optimizedConfiguration.insets.top shouldEqual 0
+                optimizedConfiguration.insets.bottom shouldEqual 0
             }
         }
     }

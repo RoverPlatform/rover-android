@@ -1,5 +1,7 @@
 package io.rover.sdk.ui
 
+import com.nhaarman.mockitokotlin2.mock
+import io.rover.helpers.shouldEqual
 import io.rover.sdk.ViewModels
 import io.rover.sdk.data.domain.Height
 import io.rover.sdk.data.domain.HorizontalAlignment
@@ -7,8 +9,6 @@ import io.rover.sdk.data.domain.Position
 import io.rover.sdk.data.domain.VerticalAlignment
 import io.rover.sdk.ui.blocks.rectangle.RectangleBlockViewModelInterface
 import io.rover.sdk.ui.layout.row.RowViewModel
-import org.amshove.kluent.mock
-import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 

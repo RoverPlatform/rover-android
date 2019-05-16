@@ -1,12 +1,12 @@
 package io.rover.sdk.assets
 
+import io.rover.helpers.shouldEqual
 import io.rover.sdk.data.domain.Background
 import io.rover.sdk.data.domain.BackgroundContentMode
 import io.rover.sdk.data.domain.BackgroundScale
 import io.rover.sdk.data.domain.Color
 import io.rover.sdk.data.domain.Image
 import io.rover.sdk.ui.PixelSize
-import org.amshove.kluent.shouldEqual
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.net.URI

@@ -1,5 +1,8 @@
 package io.rover.sdk.ui
 
+import com.nhaarman.mockitokotlin2.mock
+import io.rover.helpers.shouldBeLessThan
+import io.rover.helpers.shouldEqual
 import io.rover.sdk.ViewModels
 import io.rover.sdk.logging.GlobalStaticLogHolder
 import io.rover.sdk.logging.JvmLogger
@@ -7,9 +10,6 @@ import io.rover.sdk.logging.log
 import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.operations.data.decodeJson
 import io.rover.sdk.ui.layout.Layout
-import org.amshove.kluent.mock
-import org.amshove.kluent.shouldBeLessThan
-import org.amshove.kluent.shouldEqual
 import org.json.JSONObject
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe

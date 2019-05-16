@@ -17,7 +17,7 @@ import java.net.URL
 /**
  * Responsible for providing access the Rover cloud API, powered by GraphQL.
  */
-internal open class GraphQlApiService(
+internal class GraphQlApiService(
     private val endpoint: URL,
     private val accountToken: String?,
     private val httpClient: HttpClient

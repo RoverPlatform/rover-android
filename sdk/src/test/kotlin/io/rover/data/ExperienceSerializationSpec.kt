@@ -19,10 +19,8 @@ object ExperienceSerializationSpec : Spek({
             it("should reserialize to equivalent JSON") {
                 val experienceNewJsonString = experience.encodeJson().toString(4)
 
-                val experienceNewJson = JSONObject(experienceNewJsonString)
                 JSONAssert.assertEquals(experienceSourceJsonString, experienceNewJsonString, false)
             }
         }
     }
-
 })

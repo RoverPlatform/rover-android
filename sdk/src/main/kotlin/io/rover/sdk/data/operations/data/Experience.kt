@@ -510,7 +510,7 @@ internal fun QuestionStyle.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, QuestionStyle::color, "color") { it.encodeJson() }
         putProp(this@encodeJson, QuestionStyle::font, "font") { it.encodeJson() }
-        putProp(this@encodeJson, QuestionStyle::textAlignment, "textAlign") { it.wireFormat }
+        putProp(this@encodeJson, QuestionStyle::textAlignment, "textAlignment") { it.wireFormat }
     }
 }
 
@@ -521,7 +521,7 @@ internal fun ImagePollBlockOptionStyle.encodeJson(): JSONObject {
         putProp(this@encodeJson, ImagePollBlockOptionStyle::borderWidth, "borderWidth")
         putProp(this@encodeJson, ImagePollBlockOptionStyle::borderColor, "borderColor") { it.encodeJson() }
         putProp(this@encodeJson, ImagePollBlockOptionStyle::font, "font") { it.encodeJson() }
-        putProp(this@encodeJson, ImagePollBlockOptionStyle::textAlignment, "textAlign") { it.wireFormat }
+        putProp(this@encodeJson, ImagePollBlockOptionStyle::textAlignment, "textAlignment") { it.wireFormat }
         putProp(this@encodeJson, ImagePollBlockOptionStyle::resultFillColor, "resultFillColor") { it.encodeJson() }
         putProp(this@encodeJson, ImagePollBlockOptionStyle::verticalSpacing, "verticalSpacing")
         putProp(this@encodeJson, ImagePollBlockOptionStyle::horizontalSpacing, "horizontalSpacing")
@@ -538,7 +538,7 @@ internal fun TextPollBlockOptionStyle.encodeJson(): JSONObject {
         putProp(this@encodeJson, TextPollBlockOptionStyle::color, "color") { it.encodeJson() }
         putProp(this@encodeJson, TextPollBlockOptionStyle::backgroundColor, "backgroundColor") { it.encodeJson() }
         putProp(this@encodeJson, TextPollBlockOptionStyle::font, "font") { it.encodeJson() }
-        putProp(this@encodeJson, TextPollBlockOptionStyle::textAlignment, "textAlign") { it.wireFormat }
+        putProp(this@encodeJson, TextPollBlockOptionStyle::textAlignment, "textAlignment") { it.wireFormat }
         putProp(this@encodeJson, TextPollBlockOptionStyle::resultFillColor, "resultFillColor") { it.encodeJson() }
         putProp(this@encodeJson, TextPollBlockOptionStyle::backgroundImage, "backgroundImage") { it.encodeJson() }
         putProp(this@encodeJson, TextPollBlockOptionStyle::verticalSpacing, "verticalSpacing")
@@ -549,6 +549,7 @@ internal fun TextPollBlockOptionStyle.encodeJson(): JSONObject {
 
 internal fun ImagePollBlock.encodeJson(): JSONObject {
     return encodeSharedJson().apply {
+        put("__typename", "PollBlock")
         put("blockType", "image-poll-block")
         putProp(this@encodeJson, ImagePollBlock::question, "question")
         putProp(this@encodeJson, ImagePollBlock::options, "options") { JSONArray(it.map { it.encodeJson() }) }
@@ -559,10 +560,10 @@ internal fun ImagePollBlock.encodeJson(): JSONObject {
 
 internal fun TextPollBlock.encodeJson(): JSONObject {
     return encodeSharedJson().apply {
+        put("__typename", "PollBlock")
         put("blockType", "text-poll-block")
         putProp(this@encodeJson, TextPollBlock::question, "question")
         putProp(this@encodeJson, TextPollBlock::options, "options") { JSONArray(it) }
-        putProp(this@encodeJson, TextPollBlock::buttonHeight, "buttonHeight")
         putProp(this@encodeJson, TextPollBlock::questionStyle, "questionStyle") { it.encodeJson() }
         putProp(this@encodeJson, TextPollBlock::optionStyle, "optionStyle") { it.encodeJson() }
     }
@@ -749,7 +750,7 @@ fun QuestionStyle.Companion.decodeJson(json: JSONObject): QuestionStyle {
     return QuestionStyle(
         color = Color.decodeJson(json.getJSONObject("color")),
         font = Font.decodeJson(json.getJSONObject("font")),
-        textAlignment = TextAlignment.decodeJson(json.safeGetString("textAlign"))
+        textAlignment = TextAlignment.decodeJson(json.safeGetString("textAlignment"))
     )
 }
 
@@ -760,8 +761,8 @@ fun ImagePollBlockOptionStyle.Companion.decodeJson(json: JSONObject) : ImagePoll
         borderWidth = json.getInt("borderWidth"),
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         font = Font.decodeJson(json.getJSONObject("font")),
-        textAlignment = TextAlignment.decodeJson("textAlign"),
-        resultFillColor = Color.decodeJson(json.getJSONObject("resultsFillColor")),
+        textAlignment = TextAlignment.decodeJson(json.safeGetString("textAlignment")),
+        resultFillColor = Color.decodeJson(json.getJSONObject("resultFillColor")),
         verticalSpacing = json.getInt("verticalSpacing"),
         horizontalSpacing = json.getInt("horizontalSpacing")
     )
@@ -796,11 +797,11 @@ fun TextPollBlockOptionStyle.Companion.decodeJson(json: JSONObject): TextPollBlo
         color = Color.decodeJson(json.getJSONObject("color")),
         backgroundColor = Color.decodeJson(json.getJSONObject("backgroundColor")),
         font = Font.decodeJson(json.getJSONObject("font")),
-        textAlignment = TextAlignment.decodeJson("textAlign"),
-        resultFillColor = Color.decodeJson(json.getJSONObject("resultsFillColor")),
+        textAlignment = TextAlignment.decodeJson(json.safeGetString("textAlignment")),
+        resultFillColor = Color.decodeJson(json.getJSONObject("resultFillColor")),
         backgroundImage = PollImage.decodeJson(json.getJSONObject("backgroundImage")),
-        backgroundContentMode = BackgroundContentMode.decodeJson("backgroundContentMode"),
-        backgroundScale = BackgroundScale.decodeJson("backgroundScale"),
+        backgroundContentMode = BackgroundContentMode.decodeJson(json.safeGetString("backgroundContentMode")),
+        backgroundScale = BackgroundScale.decodeJson(json.safeGetString("backgroundScale")),
         verticalSpacing = json.getInt("verticalSpacing")
     )
 }
@@ -819,7 +820,6 @@ fun decodeToTextPollBlock(json: JSONObject): TextPollBlock {
         tags = json.getJSONArray("tags").getStringIterable().toList(),
         question = json.safeGetString("question"),
         options = json.getJSONArray("options").getStringIterable().toList(),
-        buttonHeight = json.getInt("buttonHeight"),
         questionStyle = QuestionStyle.decodeJson(json.getJSONObject("questionStyle")),
         optionStyle = TextPollBlockOptionStyle.decodeJson(json.getJSONObject("optionStyle"))
     )

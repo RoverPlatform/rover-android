@@ -199,7 +199,6 @@ data class TextPollBlock(
     override val tags: List<String>,
     val question: String,
     val options: List<String>,
-    val buttonHeight: Int,
     val questionStyle: QuestionStyle,
     val optionStyle: TextPollBlockOptionStyle
 ) : PollBlock() {

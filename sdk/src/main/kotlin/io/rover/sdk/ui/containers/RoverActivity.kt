@@ -186,7 +186,7 @@ open class RoverActivity : AppCompatActivity() {
             )
             experienceUrl != null -> roverViewModel = experienceViewModel(
                 rover,
-                RoverViewModel.ExperienceRequest.ByCampaignUrl(experienceUrl!!),
+                RoverViewModel.ExperienceRequest.ByUrl(experienceUrl!!),
                 campaignId,
                 state
             )

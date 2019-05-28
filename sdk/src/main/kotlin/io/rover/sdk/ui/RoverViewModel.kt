@@ -15,7 +15,6 @@ import io.rover.sdk.streams.observeOn
 import io.rover.sdk.streams.share
 import io.rover.sdk.streams.shareAndReplay
 import io.rover.sdk.streams.subscribe
-import io.rover.sdk.services.SessionTracker
 import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.operations.FetchExperienceRequest
 import io.rover.sdk.ui.navigation.ExperienceExternalNavigationEvent
@@ -73,7 +72,7 @@ internal class RoverViewModel(
     private fun fetchExperience(): Publisher<out ApiResult<Experience>> =
         graphQlApiService.fetchExperience(
             when (experienceRequest) {
-                is ExperienceRequest.ByCampaignUrl -> FetchExperienceRequest.ExperienceQueryIdentifier.ByUniversalLink(experienceRequest.url)
+                is ExperienceRequest.ByUrl -> FetchExperienceRequest.ExperienceQueryIdentifier.ByUniversalLink(experienceRequest.url)
                 is ExperienceRequest.ById -> FetchExperienceRequest.ExperienceQueryIdentifier.ById(experienceRequest.experienceId)
             }).observeOn(mainThreadScheduler)
 
@@ -219,7 +218,7 @@ internal class RoverViewModel(
     ) : Parcelable
 
     sealed class ExperienceRequest {
-        data class ByCampaignUrl(val url: String) : ExperienceRequest()
+        data class ByUrl(val url: String) : ExperienceRequest()
         data class ById(val experienceId: String) : ExperienceRequest()
     }
 }

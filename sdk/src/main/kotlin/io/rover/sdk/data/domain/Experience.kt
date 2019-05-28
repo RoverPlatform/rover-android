@@ -144,7 +144,7 @@ data class ImagePollBlockOptionStyle(
     companion object
 }
 
-interface PollBlock : Block {
+sealed class PollBlock : Block {
     companion object
 }
 
@@ -163,7 +163,7 @@ data class ImagePollBlock(
     val options: List<ImageBlockOption>,
     val questionStyle: QuestionStyle,
     val optionStyle: ImagePollBlockOptionStyle
-) : PollBlock {
+) : PollBlock() {
     companion object
 }
 
@@ -177,7 +177,6 @@ data class TextPollBlockOptionStyle(
     val backgroundColor: Color,
     val font: Font,
     val textAlignment: TextAlignment,
-    val insets: Insets,
     val resultFillColor: Color,
     val backgroundImage: PollImage,
     val verticalSpacing: Int,
@@ -203,7 +202,7 @@ data class TextPollBlock(
     val buttonHeight: Int,
     val questionStyle: QuestionStyle,
     val optionStyle: TextPollBlockOptionStyle
-) : PollBlock {
+) : PollBlock() {
     companion object
 }
 

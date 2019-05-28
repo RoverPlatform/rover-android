@@ -461,6 +461,7 @@ internal fun Block.encodeJson(): JSONObject {
         is RectangleBlock -> this.encodeJson()
         is TextBlock -> this.encodeJson()
         is WebViewBlock -> this.encodeJson()
+        is PollBlock -> this.encodeJson()
         else -> throw RuntimeException("Unsupported Block type for serialization")
     }
 }
@@ -477,6 +478,93 @@ internal fun Block.encodeSharedJson(): JSONObject {
         putProp(this@encodeSharedJson, Block::keys, "keys") { JSONObject(it) }
         putProp(this@encodeSharedJson, Block::name, "name") { it }
         putProp(this@encodeSharedJson, Block::tags) { JSONArray(it) }
+    }
+}
+
+internal fun PollBlock.encodeJson(): JSONObject {
+    return when (this) {
+        is ImagePollBlock -> this.encodeJson()
+        is TextPollBlock -> this.encodeJson()
+    }
+}
+
+internal fun ImageBlockOption.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, ImageBlockOption::text, "text")
+        putProp(this@encodeJson, ImageBlockOption::image, "image") { it.encodeJson() }
+    }
+}
+
+internal fun PollImage.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, PollImage::height, "height")
+        putProp(this@encodeJson, PollImage::name, "name")
+        putProp(this@encodeJson, PollImage::size, "size")
+        putProp(this@encodeJson, PollImage::type, "type")
+        putProp(this@encodeJson, PollImage::url, "url") { it.toString() }
+        putProp(this@encodeJson, PollImage::width, "width")
+    }
+}
+
+internal fun QuestionStyle.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, QuestionStyle::color, "color") { it.encodeJson() }
+        putProp(this@encodeJson, QuestionStyle::font, "font") { it.encodeJson() }
+        putProp(this@encodeJson, QuestionStyle::textAlignment, "textAlign") { it.wireFormat }
+    }
+}
+
+internal fun ImagePollBlockOptionStyle.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, ImagePollBlockOptionStyle::opacity, "opacity")
+        putProp(this@encodeJson, ImagePollBlockOptionStyle::borderRadius, "borderRadius")
+        putProp(this@encodeJson, ImagePollBlockOptionStyle::borderWidth, "borderWidth")
+        putProp(this@encodeJson, ImagePollBlockOptionStyle::borderColor, "borderColor") { it.encodeJson() }
+        putProp(this@encodeJson, ImagePollBlockOptionStyle::font, "font") { it.encodeJson() }
+        putProp(this@encodeJson, ImagePollBlockOptionStyle::textAlignment, "textAlign") { it.wireFormat }
+        putProp(this@encodeJson, ImagePollBlockOptionStyle::resultFillColor, "resultFillColor") { it.encodeJson() }
+        putProp(this@encodeJson, ImagePollBlockOptionStyle::verticalSpacing, "verticalSpacing")
+        putProp(this@encodeJson, ImagePollBlockOptionStyle::horizontalSpacing, "horizontalSpacing")
+    }
+}
+
+internal fun TextPollBlockOptionStyle.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, TextPollBlockOptionStyle::height, "height")
+        putProp(this@encodeJson, TextPollBlockOptionStyle::opacity, "opacity")
+        putProp(this@encodeJson, TextPollBlockOptionStyle::borderRadius, "borderRadius")
+        putProp(this@encodeJson, TextPollBlockOptionStyle::borderWidth, "borderWidth")
+        putProp(this@encodeJson, TextPollBlockOptionStyle::borderColor, "borderColor") { it.encodeJson() }
+        putProp(this@encodeJson, TextPollBlockOptionStyle::color, "color") { it.encodeJson() }
+        putProp(this@encodeJson, TextPollBlockOptionStyle::backgroundColor, "backgroundColor") { it.encodeJson() }
+        putProp(this@encodeJson, TextPollBlockOptionStyle::font, "font") { it.encodeJson() }
+        putProp(this@encodeJson, TextPollBlockOptionStyle::textAlignment, "textAlign") { it.wireFormat }
+        putProp(this@encodeJson, TextPollBlockOptionStyle::resultFillColor, "resultFillColor") { it.encodeJson() }
+        putProp(this@encodeJson, TextPollBlockOptionStyle::backgroundImage, "backgroundImage") { it.encodeJson() }
+        putProp(this@encodeJson, TextPollBlockOptionStyle::verticalSpacing, "verticalSpacing")
+        putProp(this@encodeJson, TextPollBlockOptionStyle::backgroundContentMode, "backgroundContentMode") { it.wireFormat }
+        putProp(this@encodeJson, TextPollBlockOptionStyle::backgroundScale, "backgroundScale") { it.wireFormat }
+    }
+}
+
+internal fun ImagePollBlock.encodeJson(): JSONObject {
+    return encodeSharedJson().apply {
+        put("blockType", "image-poll-block")
+        putProp(this@encodeJson, ImagePollBlock::question, "question")
+        putProp(this@encodeJson, ImagePollBlock::options, "options") { JSONArray(it.map { it.encodeJson() }) }
+        putProp(this@encodeJson, ImagePollBlock::questionStyle, "questionStyle") { it.encodeJson() }
+        putProp(this@encodeJson, ImagePollBlock::optionStyle, "optionStyle") { it.encodeJson() }
+    }
+}
+
+internal fun TextPollBlock.encodeJson(): JSONObject {
+    return encodeSharedJson().apply {
+        put("blockType", "text-poll-block")
+        putProp(this@encodeJson, TextPollBlock::question, "question")
+        putProp(this@encodeJson, TextPollBlock::options, "options") { JSONArray(it) }
+        putProp(this@encodeJson, TextPollBlock::buttonHeight, "buttonHeight")
+        putProp(this@encodeJson, TextPollBlock::questionStyle, "questionStyle") { it.encodeJson() }
+        putProp(this@encodeJson, TextPollBlock::optionStyle, "optionStyle") { it.encodeJson() }
     }
 }
 
@@ -709,7 +797,6 @@ fun TextPollBlockOptionStyle.Companion.decodeJson(json: JSONObject): TextPollBlo
         backgroundColor = Color.decodeJson(json.getJSONObject("backgroundColor")),
         font = Font.decodeJson(json.getJSONObject("font")),
         textAlignment = TextAlignment.decodeJson("textAlign"),
-        insets = Insets.decodeJson(json.getJSONObject("insets")),
         resultFillColor = Color.decodeJson(json.getJSONObject("resultsFillColor")),
         backgroundImage = PollImage.decodeJson(json.getJSONObject("backgroundImage")),
         backgroundContentMode = BackgroundContentMode.decodeJson("backgroundContentMode"),

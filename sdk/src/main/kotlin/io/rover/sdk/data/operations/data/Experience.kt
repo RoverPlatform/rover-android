@@ -86,16 +86,6 @@ internal fun Color.Companion.decodeJson(json: JSONObject): Color {
     )
 }
 
-internal fun Image.Companion.decodeJson(json: JSONObject): Image {
-    return  Image(
-        width = json.getInt("width"),
-        height = json.getInt("height"),
-        name = json.getString("name"),
-        size = json.getInt("size"),
-        url = json.safeGetUri("url")
-    )
-}
-
 internal fun Color.encodeJson(): JSONObject {
     return JSONObject().apply {
         listOf(

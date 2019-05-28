@@ -19,8 +19,14 @@ import io.rover.sdk.data.domain.Height
 import io.rover.sdk.data.domain.HorizontalAlignment
 import io.rover.sdk.data.domain.Image
 import io.rover.sdk.data.domain.ImageBlock
+import io.rover.sdk.data.domain.ImageBlockOption
+import io.rover.sdk.data.domain.ImagePollBlock
+import io.rover.sdk.data.domain.ImagePollBlockOptionStyle
 import io.rover.sdk.data.domain.Insets
+import io.rover.sdk.data.domain.PollBlock
+import io.rover.sdk.data.domain.PollImage
 import io.rover.sdk.data.domain.Position
+import io.rover.sdk.data.domain.QuestionStyle
 import io.rover.sdk.data.domain.RectangleBlock
 import io.rover.sdk.data.domain.Row
 import io.rover.sdk.data.domain.Screen
@@ -29,6 +35,8 @@ import io.rover.sdk.data.domain.StatusBarStyle
 import io.rover.sdk.data.domain.Text
 import io.rover.sdk.data.domain.TextAlignment
 import io.rover.sdk.data.domain.TextBlock
+import io.rover.sdk.data.domain.TextPollBlock
+import io.rover.sdk.data.domain.TextPollBlockOptionStyle
 import io.rover.sdk.data.domain.TitleBar
 import io.rover.sdk.data.domain.TitleBarButtons
 import io.rover.sdk.data.domain.UnitOfMeasure
@@ -75,6 +83,16 @@ internal fun Color.Companion.decodeJson(json: JSONObject): Color {
         json.getInt("green"),
         json.getInt("blue"),
         json.getDouble("alpha")
+    )
+}
+
+internal fun Image.Companion.decodeJson(json: JSONObject): Image {
+    return  Image(
+        width = json.getInt("width"),
+        height = json.getInt("height"),
+        name = json.getString("name"),
+        size = json.getInt("size"),
+        url = json.safeGetUri("url")
     )
 }
 
@@ -613,6 +631,113 @@ internal fun Block.TapBehavior.Companion.decodeJson(json: JSONObject): Block.Tap
         else -> throw JSONException("Unsupported Block TapBehavior type `$typeName`.")
     }
 }
+internal fun PollBlock.Companion.decodeJson(json: JSONObject): PollBlock {
+    return when (json.safeGetString("blockType")) {
+        "image-poll-block" -> { decodeToImagePollBlock(json) }
+        "text-poll-block" -> { decodeToTextPollBlock(json) }
+        else -> throw JSONException("Unsupported poll block type")
+    }
+}
+
+internal fun PollImage.Companion.decodeJson(json: JSONObject): PollImage {
+    return  PollImage(
+        width = json.getInt("width"),
+        height = json.getInt("height"),
+        name = json.getString("name"),
+        type = json.getString("type"),
+        size = json.getInt("size"),
+        url = json.safeGetUri("url")
+    )
+}
+
+fun ImageBlockOption.Companion.decodeJson(json: JSONObject): ImageBlockOption {
+    return ImageBlockOption(
+        json.safeGetString("text"),
+        PollImage.decodeJson(json.getJSONObject("image"))
+    )
+}
+
+fun QuestionStyle.Companion.decodeJson(json: JSONObject): QuestionStyle {
+    return QuestionStyle(
+        color = Color.decodeJson(json.getJSONObject("color")),
+        font = Font.decodeJson(json.getJSONObject("font")),
+        textAlignment = TextAlignment.decodeJson(json.safeGetString("textAlign"))
+    )
+}
+
+fun ImagePollBlockOptionStyle.Companion.decodeJson(json: JSONObject) : ImagePollBlockOptionStyle {
+    return ImagePollBlockOptionStyle(
+        opacity = json.getDouble("opacity"),
+        borderRadius = json.getInt("borderRadius"),
+        borderWidth = json.getInt("borderWidth"),
+        borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
+        font = Font.decodeJson(json.getJSONObject("font")),
+        textAlignment = TextAlignment.decodeJson("textAlign"),
+        resultFillColor = Color.decodeJson(json.getJSONObject("resultsFillColor")),
+        verticalSpacing = json.getInt("verticalSpacing"),
+        horizontalSpacing = json.getInt("horizontalSpacing")
+    )
+}
+
+fun decodeToImagePollBlock(json: JSONObject): ImagePollBlock {
+    return ImagePollBlock(
+        id = json.safeGetString("id"),
+        insets = Insets.decodeJson(json.getJSONObject("insets")),
+        opacity = json.getDouble("opacity"),
+        position = Position.decodeJson(json.getJSONObject("position")),
+        keys = json.getJSONObject("keys").toStringHash(),
+        background = Background.decodeJson(json.getJSONObject("background")),
+        tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
+        border = Border.decodeJson(json.getJSONObject("border")),
+        name = json.safeGetString("name"),
+        tags = json.getJSONArray("tags").getStringIterable().toList(),
+        question = json.safeGetString("question"),
+        options = json.getJSONArray("options").getObjectIterable().map { ImageBlockOption.decodeJson(it) },
+        questionStyle = QuestionStyle.decodeJson(json.getJSONObject("questionStyle")),
+        optionStyle = ImagePollBlockOptionStyle.decodeJson(json.getJSONObject("optionStyle"))
+    )
+}
+
+fun TextPollBlockOptionStyle.Companion.decodeJson(json: JSONObject): TextPollBlockOptionStyle {
+    return TextPollBlockOptionStyle(
+        height = json.getInt("height"),
+        opacity = json.getDouble("opacity"),
+        borderRadius = json.getInt("borderRadius"),
+        borderWidth = json.getInt("borderWidth"),
+        borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
+        color = Color.decodeJson(json.getJSONObject("color")),
+        backgroundColor = Color.decodeJson(json.getJSONObject("backgroundColor")),
+        font = Font.decodeJson(json.getJSONObject("font")),
+        textAlignment = TextAlignment.decodeJson("textAlign"),
+        insets = Insets.decodeJson(json.getJSONObject("insets")),
+        resultFillColor = Color.decodeJson(json.getJSONObject("resultsFillColor")),
+        backgroundImage = PollImage.decodeJson(json.getJSONObject("backgroundImage")),
+        backgroundContentMode = BackgroundContentMode.decodeJson("backgroundContentMode"),
+        backgroundScale = BackgroundScale.decodeJson("backgroundScale"),
+        verticalSpacing = json.getInt("verticalSpacing")
+    )
+}
+
+fun decodeToTextPollBlock(json: JSONObject): TextPollBlock {
+    return TextPollBlock(
+        id = json.safeGetString("id"),
+        insets = Insets.decodeJson(json.getJSONObject("insets")),
+        opacity = json.getDouble("opacity"),
+        position = Position.decodeJson(json.getJSONObject("position")),
+        keys = json.getJSONObject("keys").toStringHash(),
+        background = Background.decodeJson(json.getJSONObject("background")),
+        tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
+        border = Border.decodeJson(json.getJSONObject("border")),
+        name = json.safeGetString("name"),
+        tags = json.getJSONArray("tags").getStringIterable().toList(),
+        question = json.safeGetString("question"),
+        options = json.getJSONArray("options").getStringIterable().toList(),
+        buttonHeight = json.getInt("buttonHeight"),
+        questionStyle = QuestionStyle.decodeJson(json.getJSONObject("questionStyle")),
+        optionStyle = TextPollBlockOptionStyle.decodeJson(json.getJSONObject("optionStyle"))
+    )
+}
+
 
 internal fun Block.TapBehavior.encodeJson(): JSONObject {
     return JSONObject().apply {
@@ -642,6 +767,7 @@ internal val RectangleBlock.Companion.resourceName get() = "RectangleBlock"
 internal val WebViewBlock.Companion.resourceName get() = "WebViewBlock"
 internal val TextBlock.Companion.resourceName get() = "TextBlock"
 internal val ImageBlock.Companion.resourceName get() = "ImageBlock"
+internal val PollBlock.Companion.resourceName get() = "PollBlock"
 
 internal fun Block.Companion.decodeJson(json: JSONObject): Block {
     // Block has subclasses, so we need to delegate to the appropriate deserializer for each
@@ -655,6 +781,7 @@ internal fun Block.Companion.decodeJson(json: JSONObject): Block {
         WebViewBlock.resourceName -> WebViewBlock.decodeJson(json)
         TextBlock.resourceName -> TextBlock.decodeJson(json)
         ImageBlock.resourceName -> ImageBlock.decodeJson(json)
+        PollBlock.resourceName -> PollBlock.decodeJson(json)
         else -> throw RuntimeException("Unsupported Block type '$typeName'.")
     }
 }

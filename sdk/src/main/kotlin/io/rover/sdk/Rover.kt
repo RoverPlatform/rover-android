@@ -24,6 +24,7 @@ import io.rover.sdk.data.domain.Row
 import io.rover.sdk.data.domain.Screen
 import io.rover.sdk.data.domain.Text
 import io.rover.sdk.data.domain.TextBlock
+import io.rover.sdk.data.domain.TextPollBlock
 import io.rover.sdk.data.domain.WebView
 import io.rover.sdk.data.domain.WebViewBlock
 import io.rover.sdk.data.events.AnalyticsService
@@ -60,6 +61,9 @@ import io.rover.sdk.ui.blocks.concerns.text.TextViewModel
 import io.rover.sdk.ui.blocks.image.ImageBlockView
 import io.rover.sdk.ui.blocks.image.ImageBlockViewModel
 import io.rover.sdk.ui.blocks.image.ImageViewModel
+import io.rover.sdk.ui.blocks.poll.TextPollBlockView
+import io.rover.sdk.ui.blocks.poll.TextPollBlockViewModel
+import io.rover.sdk.ui.blocks.poll.TextPollViewModel
 import io.rover.sdk.ui.blocks.rectangle.RectangleBlockView
 import io.rover.sdk.ui.blocks.rectangle.RectangleBlockViewModel
 import io.rover.sdk.ui.blocks.text.TextBlockView
@@ -349,11 +353,25 @@ internal class ViewModels(
                     barcodeViewModel = barcodeViewModel
                 )
             }
+            is TextPollBlock -> {
+                val textPollViewModel = textPollViewModel(block, measurementService)
+                return TextPollBlockViewModel(
+                    blockViewModel = blockViewModel(block, setOf(), textPollViewModel),
+                    backgroundViewModel = backgroundViewModel(block.background),
+                    borderViewModel = borderViewModel(block.border),
+                    textPollViewModel = textPollViewModel
+                )
+            }
             else -> throw Exception(
                 "This Rover UI block type is not supported by this version of the SDK: ${block.javaClass.simpleName}."
             )
         }
     }
+
+    private fun textPollViewModel(
+        textPollBlock: TextPollBlock,
+        measurementService: MeasurementService
+    ) = TextPollViewModel(textPollBlock, measurementService)
 
     private fun blockViewModel(
         block: Block,
@@ -439,6 +457,7 @@ internal class Views {
             ViewType.Image -> ImageBlockView(context)
             ViewType.WebView -> WebBlockView(context)
             ViewType.Barcode -> BarcodeBlockView(context)
+            ViewType.Poll -> TextPollBlockView(context)
         }
     }
 

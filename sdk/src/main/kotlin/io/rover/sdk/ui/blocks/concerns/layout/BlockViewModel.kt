@@ -145,7 +145,7 @@ internal class BlockViewModel(
     override val events = eventSource.share()
 
     override val isClickable: Boolean
-    get() = block.tapBehavior !is Block.TapBehavior.None
+    get() = true
 
     override fun click() {
         // I don't have an epic (any other asynchronous behaviour to compose) here, just a single
@@ -156,7 +156,7 @@ internal class BlockViewModel(
             is Block.TapBehavior.GoToScreen -> { NavigateToFromBlock.GoToScreenAction(tapBehavior.screenId, block) }
             is Block.TapBehavior.OpenUri -> { NavigateToFromBlock.External(tapBehavior.uri, block) }
             is Block.TapBehavior.PresentWebsite -> { NavigateToFromBlock.PresentWebsiteAction(tapBehavior.url, block) }
-            is Block.TapBehavior.None -> return
+            is Block.TapBehavior.None -> { NavigateToFromBlock.None(block) }
         }
 
         navigateTo.whenNotNull {

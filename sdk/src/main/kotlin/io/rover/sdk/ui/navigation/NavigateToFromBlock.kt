@@ -26,4 +26,8 @@ internal sealed class NavigateToFromBlock(
         val url: URI,
         block: Block
     ) : NavigateToFromBlock(block)
+
+    class None(
+        block: Block
+    ) : NavigateToFromBlock(block)
 }

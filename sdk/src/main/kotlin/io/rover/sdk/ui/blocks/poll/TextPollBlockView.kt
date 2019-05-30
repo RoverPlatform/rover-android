@@ -47,14 +47,7 @@ import io.rover.sdk.ui.dpAsPx
 import io.rover.sdk.ui.layout.ViewType
 import io.rover.sdk.ui.pxAsDp
 
-internal class TextPollBlockView : LinearLayout, LayoutableView<TextPollBlockViewModel> {
-    constructor(context: Context?) : super(context)
-    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(
-        context,
-        attrs,
-        defStyleAttr
-    )
+internal class TextPollBlockView(context: Context?) : LinearLayout(context), LayoutableView<TextPollBlockViewModel> {
 
     // mixins
     private val viewComposition = ViewComposition()
@@ -104,14 +97,8 @@ internal class TextPollBlockView : LinearLayout, LayoutableView<TextPollBlockVie
     }
 
     override fun onDraw(canvas: Canvas) {
-        viewComposition.beforeOnDraw(canvas)
         super.onDraw(canvas)
         viewComposition.afterOnDraw(canvas)
-    }
-
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-        viewComposition.onSizeChanged(w, h, oldw, oldh)
     }
 
     @SuppressLint("MissingSuperCall")

@@ -1,6 +1,7 @@
 package io.rover.sdk.services
 
 import io.rover.sdk.data.events.RoverEvent
+import io.rover.sdk.logging.log
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.share
 import org.reactivestreams.Publisher
@@ -19,6 +20,7 @@ class EventEmitter {
 
     internal fun trackEvent(roverEvent: RoverEvent) {
         eventSubject.onNext(roverEvent)
+        log.d("Event emitted: ${roverEvent.toString()}")
         when (roverEvent) {
             is RoverEvent.BlockTapped -> listeners.forEach { it.onBlockTapped(roverEvent) }
             is RoverEvent.ExperienceDismissed -> listeners.forEach {

@@ -597,10 +597,8 @@ internal fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
 }
 
 internal fun Block.TapBehavior.Companion.decodeJson(json: JSONObject): Block.TapBehavior {
-    val typeName = json.safeGetString("__typename")
-
-    return when (typeName) {
-        "NoneBlockTapBehavior" -> Block.TapBehavior.None()
+    return when (val typeName = json.safeGetString("__typename")) {
+        "NoneBlockTapBehavior" -> Block.TapBehavior.None
         "OpenURLBlockTapBehavior" -> Block.TapBehavior.OpenUri(
             uri = json.safeGetUri("url")
         )

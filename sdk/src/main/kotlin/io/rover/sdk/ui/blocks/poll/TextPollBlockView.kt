@@ -123,15 +123,3 @@ internal class TextPollBlockView : LinearLayout, LayoutableView<TextPollBlockVie
         log.v("Tried to forcefully invalidate layout.  Inhibited.")
     }
 }
-
-internal class TextPollBlockViewModel(
-    val textPollBlock: TextPollBlock,
-    private val blockViewModel: BlockViewModelInterface,
-    private val backgroundViewModel: BackgroundViewModelInterface,
-    private val borderViewModel: BorderViewModelInterface
-) : CompositeBlockViewModelInterface,
-    BlockViewModelInterface by blockViewModel,
-    BackgroundViewModelInterface by backgroundViewModel,
-    BorderViewModelInterface by borderViewModel {
-    override val viewType: ViewType = ViewType.Poll
-}

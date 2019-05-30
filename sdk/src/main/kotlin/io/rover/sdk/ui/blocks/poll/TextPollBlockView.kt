@@ -5,8 +5,11 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Typeface
+import android.support.v7.widget.AppCompatButton
+import android.support.v7.widget.AppCompatTextView
 import android.util.AttributeSet
 import android.widget.LinearLayout
+import android.widget.TextView
 import io.rover.sdk.data.domain.Color
 import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.QuestionStyle
@@ -37,7 +40,7 @@ import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.ViewModelBinding
 import io.rover.sdk.ui.layout.ViewType
 
-internal class TextPollBlockView : LinearLayout, LayoutableView<TextPollBlockViewModelInterface> {
+internal class TextPollBlockView : LinearLayout, LayoutableView<TextPollBlockViewModel> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
@@ -48,10 +51,26 @@ internal class TextPollBlockView : LinearLayout, LayoutableView<TextPollBlockVie
     private val viewBorder = ViewBorder(this, viewComposition)
     private val viewBlock = ViewBlock(this)
 
-    override var viewModelBinding: MeasuredBindableView.Binding<TextPollBlockViewModelInterface>? by ViewModelBinding { binding, _ ->
+    override var viewModelBinding: MeasuredBindableView.Binding<TextPollBlockViewModel>? by ViewModelBinding { binding, _ ->
         viewBorder.viewModelBinding = binding
         viewBlock.viewModelBinding = binding
         viewBackground.viewModelBinding = binding
+
+        binding?.viewModel?.textPollBlock
+    }
+
+    fun createViews(textPollBlock: TextPollBlock) {
+
+    }
+
+    fun createQuestionTextView(text: String): AppCompatTextView {
+        return AppCompatTextView(context).apply {
+            setText(text)
+        }
+    }
+
+    fun createOptionsButton(optionText: String): AppCompatButton {
+        
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -75,7 +94,25 @@ internal class TextPollBlockView : LinearLayout, LayoutableView<TextPollBlockVie
     }
 }
 
-internal class TextPollViewModel(private val textPollBlock: TextPollBlock, private val measurementService: MeasurementService) : TextPollViewModelInterface {
+internal class TextPollBlockViewModel(
+    val textPollBlock: TextPollBlock,
+    private val blockViewModel: BlockViewModelInterface,
+    private val backgroundViewModel: BackgroundViewModelInterface,
+    private val borderViewModel: BorderViewModelInterface
+) : CompositeBlockViewModelInterface,
+    BlockViewModelInterface by blockViewModel,
+    BackgroundViewModelInterface by backgroundViewModel,
+    BorderViewModelInterface by borderViewModel
+{
+    override val viewType: ViewType = ViewType.Poll
+
+
+}
+
+internal class TextPollBlockViewMeasurer(
+    private val textPollBlock: TextPollBlock,
+    private val measurementService: MeasurementService) : Measurable {
+
     override fun intrinsicHeight(bounds: RectF): Float {
         val questionHeight = measurementService.measureHeightNeededForMultiLineTextInTextView(
             textPollBlock.question,
@@ -101,44 +138,4 @@ internal class TextPollViewModel(private val textPollBlock: TextPollBlock, priva
 
         return FontAppearance(modelFont.size, font, color.asAndroidColor(), getPaintAlignFromTextAlign(alignment))
     }
-
-    override val question: String
-        get() = textPollBlock.question
-
-    override val options: List<String>
-        get() = textPollBlock.options
-
-    override val questionStyle: QuestionStyle
-        get() = textPollBlock.questionStyle
-
-    override val optionStyle: TextPollBlockOptionStyle
-        get() = textPollBlock.optionStyle
-}
-
-internal class TextPollBlockViewModel(
-    private val blockViewModel: BlockViewModelInterface,
-    private val textPollViewModel: TextPollViewModelInterface,
-    private val backgroundViewModel: BackgroundViewModelInterface,
-    private val borderViewModel: BorderViewModelInterface
-) : TextPollBlockViewModelInterface,
-    BlockViewModelInterface by blockViewModel,
-    BackgroundViewModelInterface by backgroundViewModel,
-    TextPollViewModelInterface by textPollViewModel,
-    BorderViewModelInterface by borderViewModel {
-
-    override val viewType: ViewType = ViewType.Poll
-}
-
-internal interface TextPollBlockViewModelInterface :
-    CompositeBlockViewModelInterface,
-    LayoutableViewModel,
-    BlockViewModelInterface,
-    BackgroundViewModelInterface,
-    BorderViewModelInterface
-
-internal interface TextPollViewModelInterface : Measurable, BindableViewModel {
-    val question: String
-    val options: List<String>
-    val questionStyle: QuestionStyle
-    val optionStyle: TextPollBlockOptionStyle
 }

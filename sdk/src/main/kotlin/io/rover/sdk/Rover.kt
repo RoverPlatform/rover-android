@@ -62,8 +62,8 @@ import io.rover.sdk.ui.blocks.image.ImageBlockView
 import io.rover.sdk.ui.blocks.image.ImageBlockViewModel
 import io.rover.sdk.ui.blocks.image.ImageViewModel
 import io.rover.sdk.ui.blocks.poll.TextPollBlockView
+import io.rover.sdk.ui.blocks.poll.TextPollBlockViewMeasurer
 import io.rover.sdk.ui.blocks.poll.TextPollBlockViewModel
-import io.rover.sdk.ui.blocks.poll.TextPollViewModel
 import io.rover.sdk.ui.blocks.rectangle.RectangleBlockView
 import io.rover.sdk.ui.blocks.rectangle.RectangleBlockViewModel
 import io.rover.sdk.ui.blocks.text.TextBlockView
@@ -354,12 +354,11 @@ internal class ViewModels(
                 )
             }
             is TextPollBlock -> {
-                val textPollViewModel = textPollViewModel(block, measurementService)
                 return TextPollBlockViewModel(
-                    blockViewModel = blockViewModel(block, setOf(), textPollViewModel),
+                    textPollBlock = block,
+                    blockViewModel = blockViewModel(block, setOf(), TextPollBlockViewMeasurer(block, measurementService)),
                     backgroundViewModel = backgroundViewModel(block.background),
-                    borderViewModel = borderViewModel(block.border),
-                    textPollViewModel = textPollViewModel
+                    borderViewModel = borderViewModel(block.border)
                 )
             }
             else -> throw Exception(
@@ -367,11 +366,6 @@ internal class ViewModels(
             )
         }
     }
-
-    private fun textPollViewModel(
-        textPollBlock: TextPollBlock,
-        measurementService: MeasurementService
-    ) = TextPollViewModel(textPollBlock, measurementService)
 
     private fun blockViewModel(
         block: Block,

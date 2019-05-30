@@ -146,7 +146,7 @@ internal class BlockViewModel(
     override val events = eventSource.share()
 
     override val isClickable: Boolean
-    get() = this.block is ButtonBlock || this.block.tapBehavior != Block.TapBehavior.None
+    get() = block is ButtonBlock || block.tapBehavior != Block.TapBehavior.None
 
     override fun click() {
         // I don't have an epic (any other asynchronous behaviour to compose) here, just a single

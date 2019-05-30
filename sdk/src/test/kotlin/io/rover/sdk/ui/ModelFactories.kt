@@ -78,7 +78,7 @@ internal class ModelFactories {
 
         fun emptyRectangleBlock(): RectangleBlock {
             return RectangleBlock(
-                tapBehavior = Block.TapBehavior.None(),
+                tapBehavior = Block.TapBehavior.None,
                 position = Position(
                     horizontalAlignment = HorizontalAlignment.Fill(
                         0.0, 0.0

@@ -20,7 +20,7 @@ class EventEmitter {
 
     internal fun trackEvent(roverEvent: RoverEvent) {
         eventSubject.onNext(roverEvent)
-        log.d("Event emitted: ${roverEvent.toString()}")
+        log.d("Event emitted: ${roverEvent}")
         when (roverEvent) {
             is RoverEvent.BlockTapped -> listeners.forEach { it.onBlockTapped(roverEvent) }
             is RoverEvent.ExperienceDismissed -> listeners.forEach {

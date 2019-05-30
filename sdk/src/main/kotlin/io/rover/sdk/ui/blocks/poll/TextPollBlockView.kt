@@ -8,6 +8,8 @@ import android.graphics.Typeface
 import android.support.v7.widget.AppCompatButton
 import android.support.v7.widget.AppCompatTextView
 import android.util.AttributeSet
+import android.view.View
+import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import io.rover.sdk.data.domain.Color
@@ -17,7 +19,10 @@ import io.rover.sdk.data.domain.TextAlignment
 import io.rover.sdk.data.domain.TextPollBlock
 import io.rover.sdk.data.domain.TextPollBlockOptionStyle
 import io.rover.sdk.logging.log
+import io.rover.sdk.platform.button
 import io.rover.sdk.platform.mapToFont
+import io.rover.sdk.platform.setDimens
+import io.rover.sdk.platform.textView
 import io.rover.sdk.services.MeasurementService
 import io.rover.sdk.ui.RectF
 import io.rover.sdk.data.domain.Font as ModelFont
@@ -38,12 +43,18 @@ import io.rover.sdk.ui.blocks.concerns.text.FontAppearance
 import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.ViewModelBinding
+import io.rover.sdk.ui.dpAsPx
 import io.rover.sdk.ui.layout.ViewType
+import io.rover.sdk.ui.pxAsDp
 
 internal class TextPollBlockView : LinearLayout, LayoutableView<TextPollBlockViewModel> {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
+    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(
+        context,
+        attrs,
+        defStyleAttr
+    )
 
     // mixins
     private val viewComposition = ViewComposition()
@@ -51,26 +62,45 @@ internal class TextPollBlockView : LinearLayout, LayoutableView<TextPollBlockVie
     private val viewBorder = ViewBorder(this, viewComposition)
     private val viewBlock = ViewBlock(this)
 
+    init {
+        orientation = VERTICAL
+    }
+
     override var viewModelBinding: MeasuredBindableView.Binding<TextPollBlockViewModel>? by ViewModelBinding { binding, _ ->
         viewBorder.viewModelBinding = binding
         viewBlock.viewModelBinding = binding
         viewBackground.viewModelBinding = binding
 
-        binding?.viewModel?.textPollBlock
-    }
-
-    fun createViews(textPollBlock: TextPollBlock) {
-
-    }
-
-    fun createQuestionTextView(text: String): AppCompatTextView {
-        return AppCompatTextView(context).apply {
-            setText(text)
+        binding?.viewModel?.textPollBlock?.let {
+            createViews(it)
         }
     }
 
-    fun createOptionsButton(optionText: String): AppCompatButton {
-        
+    private fun createViews(textPollBlock: TextPollBlock) {
+        val question = textView {
+            text = textPollBlock.question
+        }
+
+        addView(question)
+
+        val optionStyleHeight = textPollBlock.optionStyle.height.dpAsPx(resources.displayMetrics)
+        val optionMarginHeight =
+            textPollBlock.optionStyle.verticalSpacing.dpAsPx(resources.displayMetrics)
+
+        textPollBlock.options.forEachIndexed { index, option ->
+            val button = button {
+                id = index
+                background = null
+                text = option
+                setDimens(
+                    width = LayoutParams.MATCH_PARENT,
+                    height = optionStyleHeight,
+                    topMargin = optionMarginHeight
+                )
+            }
+
+            addView(button)
+        }
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -102,40 +132,6 @@ internal class TextPollBlockViewModel(
 ) : CompositeBlockViewModelInterface,
     BlockViewModelInterface by blockViewModel,
     BackgroundViewModelInterface by backgroundViewModel,
-    BorderViewModelInterface by borderViewModel
-{
+    BorderViewModelInterface by borderViewModel {
     override val viewType: ViewType = ViewType.Poll
-
-
-}
-
-internal class TextPollBlockViewMeasurer(
-    private val textPollBlock: TextPollBlock,
-    private val measurementService: MeasurementService) : Measurable {
-
-    override fun intrinsicHeight(bounds: RectF): Float {
-        val questionHeight = measurementService.measureHeightNeededForMultiLineTextInTextView(
-            textPollBlock.question,
-            getFontAppearance(textPollBlock.questionStyle.font, textPollBlock.questionStyle.color, textPollBlock.questionStyle.textAlignment),
-            bounds.width())
-        val optionsHeight = textPollBlock.optionStyle.height * textPollBlock.options.size
-        val numberOfVerticalSpaces = 2 + (textPollBlock.options.size - 1)
-        val optionSpacing = textPollBlock.optionStyle.verticalSpacing * (numberOfVerticalSpaces)
-
-        return questionHeight + optionsHeight + optionSpacing
-    }
-
-    private fun getPaintAlignFromTextAlign(textAlignment: TextAlignment): Paint.Align {
-        return when (textAlignment) {
-            TextAlignment.Center -> Paint.Align.CENTER
-            TextAlignment.Left -> Paint.Align.LEFT
-            TextAlignment.Right -> Paint.Align.RIGHT
-        }
-    }
-
-    private fun getFontAppearance(modelFont: ModelFont, color: Color, alignment: TextAlignment): FontAppearance {
-        val font = modelFont.weight.mapToFont()
-
-        return FontAppearance(modelFont.size, font, color.asAndroidColor(), getPaintAlignFromTextAlign(alignment))
-    }
 }

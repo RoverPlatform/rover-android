@@ -1,10 +1,11 @@
 package io.rover.sdk.data.http
 
 import android.content.Context
+import android.content.pm.PackageInfo
 import android.net.http.HttpResponseCache
 import android.util.Log
-import io.rover.sdk.BuildConfig
 import io.rover.sdk.logging.log
+import io.rover.sdk.platform.setRoverUserAgent
 import io.rover.sdk.streams.Publishers
 import io.rover.sdk.streams.Scheduler
 import io.rover.sdk.streams.subscribeOn
@@ -15,11 +16,8 @@ import java.io.DataOutputStream
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
-import java.net.URLConnection
 import java.util.zip.GZIPOutputStream
 import javax.net.ssl.HttpsURLConnection
-import android.R.attr.versionName
-import android.content.pm.PackageInfo
 
 
 /**
@@ -209,11 +207,4 @@ internal class HttpClient(
             gzipStream.close()
         }
     }
-}
-
-internal fun URLConnection.setRoverUserAgent(packageInfo: PackageInfo) {
-    // get the version number of the app we're embedded into (thus can't use BuildConfig for that)
-    val appDescriptor = "${packageInfo.packageName}/${packageInfo.versionName}"
-    val roverDescriptor = "RoverSDK/${BuildConfig.VERSION_NAME}"
-    setRequestProperty("User-Agent", "${ System.getProperty("http.agent")} $appDescriptor $roverDescriptor")
 }

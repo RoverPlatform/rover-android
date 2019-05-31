@@ -608,6 +608,7 @@ internal fun Block.TapBehavior.Companion.decodeJson(json: JSONObject): Block.Tap
         "PresentWebsiteBlockTapBehavior" -> Block.TapBehavior.PresentWebsite(
             url = json.safeGetUri("url")
         )
+        "CustomBlockTapBehavior" -> Block.TapBehavior.Custom
         else -> throw JSONException("Unsupported Block TapBehavior type `$typeName`.")
     }
 }
@@ -629,6 +630,9 @@ internal fun Block.TapBehavior.encodeJson(): JSONObject {
             }
             is Block.TapBehavior.None -> {
                 "NoneBlockTapBehavior"
+            }
+            is Block.TapBehavior.Custom -> {
+                "CustomBlockTapBehavior"
             }
         })
     }

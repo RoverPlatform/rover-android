@@ -109,6 +109,8 @@ interface Block {
 
         object None : TapBehavior()
 
+        object Custom : TapBehavior()
+
         companion object
     }
 

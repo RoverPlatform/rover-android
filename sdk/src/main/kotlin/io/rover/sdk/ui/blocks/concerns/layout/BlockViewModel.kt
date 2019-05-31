@@ -1,18 +1,18 @@
 package io.rover.sdk.ui.blocks.concerns.layout
 
-import io.rover.sdk.ui.layout.ViewType
-import io.rover.sdk.ui.layout.screen.ScreenViewModel
-import io.rover.sdk.ui.navigation.NavigateToFromBlock
 import io.rover.sdk.data.domain.Block
 import io.rover.sdk.data.domain.ButtonBlock
 import io.rover.sdk.data.domain.Height
 import io.rover.sdk.data.domain.HorizontalAlignment
 import io.rover.sdk.data.domain.VerticalAlignment
 import io.rover.sdk.logging.log
+import io.rover.sdk.platform.whenNotNull
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.share
 import io.rover.sdk.ui.RectF
-import io.rover.sdk.platform.whenNotNull
+import io.rover.sdk.ui.layout.ViewType
+import io.rover.sdk.ui.layout.screen.ScreenViewModel
+import io.rover.sdk.ui.navigation.NavigateToFromBlock
 
 /**
  * A mixin used by all blocks that contains the block layout and positioning concerns.
@@ -158,6 +158,7 @@ internal class BlockViewModel(
             is Block.TapBehavior.OpenUri -> { NavigateToFromBlock.External(tapBehavior.uri, block) }
             is Block.TapBehavior.PresentWebsite -> { NavigateToFromBlock.PresentWebsiteAction(tapBehavior.url, block) }
             is Block.TapBehavior.None -> { NavigateToFromBlock.None(block) }
+            is Block.TapBehavior.Custom -> { NavigateToFromBlock.Custom(block) }
         }
 
         navigateTo.whenNotNull {

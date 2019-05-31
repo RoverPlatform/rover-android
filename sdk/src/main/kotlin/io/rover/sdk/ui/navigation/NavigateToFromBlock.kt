@@ -30,4 +30,8 @@ internal sealed class NavigateToFromBlock(
     class None(
         block: Block
     ) : NavigateToFromBlock(block)
+
+    class Custom(
+        block: Block
+    ) : NavigateToFromBlock(block)
 }

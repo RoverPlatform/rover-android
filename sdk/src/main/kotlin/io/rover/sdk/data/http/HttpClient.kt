@@ -3,6 +3,7 @@ package io.rover.sdk.data.http
 import android.content.Context
 import android.net.http.HttpResponseCache
 import android.util.Log
+import io.rover.sdk.BuildConfig
 import io.rover.sdk.logging.log
 import io.rover.sdk.streams.Publishers
 import io.rover.sdk.streams.Scheduler
@@ -14,15 +15,20 @@ import java.io.DataOutputStream
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.URLConnection
 import java.util.zip.GZIPOutputStream
 import javax.net.ssl.HttpsURLConnection
+import android.R.attr.versionName
+import android.content.pm.PackageInfo
+
 
 /**
  * HTTP client (used for both Rover API access and other tasks), powered by Android's stock
  * [HttpsURLConnection].
  */
 internal class HttpClient(
-    private val ioScheduler: Scheduler
+    private val ioScheduler: Scheduler,
+    private val appPackageInfo: PackageInfo
 )  {
     /**
      * When subscribed performs the given [HttpRequest] and then yields the result.
@@ -78,6 +84,8 @@ internal class HttpClient(
                         setFixedLengthStreamingMode(requestBody?.size ?: 0)
                         setRequestProperty("Content-Encoding", "gzip")
                     }
+
+                    setRoverUserAgent(appPackageInfo)
 
                     // add the request headers.
                     request.headers.onEach { (field, value) -> setRequestProperty(field, value) }
@@ -201,4 +209,11 @@ internal class HttpClient(
             gzipStream.close()
         }
     }
+}
+
+internal fun URLConnection.setRoverUserAgent(packageInfo: PackageInfo) {
+    // get the version number of the app we're embedded into (thus can't use BuildConfig for that)
+    val appDescriptor = "${packageInfo.packageName}/${packageInfo.versionName}"
+    val roverDescriptor = "RoverSDK/${BuildConfig.VERSION_NAME}"
+    setRequestProperty("User-Agent", "${ System.getProperty("http.agent")} $appDescriptor $roverDescriptor")
 }

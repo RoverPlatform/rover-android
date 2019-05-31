@@ -107,7 +107,9 @@ interface Block {
 
         data class PresentWebsite(val url: URI) : TapBehavior()
 
-        class None : TapBehavior()
+        object None : TapBehavior()
+
+        object Custom : TapBehavior()
 
         companion object
     }

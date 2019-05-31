@@ -139,7 +139,9 @@ open class Rover(
 
     private val imageOptimizationService: ImageOptimizationService = ImageOptimizationService()
 
-    private val httpClient: HttpClient = HttpClient(ioScheduler)
+    private val packageInfo = application.packageManager.getPackageInfo(application.packageName, 0)
+
+    private val httpClient: HttpClient = HttpClient(ioScheduler, packageInfo)
 
     internal val webBrowserDisplay: EmbeddedWebBrowserDisplay = EmbeddedWebBrowserDisplay(chromeTabBackgroundColor)
 
@@ -149,6 +151,7 @@ open class Rover(
 
     private val analyticsService: AnalyticsService = AnalyticsService(
         application,
+        packageInfo,
         accountToken,
         eventEmitter
     )

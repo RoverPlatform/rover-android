@@ -124,15 +124,16 @@ internal class NavigationViewModel(
 
         // observe actions and emit analytics events
         actions.subscribe { action ->
-
             when (action) {
                 is Action.Navigate -> {
                     eventEmitter.trackEvent(
-                        RoverEvent.BlockTapped(experience,
+                        RoverEvent.BlockTapped(
+                            experience,
                             action.sourceScreenViewModel.screen,
                             action.navigateTo.block,
                             action.row,
-                        campaignId)
+                            campaignId
+                        )
                     )
                 }
             }

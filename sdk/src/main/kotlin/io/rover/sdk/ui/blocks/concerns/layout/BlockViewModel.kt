@@ -144,8 +144,7 @@ internal class BlockViewModel(
     private val eventSource = PublishSubject<BlockViewModelInterface.Event>()
     override val events = eventSource.share()
 
-    override val isClickable: Boolean
-    get() = block.tapBehavior !is Block.TapBehavior.None
+    override val isClickable: Boolean = true
 
     override fun click() {
         // I don't have an epic (any other asynchronous behaviour to compose) here, just a single

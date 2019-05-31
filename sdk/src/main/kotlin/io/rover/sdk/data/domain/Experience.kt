@@ -1,6 +1,7 @@
 package io.rover.sdk.data.domain
 
 import android.util.DisplayMetrics
+import android.view.Gravity
 import io.rover.sdk.data.domain.BackgroundScale.X3
 import java.net.URI
 import java.net.URL
@@ -519,6 +520,14 @@ enum class TextAlignment(
     Center("CENTER"),
     Left("LEFT"),
     Right("RIGHT");
+
+    fun convertToGravity(): Int {
+        return when (this) {
+            Right -> Gravity.END
+            Left -> Gravity.START
+            Center -> Gravity.CENTER_HORIZONTAL
+        }
+    }
 
     companion object
 }

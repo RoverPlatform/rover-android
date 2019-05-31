@@ -21,7 +21,6 @@ internal class MeasurementService(
     private val richTextToSpannedTransformer: RichTextToSpannedTransformer,
     private val barcodeRenderingService: BarcodeRenderingService
 ) {
-
     @SuppressLint("NewApi")
     fun measureHeightNeededForMultiLineTextInTextView(
         text: String,

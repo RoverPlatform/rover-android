@@ -5,17 +5,19 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.RectF
+import android.graphics.Region
 import android.graphics.Typeface
 import android.support.v7.widget.AppCompatTextView
 import android.view.Gravity
-import android.view.Gravity.CENTER_VERTICAL
+import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import io.rover.sdk.data.domain.QuestionStyle
 import io.rover.sdk.data.domain.TextPollBlock
 import io.rover.sdk.data.domain.TextPollBlockOptionStyle
 import io.rover.sdk.logging.log
-import io.rover.sdk.platform.button
 import io.rover.sdk.platform.mapToFont
 import io.rover.sdk.platform.optionView
 import io.rover.sdk.platform.setDimens
@@ -31,10 +33,8 @@ import io.rover.sdk.ui.blocks.concerns.layout.ViewBlock
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.ViewModelBinding
 import io.rover.sdk.ui.dpAsPx
-import io.rover.sdk.ui.pxAsDp
 import io.rover.sdk.data.domain.Font as ModelFont
-
-
+import android.support.v4.view.ViewCompat.getClipBounds
 
 internal class TextPollBlockView(context: Context?) : LinearLayout(context), LayoutableView<TextPollBlockViewModel> {
 
@@ -72,6 +72,7 @@ internal class TextPollBlockView(context: Context?) : LinearLayout(context), Lay
         val question = textView {
             text = textPollBlock.question
             setTextStyleProperties(textPollBlock.questionStyle)
+            layoutParams = MarginLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
         }
 
         addView(question)
@@ -82,21 +83,22 @@ internal class TextPollBlockView(context: Context?) : LinearLayout(context), Lay
         val borderWidth = optionStyle.borderWidth.dpAsPx(resources.displayMetrics)
 
         textPollBlock.options.forEachIndexed { index, option ->
-            val button = optionView {
+            val optionView = optionView {
+                gravity = Gravity.CENTER_VERTICAL
                 id = index
                 alpha = optionStyle.opacity.toFloat()
-                setBackgroundColor(optionStyle.backgroundColor.asAndroidColor())
+                setBackgroundColor(Color.TRANSPARENT)
                 setDimens(
                     width = LayoutParams.MATCH_PARENT,
-                    height = optionStyleHeight + borderWidth,
+                    height = optionStyleHeight + (borderWidth * 2),
                     topMargin = optionMarginHeight,
-                    padding = borderWidth
+                    leftPadding = borderWidth
                 )
                 createViews(option, textPollBlock.optionStyle)
                 setResult(optionStyle.resultFillColor.asAndroidColor())
             }
 
-            addView(button)
+            addView(optionView)
         }
     }
 
@@ -131,6 +133,7 @@ internal class OptionView(context: Context?) : LinearLayout(context) {
     }
 
     fun createViews(option: String, optionStyle: TextPollBlockOptionStyle) {
+
         val question = textView {
             id = TEXT_ID
             text = option
@@ -140,20 +143,43 @@ internal class OptionView(context: Context?) : LinearLayout(context) {
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
         }
 
+        borderRadius = optionStyle.borderRadius.dpAsPx(resources.displayMetrics).toFloat()
+        strokeWidthX = optionStyle.borderWidth.dpAsPx(resources.displayMetrics).toFloat()
+
         paint = Paint().apply {
             color = optionStyle.borderColor.asAndroidColor()
-            strokeWidth = optionStyle.borderWidth.dpAsPx(resources.displayMetrics).toFloat()
+            this.strokeWidth = strokeWidthX
             style = Paint.Style.STROKE
+        }
+
+        fillColorPaint = Paint().apply {
+            color = optionStyle.backgroundColor.asAndroidColor()
+            style = Paint.Style.FILL
         }
 
         addView(question)
     }
 
+    private var strokeWidthX = 0f
+    private var borderRadius = 0f
     private var paint = Paint()
+    private var fillColorPaint = Paint()
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
+        //TODO: Extract this from on draw - Churning == bad
+        val halfStrokeWidth = strokeWidthX / 2
+
+        val rectWithBorders = RectF(halfStrokeWidth, halfStrokeWidth, width.toFloat() - halfStrokeWidth, height.toFloat() - halfStrokeWidth)
+        val rectF = RectF(0f, 0f, width.toFloat(), height.toFloat())
+
+        //TODO: Clip to avoid overdraw
+
+        canvas.drawRoundRect(rectWithBorders, borderRadius, borderRadius, fillColorPaint)
+        if (strokeWidthX != 0f) {
+            canvas.drawRoundRect(rectWithBorders, borderRadius, borderRadius, paint)
+        }
+
     }
 
     fun setResult(resultColor: Int) {

@@ -21,7 +21,6 @@ internal class MeasurementService(
     private val richTextToSpannedTransformer: RichTextToSpannedTransformer,
     private val barcodeRenderingService: BarcodeRenderingService
 ) {
-    @SuppressLint("NewApi")
     fun measureHeightNeededForMultiLineTextInTextView(
         text: String,
         fontAppearance: FontAppearance,
@@ -31,7 +30,7 @@ internal class MeasurementService(
         val  spanned = SpannableString(text)
 
         val paint = TextPaint().apply {
-            textSize = fontAppearance.fontSize.toFloat() * displayMetrics.scaledDensity
+            textSize = fontAppearance.fontSize * displayMetrics.scaledDensity
             typeface = Typeface.create(fontAppearance.font.fontFamily, fontAppearance.font.fontStyle)
             textAlign = fontAppearance.align
         }
@@ -44,7 +43,7 @@ internal class MeasurementService(
 
         val layout = StaticLayout(spanned, paint, width.dpAsPx(displayMetrics), textLayoutAlign,
             textViewLineSpacing, 0f, true)
-        return (layout.height + layout.topPadding + layout.bottomPadding).pxAsDp(displayMetrics)
+        return layout.height.pxAsDp(displayMetrics)
     }
 
     /**

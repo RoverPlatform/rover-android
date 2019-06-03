@@ -24,16 +24,13 @@ internal fun LinearLayout.optionView(builder: OptionView.() -> Unit): OptionView
     }
 }
 
-internal fun OptionView.setDimens(width: Int, height: Int, topMargin: Int, padding: Int) {
+internal fun OptionView.setDimens(width: Int, height: Int, topMargin: Int, leftPadding: Int) {
     layoutParams = ViewGroup.MarginLayoutParams(width, height).apply {
         this.topMargin = topMargin
-        setPadding(padding, padding, padding, padding)
+        setPadding(leftPadding, 0, 0, 0)
     }
 }
 
-internal fun AppCompatTextView.setDimens(width: Int, height: Int, topMargin: Int, padding: Int) {
-    layoutParams = ViewGroup.MarginLayoutParams(width, height).apply {
-        this.topMargin = topMargin
-        setPadding(padding, padding, padding, padding)
-    }
+internal fun AppCompatTextView.setDimens(width: Int, height: Int) {
+    layoutParams = ViewGroup.MarginLayoutParams(width, height)
 }

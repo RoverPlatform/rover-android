@@ -22,7 +22,7 @@ internal class TextPollBlockViewMeasurer(
             textPollBlock.question,
             getFontAppearance(textPollBlock.questionStyle.font, textPollBlock.questionStyle.color, textPollBlock.questionStyle.textAlignment),
             bounds.width())
-        val optionsHeight = (textPollBlock.optionStyle.height + textPollBlock.optionStyle.borderWidth) * textPollBlock.options.size
+        val optionsHeight = ((textPollBlock.optionStyle.height + (textPollBlock.optionStyle.borderWidth * 2)) * textPollBlock.options.size)
         val optionSpacing = textPollBlock.optionStyle.verticalSpacing * (textPollBlock.options.size)
 
         return optionsHeight + optionSpacing + questionHeight

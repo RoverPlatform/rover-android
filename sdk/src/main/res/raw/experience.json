@@ -111,10 +111,10 @@
                 "textAlignment": "CENTER"
               },
               "optionStyle": {
-                "height": 36,
+                "height": 40,
                 "opacity": 1,
                 "borderRadius": 0,
-                "borderWidth": 5,
+                "borderWidth": 1,
                 "borderColor": {
                   "red": 10,
                   "green": 10,

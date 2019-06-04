@@ -18,12 +18,17 @@ internal class TextPollBlockViewMeasurer(
 ) : Measurable {
 
     override fun intrinsicHeight(bounds: RectF): Float {
+        // Roundtrip to avoid rounding when converting floats to ints causing mismatches in measured size vs views actual size
+        val optionStyleHeight = measurementService.measureDpToPxToDp(textPollBlock.optionStyle.height)
+        val borderWidth = measurementService.measureDpToPxToDp(textPollBlock.optionStyle.borderWidth)
+        val verticalSpacing = measurementService.measureDpToPxToDp(textPollBlock.optionStyle.verticalSpacing)
+
         val questionHeight = measurementService.measureHeightNeededForMultiLineTextInTextView(
             textPollBlock.question,
             getFontAppearance(textPollBlock.questionStyle.font, textPollBlock.questionStyle.color, textPollBlock.questionStyle.textAlignment),
             bounds.width())
-        val optionsHeight = ((textPollBlock.optionStyle.height + (textPollBlock.optionStyle.borderWidth * 2)) * textPollBlock.options.size)
-        val optionSpacing = textPollBlock.optionStyle.verticalSpacing * (textPollBlock.options.size)
+        val optionsHeight = ((optionStyleHeight + (borderWidth * 2)) * textPollBlock.options.size)
+        val optionSpacing = verticalSpacing * (textPollBlock.options.size)
 
         return optionsHeight + optionSpacing + questionHeight
     }

@@ -21,6 +21,12 @@ internal class MeasurementService(
     private val richTextToSpannedTransformer: RichTextToSpannedTransformer,
     private val barcodeRenderingService: BarcodeRenderingService
 ) {
+
+    // Roundtrip to avoid rounding causing mismatched when converting floats to ints
+    fun measureDpToPxToDp(dpValue: Int): Float {
+        return dpValue.dpAsPx(displayMetrics).pxAsDp(displayMetrics)
+    }
+
     fun measureHeightNeededForMultiLineTextInTextView(
         text: String,
         fontAppearance: FontAppearance,

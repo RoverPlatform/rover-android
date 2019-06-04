@@ -171,7 +171,6 @@ internal class OptionView(context: Context?) : LinearLayout(context) {
         val halfStrokeWidth = strokeWidthX / 2
 
         val rectWithBorders = RectF(halfStrokeWidth, halfStrokeWidth, width.toFloat() - halfStrokeWidth, height.toFloat() - halfStrokeWidth)
-        val rectF = RectF(0f, 0f, width.toFloat(), height.toFloat())
 
         //TODO: Clip to avoid overdraw
 

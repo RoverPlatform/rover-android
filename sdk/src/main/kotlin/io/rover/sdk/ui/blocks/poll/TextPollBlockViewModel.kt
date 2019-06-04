@@ -15,11 +15,13 @@ internal class TextPollBlockViewModel(
     val textPollBlock: TextPollBlock,
     private val blockViewModel: BlockViewModelInterface,
     private val backgroundViewModel: BackgroundViewModelInterface,
+    val optionBackgroundViewModel: BackgroundViewModelInterface,
     private val borderViewModel: BorderViewModelInterface
 ) : CompositeBlockViewModelInterface,
     BlockViewModelInterface by blockViewModel,
     BackgroundViewModelInterface by backgroundViewModel,
-    BorderViewModelInterface by borderViewModel {
+    BorderViewModelInterface by borderViewModel
+{
     override val viewType: ViewType = ViewType.Poll
 
     val pollState: Publisher<PollState> = Publishers.just(PollState.LoadingState)
@@ -30,7 +32,6 @@ sealed class PollState {
     data class VotingState(val textPollBlock: TextPollBlock) : PollState()
     object LoadingState : PollState()
 }
-
 
 interface PollsService {
     fun vote()

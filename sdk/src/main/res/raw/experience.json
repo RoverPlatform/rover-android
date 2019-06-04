@@ -12,13 +12,7 @@
           "alpha": 0
         },
         "contentMode": "ORIGINAL",
-        "image": {
-          "height": 0,
-          "name": "westie.jpg",
-          "size": 20334,
-          "width": 480,
-          "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/b0f7883c-b405-4036-b17e-ced171f874b8-westie.jpg"
-        },
+        "image": null,
         "scale": "X1"
       },
       "id": "ry0ohjx9",
@@ -47,7 +41,13 @@
                   "alpha": 0
                 },
                 "contentMode": "ORIGINAL",
-                "image": null,
+                "image": {
+                  "height": 561,
+                  "name": "tex-mex-lasagna-main.png",
+                  "size": 593477,
+                  "width": 936,
+                  "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/5156d40b-11ed-40c2-8f41-9ed681842c61-tex-mex-lasagna-main.png"
+                },
                 "scale": "X1"
               },
               "border": {
@@ -111,10 +111,10 @@
                 "textAlignment": "CENTER"
               },
               "optionStyle": {
-                "height": 40,
+                "height": 100,
                 "opacity": 1,
-                "borderRadius": 0,
-                "borderWidth": 1,
+                "borderRadius": 20,
+                "borderWidth": 5,
                 "borderColor": {
                   "red": 10,
                   "green": 10,

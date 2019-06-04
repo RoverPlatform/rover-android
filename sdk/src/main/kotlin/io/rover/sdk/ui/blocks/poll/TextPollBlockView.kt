@@ -7,12 +7,9 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
-import android.graphics.Region
 import android.graphics.Typeface
 import android.support.v7.widget.AppCompatTextView
 import android.view.Gravity
-import android.view.View
-import android.view.ViewGroup
 import android.widget.LinearLayout
 import io.rover.sdk.data.domain.QuestionStyle
 import io.rover.sdk.data.domain.TextPollBlock
@@ -26,15 +23,18 @@ import io.rover.sdk.streams.androidLifecycleDispose
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.concerns.ViewComposition
+import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
 import io.rover.sdk.ui.blocks.concerns.background.ViewBackground
+import io.rover.sdk.ui.blocks.concerns.background.createBackgroundDrawable
 import io.rover.sdk.ui.blocks.concerns.border.ViewBorder
 import io.rover.sdk.ui.blocks.concerns.layout.LayoutableView
 import io.rover.sdk.ui.blocks.concerns.layout.ViewBlock
 import io.rover.sdk.ui.concerns.MeasuredBindableView
+import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.concerns.ViewModelBinding
 import io.rover.sdk.ui.dpAsPx
+import io.rover.sdk.ui.pxAsDp
 import io.rover.sdk.data.domain.Font as ModelFont
-import android.support.v4.view.ViewCompat.getClipBounds
 
 internal class TextPollBlockView(context: Context?) : LinearLayout(context), LayoutableView<TextPollBlockViewModel> {
 
@@ -53,8 +53,23 @@ internal class TextPollBlockView(context: Context?) : LinearLayout(context), Lay
         viewBlock.viewModelBinding = binding
         viewBackground.viewModelBinding = binding
 
-        binding?.viewModel?.textPollBlock?.let {
-            createViews(it)
+        binding?.viewModel?.let {
+
+            val optionStyleHeight = it.textPollBlock.optionStyle.height
+            val borderWidth = it.textPollBlock.optionStyle.borderWidth
+
+            val optionViews = createOptionViews(it.textPollBlock)
+
+            startListeningForOptionImageUpdates(it, optionViews)
+
+            addView(createQuestion(it.textPollBlock))
+            optionViews.forEach { optionView -> addView(optionView) }
+
+            val optionHeight = MeasuredSize(width = 1050.pxAsDp(resources.displayMetrics),
+                height = optionStyleHeight + (borderWidth * 2).toFloat(),
+                density = resources.displayMetrics.density)
+
+            it.optionBackgroundViewModel.informDimensions(optionHeight)
         }
 
         binding?.viewModel?.pollState?.androidLifecycleDispose(this)?.subscribe {
@@ -68,22 +83,42 @@ internal class TextPollBlockView(context: Context?) : LinearLayout(context), Lay
         }
     }
 
-    private fun createViews(textPollBlock: TextPollBlock) {
-        val question = textView {
+    private fun startListeningForOptionImageUpdates(
+        it: TextPollBlockViewModel,
+        optionViews: List<OptionView>
+    ) {
+        it.optionBackgroundViewModel.backgroundUpdates.androidLifecycleDispose(this)
+            .subscribe { (bitmap, fadeIn, backgroundImageConfiguration) ->
+                val backgroundDrawable = bitmap.createBackgroundDrawable(view, it.backgroundColor, fadeIn, backgroundImageConfiguration)
+
+                optionViews.forEach {
+                    it.backgroundImage = backgroundDrawable
+                    val paddingLeft = it.paddingLeft
+                    val paddingTop = it.paddingTop
+                    val paddingRight = it.paddingRight
+                    val paddingBottom = it.paddingBottom
+                    it.background = backgroundDrawable
+                    it.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom)
+                }
+            }
+    }
+
+    private fun createQuestion(textPollBlock: TextPollBlock): AppCompatTextView {
+        return textView {
             text = textPollBlock.question
             setTextStyleProperties(textPollBlock.questionStyle)
             layoutParams = MarginLayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
         }
+    }
 
-        addView(question)
-
+    private fun createOptionViews(textPollBlock: TextPollBlock): List<OptionView> {
         val optionStyle = textPollBlock.optionStyle
         val optionStyleHeight = optionStyle.height.dpAsPx(resources.displayMetrics)
         val optionMarginHeight = optionStyle.verticalSpacing.dpAsPx(resources.displayMetrics)
         val borderWidth = optionStyle.borderWidth.dpAsPx(resources.displayMetrics)
 
-        textPollBlock.options.forEachIndexed { index, option ->
-            val optionView = optionView {
+        return textPollBlock.options.mapIndexed { index, option ->
+            optionView {
                 gravity = Gravity.CENTER_VERTICAL
                 id = index
                 alpha = optionStyle.opacity.toFloat()
@@ -97,8 +132,6 @@ internal class TextPollBlockView(context: Context?) : LinearLayout(context), Lay
                 createViews(option, textPollBlock.optionStyle)
                 setResult(optionStyle.resultFillColor.asAndroidColor())
             }
-
-            addView(optionView)
         }
     }
 
@@ -164,6 +197,7 @@ internal class OptionView(context: Context?) : LinearLayout(context) {
     private var borderRadius = 0f
     private var paint = Paint()
     private var fillColorPaint = Paint()
+    var backgroundImage: BackgroundColorDrawableWrapper? = null
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -174,11 +208,17 @@ internal class OptionView(context: Context?) : LinearLayout(context) {
 
         //TODO: Clip to avoid overdraw
 
-        canvas.drawRoundRect(rectWithBorders, borderRadius, borderRadius, fillColorPaint)
+//        val path1 = Path().addRoundRect(rectWithBorders, borderRadius, borderRadius, Path.Direction.CW)
+//        val path2 = Path().addRect(RectF(0f, 0f, width.toFloat(), height.toFloat()), Path.Direction.CW)
+
+
+        if (backgroundImage == null) {
+            canvas.drawRoundRect(rectWithBorders, borderRadius, borderRadius, fillColorPaint)
+        }
+
         if (strokeWidthX != 0f) {
             canvas.drawRoundRect(rectWithBorders, borderRadius, borderRadius, paint)
         }
-
     }
 
     fun setResult(resultColor: Int) {

@@ -361,6 +361,7 @@ internal class ViewModels(
                     textPollBlock = block,
                     blockViewModel = blockViewModel(block, setOf(), TextPollBlockViewMeasurer(block, measurementService)),
                     backgroundViewModel = backgroundViewModel(block.background),
+                    optionBackgroundViewModel = backgroundViewModel(block.background),
                     borderViewModel = borderViewModel(block.border)
                 )
             }

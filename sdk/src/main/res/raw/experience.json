@@ -41,13 +41,7 @@
                   "alpha": 0
                 },
                 "contentMode": "ORIGINAL",
-                "image": {
-                  "height": 561,
-                  "name": "tex-mex-lasagna-main.png",
-                  "size": 593477,
-                  "width": 936,
-                  "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/5156d40b-11ed-40c2-8f41-9ed681842c61-tex-mex-lasagna-main.png"
-                },
+                "image": null,
                 "scale": "X1"
               },
               "border": {

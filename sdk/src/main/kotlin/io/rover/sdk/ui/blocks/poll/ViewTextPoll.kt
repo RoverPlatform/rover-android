@@ -8,6 +8,7 @@ import android.support.v7.widget.AppCompatTextView
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import io.rover.sdk.data.domain.HorizontalAlignment
 import io.rover.sdk.data.domain.QuestionStyle
 import io.rover.sdk.data.domain.TextPollBlock
 import io.rover.sdk.data.domain.TextPollBlockOptionStyle
@@ -43,13 +44,18 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             view.addView(createQuestion(it.textPollBlock))
             optionViews.forEach { optionView -> view.addView(optionView) }
 
-            val optionHeight = MeasuredSize(
-                width = view.height.pxAsDp(view.resources.displayMetrics),
-                height = optionStyleHeight + (borderWidth * 2).toFloat(),
-                density = view.resources.displayMetrics.density
-            )
+            binding.measuredSize?.width?.let { measuredWidth ->
+                val width = measuredWidth - (borderWidth * 2)
+                val height = optionStyleHeight + (borderWidth * 2).toFloat()
 
-            it.optionBackgroundViewModel.informDimensions(optionHeight)
+                val optionHeight = MeasuredSize(
+                    width = width,
+                    height = height,
+                    density = view.resources.displayMetrics.density
+                )
+
+                it.optionBackgroundViewModel.informDimensions(optionHeight)
+            }
         }
     }
 

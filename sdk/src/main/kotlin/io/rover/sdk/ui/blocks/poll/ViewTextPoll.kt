@@ -9,8 +9,6 @@ import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.ViewModelBinding
 import io.rover.sdk.ui.dpAsPx
 
-internal interface ViewTextPollInterface : MeasuredBindableView<TextPollViewModelInterface>
-
 internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInterface {
     override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding { binding, _ ->
         binding?.viewModel?.textPollBlock?.let {
@@ -45,3 +43,5 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         }
     }
 }
+
+internal interface ViewTextPollInterface : MeasuredBindableView<TextPollViewModelInterface>

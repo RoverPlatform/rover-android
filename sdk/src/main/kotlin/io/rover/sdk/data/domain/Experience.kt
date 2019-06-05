@@ -175,14 +175,11 @@ data class TextPollBlockOptionStyle(
     val borderWidth: Int,
     val borderColor: Color,
     val color: Color,
-    val backgroundColor: Color,
     val font: Font,
     val textAlignment: TextAlignment,
     val resultFillColor: Color,
-    val backgroundImage: PollImage,
-    val verticalSpacing: Int,
-    val backgroundContentMode: BackgroundContentMode,
-    val backgroundScale: BackgroundScale
+    val background: Background,
+    val verticalSpacing: Int
 ) {
     companion object
 }

@@ -18,6 +18,8 @@ import io.rover.sdk.streams.shareAndReplay
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.operations.data.decodeJson
+import io.rover.sdk.data.operations.FetchExperienceRequest
+import io.rover.sdk.data.operations.data.decodeJson
 import io.rover.sdk.ui.navigation.ExperienceExternalNavigationEvent
 import io.rover.sdk.ui.navigation.NavigationViewModelInterface
 import io.rover.sdk.ui.toolbar.ExperienceToolbarViewModelInterface
@@ -76,8 +78,8 @@ internal class RoverViewModel(
         val experienceJson = context!!.resources.openRawResource(R.raw.experience).bufferedReader(Charsets.UTF_8).use { it.readText() }
         val decoded = Experience.decodeJson(JSONObject(experienceJson))
         return Publishers.just(decoded).observeOn(mainThreadScheduler)
-    }
 
+    }
 
     /**
      * Hold on to a reference to the navigation view model so that it can contribute to the Android

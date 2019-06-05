@@ -127,12 +127,6 @@
                   "blue": 220,
                   "alpha": 1
                 },
-                "backgroundColor": {
-                  "red": 220,
-                  "green": 129,
-                  "blue": 129,
-                  "alpha": 1
-                },
                 "resultFillColor": {
                   "red": 129,
                   "green": 129,
@@ -143,17 +137,24 @@
                   "size": 26,
                   "weight": "MEDIUM"
                 },
-                "textAlignment": "LEFT",
-                "backgroundImage": {
-                  "height": 128,
-                  "name": "myImage.png",
-                  "size": 11800,
-                  "type": "image/png",
-                  "url": "",
-                  "width": 128
+                "background": {
+                  "color": {
+                    "red": 238,
+                    "green": 238,
+                    "blue": 238,
+                    "alpha": 0
+                  },
+                  "contentMode": "ORIGINAL",
+                  "image": {
+                    "height": 561,
+                    "name": "tex-mex-lasagna-main.png",
+                    "size": 593477,
+                    "width": 936,
+                    "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/5156d40b-11ed-40c2-8f41-9ed681842c61-tex-mex-lasagna-main.png"
+                  },
+                  "scale": "X1"
                 },
-                "backgroundContentMode": "ORIGINAL",
-                "backgroundScale": "X3",
+                "textAlignment": "LEFT",
                 "verticalSpacing": 16
               }
             }

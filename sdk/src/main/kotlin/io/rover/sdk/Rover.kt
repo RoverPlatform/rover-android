@@ -62,8 +62,8 @@ import io.rover.sdk.ui.blocks.image.ImageBlockView
 import io.rover.sdk.ui.blocks.image.ImageBlockViewModel
 import io.rover.sdk.ui.blocks.image.ImageViewModel
 import io.rover.sdk.ui.blocks.poll.TextPollBlockView
-import io.rover.sdk.ui.blocks.poll.TextPollBlockViewMeasurer
 import io.rover.sdk.ui.blocks.poll.TextPollBlockViewModel
+import io.rover.sdk.ui.blocks.poll.TextPollViewModel
 import io.rover.sdk.ui.blocks.rectangle.RectangleBlockView
 import io.rover.sdk.ui.blocks.rectangle.RectangleBlockViewModel
 import io.rover.sdk.ui.blocks.text.TextBlockView
@@ -357,11 +357,11 @@ internal class ViewModels(
                 )
             }
             is TextPollBlock -> {
+                val textPollViewModel = textPollViewModel(block)
                 return TextPollBlockViewModel(
-                    textPollBlock = block,
-                    blockViewModel = blockViewModel(block, setOf(), TextPollBlockViewMeasurer(block, measurementService)),
+                    textPollViewModel = textPollViewModel,
+                    blockViewModel = blockViewModel(block, setOf(), textPollViewModel),
                     backgroundViewModel = backgroundViewModel(block.background),
-                    optionBackgroundViewModel = backgroundViewModel(block.background),
                     borderViewModel = borderViewModel(block.border)
                 )
             }
@@ -369,6 +369,12 @@ internal class ViewModels(
                 "This Rover UI block type is not supported by this version of the SDK: ${block.javaClass.simpleName}."
             )
         }
+    }
+
+    private fun textPollViewModel(
+        textPollBlock: TextPollBlock
+    ) : TextPollViewModel {
+        return TextPollViewModel(textPollBlock, measurementService, backgroundViewModel(textPollBlock.optionStyle.background))
     }
 
     private fun blockViewModel(

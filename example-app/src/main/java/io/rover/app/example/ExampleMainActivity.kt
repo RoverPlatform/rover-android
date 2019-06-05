@@ -30,8 +30,6 @@ class ExampleMainActivity : AppCompatActivity() {
         // Tries to retrieve experienceId query parameter:
         val queryExperienceId = uri.getQueryParameter("id")
 
-
-
         // Tries to retrieve campaignId query parameter:
         val queryCampaignId = uri.getQueryParameter("campaignID")
         if (uri.scheme == getString(R.string.uri_scheme) && uri.host == "experience" && queryExperienceId != null) {

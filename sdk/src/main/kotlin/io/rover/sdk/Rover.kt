@@ -181,7 +181,8 @@ open class Rover(
             sessionTracker,
             imageOptimizationService,
             assetService,
-            measurementService
+            measurementService,
+            application
         )
     }
 
@@ -227,7 +228,8 @@ internal class ViewModels(
     private val sessionTracker: SessionTracker,
     private val imageOptimizationService: ImageOptimizationService,
     private val assetService: AndroidAssetService,
-    private val measurementService: MeasurementService
+    private val measurementService: MeasurementService,
+    private val application: Application
 ) {
     fun experienceViewModel(
         experienceRequest: RoverViewModel.ExperienceRequest,
@@ -242,7 +244,8 @@ internal class ViewModels(
             resolveNavigationViewModel = { experience, icicle ->
                 experienceNavigationViewModel(experience, campaignId, activityLifecycle, icicle)
             },
-            experienceTransformer = experienceTransformer
+            experienceTransformer = experienceTransformer,
+            context = application.applicationContext
         )
     }
 

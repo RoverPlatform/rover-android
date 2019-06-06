@@ -117,6 +117,96 @@ interface Block {
     companion object
 }
 
+data class ImageBlockOption(
+    val text: String,
+    val image: PollImage
+) {
+    companion object
+}
+
+data class QuestionStyle(
+    val color: Color,
+    val font: Font,
+    val textAlignment: TextAlignment
+) {
+    companion object
+}
+
+data class ImagePollBlockOptionStyle(
+    val opacity: Double,
+    val borderRadius: Int,
+    val borderWidth: Int,
+    val borderColor: Color,
+    val font: Font,
+    val textAlignment: TextAlignment,
+    val resultFillColor: Color,
+    val verticalSpacing: Int,
+    val horizontalSpacing: Int
+) {
+    companion object
+}
+
+sealed class PollBlock : Block {
+    companion object
+}
+
+data class ImagePollBlock(
+    override val id: String,
+    override val insets: Insets,
+    override val opacity: Double,
+    override val position: Position,
+    override val keys: Map<String, String>,
+    override val tapBehavior: Block.TapBehavior,
+    override val background: Background,
+    override val border: Border,
+    override val name: String,
+    override val tags: List<String>,
+    val question: String,
+    val options: List<ImageBlockOption>,
+    val questionStyle: QuestionStyle,
+    val optionStyle: ImagePollBlockOptionStyle
+) : PollBlock() {
+    companion object
+}
+
+data class TextPollBlockOptionStyle(
+    val height: Int,
+    val opacity: Double,
+    val borderRadius: Int,
+    val borderWidth: Int,
+    val borderColor: Color,
+    val color: Color,
+    val backgroundColor: Color,
+    val font: Font,
+    val textAlignment: TextAlignment,
+    val resultFillColor: Color,
+    val backgroundImage: PollImage,
+    val verticalSpacing: Int,
+    val backgroundContentMode: BackgroundContentMode,
+    val backgroundScale: BackgroundScale
+) {
+    companion object
+}
+
+data class TextPollBlock(
+    override val id: String,
+    override val insets: Insets,
+    override val opacity: Double,
+    override val position: Position,
+    override val keys: Map<String, String>,
+    override val tapBehavior: Block.TapBehavior,
+    override val background: Background,
+    override val border: Border,
+    override val name: String,
+    override val tags: List<String>,
+    val question: String,
+    val options: List<String>,
+    val questionStyle: QuestionStyle,
+    val optionStyle: TextPollBlockOptionStyle
+) : PollBlock() {
+    companion object
+}
+
 data class BarcodeBlock(
     override val tapBehavior: Block.TapBehavior,
     override val id: String,
@@ -330,6 +420,17 @@ sealed class VerticalAlignment {
     data class Stacked(val topOffset: Double, val bottomOffset: Double, override val height: Height) : VerticalAlignment(), Measured
     data class Top(val offset: Double, override val height: Height) : VerticalAlignment(), Measured
 
+    companion object
+}
+
+data class PollImage(
+    val width: Int,
+    val height: Int,
+    val type: String,
+    val name: String,
+    val size: Int,
+    val url: URI
+) {
     companion object
 }
 

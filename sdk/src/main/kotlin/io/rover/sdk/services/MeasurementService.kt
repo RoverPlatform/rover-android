@@ -5,6 +5,7 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.os.Build
 import android.text.Layout
+import android.text.SpannableString
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.DisplayMetrics
@@ -20,6 +21,33 @@ internal class MeasurementService(
     private val richTextToSpannedTransformer: RichTextToSpannedTransformer,
     private val barcodeRenderingService: BarcodeRenderingService
 ) {
+
+    @SuppressLint("NewApi")
+    fun measureHeightNeededForMultiLineTextInTextView(
+        text: String,
+        fontAppearance: FontAppearance,
+        width: Float,
+        textViewLineSpacing: Float = 1.0f
+    ): Float {
+        val  spanned = SpannableString(text)
+
+        val paint = TextPaint().apply {
+            textSize = fontAppearance.fontSize.toFloat() * displayMetrics.scaledDensity
+            typeface = Typeface.create(fontAppearance.font.fontFamily, fontAppearance.font.fontStyle)
+            textAlign = fontAppearance.align
+        }
+
+        val textLayoutAlign = when (fontAppearance.align) {
+            Paint.Align.CENTER -> Layout.Alignment.ALIGN_CENTER
+            Paint.Align.LEFT -> Layout.Alignment.ALIGN_NORMAL
+            Paint.Align.RIGHT -> Layout.Alignment.ALIGN_OPPOSITE
+        }
+
+        val layout = StaticLayout(spanned, paint, width.dpAsPx(displayMetrics), textLayoutAlign,
+            textViewLineSpacing, 0f, true)
+        return (layout.height + layout.topPadding + layout.bottomPadding).pxAsDp(displayMetrics)
+    }
+
     /**
      * Measure how much height a given bit of Unicode [richText] (with optional HTML tags such as
      * strong, italic, and underline) will require if soft wrapped to the given [width] and

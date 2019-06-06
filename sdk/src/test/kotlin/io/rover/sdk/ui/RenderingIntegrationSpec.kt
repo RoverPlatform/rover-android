@@ -27,7 +27,7 @@ class RenderingIntegrationSpec : Spek({
 
     describe("integration test with a full experience in JSON") {
         GlobalStaticLogHolder.globalLogEmitter = JvmLogger()
-        val experienceJson = this.javaClass.classLoader.getResourceAsStream("experience.json").bufferedReader(Charsets.UTF_8).readText()
+        val experienceJson = this.javaClass.classLoader.getResourceAsStream("experience_without_polls.json").bufferedReader(Charsets.UTF_8).readText()
         val experience = Experience.decodeJson(JSONObject(experienceJson))
 
         log.v("There are ${experience.screens.count()} screens.")

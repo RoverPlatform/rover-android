@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.support.v4.view.ViewCompat
@@ -130,7 +131,6 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                     rightPadding = borderWidth
                 )
                 createViews(option, textPollBlock.optionStyle)
-                setResultColor(optionStyle.resultFillColor.asAndroidColor())
             }
         }
     }
@@ -151,7 +151,12 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
         val answerOption = textView(option) {
             id = textId
             ellipsize = TextUtils.TruncateAt.END
-            setStyle(optionStyle)
+            maxLines = 1
+            gravity = Gravity.CENTER_VERTICAL
+            textSize = optionStyle.font.size.toFloat()
+            setTextColor(optionStyle.color.asAndroidColor())
+            val font = optionStyle.font.weight.mapToFont()
+            typeface = Typeface.create(font.fontFamily, font.fontStyle)
             val marginInPixels = 16.dpAsPx(resources.displayMetrics)
 
             setupRelativeLayoutParams(width = ViewGroup.LayoutParams.WRAP_CONTENT, height = ViewGroup.LayoutParams.MATCH_PARENT,
@@ -165,7 +170,7 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
         borderRadius = optionStyle.borderRadius.dpAsPx(resources.displayMetrics).toFloat()
         strokeWidthX = optionStyle.borderWidth.dpAsPx(resources.displayMetrics).toFloat()
 
-        paint = Paint().apply {
+        borderPaint = Paint().apply {
             color = optionStyle.borderColor.asAndroidColor()
             this.strokeWidth = strokeWidthX
             style = Paint.Style.STROKE
@@ -175,45 +180,32 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
             color = optionStyle.background.color.asAndroidColor()
             style = Paint.Style.FILL
         }
-    }
 
-    private fun AppCompatTextView.setStyle(optionStyle: TextPollBlockOptionStyle) {
-        maxLines = 1
-        gravity = Gravity.CENTER_VERTICAL
-        textSize = optionStyle.font.size.toFloat()
-        setTextColor(optionStyle.color.asAndroidColor())
-        val font = optionStyle.font.weight.mapToFont()
-        typeface = Typeface.create(font.fontFamily, font.fontStyle)
+        resultColorPaint = Paint().apply {
+            color = optionStyle.resultFillColor.asAndroidColor()
+        }
+        val halfStrokeWidth = strokeWidthX / 2
+        rectWithBorders = RectF(halfStrokeWidth, halfStrokeWidth, width.toFloat() - (halfStrokeWidth), height.toFloat() - halfStrokeWidth)
     }
 
     private var strokeWidthX = 0f
     private var borderRadius = 0f
-    private var paint = Paint()
+    private var borderPaint = Paint()
     private var fillColorPaint = Paint()
-    private var resultColorPaint: Paint? = null
+    private var resultColorPaint = Paint()
     private var voteState = false
     var backgroundImage: BackgroundColorDrawableWrapper? = null
+    var rectWithBorders = RectF()
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        //TODO: Extract this from on draw - Churning == bad
-        val halfStrokeWidth = strokeWidthX / 2
-
-        val rectWithBorders = android.graphics.RectF(
-            halfStrokeWidth,
-            halfStrokeWidth,
-            width.toFloat() - halfStrokeWidth,
-            height.toFloat() - halfStrokeWidth
-        )
-
-        //TODO: Clip to avoid overdraw
 
         if (backgroundImage == null) {
             canvas.drawRoundRect(rectWithBorders, borderRadius, borderRadius, fillColorPaint)
         }
 
         if (strokeWidthX != 0f) {
-            canvas.drawRoundRect(rectWithBorders, borderRadius, borderRadius, paint)
+            canvas.drawRoundRect(rectWithBorders, borderRadius, borderRadius, borderPaint)
         }
 
         if (voteState) {
@@ -234,12 +226,6 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
             addRoundRect(rectWithBorders, borderRadius, borderRadius, Path.Direction.CW)
         })
         super.draw(canvas)
-    }
-
-    fun setResultColor(resultColor: Int) {
-        resultColorPaint = Paint().apply {
-            color = resultColor
-        }
     }
 
     private fun FontWeight.getIncreasedFontWeight(): FontWeight {

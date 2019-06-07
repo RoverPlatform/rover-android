@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Typeface
+import android.graphics.drawable.Drawable
 import android.support.v4.view.ViewCompat
 import android.support.v7.widget.AppCompatTextView
 import android.text.Layout
@@ -169,18 +170,19 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
 
     fun createViews(option: String, optionStyle: TextPollBlockOptionStyle) {
         val answerOption = textView {
-            setSingleLine(true)
+            maxLines = 1
             this.id = textId
             ellipsize = TextUtils.TruncateAt.END
             text = option
+            gravity = Gravity.CENTER_VERTICAL
             textSize = optionStyle.font.size.toFloat()
             setTextColor(optionStyle.color.asAndroidColor())
             val font = optionStyle.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
 
-            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
+            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT).apply {
                 val marginInPixels = 16.dpAsPx(resources.displayMetrics)
-                setMargins(marginInPixels, 0, 0, 0)
+                setMargins(marginInPixels, 0, marginInPixels, 0)
                 addRule(ALIGN_PARENT_START)
             }
         }
@@ -206,7 +208,8 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
     private var borderRadius = 0f
     private var paint = Paint()
     private var fillColorPaint = Paint()
-    private var resultColor = 0
+    private var resultColorPaint: Paint? = null
+    private var voteState = false
     var backgroundImage: BackgroundColorDrawableWrapper? = null
 
     override fun onDraw(canvas: Canvas) {
@@ -230,10 +233,31 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
         if (strokeWidthX != 0f) {
             canvas.drawRoundRect(rectWithBorders, borderRadius, borderRadius, paint)
         }
+
+        if (voteState) {
+            canvas.drawRoundRect(rectWithBorders, borderRadius, borderRadius, resultColorPaint)
+        }
+    }
+
+    override fun draw(canvas: Canvas?) {
+        val halfStrokeWidth = strokeWidthX / 2
+        val rectWithBorders = android.graphics.RectF(
+            halfStrokeWidth,
+            halfStrokeWidth,
+            width.toFloat() - halfStrokeWidth,
+            height.toFloat() - halfStrokeWidth
+        )
+
+        canvas!!.clipPath(Path().apply {
+            addRoundRect(rectWithBorders, borderRadius, borderRadius, Path.Direction.CW)
+        })
+        super.draw(canvas)
     }
 
     fun setResultColor(resultColor: Int) {
-        this.resultColor = resultColor
+        resultColorPaint = Paint().apply {
+            color = resultColor
+        }
     }
 
     private fun FontWeight.getIncreasedFontWeight(): FontWeight {
@@ -241,15 +265,19 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
     }
 
     fun goToResultsState(votingShare: Int, voted: Boolean, optionStyle: TextPollBlockOptionStyle) {
+        if (voteState) return
+        voteState = true
         val votePercentageText = textView {
             this.id = ViewCompat.generateViewId()
             text = "$votingShare%"
+            maxLines = 1
+            gravity = Gravity.CENTER_VERTICAL
             textSize = (optionStyle.font.size * 1.05).toFloat()
             setTextColor(optionStyle.color.asAndroidColor())
 
             val font = optionStyle.font.weight.getIncreasedFontWeight().mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
-            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
+            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT).apply {
                 val marginInDp = 16.dpAsPx(resources.displayMetrics)
                 setMargins(marginInDp, 0, marginInDp, 0)
                 addRule(ALIGN_PARENT_RIGHT)
@@ -262,13 +290,15 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
 
         val voteIndicatorView = textView {
             this.id = ViewCompat.generateViewId()
-            text = "\u00B7"
+            maxLines = 1
+            text = "\u2022"
             textSize = (optionStyle.font.size * 1.05).toFloat()
             setTextColor(optionStyle.color.asAndroidColor())
             val font = optionStyle.font.weight.mapToFont()
+            gravity = Gravity.CENTER_VERTICAL
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
             textAlignment = View.TEXT_ALIGNMENT_TEXT_START
-            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
+            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT).apply {
                 val marginInPixels = 8.dpAsPx(resources.displayMetrics)
                 setMargins(marginInPixels, 0, 0, 0)
                 addRule(END_OF, textId)
@@ -279,7 +309,8 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
 
         val textView = findViewById<AppCompatTextView>(textId)
         textView.apply {
-            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
+            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT).apply {
+                gravity = Gravity.CENTER_VERTICAL
                 val marginInPixels = 16.dpAsPx(resources.displayMetrics)
                 setMargins(marginInPixels, 0, 0, 0)
                 addRule(ALIGN_PARENT_LEFT)

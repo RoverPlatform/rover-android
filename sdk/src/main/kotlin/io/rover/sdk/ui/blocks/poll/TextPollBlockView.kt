@@ -1,10 +1,8 @@
 package io.rover.sdk.ui.blocks.poll
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.widget.LinearLayout
-import io.rover.sdk.logging.log
 import io.rover.sdk.ui.blocks.concerns.ViewComposition
 import io.rover.sdk.ui.blocks.concerns.background.ViewBackground
 import io.rover.sdk.ui.blocks.concerns.border.ViewBorder

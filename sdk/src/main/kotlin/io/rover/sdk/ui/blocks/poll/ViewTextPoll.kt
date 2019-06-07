@@ -183,9 +183,9 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
 
         resultColorPaint = Paint().apply {
             color = optionStyle.resultFillColor.asAndroidColor()
+            style = Paint.Style.FILL
         }
-        val halfStrokeWidth = strokeWidthX / 2
-        rectWithBorders = RectF(halfStrokeWidth, halfStrokeWidth, width.toFloat() - (halfStrokeWidth), height.toFloat() - halfStrokeWidth)
+
     }
 
     private var strokeWidthX = 0f
@@ -199,6 +199,9 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+
+        val halfStrokeWidth = strokeWidthX / 2
+        rectWithBorders = RectF(halfStrokeWidth, halfStrokeWidth, width.toFloat() - (halfStrokeWidth), height.toFloat() - halfStrokeWidth)
 
         if (backgroundImage == null) {
             canvas.drawRoundRect(rectWithBorders, borderRadius, borderRadius, fillColorPaint)

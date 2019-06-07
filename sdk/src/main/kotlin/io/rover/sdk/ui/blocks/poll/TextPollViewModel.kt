@@ -6,6 +6,7 @@ import io.rover.sdk.data.domain.TextAlignment
 import io.rover.sdk.data.domain.TextPollBlock
 import io.rover.sdk.platform.mapToFont
 import io.rover.sdk.services.MeasurementService
+import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.ui.RectF
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundViewModelInterface
@@ -48,9 +49,29 @@ internal class TextPollViewModel(
 
         return FontAppearance(modelFont.size, font, color.asAndroidColor(), getPaintAlignFromTextAlign(alignment))
     }
+
+    override fun castVote(selectedOption: Int) {
+        //TODO: Add voting logic
+        setResultsState(selectedOption, listOf(12, 14, 67))
+    }
+
+    override val votingState = PublishSubject<VotingState>().apply {
+        onNext(VotingState.WaitingForVote)
+    }
+
+    private fun setResultsState(selectedOption: Int, votingShare: List<Int>) {
+        votingState.onNext(VotingState.Results(selectedOption, votingShare))
+    }
+}
+
+sealed class VotingState {
+    object WaitingForVote: VotingState()
+    data class Results(val selectedOption: Int, val votingShare: List<Int>): VotingState()
 }
 
 internal interface TextPollViewModelInterface : Measurable, BindableViewModel {
     val textPollBlock: TextPollBlock
     val optionBackgroundViewModel: BackgroundViewModelInterface
+    fun castVote(selectedOption: Int)
+    val votingState: PublishSubject<VotingState>
 }

@@ -39,13 +39,4 @@ internal class TextPollBlockView(context: Context?) : LinearLayout(context),
         super.onDraw(canvas)
         viewComposition.afterOnDraw(canvas)
     }
-
-    @SuppressLint("MissingSuperCall")
-    override fun requestLayout() {
-        // log.v("Tried to invalidate layout.  Inhibited.")
-    }
-
-    override fun forceLayout() {
-        log.v("Tried to forcefully invalidate layout.  Inhibited.")
-    }
 }

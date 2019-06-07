@@ -87,9 +87,9 @@
               "blockType": "text-poll-block",
               "question": "This is the very long question question question",
               "options": [
-                "option-1",
-                "option-2",
-                "option-3"
+                "Is this the best",
+                "Or is it this option",
+                "How about this very very very very long option"
               ],
               "questionStyle": {
                 "color": {

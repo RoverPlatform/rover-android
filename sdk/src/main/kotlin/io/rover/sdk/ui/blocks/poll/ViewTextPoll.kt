@@ -2,14 +2,23 @@ package io.rover.sdk.ui.blocks.poll
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.Typeface
+import android.support.v4.view.ViewCompat
 import android.support.v7.widget.AppCompatTextView
+import android.text.Layout
+import android.text.TextUtils
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.RelativeLayout
+import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.HorizontalAlignment
 import io.rover.sdk.data.domain.QuestionStyle
+import io.rover.sdk.data.domain.TextAlignment
 import io.rover.sdk.data.domain.TextPollBlock
 import io.rover.sdk.data.domain.TextPollBlockOptionStyle
 import io.rover.sdk.platform.button
@@ -30,9 +39,11 @@ import io.rover.sdk.ui.dpAsPx
 import io.rover.sdk.ui.pxAsDp
 
 internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInterface {
+
+    private val optionIDs = listOf(ViewCompat.generateViewId(), ViewCompat.generateViewId(), ViewCompat.generateViewId(), ViewCompat.generateViewId())
+
     override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding { binding, _ ->
         binding?.viewModel?.let {
-
 
             val optionStyleHeight = it.textPollBlock.optionStyle.height
             val borderWidth = it.textPollBlock.optionStyle.borderWidth
@@ -42,7 +53,12 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             startListeningForOptionImageUpdates(it.optionBackgroundViewModel, optionViews)
 
             view.addView(createQuestion(it.textPollBlock))
-            optionViews.forEach { optionView -> view.addView(optionView) }
+            optionViews.forEachIndexed { index, optionView ->
+                view.addView(optionView)
+                optionView.setOnClickListener {
+                    setOptionClicked(index)
+                }
+            }
 
             binding.measuredSize?.width?.let { measuredWidth ->
                 val width = measuredWidth - (borderWidth * 2)
@@ -56,7 +72,27 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
                 it.optionBackgroundViewModel.informDimensions(optionHeight)
             }
+
+            it.votingState.androidLifecycleDispose(view).subscribe { votingState ->
+                when(votingState) {
+                    is VotingState.WaitingForVote -> {}
+                    is VotingState.Results -> {
+                        setVoteResultsReceived(votingState)
+                    }
+                }
+            }
         }
+    }
+
+    private fun setVoteResultsReceived(votingResults: VotingState.Results) {
+        votingResults.votingShare.forEachIndexed { index, votingShare ->
+            val option = view.findViewById<OptionView>(optionIDs[index])
+            option.goToResultsState(votingShare, index == votingResults.selectedOption, viewModelBinding!!.viewModel.textPollBlock.optionStyle)
+        }
+    }
+
+    private fun setOptionClicked(selectedOption: Int) {
+        viewModelBinding?.viewModel?.castVote(selectedOption)
     }
 
     private fun startListeningForOptionImageUpdates(
@@ -104,17 +140,17 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         return textPollBlock.options.mapIndexed { index, option ->
             view.optionView {
                 gravity = Gravity.CENTER_VERTICAL
-                id = index
+                id = optionIDs[index]
                 alpha = optionStyle.opacity.toFloat()
-                setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                setBackgroundColor(Color.TRANSPARENT)
                 setDimens(
                     width = LinearLayout.LayoutParams.MATCH_PARENT,
                     height = optionStyleHeight + (borderWidth * 2),
                     topMargin = optionMarginHeight,
-                    leftPadding = borderWidth
+                    horizontalPadding = borderWidth
                 )
                 createViews(option, textPollBlock.optionStyle)
-                setResult(optionStyle.resultFillColor.asAndroidColor())
+                setResultColor(optionStyle.resultFillColor.asAndroidColor())
             }
         }
     }
@@ -128,23 +164,27 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     }
 }
 
-internal class OptionView(context: Context?) : LinearLayout(context) {
-
-    companion object {
-        private const val TEXT_ID = 0
-        private const val RESULT_PERCENT_ID = 1
-    }
+internal class OptionView(context: Context?) : RelativeLayout(context) {
+    private val textId = ViewCompat.generateViewId()
 
     fun createViews(option: String, optionStyle: TextPollBlockOptionStyle) {
-
-        val question = textView {
-            id = TEXT_ID
+        val answerOption = textView {
+            setSingleLine(true)
+            this.id = textId
+            ellipsize = TextUtils.TruncateAt.END
             text = option
             textSize = optionStyle.font.size.toFloat()
             setTextColor(optionStyle.color.asAndroidColor())
             val font = optionStyle.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
+
+            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
+                setMargins(16, 0, 0, 0)
+                addRule(ALIGN_PARENT_START)
+            }
         }
+
+       addView(answerOption)
 
         borderRadius = optionStyle.borderRadius.dpAsPx(resources.displayMetrics).toFloat()
         strokeWidthX = optionStyle.borderWidth.dpAsPx(resources.displayMetrics).toFloat()
@@ -159,14 +199,13 @@ internal class OptionView(context: Context?) : LinearLayout(context) {
             color = optionStyle.background.color.asAndroidColor()
             style = Paint.Style.FILL
         }
-
-        addView(question)
     }
 
     private var strokeWidthX = 0f
     private var borderRadius = 0f
     private var paint = Paint()
     private var fillColorPaint = Paint()
+    private var resultColor = 0
     var backgroundImage: BackgroundColorDrawableWrapper? = null
 
     override fun onDraw(canvas: Canvas) {
@@ -183,10 +222,6 @@ internal class OptionView(context: Context?) : LinearLayout(context) {
 
         //TODO: Clip to avoid overdraw
 
-//        val path1 = Path().addRoundRect(rectWithBorders, borderRadius, borderRadius, Path.Direction.CW)
-//        val path2 = Path().addRect(RectF(0f, 0f, width.toFloat(), height.toFloat()), Path.Direction.CW)
-
-
         if (backgroundImage == null) {
             canvas.drawRoundRect(rectWithBorders, borderRadius, borderRadius, fillColorPaint)
         }
@@ -196,8 +231,64 @@ internal class OptionView(context: Context?) : LinearLayout(context) {
         }
     }
 
-    fun setResult(resultColor: Int) {
+    fun setResultColor(resultColor: Int) {
+        this.resultColor = resultColor
+    }
 
+    private fun FontWeight.getIncreasedFontWeight(): FontWeight {
+        return FontWeight.values().getOrElse(this.ordinal + 2) { FontWeight.Black }
+    }
+
+    fun goToResultsState(votingShare: Int, voted: Boolean, optionStyle: TextPollBlockOptionStyle) {
+        val votePercentageText = textView {
+            this.id = ViewCompat.generateViewId()
+            text = "$votingShare%"
+            textSize = (optionStyle.font.size * 1.05).toFloat()
+            setTextColor(optionStyle.color.asAndroidColor())
+
+            val font = optionStyle.font.weight.getIncreasedFontWeight().mapToFont()
+            typeface = Typeface.create(font.fontFamily, font.fontStyle)
+            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
+                setMargins(16, 0, 16, 0)
+                addRule(ALIGN_PARENT_RIGHT)
+            }
+            textAlignment = View.TEXT_ALIGNMENT_TEXT_END
+
+        }
+
+        addView(votePercentageText)
+
+        val voteIndicatorView = textView {
+            this.id = ViewCompat.generateViewId()
+            text = "\u00B7"
+            textSize = (optionStyle.font.size * 1.05).toFloat()
+            setTextColor(optionStyle.color.asAndroidColor())
+            val font = optionStyle.font.weight.mapToFont()
+            typeface = Typeface.create(font.fontFamily, font.fontStyle)
+            textAlignment = View.TEXT_ALIGNMENT_TEXT_START
+            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
+                setMargins(8, 0, 8, 0)
+                addRule(END_OF, textId)
+            }
+        }
+
+        if (voted) addView(voteIndicatorView)
+
+        val textView = findViewById<AppCompatTextView>(textId)
+        textView.apply {
+            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
+                setMargins(16, 0, 0, 0)
+                addRule(ALIGN_PARENT_LEFT)
+//                addRule(LEFT_OF, votePercentageText.id)
+            }
+        }
+
+        findViewById<AppCompatTextView>(textId).apply {
+            voteIndicatorView.measure(0,0)
+            votePercentageText.measure(0, 0)
+            val widthOfOtherViews = voteIndicatorView.measuredWidth + 16.dpAsPx(resources.displayMetrics) + (layoutParams as MarginLayoutParams).marginStart + votePercentageText.measuredWidth + (votePercentageText.layoutParams as MarginLayoutParams).marginEnd + (votePercentageText.layoutParams as MarginLayoutParams).marginStart
+            maxWidth = this@OptionView.width - widthOfOtherViews
+        }
     }
 }
 

@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import io.rover.sdk.ui.blocks.poll.OptionView
 
-internal fun LinearLayout.textView(builder: AppCompatTextView.() -> Unit): AppCompatTextView {
+internal fun ViewGroup.textView(builder: AppCompatTextView.() -> Unit): AppCompatTextView {
     return AppCompatTextView(context).apply {
         builder()
     }
@@ -24,10 +24,10 @@ internal fun LinearLayout.optionView(builder: OptionView.() -> Unit): OptionView
     }
 }
 
-internal fun OptionView.setDimens(width: Int, height: Int, topMargin: Int, leftPadding: Int) {
+internal fun OptionView.setDimens(width: Int, height: Int, topMargin: Int, horizontalPadding: Int) {
     layoutParams = ViewGroup.MarginLayoutParams(width, height).apply {
         this.topMargin = topMargin
-        setPadding(leftPadding, 0, 0, 0)
+        setPadding(horizontalPadding, 0, horizontalPadding, 0)
     }
 }
 

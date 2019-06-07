@@ -179,7 +179,8 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
 
             layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
-                setMargins(16, 0, 0, 0)
+                val marginInPixels = 16.dpAsPx(resources.displayMetrics)
+                setMargins(marginInPixels, 0, 0, 0)
                 addRule(ALIGN_PARENT_START)
             }
         }
@@ -249,7 +250,8 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
             val font = optionStyle.font.weight.getIncreasedFontWeight().mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
             layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
-                setMargins(16, 0, 16, 0)
+                val marginInDp = 16.dpAsPx(resources.displayMetrics)
+                setMargins(marginInDp, 0, marginInDp, 0)
                 addRule(ALIGN_PARENT_RIGHT)
             }
             textAlignment = View.TEXT_ALIGNMENT_TEXT_END
@@ -267,7 +269,8 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
             textAlignment = View.TEXT_ALIGNMENT_TEXT_START
             layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
-                setMargins(8, 0, 8, 0)
+                val marginInPixels = 8.dpAsPx(resources.displayMetrics)
+                setMargins(marginInPixels, 0, 0, 0)
                 addRule(END_OF, textId)
             }
         }
@@ -277,16 +280,21 @@ internal class OptionView(context: Context?) : RelativeLayout(context) {
         val textView = findViewById<AppCompatTextView>(textId)
         textView.apply {
             layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
-                setMargins(16, 0, 0, 0)
+                val marginInPixels = 16.dpAsPx(resources.displayMetrics)
+                setMargins(marginInPixels, 0, 0, 0)
                 addRule(ALIGN_PARENT_LEFT)
-//                addRule(LEFT_OF, votePercentageText.id)
             }
         }
 
         findViewById<AppCompatTextView>(textId).apply {
             voteIndicatorView.measure(0,0)
             votePercentageText.measure(0, 0)
-            val widthOfOtherViews = voteIndicatorView.measuredWidth + 16.dpAsPx(resources.displayMetrics) + (layoutParams as MarginLayoutParams).marginStart + votePercentageText.measuredWidth + (votePercentageText.layoutParams as MarginLayoutParams).marginEnd + (votePercentageText.layoutParams as MarginLayoutParams).marginStart
+            val voteIndicatorWidth = if (voted) voteIndicatorView.measuredWidth + (voteIndicatorView.layoutParams as MarginLayoutParams).marginStart else 0
+            val votePercentageMargins = (votePercentageText.layoutParams as MarginLayoutParams).marginEnd + (votePercentageText.layoutParams as MarginLayoutParams).marginStart
+            val votePercentageWidth = votePercentageText.measuredWidth + votePercentageMargins
+            val borderWidth = (optionStyle.borderWidth.dpAsPx(resources.displayMetrics) * 2)
+
+            val widthOfOtherViews = voteIndicatorWidth + (layoutParams as MarginLayoutParams).marginStart + votePercentageWidth + borderWidth
             maxWidth = this@OptionView.width - widthOfOtherViews
         }
     }

@@ -55,9 +55,7 @@ internal class TextPollViewModel(
         setResultsState(selectedOption, listOf(12, 14, 67))
     }
 
-    override val votingState = PublishSubject<VotingState>().apply {
-        onNext(VotingState.WaitingForVote)
-    }
+    override val votingState = PublishSubject<VotingState>()
 
     private fun setResultsState(selectedOption: Int, votingShare: List<Int>) {
         votingState.onNext(VotingState.Results(selectedOption, votingShare))

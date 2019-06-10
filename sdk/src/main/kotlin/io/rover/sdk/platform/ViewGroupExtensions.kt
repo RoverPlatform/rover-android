@@ -1,5 +1,6 @@
 package io.rover.sdk.platform
 
+import android.graphics.Paint
 import android.support.v7.widget.AppCompatButton
 import android.support.v7.widget.AppCompatTextView
 import android.view.View
@@ -53,6 +54,25 @@ internal fun View.setupRelativeLayoutParams(width: Int = 0, height: Int = 0, lef
         setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
         setMargins(leftMargin, topMargin, rightMargin, bottomMargin)
         rulesBuilder()
+    }
+}
+
+internal fun ViewGroup.addView(viewBuilder: ViewGroup.() -> View) {
+    addView(viewBuilder())
+}
+
+internal fun Paint.create(paintColor: Int, paintStyle: Paint.Style): Paint {
+    return this.apply {
+        color = paintColor
+        style = paintStyle
+    }
+}
+
+internal fun Paint.create(paintColor: Int, paintStyle: Paint.Style, paintStrokeWidth: Float): Paint {
+    return this.apply {
+        color = paintColor
+        style = paintStyle
+        strokeWidth = paintStrokeWidth
     }
 }
 

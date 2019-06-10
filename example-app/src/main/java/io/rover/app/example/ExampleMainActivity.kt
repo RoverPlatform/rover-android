@@ -16,8 +16,6 @@ class ExampleMainActivity : AppCompatActivity() {
         //     RoverActivity.makeIntent(this, experienceId = "my-experience-id", campaignId = null)
         // )
 
-        startActivity(RoverActivity.makeIntent(packageContext = this, experienceId = ""))
-
         val uri : Uri = intent.data ?: return
 
         // You will need to setup a specific URL structure to be used for presenting Rover

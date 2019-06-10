@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
-import io.rover.sdk.ui.blocks.poll.OptionView
+import io.rover.sdk.ui.blocks.poll.TextOptionView
 
 internal fun ViewGroup.textView(text: String, builder: AppCompatTextView.() -> Unit): AppCompatTextView {
     return AppCompatTextView(context).apply {
@@ -23,8 +23,8 @@ internal fun LinearLayout.button(builder: AppCompatButton.() -> Unit): AppCompat
     }
 }
 
-internal fun LinearLayout.optionView(builder: OptionView.() -> Unit): OptionView {
-    return OptionView(context).apply {
+internal fun LinearLayout.optionView(builder: TextOptionView.() -> Unit): TextOptionView {
+    return TextOptionView(context).apply {
         builder()
     }
 }

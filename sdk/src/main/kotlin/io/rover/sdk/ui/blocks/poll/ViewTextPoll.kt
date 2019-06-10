@@ -1,36 +1,21 @@
 package io.rover.sdk.ui.blocks.poll
 
-import android.content.Context
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Path
-import android.graphics.RectF
 import android.graphics.Typeface
 import android.support.v4.view.ViewCompat
 import android.support.v7.widget.AppCompatTextView
-import android.text.TextUtils
 import android.view.Gravity
-import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import android.widget.RelativeLayout
-import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.QuestionStyle
 import io.rover.sdk.data.domain.TextPollBlock
-import io.rover.sdk.data.domain.TextPollBlockOptionStyle
-import io.rover.sdk.platform.addView
-import io.rover.sdk.platform.create
 import io.rover.sdk.platform.mapToFont
 import io.rover.sdk.platform.optionView
-import io.rover.sdk.platform.setBackgroundWithoutPaddingChange
 import io.rover.sdk.platform.setupLayoutParams
-import io.rover.sdk.platform.setupRelativeLayoutParams
 import io.rover.sdk.platform.textView
 import io.rover.sdk.streams.androidLifecycleDispose
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
-import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.background.createBackgroundDrawable
 import io.rover.sdk.ui.concerns.MeasuredBindableView
@@ -84,7 +69,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
     private fun setVoteResultsReceived(votingResults: VotingState.Results) {
         votingResults.votingShare.forEachIndexed { index, votingShare ->
-            val option = view.findViewById<OptionView>(optionIds[index])
+            val option = view.findViewById<TextOptionView>(optionIds[index])
             val isSelectedOption = index == votingResults.selectedOption
             viewModelBinding?.viewModel?.let {
                 option.goToResultsState(votingShare, isSelectedOption, it.textPollBlock.optionStyle)
@@ -93,12 +78,12 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     }
 
     private fun startListeningForOptionImageUpdates(
-        viewModel: BackgroundViewModelInterface, optionViews: List<OptionView>
+        viewModel: BackgroundViewModelInterface, textOptionViews: List<TextOptionView>
     ) {
         viewModel.backgroundUpdates.androidLifecycleDispose(view)
             .subscribe { (bitmap, fadeIn, backgroundImageConfiguration) ->
                 val backgroundDrawable = bitmap.createBackgroundDrawable(view, viewModel.backgroundColor, fadeIn, backgroundImageConfiguration)
-                optionViews.forEach { it.backgroundImage = backgroundDrawable }
+                textOptionViews.forEach { it.backgroundImage = backgroundDrawable }
             }
     }
 
@@ -109,7 +94,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         }
     }
 
-    private fun createOptionViews(textPollBlock: TextPollBlock): List<OptionView> {
+    private fun createOptionViews(textPollBlock: TextPollBlock): List<TextOptionView> {
         val optionStyle = textPollBlock.optionStyle
         val optionStyleHeight = optionStyle.height.dpAsPx(view.resources.displayMetrics)
         val optionMarginHeight = optionStyle.verticalSpacing.dpAsPx(view.resources.displayMetrics)

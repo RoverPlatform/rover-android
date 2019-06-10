@@ -2,6 +2,7 @@ package io.rover.sdk.data.events
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.PackageInfo
 import android.os.AsyncTask
 import io.rover.sdk.data.domain.Attributes
 import io.rover.sdk.data.graphql.encodeJson
@@ -9,6 +10,7 @@ import io.rover.sdk.data.http.HttpRequest
 import io.rover.sdk.data.http.HttpVerb
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.dateAsIso8601
+import io.rover.sdk.platform.setRoverUserAgent
 import io.rover.sdk.services.EventEmitter
 import io.rover.sdk.streams.subscribe
 import org.json.JSONObject
@@ -23,6 +25,7 @@ import java.util.UUID
  */
 internal class AnalyticsService(
     context: Context,
+    private val packageInfo: PackageInfo,
     private val accountToken: String?,
     eventEmitter: EventEmitter
 ) {
@@ -99,6 +102,8 @@ internal class AnalyticsService(
                 connection.apply {
                     setFixedLengthStreamingMode(requestBody.size)
                     request.headers.onEach { (field, value) -> setRequestProperty(field, value) }
+
+                    this.setRoverUserAgent(packageInfo)
 
                     doOutput = true
                     requestMethod = request.verb.wireFormat

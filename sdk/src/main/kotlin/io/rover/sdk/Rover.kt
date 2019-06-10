@@ -143,7 +143,9 @@ open class Rover(
 
     private val imageOptimizationService: ImageOptimizationService = ImageOptimizationService()
 
-    private val httpClient: HttpClient = HttpClient(ioScheduler)
+    private val packageInfo = application.packageManager.getPackageInfo(application.packageName, 0)
+
+    private val httpClient: HttpClient = HttpClient(ioScheduler, packageInfo)
 
     internal val webBrowserDisplay: EmbeddedWebBrowserDisplay = EmbeddedWebBrowserDisplay(chromeTabBackgroundColor)
 
@@ -153,6 +155,7 @@ open class Rover(
 
     private val analyticsService: AnalyticsService = AnalyticsService(
         application,
+        packageInfo,
         accountToken,
         eventEmitter
     )
@@ -181,8 +184,7 @@ open class Rover(
             sessionTracker,
             imageOptimizationService,
             assetService,
-            measurementService,
-            application
+            measurementService
         )
     }
 
@@ -228,8 +230,7 @@ internal class ViewModels(
     private val sessionTracker: SessionTracker,
     private val imageOptimizationService: ImageOptimizationService,
     private val assetService: AndroidAssetService,
-    private val measurementService: MeasurementService,
-    private val application: Application
+    private val measurementService: MeasurementService
 ) {
     fun experienceViewModel(
         experienceRequest: RoverViewModel.ExperienceRequest,
@@ -244,8 +245,7 @@ internal class ViewModels(
             resolveNavigationViewModel = { experience, icicle ->
                 experienceNavigationViewModel(experience, campaignId, activityLifecycle, icicle)
             },
-            experienceTransformer = experienceTransformer,
-            context = application.applicationContext
+            experienceTransformer = experienceTransformer
         )
     }
 

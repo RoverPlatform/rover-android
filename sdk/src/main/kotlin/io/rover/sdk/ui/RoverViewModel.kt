@@ -17,6 +17,7 @@ import io.rover.sdk.streams.share
 import io.rover.sdk.streams.shareAndReplay
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.data.domain.Experience
+import io.rover.sdk.data.graphql.ApiResult
 import io.rover.sdk.data.operations.data.decodeJson
 import io.rover.sdk.data.operations.FetchExperienceRequest
 import io.rover.sdk.data.operations.data.decodeJson
@@ -34,8 +35,7 @@ internal class RoverViewModel(
     private val mainThreadScheduler: Scheduler,
     private val resolveNavigationViewModel: (experience: Experience, icicle: Parcelable?) -> NavigationViewModelInterface,
     private val icicle: Parcelable? = null,
-    private val experienceTransformer: ((Experience) -> Experience)? = null,
-    private val context: Context
+    private val experienceTransformer: ((Experience) -> Experience)? = null
 ) : RoverViewModelInterface {
 
     override val state: Parcelable
@@ -74,12 +74,12 @@ internal class RoverViewModel(
     private val actionSource = PublishSubject<Action>()
     private val actions = actionSource.share()
 
-    private fun fetchExperience(): Publisher<Experience> {
-        val experienceJson = context!!.resources.openRawResource(R.raw.experience).bufferedReader(Charsets.UTF_8).use { it.readText() }
-        val decoded = Experience.decodeJson(JSONObject(experienceJson))
-        return Publishers.just(decoded).observeOn(mainThreadScheduler)
-
-    }
+    private fun fetchExperience(): Publisher<out ApiResult<Experience>> =
+        graphQlApiService.fetchExperience(
+            when (experienceRequest) {
+                is ExperienceRequest.ByUrl -> FetchExperienceRequest.ExperienceQueryIdentifier.ByUniversalLink(experienceRequest.url)
+                is ExperienceRequest.ById -> FetchExperienceRequest.ExperienceQueryIdentifier.ById(experienceRequest.experienceId)
+            }).observeOn(mainThreadScheduler)
 
     /**
      * Hold on to a reference to the navigation view model so that it can contribute to the Android
@@ -89,7 +89,7 @@ internal class RoverViewModel(
 
     init {
         // maybe for each type fork I should split out and delegate to subjects?
-        val fetchAttempts = PublishSubject<Experience>()
+        val fetchAttempts = PublishSubject<ApiResult<Experience>>()
 
         val toolBarSubject = PublishSubject<ExperienceToolbarViewModelInterface>()
         val loadingSubject = PublishSubject<Boolean>()
@@ -144,7 +144,16 @@ internal class RoverViewModel(
 
         fetchAttempts.subscribe { networkResult ->
            loadingSubject.onNext(false)
-            experiences.onNext(networkResult)
+           when (networkResult) {
+               is ApiResult.Error -> {
+                   eventsSubject.onNext(RoverViewModelInterface.Event.DisplayError(
+                       networkResult.throwable.message ?: "Unknown"
+                   ))
+               }
+               is ApiResult.Success -> {
+                   experiences.onNext(networkResult.response)
+               }
+           }
         }
 
         // yields an experience navigation view model. used by both our view and some of the
@@ -214,7 +223,7 @@ internal class RoverViewModel(
     ) : Parcelable
 
     sealed class ExperienceRequest {
-        data class ByCampaignUrl(val url: String) : ExperienceRequest()
+        data class ByUrl(val url: String) : ExperienceRequest()
         data class ById(val experienceId: String) : ExperienceRequest()
     }
 }

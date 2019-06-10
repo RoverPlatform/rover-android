@@ -1,9 +1,11 @@
 package io.rover.sdk.data.http
 
 import android.content.Context
+import android.content.pm.PackageInfo
 import android.net.http.HttpResponseCache
 import android.util.Log
 import io.rover.sdk.logging.log
+import io.rover.sdk.platform.setRoverUserAgent
 import io.rover.sdk.streams.Publishers
 import io.rover.sdk.streams.Scheduler
 import io.rover.sdk.streams.subscribeOn
@@ -17,12 +19,14 @@ import java.net.HttpURLConnection
 import java.util.zip.GZIPOutputStream
 import javax.net.ssl.HttpsURLConnection
 
+
 /**
  * HTTP client (used for both Rover API access and other tasks), powered by Android's stock
  * [HttpsURLConnection].
  */
 internal class HttpClient(
-    private val ioScheduler: Scheduler
+    private val ioScheduler: Scheduler,
+    private val appPackageInfo: PackageInfo
 )  {
     /**
      * When subscribed performs the given [HttpRequest] and then yields the result.
@@ -78,6 +82,8 @@ internal class HttpClient(
                         setFixedLengthStreamingMode(requestBody?.size ?: 0)
                         setRequestProperty("Content-Encoding", "gzip")
                     }
+
+                    setRoverUserAgent(appPackageInfo)
 
                     // add the request headers.
                     request.headers.onEach { (field, value) -> setRequestProperty(field, value) }

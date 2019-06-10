@@ -1,11 +1,12 @@
 package io.rover.sdk.ui
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.graphics.Color
 import android.os.Parcelable
-import io.rover.sdk.R
+import io.rover.sdk.data.domain.Experience
+import io.rover.sdk.data.graphql.ApiResult
 import io.rover.sdk.data.graphql.GraphQlApiService
+import io.rover.sdk.data.operations.FetchExperienceRequest
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.Publishers
 import io.rover.sdk.streams.Scheduler
@@ -16,17 +17,11 @@ import io.rover.sdk.streams.observeOn
 import io.rover.sdk.streams.share
 import io.rover.sdk.streams.shareAndReplay
 import io.rover.sdk.streams.subscribe
-import io.rover.sdk.data.domain.Experience
-import io.rover.sdk.data.graphql.ApiResult
-import io.rover.sdk.data.operations.data.decodeJson
-import io.rover.sdk.data.operations.FetchExperienceRequest
-import io.rover.sdk.data.operations.data.decodeJson
 import io.rover.sdk.ui.navigation.ExperienceExternalNavigationEvent
 import io.rover.sdk.ui.navigation.NavigationViewModelInterface
 import io.rover.sdk.ui.toolbar.ExperienceToolbarViewModelInterface
 import io.rover.sdk.ui.toolbar.ToolbarConfiguration
 import kotlinx.android.parcel.Parcelize
-import org.json.JSONObject
 import org.reactivestreams.Publisher
 
 internal class RoverViewModel(

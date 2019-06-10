@@ -118,7 +118,6 @@ interface Block {
     companion object
 }
 
-
 data class ImageBlockOption(
     val text: String,
     val image: PollImage

@@ -1,6 +1,5 @@
 package io.rover.sdk.ui.blocks.concerns.background
 
-import android.R
 import android.animation.ObjectAnimator
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -10,12 +9,12 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.InsetDrawable
 import android.view.Gravity
 import android.view.View
+import io.rover.sdk.platform.DrawableWrapper
 import io.rover.sdk.streams.androidLifecycleDispose
 import io.rover.sdk.streams.subscribe
-import io.rover.sdk.platform.DrawableWrapper
 import io.rover.sdk.ui.BackgroundImageConfiguration
-import io.rover.sdk.ui.concerns.ViewModelBinding
 import io.rover.sdk.ui.concerns.MeasuredBindableView
+import io.rover.sdk.ui.concerns.ViewModelBinding
 
 internal class ViewBackground(
     override val view: View
@@ -89,7 +88,7 @@ internal fun Bitmap.createBackgroundDrawable(view: View,
         ObjectAnimator.ofInt(
             backgroundDrawable, "alpha", 0, 255
         ).apply {
-            duration = view.resources.getInteger(R.integer.config_shortAnimTime).toLong()
+            duration = view.resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
             start()
         }
     } else {

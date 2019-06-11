@@ -2,6 +2,7 @@ package io.rover.sdk.ui.blocks.poll
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
@@ -19,6 +20,7 @@ import io.rover.sdk.platform.addView
 import io.rover.sdk.platform.create
 import io.rover.sdk.platform.mapToFont
 import io.rover.sdk.platform.setBackgroundWithoutPaddingChange
+import io.rover.sdk.platform.setupLayoutParams
 import io.rover.sdk.platform.setupRelativeLayoutParams
 import io.rover.sdk.platform.textView
 import io.rover.sdk.ui.asAndroidColor
@@ -26,7 +28,9 @@ import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
 import io.rover.sdk.ui.dpAsPx
 
 internal class TextOptionView(context: Context?) : RelativeLayout(context) {
-    private val textId = ViewCompat.generateViewId()
+    private val optionTextId = ViewCompat.generateViewId()
+    private val voteIndicatorId = ViewCompat.generateViewId()
+    private val votePercentageTextId = ViewCompat.generateViewId()
 
     private var roundRect: RoundRect? = null
     private var optionPaints: OptionPaints = OptionPaints()
@@ -44,24 +48,32 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         private const val RESULTS_TEXT_SCALE_FACTOR = 1.05f
     }
 
-    fun createViews(option: String, optionStyle: TextPollBlockOptionStyle) {
-        addView {
-            textView(option) {
-                id = textId
-                ellipsize = TextUtils.TruncateAt.END
-                maxLines = 1
-                gravity = Gravity.CENTER_VERTICAL
-                textSize = optionStyle.font.size.toFloat()
-                setTextColor(optionStyle.color.asAndroidColor())
-                val font = optionStyle.font.weight.mapToFont()
-                typeface = Typeface.create(font.fontFamily, font.fontStyle)
-                val marginInPixels = 16.dpAsPx(resources.displayMetrics)
 
-                setupRelativeLayoutParams(width = ViewGroup.LayoutParams.WRAP_CONTENT, height = ViewGroup.LayoutParams.MATCH_PARENT,
-                    leftMargin = marginInPixels, rightMargin = marginInPixels) {
-                    addRule(ALIGN_PARENT_START)
-                }
-            }
+
+    fun initializeOptionView(optionStyle: TextPollBlockOptionStyle) {
+        val optionStyleHeight = optionStyle.height.dpAsPx(resources.displayMetrics)
+        val optionMarginHeight = optionStyle.verticalSpacing.dpAsPx(resources.displayMetrics)
+        val borderWidth = optionStyle.borderWidth.dpAsPx(resources.displayMetrics)
+
+        gravity = Gravity.CENTER_VERTICAL
+        alpha = optionStyle.opacity.toFloat()
+        setBackgroundColor(Color.TRANSPARENT)
+        setupLayoutParams(
+            width = ViewGroup.LayoutParams.MATCH_PARENT,
+            height = optionStyleHeight + (borderWidth * 2),
+            topMargin = optionMarginHeight,
+            leftPadding = borderWidth,
+            rightPadding = borderWidth
+        )
+    }
+
+    fun bindOptionView(option: String, optionStyle: TextPollBlockOptionStyle) {
+        findViewById<AppCompatTextView>(optionTextId).run {
+            text = option
+            textSize = optionStyle.font.size.toFloat()
+            setTextColor(optionStyle.color.asAndroidColor())
+            val font = optionStyle.font.weight.mapToFont()
+            typeface = Typeface.create(font.fontFamily, font.fontStyle)
         }
 
         initializeViewStyle(optionStyle)
@@ -123,13 +135,15 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         if (inResultState) return
         inResultState = true
 
-        val votePercentageText = createVotePercentageText(votingShare, optionStyle)
-        addView(votePercentageText)
+        bindVotePercentageText(votingShare, optionStyle)
+        val votePercentageText = findViewById<AppCompatTextView>(votePercentageTextId)
+        votePercentageText.visibility = View.VISIBLE
 
-        val voteIndicatorView = createVoteIndicator(optionStyle)
-        if (isSelectedOption) addView(voteIndicatorView)
+        bindVoteIndicatorText(optionStyle)
+        val voteIndicator = findViewById<AppCompatTextView>(voteIndicatorId)
+        if (isSelectedOption) voteIndicator.visibility = View.VISIBLE
 
-        val optionTextView = findViewById<AppCompatTextView>(textId)
+        val optionTextView = findViewById<AppCompatTextView>(optionTextId)
         optionTextView.run {
             gravity = Gravity.CENTER_VERTICAL
             val marginInPixels = 16.dpAsPx(resources.displayMetrics)
@@ -141,7 +155,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
                 addRule(ALIGN_PARENT_LEFT)
             }
 
-            val widthOfOtherViews = calculateWidthWithoutOptionText(voteIndicatorView, votePercentageText, isSelectedOption, optionStyle)
+            val widthOfOtherViews = calculateWidthWithoutOptionText(voteIndicator, votePercentageText, isSelectedOption, optionStyle)
             maxWidth = this@TextOptionView.width - widthOfOtherViews
         }
     }
@@ -164,30 +178,73 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         return voteIndicatorWidth + (layoutParams as MarginLayoutParams).marginStart + votePercentageWidth + borderWidth
     }
 
-    private fun createVotePercentageText(
+    init {
+        addView {
+            textView {
+                id = optionTextId
+                ellipsize = TextUtils.TruncateAt.END
+                maxLines = 1
+                gravity = Gravity.CENTER_VERTICAL
+                val marginInPixels = 16.dpAsPx(resources.displayMetrics)
+
+                setupRelativeLayoutParams(width = ViewGroup.LayoutParams.WRAP_CONTENT, height = ViewGroup.LayoutParams.MATCH_PARENT,
+                    leftMargin = marginInPixels, rightMargin = marginInPixels) {
+                    addRule(ALIGN_PARENT_START)
+                }
+
+            }
+        }
+
+        addView {
+            textView {
+                id = voteIndicatorId
+                visibility = View.GONE
+                maxLines = 1
+                gravity = Gravity.CENTER_VERTICAL
+                textAlignment = View.TEXT_ALIGNMENT_TEXT_START
+
+                val marginInPixels = 8.dpAsPx(resources.displayMetrics)
+
+                setupRelativeLayoutParams(
+                    width = LayoutParams.WRAP_CONTENT,
+                    height = LayoutParams.MATCH_PARENT,
+                    leftMargin = marginInPixels
+                ) {
+                    addRule(END_OF, optionTextId)
+                }
+            }
+        }
+
+        addView {
+            textView {
+                id = votePercentageTextId
+                visibility = View.GONE
+                maxLines = 1
+                gravity = Gravity.CENTER_VERTICAL
+                textAlignment = View.TEXT_ALIGNMENT_TEXT_END
+
+                val marginInDp = 16.dpAsPx(resources.displayMetrics)
+
+                setupRelativeLayoutParams(
+                    width = LayoutParams.WRAP_CONTENT, height = LayoutParams.MATCH_PARENT,
+                    leftMargin = marginInDp, rightMargin = marginInDp
+                ) {
+                    addRule(ALIGN_PARENT_RIGHT)
+                }
+            }
+        }
+    }
+
+    private fun bindVotePercentageText(
         votingShare: Int,
         optionStyle: TextPollBlockOptionStyle
-    ): AppCompatTextView {
-        return textView("$votingShare%") {
-            id = ViewCompat.generateViewId()
-            maxLines = 1
-            gravity = Gravity.CENTER_VERTICAL
+    ) {
+        findViewById<AppCompatTextView>(votePercentageTextId).run {
             textSize = (optionStyle.font.size * RESULTS_TEXT_SCALE_FACTOR)
             setTextColor(optionStyle.color.asAndroidColor())
-
+            text = "$votingShare%"
             val font = optionStyle.font.weight.getIncreasedFontWeight().mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
-
-            val marginInDp = 16.dpAsPx(resources.displayMetrics)
-
-            setupRelativeLayoutParams(
-                width = LayoutParams.WRAP_CONTENT, height = LayoutParams.MATCH_PARENT,
-                leftMargin = marginInDp, rightMargin = marginInDp
-            ) {
-                addRule(ALIGN_PARENT_RIGHT)
-            }
-
-            textAlignment = View.TEXT_ALIGNMENT_TEXT_END
         }
     }
 
@@ -195,25 +252,13 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         return FontWeight.values().getOrElse(this.ordinal + 2) { FontWeight.Black }
     }
 
-    private fun createVoteIndicator(optionStyle: TextPollBlockOptionStyle): AppCompatTextView {
-        return textView("\u2022") {
-            id = ViewCompat.generateViewId()
-            maxLines = 1
+    private fun bindVoteIndicatorText(optionStyle: TextPollBlockOptionStyle) {
+        findViewById<AppCompatTextView>(voteIndicatorId).run{
+            text = "\u2022"
             textSize = (optionStyle.font.size * RESULTS_TEXT_SCALE_FACTOR)
             setTextColor(optionStyle.color.asAndroidColor())
             val font = optionStyle.font.weight.mapToFont()
-            gravity = Gravity.CENTER_VERTICAL
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
-            textAlignment = View.TEXT_ALIGNMENT_TEXT_START
-            val marginInPixels = 8.dpAsPx(resources.displayMetrics)
-
-            setupRelativeLayoutParams(
-                width = LayoutParams.WRAP_CONTENT,
-                height = LayoutParams.MATCH_PARENT,
-                leftMargin = marginInPixels
-            ) {
-                addRule(END_OF, textId)
-            }
         }
     }
 }

@@ -10,10 +10,9 @@ import android.widget.RelativeLayout
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
 import io.rover.sdk.ui.blocks.poll.TextOptionView
 
-internal fun ViewGroup.textView(text: String, builder: AppCompatTextView.() -> Unit): AppCompatTextView {
+internal fun ViewGroup.textView(builder: AppCompatTextView.() -> Unit): AppCompatTextView {
     return AppCompatTextView(context).apply {
         builder()
-        this.text = text
     }
 }
 

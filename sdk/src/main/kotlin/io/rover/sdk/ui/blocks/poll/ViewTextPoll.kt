@@ -31,23 +31,20 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
     private val optionIds = (0 until MAX_OPTIONS_AMOUNT).map { ViewCompat.generateViewId() }
 
-    override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding { binding, _ ->
+    override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
         binding?.viewModel?.let { viewModel ->
-            setupQuestionView(viewModel)
+            view.removeAllViews()
+            view.addView(createQuestion(viewModel.textPollBlock))
             setupOptionViews(viewModel)
             informOptionBackgroundAboutSize(viewModel)
 
-            viewModel.votingState.androidLifecycleDispose(view).subscribe { votingState ->
+            viewModel.votingState.androidLifecycleDispose(view).subscribe ({ votingState ->
                 when (votingState) {
                     is VotingState.WaitingForVote -> { }
                     is VotingState.Results -> setVoteResultsReceived(votingState)
                 }
-            }
+            }, { throw (it) }, { subscriptionCallback(it) })
         }
-    }
-
-    private fun setupQuestionView(viewModel: TextPollViewModelInterface) {
-        view.addView(createQuestion(viewModel.textPollBlock))
     }
 
     private fun setupOptionViews(viewModel: TextPollViewModelInterface) {
@@ -88,32 +85,19 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     }
 
     private fun createQuestion(textPollBlock: TextPollBlock): AppCompatTextView {
-        return view.textView(textPollBlock.question) {
+        return view.textView {
+            text = textPollBlock.question
             setTextStyleProperties(textPollBlock.questionStyle)
             setupLayoutParams(width = ViewGroup.LayoutParams.MATCH_PARENT, height = ViewGroup.LayoutParams.WRAP_CONTENT)
         }
     }
 
     private fun createOptionViews(textPollBlock: TextPollBlock): List<TextOptionView> {
-        val optionStyle = textPollBlock.optionStyle
-        val optionStyleHeight = optionStyle.height.dpAsPx(view.resources.displayMetrics)
-        val optionMarginHeight = optionStyle.verticalSpacing.dpAsPx(view.resources.displayMetrics)
-        val borderWidth = optionStyle.borderWidth.dpAsPx(view.resources.displayMetrics)
-
         return textPollBlock.options.mapIndexed { index, option ->
             view.optionView {
                 id = optionIds[index]
-                gravity = Gravity.CENTER_VERTICAL
-                alpha = optionStyle.opacity.toFloat()
-                setBackgroundColor(Color.TRANSPARENT)
-                setupLayoutParams(
-                    width = ViewGroup.LayoutParams.MATCH_PARENT,
-                    height = optionStyleHeight + (borderWidth * 2),
-                    topMargin = optionMarginHeight,
-                    leftPadding = borderWidth,
-                    rightPadding = borderWidth
-                )
-                createViews(option, textPollBlock.optionStyle)
+                initializeOptionView(textPollBlock.optionStyle)
+                bindOptionView(option, textPollBlock.optionStyle)
             }
         }
     }

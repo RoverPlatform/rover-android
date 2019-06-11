@@ -1,14 +1,13 @@
 package io.rover.sdk.ui.blocks.poll
 
-import android.graphics.Color
 import android.graphics.Typeface
 import android.support.v4.view.ViewCompat
 import android.support.v7.widget.AppCompatTextView
-import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import io.rover.sdk.data.domain.QuestionStyle
 import io.rover.sdk.data.domain.TextPollBlock
+import io.rover.sdk.platform.addView
 import io.rover.sdk.platform.mapToFont
 import io.rover.sdk.platform.optionView
 import io.rover.sdk.platform.setupLayoutParams
@@ -21,7 +20,6 @@ import io.rover.sdk.ui.blocks.concerns.background.createBackgroundDrawable
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.concerns.ViewModelBinding
-import io.rover.sdk.ui.dpAsPx
 
 internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInterface {
 
@@ -30,11 +28,20 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     }
 
     private val optionIds = (0 until MAX_OPTIONS_AMOUNT).map { ViewCompat.generateViewId() }
+    private val questionId = ViewCompat.generateViewId()
 
     override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
         binding?.viewModel?.let { viewModel ->
-            view.removeAllViews()
-            view.addView(createQuestion(viewModel.textPollBlock))
+            if (view.childCount == 0) {
+                view.addView {
+                    view.textView {
+                        id = questionId
+                        setupLayoutParams(width = ViewGroup.LayoutParams.MATCH_PARENT, height = ViewGroup.LayoutParams.WRAP_CONTENT)
+                    }
+                }
+            }
+
+            bindQuestion(viewModel.textPollBlock)
             setupOptionViews(viewModel)
             informOptionBackgroundAboutSize(viewModel)
 
@@ -84,11 +91,14 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             }
     }
 
-    private fun createQuestion(textPollBlock: TextPollBlock): AppCompatTextView {
-        return view.textView {
+    private fun bindQuestion(textPollBlock: TextPollBlock) {
+        view.findViewById<AppCompatTextView>(questionId).run {
             text = textPollBlock.question
-            setTextStyleProperties(textPollBlock.questionStyle)
-            setupLayoutParams(width = ViewGroup.LayoutParams.MATCH_PARENT, height = ViewGroup.LayoutParams.WRAP_CONTENT)
+            gravity = textPollBlock.questionStyle.textAlignment.convertToGravity()
+            textSize = textPollBlock.questionStyle.font.size.toFloat()
+            setTextColor(textPollBlock.questionStyle.color.asAndroidColor())
+            val font = textPollBlock.questionStyle.font.weight.mapToFont()
+            typeface = Typeface.create(font.fontFamily, font.fontStyle)
         }
     }
 
@@ -96,18 +106,10 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         return textPollBlock.options.mapIndexed { index, option ->
             view.optionView {
                 id = optionIds[index]
-                initializeOptionView(textPollBlock.optionStyle)
+                initializeOptionViewLayout(textPollBlock.optionStyle)
                 bindOptionView(option, textPollBlock.optionStyle)
             }
         }
-    }
-
-    private fun AppCompatTextView.setTextStyleProperties(questionStyle: QuestionStyle) {
-        gravity = questionStyle.textAlignment.convertToGravity()
-        textSize = questionStyle.font.size.toFloat()
-        setTextColor(questionStyle.color.asAndroidColor())
-        val font = questionStyle.font.weight.mapToFont()
-        typeface = Typeface.create(font.fontFamily, font.fontStyle)
     }
 }
 

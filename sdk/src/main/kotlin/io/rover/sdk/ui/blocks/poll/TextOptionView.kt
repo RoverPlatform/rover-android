@@ -48,7 +48,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         private const val RESULTS_TEXT_SCALE_FACTOR = 1.05f
     }
     
-    fun initializeOptionView(optionStyle: TextPollBlockOptionStyle) {
+    fun initializeOptionViewLayout(optionStyle: TextPollBlockOptionStyle) {
         val optionStyleHeight = optionStyle.height.dpAsPx(resources.displayMetrics)
         val optionMarginHeight = optionStyle.verticalSpacing.dpAsPx(resources.displayMetrics)
         val borderWidth = optionStyle.borderWidth.dpAsPx(resources.displayMetrics)
@@ -63,6 +63,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             leftPadding = borderWidth,
             rightPadding = borderWidth
         )
+
+        initializeViewStyle(optionStyle)
     }
 
     fun bindOptionView(option: String, optionStyle: TextPollBlockOptionStyle) {
@@ -73,8 +75,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             val font = optionStyle.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
         }
-
-        initializeViewStyle(optionStyle)
     }
 
     private fun initializeViewStyle(optionStyle: TextPollBlockOptionStyle) {
@@ -172,8 +172,9 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             (votePercentageText.layoutParams as MarginLayoutParams).marginEnd + (votePercentageText.layoutParams as MarginLayoutParams).marginStart
         val votePercentageWidth = votePercentageText.measuredWidth + votePercentageMargins
         val borderWidth = (optionStyle.borderWidth.dpAsPx(resources.displayMetrics) * 2)
+        val optionEndMargin = (findViewById<AppCompatTextView>(optionTextId).layoutParams as MarginLayoutParams).marginStart
 
-        return voteIndicatorWidth + (layoutParams as MarginLayoutParams).marginStart + votePercentageWidth + borderWidth
+        return voteIndicatorWidth + optionEndMargin + votePercentageWidth + borderWidth
     }
 
     init {

@@ -47,9 +47,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     companion object {
         private const val RESULTS_TEXT_SCALE_FACTOR = 1.05f
     }
-
-
-
+    
     fun initializeOptionView(optionStyle: TextPollBlockOptionStyle) {
         val optionStyleHeight = optionStyle.height.dpAsPx(resources.displayMetrics)
         val optionMarginHeight = optionStyle.verticalSpacing.dpAsPx(resources.displayMetrics)

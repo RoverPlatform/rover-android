@@ -190,7 +190,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
                     leftMargin = marginInPixels, rightMargin = marginInPixels) {
                     addRule(ALIGN_PARENT_START)
                 }
-
             }
         }
 
@@ -262,5 +261,5 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 }
 
-private data class RoundRect(val rectF: RectF?, val borderRadius: Float, val halfBorderStrokeWidth: Float)
+data class RoundRect(val rectF: RectF?, val borderRadius: Float, val halfBorderStrokeWidth: Float)
 private data class OptionPaints(val borderPaint: Paint = Paint(), val fillPaint: Paint = Paint(), val resultPaint: Paint = Paint())

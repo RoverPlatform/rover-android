@@ -2,6 +2,7 @@
 
 package io.rover.sdk.data.operations.data
 
+import android.net.Uri
 import io.rover.sdk.data.domain.Background
 import io.rover.sdk.data.domain.BackgroundContentMode
 import io.rover.sdk.data.domain.BackgroundScale
@@ -24,7 +25,6 @@ import io.rover.sdk.data.domain.ImagePollBlock
 import io.rover.sdk.data.domain.ImagePollBlockOptionStyle
 import io.rover.sdk.data.domain.Insets
 import io.rover.sdk.data.domain.PollBlock
-import io.rover.sdk.data.domain.PollImage
 import io.rover.sdk.data.domain.Position
 import io.rover.sdk.data.domain.QuestionStyle
 import io.rover.sdk.data.domain.RectangleBlock
@@ -103,6 +103,16 @@ internal fun BarcodeFormat.Companion.decodeJson(value: String): BarcodeFormat =
 internal fun Image.Companion.optDecodeJSON(json: JSONObject?): Image? = when (json) {
     null -> null
     else -> Image(
+        json.getInt("width"),
+        json.getInt("height"),
+        json.safeGetString("name"),
+        json.getInt("size"),
+        json.safeGetUri("url")
+    )
+}
+
+internal fun Image.Companion.decodeJson(json: JSONObject): Image {
+    return Image(
         json.getInt("width"),
         json.getInt("height"),
         json.safeGetString("name"),
@@ -485,17 +495,6 @@ internal fun ImageBlockOption.encodeJson(): JSONObject {
     }
 }
 
-internal fun PollImage.encodeJson(): JSONObject {
-    return JSONObject().apply {
-        putProp(this@encodeJson, PollImage::height, "height")
-        putProp(this@encodeJson, PollImage::name, "name")
-        putProp(this@encodeJson, PollImage::size, "size")
-        putProp(this@encodeJson, PollImage::type, "type")
-        putProp(this@encodeJson, PollImage::url, "url") { it.toString() }
-        putProp(this@encodeJson, PollImage::width, "width")
-    }
-}
-
 internal fun QuestionStyle.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, QuestionStyle::color, "color") { it.encodeJson() }
@@ -507,9 +506,8 @@ internal fun QuestionStyle.encodeJson(): JSONObject {
 internal fun ImagePollBlockOptionStyle.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, ImagePollBlockOptionStyle::opacity, "opacity")
-        putProp(this@encodeJson, ImagePollBlockOptionStyle::borderRadius, "borderRadius")
-        putProp(this@encodeJson, ImagePollBlockOptionStyle::borderWidth, "borderWidth")
-        putProp(this@encodeJson, ImagePollBlockOptionStyle::borderColor, "borderColor") { it.encodeJson() }
+        putProp(this@encodeJson, ImagePollBlockOptionStyle::color, "color") { it.encodeJson() }
+        putProp(this@encodeJson, ImagePollBlockOptionStyle::border, "border") { it.encodeJson() }
         putProp(this@encodeJson, ImagePollBlockOptionStyle::font, "font") { it.encodeJson() }
         putProp(this@encodeJson, ImagePollBlockOptionStyle::textAlignment, "textAlignment") { it.wireFormat }
         putProp(this@encodeJson, ImagePollBlockOptionStyle::resultFillColor, "resultFillColor") { it.encodeJson() }
@@ -714,21 +712,10 @@ internal fun PollBlock.Companion.decodeJson(json: JSONObject): PollBlock {
     }
 }
 
-internal fun PollImage.Companion.decodeJson(json: JSONObject): PollImage {
-    return  PollImage(
-        width = json.getInt("width"),
-        height = json.getInt("height"),
-        name = json.getString("name"),
-        type = json.getString("type"),
-        size = json.getInt("size"),
-        url = json.safeGetUri("url")
-    )
-}
-
 fun ImageBlockOption.Companion.decodeJson(json: JSONObject): ImageBlockOption {
     return ImageBlockOption(
         json.safeGetString("text"),
-        PollImage.decodeJson(json.getJSONObject("image"))
+        Image.decodeJson(json.getJSONObject("image"))
     )
 }
 
@@ -743,9 +730,8 @@ fun QuestionStyle.Companion.decodeJson(json: JSONObject): QuestionStyle {
 fun ImagePollBlockOptionStyle.Companion.decodeJson(json: JSONObject) : ImagePollBlockOptionStyle {
     return ImagePollBlockOptionStyle(
         opacity = json.getDouble("opacity"),
-        borderRadius = json.getInt("borderRadius"),
-        borderWidth = json.getInt("borderWidth"),
-        borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
+        color = Color.decodeJson(json.getJSONObject("color")),
+        border = Border.decodeJson(json.getJSONObject("border")),
         font = Font.decodeJson(json.getJSONObject("font")),
         textAlignment = TextAlignment.decodeJson(json.safeGetString("textAlignment")),
         resultFillColor = Color.decodeJson(json.getJSONObject("resultFillColor")),

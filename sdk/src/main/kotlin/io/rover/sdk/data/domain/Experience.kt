@@ -120,7 +120,7 @@ interface Block {
 
 data class ImageBlockOption(
     val text: String,
-    val image: PollImage
+    val image: Image
 ) {
     companion object
 }
@@ -135,9 +135,8 @@ data class QuestionStyle(
 
 data class ImagePollBlockOptionStyle(
     val opacity: Double,
-    val borderRadius: Int,
-    val borderWidth: Int,
-    val borderColor: Color,
+    val color: Color,
+    val border: Border,
     val font: Font,
     val textAlignment: TextAlignment,
     val resultFillColor: Color,
@@ -418,17 +417,6 @@ sealed class VerticalAlignment {
     data class Stacked(val topOffset: Double, val bottomOffset: Double, override val height: Height) : VerticalAlignment(), Measured
     data class Top(val offset: Double, override val height: Height) : VerticalAlignment(), Measured
 
-    companion object
-}
-
-data class PollImage(
-    val width: Int,
-    val height: Int,
-    val type: String,
-    val name: String,
-    val size: Int,
-    val url: URI
-) {
     companion object
 }
 

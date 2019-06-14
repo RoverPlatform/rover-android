@@ -10,6 +10,9 @@ import android.widget.RelativeLayout
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
 import io.rover.sdk.ui.blocks.poll.TextOptionView
 
+// Extension functions to reduce the amount of boilerplate when programmatically creating
+// and modifying views
+
 internal fun ViewGroup.textView(builder: AppCompatTextView.() -> Unit): AppCompatTextView {
     return AppCompatTextView(context).apply {
         builder()

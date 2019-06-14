@@ -38,23 +38,32 @@ internal class ViewBackground(
                     val paddingTop = view.paddingTop
                     val paddingRight = view.paddingRight
                     val paddingBottom = view.paddingBottom
-                    view.background = bitmap.createBackgroundDrawable(view, viewModel.backgroundColor, fadeIn, backgroundImageConfiguration)
+                    view.background = bitmap.createBackgroundDrawable(
+                        view,
+                        viewModel.backgroundColor,
+                        fadeIn,
+                        backgroundImageConfiguration
+                    )
                     view.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom)
 
 
-            }, { error -> throw error }, { subscriptionCallback(it) })
+                }, { error -> throw error }, { subscriptionCallback(it) })
 
-            binding.viewModel.informDimensions(binding.measuredSize ?: throw RuntimeException(
-                "ViewBackground may only be used with a view model binding including a measured size (ie. used within a Rover screen layout)."
-            ))
+            binding.viewModel.informDimensions(
+                binding.measuredSize ?: throw RuntimeException(
+                    "ViewBackground may only be used with a view model binding including a measured size (ie. used within a Rover screen layout)."
+                )
+            )
         }
     }
 }
 
-internal fun Bitmap.createBackgroundDrawable(view: View,
-                                    backgroundColor: Int,
-                                    fadeIn: Boolean,
-                                    backgroundImageConfiguration: BackgroundImageConfiguration): BackgroundColorDrawableWrapper {
+internal fun Bitmap.createBackgroundDrawable(
+    view: View,
+    backgroundColor: Int,
+    fadeIn: Boolean,
+    backgroundImageConfiguration: BackgroundImageConfiguration
+): BackgroundColorDrawableWrapper {
     // now construct/compose drawables for the given configuration and bitmap.
 
     // note that this will only have an effect in tiled mode (which is exactly

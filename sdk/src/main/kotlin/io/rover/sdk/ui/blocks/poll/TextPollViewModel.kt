@@ -22,9 +22,9 @@ internal class TextPollViewModel(
 
     override fun intrinsicHeight(bounds: RectF): Float {
         // Roundtrip to avoid rounding when converting floats to ints causing mismatches in measured size vs views actual size
-        val optionStyleHeight = measurementService.measureDpToPxToDp(textPollBlock.optionStyle.height)
-        val borderWidth = measurementService.measureDpToPxToDp(textPollBlock.optionStyle.borderWidth)
-        val verticalSpacing = measurementService.measureDpToPxToDp(textPollBlock.optionStyle.verticalSpacing)
+        val optionStyleHeight = measurementService.snapToPixValue(textPollBlock.optionStyle.height)
+        val borderWidth = measurementService.snapToPixValue(textPollBlock.optionStyle.borderWidth)
+        val verticalSpacing = measurementService.snapToPixValue(textPollBlock.optionStyle.verticalSpacing)
 
         val questionHeight = measurementService.measureHeightNeededForMultiLineTextInTextView(
             textPollBlock.question,

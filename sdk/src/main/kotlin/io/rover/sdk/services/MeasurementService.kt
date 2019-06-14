@@ -21,9 +21,11 @@ internal class MeasurementService(
     private val richTextToSpannedTransformer: RichTextToSpannedTransformer,
     private val barcodeRenderingService: BarcodeRenderingService
 ) {
-
-    // Roundtrip to avoid rounding causing mismatched when converting floats to ints
-    fun measureDpToPxToDp(dpValue: Int): Float {
+    // Snap the given Dp value to the nearest pixel, returning the equivalent Dp value.  The goal
+    // here is to ensure when the resulting Dp value is converted to a Px value (for the same
+    // density), no rounding will need to occur to yield an exact Px value (since Px values cannot
+    // be fractional).  This is useful because we do not want to accrue rounding errors downstream.
+    fun snapToPixValue(dpValue: Int): Float {
         return dpValue.dpAsPx(displayMetrics).pxAsDp(displayMetrics)
     }
 

@@ -1,6 +1,7 @@
 package io.rover.sdk.data.domain
 
 import android.util.DisplayMetrics
+import android.view.Gravity
 import io.rover.sdk.data.domain.BackgroundScale.X3
 import java.net.URI
 import java.net.URL
@@ -176,14 +177,11 @@ data class TextPollBlockOptionStyle(
     val borderWidth: Int,
     val borderColor: Color,
     val color: Color,
-    val backgroundColor: Color,
     val font: Font,
     val textAlignment: TextAlignment,
     val resultFillColor: Color,
-    val backgroundImage: PollImage,
-    val verticalSpacing: Int,
-    val backgroundContentMode: BackgroundContentMode,
-    val backgroundScale: BackgroundScale
+    val background: Background,
+    val verticalSpacing: Int
 ) {
     companion object
 }
@@ -521,6 +519,14 @@ enum class TextAlignment(
     Center("CENTER"),
     Left("LEFT"),
     Right("RIGHT");
+
+    fun convertToGravity(): Int {
+        return when (this) {
+            Right -> Gravity.END
+            Left -> Gravity.START
+            Center -> Gravity.CENTER_HORIZONTAL
+        }
+    }
 
     companion object
 }

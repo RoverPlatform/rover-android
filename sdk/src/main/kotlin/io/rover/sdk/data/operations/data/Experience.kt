@@ -526,14 +526,11 @@ internal fun TextPollBlockOptionStyle.encodeJson(): JSONObject {
         putProp(this@encodeJson, TextPollBlockOptionStyle::borderWidth, "borderWidth")
         putProp(this@encodeJson, TextPollBlockOptionStyle::borderColor, "borderColor") { it.encodeJson() }
         putProp(this@encodeJson, TextPollBlockOptionStyle::color, "color") { it.encodeJson() }
-        putProp(this@encodeJson, TextPollBlockOptionStyle::backgroundColor, "backgroundColor") { it.encodeJson() }
         putProp(this@encodeJson, TextPollBlockOptionStyle::font, "font") { it.encodeJson() }
         putProp(this@encodeJson, TextPollBlockOptionStyle::textAlignment, "textAlignment") { it.wireFormat }
         putProp(this@encodeJson, TextPollBlockOptionStyle::resultFillColor, "resultFillColor") { it.encodeJson() }
-        putProp(this@encodeJson, TextPollBlockOptionStyle::backgroundImage, "backgroundImage") { it.encodeJson() }
+        putProp(this@encodeJson, TextPollBlockOptionStyle::background, "background") { it.encodeJson() }
         putProp(this@encodeJson, TextPollBlockOptionStyle::verticalSpacing, "verticalSpacing")
-        putProp(this@encodeJson, TextPollBlockOptionStyle::backgroundContentMode, "backgroundContentMode") { it.wireFormat }
-        putProp(this@encodeJson, TextPollBlockOptionStyle::backgroundScale, "backgroundScale") { it.wireFormat }
     }
 }
 
@@ -784,13 +781,10 @@ fun TextPollBlockOptionStyle.Companion.decodeJson(json: JSONObject): TextPollBlo
         borderWidth = json.getInt("borderWidth"),
         borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
         color = Color.decodeJson(json.getJSONObject("color")),
-        backgroundColor = Color.decodeJson(json.getJSONObject("backgroundColor")),
+        background = Background.decodeJson(json.getJSONObject("background")),
         font = Font.decodeJson(json.getJSONObject("font")),
         textAlignment = TextAlignment.decodeJson(json.safeGetString("textAlignment")),
         resultFillColor = Color.decodeJson(json.getJSONObject("resultFillColor")),
-        backgroundImage = PollImage.decodeJson(json.getJSONObject("backgroundImage")),
-        backgroundContentMode = BackgroundContentMode.decodeJson(json.safeGetString("backgroundContentMode")),
-        backgroundScale = BackgroundScale.decodeJson(json.safeGetString("backgroundScale")),
         verticalSpacing = json.getInt("verticalSpacing")
     )
 }

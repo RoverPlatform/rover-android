@@ -374,7 +374,7 @@ internal class ViewModels(
     private fun textPollViewModel(
         textPollBlock: TextPollBlock
     ) : TextPollViewModel {
-        return TextPollViewModel(textPollBlock, measurementService)
+        return TextPollViewModel(textPollBlock, measurementService, backgroundViewModel(textPollBlock.optionStyle.background))
     }
 
     private fun blockViewModel(

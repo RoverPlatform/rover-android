@@ -21,8 +21,14 @@ internal class MeasurementService(
     private val richTextToSpannedTransformer: RichTextToSpannedTransformer,
     private val barcodeRenderingService: BarcodeRenderingService
 ) {
+    // Snap the given Dp value to the nearest pixel, returning the equivalent Dp value.  The goal
+    // here is to ensure when the resulting Dp value is converted to a Px value (for the same
+    // density), no rounding will need to occur to yield an exact Px value (since Px values cannot
+    // be fractional).  This is useful because we do not want to accrue rounding errors downstream.
+    fun snapToPixValue(dpValue: Int): Float {
+        return dpValue.dpAsPx(displayMetrics).pxAsDp(displayMetrics)
+    }
 
-    @SuppressLint("NewApi")
     fun measureHeightNeededForMultiLineTextInTextView(
         text: String,
         fontAppearance: FontAppearance,
@@ -32,7 +38,7 @@ internal class MeasurementService(
         val  spanned = SpannableString(text)
 
         val paint = TextPaint().apply {
-            textSize = fontAppearance.fontSize.toFloat() * displayMetrics.scaledDensity
+            textSize = fontAppearance.fontSize * displayMetrics.scaledDensity
             typeface = Typeface.create(fontAppearance.font.fontFamily, fontAppearance.font.fontStyle)
             textAlign = fontAppearance.align
         }
@@ -45,7 +51,7 @@ internal class MeasurementService(
 
         val layout = StaticLayout(spanned, paint, width.dpAsPx(displayMetrics), textLayoutAlign,
             textViewLineSpacing, 0f, true)
-        return (layout.height + layout.topPadding + layout.bottomPadding).pxAsDp(displayMetrics)
+        return layout.height.pxAsDp(displayMetrics)
     }
 
     /**

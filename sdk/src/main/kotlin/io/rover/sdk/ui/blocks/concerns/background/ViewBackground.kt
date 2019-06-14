@@ -1,6 +1,7 @@
 package io.rover.sdk.ui.blocks.concerns.background
 
 import android.animation.ObjectAnimator
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
@@ -8,19 +9,16 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.InsetDrawable
 import android.view.Gravity
 import android.view.View
+import io.rover.sdk.platform.DrawableWrapper
 import io.rover.sdk.streams.androidLifecycleDispose
 import io.rover.sdk.streams.subscribe
-import io.rover.sdk.platform.DrawableWrapper
-import io.rover.sdk.ui.concerns.ViewModelBinding
+import io.rover.sdk.ui.BackgroundImageConfiguration
 import io.rover.sdk.ui.concerns.MeasuredBindableView
+import io.rover.sdk.ui.concerns.ViewModelBinding
 
 internal class ViewBackground(
     override val view: View
 ) : ViewBackgroundInterface {
-    private val shortAnimationDuration = view.resources.getInteger(
-        android.R.integer.config_shortAnimTime
-    )
-
     override var viewModelBinding: MeasuredBindableView.Binding<BackgroundViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
         view.background = null
         view.setBackgroundColor(Color.TRANSPARENT)
@@ -36,54 +34,77 @@ internal class ViewBackground(
                 .backgroundUpdates
                 .androidLifecycleDispose(view)
                 .subscribe({ (bitmap, fadeIn, backgroundImageConfiguration) ->
-                // now construct/compose drawables for the given configuration and bitmap.
-
-                // note that this will only have an effect in tiled mode (which is exactly
-                // where we need it), since we always scale to the insets otherwise.
-                bitmap.density = backgroundImageConfiguration.imageNativeDensity
-
-                val bitmapDrawable =
-                    BitmapDrawable(
-                        view.resources,
-                        bitmap
-                    ).apply {
-                        this.gravity = Gravity.FILL
-                        if (backgroundImageConfiguration.tileMode != null) {
-                            tileModeX = backgroundImageConfiguration.tileMode
-                            tileModeY = backgroundImageConfiguration.tileMode
-                        }
-                    }
-
-                val backgroundDrawable = BackgroundColorDrawableWrapper(
-                    viewModel.backgroundColor,
-                    InsetDrawable(
-                        bitmapDrawable,
-                        backgroundImageConfiguration.insets.left,
-                        backgroundImageConfiguration.insets.top,
-                        backgroundImageConfiguration.insets.right,
-                        backgroundImageConfiguration.insets.bottom
+                    val paddingLeft = view.paddingLeft
+                    val paddingTop = view.paddingTop
+                    val paddingRight = view.paddingRight
+                    val paddingBottom = view.paddingBottom
+                    view.background = bitmap.createBackgroundDrawable(
+                        view,
+                        viewModel.backgroundColor,
+                        fadeIn,
+                        backgroundImageConfiguration
                     )
+                    view.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom)
+
+
+                }, { error -> throw error }, { subscriptionCallback(it) })
+
+            binding.viewModel.informDimensions(
+                binding.measuredSize ?: throw RuntimeException(
+                    "ViewBackground may only be used with a view model binding including a measured size (ie. used within a Rover screen layout)."
                 )
-
-                if (fadeIn) {
-                    ObjectAnimator.ofInt(
-                        backgroundDrawable, "alpha", 0, 255
-                    ).apply {
-                        duration = shortAnimationDuration.toLong()
-                        start()
-                    }
-                } else {
-                    backgroundDrawable.alpha = 255
-                }
-
-                view.background = backgroundDrawable
-            }, { error -> throw error }, { subscriptionCallback(it) })
-
-            binding.viewModel.informDimensions(binding.measuredSize ?: throw RuntimeException(
-                "ViewBackground may only be used with a view model binding including a measured size (ie. used within a Rover screen layout)."
-            ))
+            )
         }
     }
+}
+
+internal fun Bitmap.createBackgroundDrawable(
+    view: View,
+    backgroundColor: Int,
+    fadeIn: Boolean,
+    backgroundImageConfiguration: BackgroundImageConfiguration
+): BackgroundColorDrawableWrapper {
+    // now construct/compose drawables for the given configuration and bitmap.
+
+    // note that this will only have an effect in tiled mode (which is exactly
+    // where we need it), since we always scale to the insets otherwise.
+    density = backgroundImageConfiguration.imageNativeDensity
+
+    val bitmapDrawable =
+        BitmapDrawable(
+            view.resources,
+            this
+        ).apply {
+            this.gravity = Gravity.FILL
+            if (backgroundImageConfiguration.tileMode != null) {
+                tileModeX = backgroundImageConfiguration.tileMode
+                tileModeY = backgroundImageConfiguration.tileMode
+            }
+        }
+
+    val backgroundDrawable = BackgroundColorDrawableWrapper(
+        backgroundColor,
+        InsetDrawable(
+            bitmapDrawable,
+            backgroundImageConfiguration.insets.left,
+            backgroundImageConfiguration.insets.top,
+            backgroundImageConfiguration.insets.right,
+            backgroundImageConfiguration.insets.bottom
+        )
+    )
+
+    if (fadeIn) {
+        ObjectAnimator.ofInt(
+            backgroundDrawable, "alpha", 0, 255
+        ).apply {
+            duration = view.resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
+            start()
+        }
+    } else {
+        backgroundDrawable.alpha = 255
+    }
+
+    return backgroundDrawable
 }
 
 internal class BackgroundColorDrawableWrapper(

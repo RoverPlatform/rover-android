@@ -43,10 +43,10 @@ internal class ImagePollViewModel(
         )
 
         val horizontalSpacing =
-            measurementService.measureDpToPxToDp(imagePollBlock.optionStyle.horizontalSpacing)
-        val optionTextHeight = measurementService.measureDpToPxToDp(OPTION_TEXT_HEIGHT)
+            measurementService.snapToPixValue(imagePollBlock.optionStyle.horizontalSpacing)
+        val optionTextHeight = measurementService.snapToPixValue(OPTION_TEXT_HEIGHT)
         val verticalSpacing =
-            measurementService.measureDpToPxToDp(imagePollBlock.optionStyle.verticalSpacing)
+            measurementService.snapToPixValue(imagePollBlock.optionStyle.verticalSpacing)
 
         val optionImageHeight = (bounds.width() - horizontalSpacing) / 2
 

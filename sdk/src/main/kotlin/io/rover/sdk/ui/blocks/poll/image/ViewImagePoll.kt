@@ -32,9 +32,11 @@ internal class ViewImagePoll(override val view: LinearLayout) :
     private var optionViews: List<ImageOptionView>? = null
 
     init {
-        view.addView {
-            questionView
-        }
+        view.addView(questionView)
+    }
+
+    companion object {
+        private const val OPTION_TEXT_HEIGHT = 40f
     }
 
     override var viewModelBinding: MeasuredBindableView.Binding<ImagePollViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
@@ -82,34 +84,39 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         optionViews = createOptionViews(viewModel.imagePollBlock, imageLength)
 
         when {
-            optionViews?.size == 2 -> {
-                val row = LinearLayout(view.context)
-                view.addView(row)
+            optionViews?.size == 2 -> createTwoOptionLayout()
+            optionViews?.size == 4 -> createFourOptionLayout()
+        }
+    }
 
+    private fun createTwoOptionLayout() {
+        val row = LinearLayout(view.context)
+        view.addView(row)
+        optionViews?.forEach { optionView -> row.addView(optionView) }
+    }
 
-                optionViews?.forEach { optionView -> row.addView(optionView) }
-            }
-            optionViews?.size == 4 -> {
-                val row1 = LinearLayout(view.context)
-                val row2 = LinearLayout(view.context)
-                view.addView(row1)
-                view.addView(row2)
+    private fun createFourOptionLayout() {
+        val row1 = LinearLayout(view.context)
+        val row2 = LinearLayout(view.context)
+        view.addView(row1)
+        view.addView(row2)
 
-                optionViews?.forEachIndexed { index, optionView ->
-                    if (index < 2) row1.addView(optionView) else row2.addView(optionView)
-                }
-            }
+        optionViews?.forEachIndexed { index, optionView ->
+            val isOnFirstRow = index < 2
+            if (isOnFirstRow) row1.addView(optionView) else row2.addView(optionView)
         }
     }
 
     private fun createOptionViews(imagePollBlock: ImagePollBlock, imageLength: Int): List<ImageOptionView> {
-        val optionTextHeight = 40f.dpAsPx(view.resources.displayMetrics)
+        val optionTextHeight = OPTION_TEXT_HEIGHT.dpAsPx(view.resources.displayMetrics)
         val horizontalSpacing =
             imagePollBlock.optionStyle.horizontalSpacing.dpAsPx(view.resources.displayMetrics)
         val verticalSpacing =
             imagePollBlock.optionStyle.verticalSpacing.dpAsPx(view.resources.displayMetrics)
 
         return imagePollBlock.options.mapIndexed { index, option ->
+            val isInFirstColumn = index == 0 || index == 2
+
             view.imageOptionView {
                 initializeOptionViewLayout(imagePollBlock.optionStyle)
                 bindOptionView(option.text, imagePollBlock.optionStyle)
@@ -117,7 +124,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                 setupLayoutParams(
                     width = imageLength,
                     height = imageLength + optionTextHeight,
-                    rightMargin = if (index == 0 || index == 2) horizontalSpacing else 0,
+                    rightMargin = if (isInFirstColumn) horizontalSpacing else 0,
                     topMargin = verticalSpacing
                 )
             }

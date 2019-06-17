@@ -105,7 +105,7 @@ internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
     val imagePollBlock: ImagePollBlock
 
     /**
-     * Subscribe to be informed of the image becoming ready.
+     * Subscribe to be informed of the images becoming ready.
      */
     val multiImageUpdates: Publisher<List<ImageUpdate>>
 
@@ -113,9 +113,9 @@ internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
 
     /**
      * Inform the view model of the display geometry of the image view, so that it may
-     * make an attempt to retrieve the image for display.
+     * make an attempt to retrieve the images for display.
      *
-     * Be sure to subscribe to [imageUpdates] first.
+     * Be sure to subscribe to [multiImageUpdates] first.
      */
     fun informImagePollOptionDimensions(
         measuredSize: MeasuredSize

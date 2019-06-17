@@ -340,7 +340,7 @@ internal class ImageOptimizationService  {
      */
     fun optimizeImageBlock(
         image: Image,
-        containingBlock: Block,
+        blockBorderWidth: Int,
         targetViewPixelSize: PixelSize,
         density: Float
     ): URI {
@@ -350,7 +350,7 @@ internal class ImageOptimizationService  {
         )
 
         // Now take border width into account.
-        val borderWidth = containingBlock.border.width.dpAsPx(density)
+        val borderWidth = blockBorderWidth.dpAsPx(density)
         val targetViewSizeWithoutBorderWidth = PixelSize(
             targetViewPixelSize.width - borderWidth,
             targetViewPixelSize.height - borderWidth

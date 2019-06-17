@@ -2,6 +2,7 @@ package io.rover.sdk.platform
 
 import android.graphics.Paint
 import android.support.v7.widget.AppCompatButton
+import android.support.v7.widget.AppCompatImageView
 import android.support.v7.widget.AppCompatTextView
 import android.view.View
 import android.view.ViewGroup
@@ -9,12 +10,19 @@ import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
 import io.rover.sdk.ui.blocks.poll.TextOptionView
+import io.rover.sdk.ui.blocks.poll.image.ImageOptionView
 
 // Extension functions to reduce the amount of boilerplate when programmatically creating
 // and modifying views
 
 internal fun ViewGroup.textView(builder: AppCompatTextView.() -> Unit): AppCompatTextView {
     return AppCompatTextView(context).apply {
+        builder()
+    }
+}
+
+internal fun ViewGroup.imageView(builder: AppCompatImageView.() -> Unit): AppCompatImageView {
+    return AppCompatImageView(context).apply {
         builder()
     }
 }
@@ -27,6 +35,12 @@ internal fun LinearLayout.button(builder: AppCompatButton.() -> Unit): AppCompat
 
 internal fun LinearLayout.optionView(builder: TextOptionView.() -> Unit): TextOptionView {
     return TextOptionView(context).apply {
+        builder()
+    }
+}
+
+internal fun LinearLayout.imageOptionView(builder: ImageOptionView.() -> Unit): ImageOptionView {
+    return ImageOptionView(context).apply {
         builder()
     }
 }

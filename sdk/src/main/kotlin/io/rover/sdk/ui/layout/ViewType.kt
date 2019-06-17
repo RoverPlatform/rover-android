@@ -12,5 +12,6 @@ internal enum class ViewType {
     WebView,
     Barcode,
     Button,
-    Poll
+    TextPoll,
+    ImagePoll
 }

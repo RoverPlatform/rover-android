@@ -1,14 +1,11 @@
 package io.rover.sdk.ui.blocks.poll
 
 import android.graphics.Typeface
-import android.support.v4.view.ViewCompat
-import android.support.v7.widget.AppCompatTextView
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import io.rover.sdk.data.domain.QuestionStyle
 import io.rover.sdk.data.domain.TextPollBlock
+import io.rover.sdk.data.mapToFont
 import io.rover.sdk.platform.addView
-import io.rover.sdk.platform.mapToFont
 import io.rover.sdk.platform.optionView
 import io.rover.sdk.platform.setupLayoutParams
 import io.rover.sdk.platform.textView

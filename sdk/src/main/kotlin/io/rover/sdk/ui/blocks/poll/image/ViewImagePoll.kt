@@ -6,10 +6,10 @@ import android.support.v7.widget.AppCompatTextView
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import io.rover.sdk.data.domain.ImagePollBlock
+import io.rover.sdk.data.mapToFont
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.addView
 import io.rover.sdk.platform.imageOptionView
-import io.rover.sdk.platform.mapToFont
 import io.rover.sdk.platform.setupLayoutParams
 import io.rover.sdk.platform.textView
 import io.rover.sdk.streams.androidLifecycleDispose

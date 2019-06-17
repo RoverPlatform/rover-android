@@ -16,9 +16,9 @@ import android.view.ViewGroup
 import android.widget.RelativeLayout
 import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.TextPollBlockOptionStyle
+import io.rover.sdk.data.mapToFont
 import io.rover.sdk.platform.addView
 import io.rover.sdk.platform.create
-import io.rover.sdk.platform.mapToFont
 import io.rover.sdk.platform.setBackgroundWithoutPaddingChange
 import io.rover.sdk.platform.setupLayoutParams
 import io.rover.sdk.platform.setupRelativeLayoutParams
@@ -27,6 +27,11 @@ import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
 import io.rover.sdk.ui.dpAsPx
 
+/**
+ * Custom view that is "externally bound", the "bind" methods on this class are externally called
+ * as opposed to other views which subscribe to a ViewModel. This means that this view and the views
+ * that interact with it operate in a more MVP type approach than the other MVVM-esque views.
+ */
 internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     private val optionTextId = ViewCompat.generateViewId()
     private val voteIndicatorId = ViewCompat.generateViewId()
@@ -261,5 +266,4 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 }
 
-data class RoundRect(val rectF: RectF?, val borderRadius: Float, val halfBorderStrokeWidth: Float)
 private data class OptionPaints(val borderPaint: Paint = Paint(), val fillPaint: Paint = Paint(), val resultPaint: Paint = Paint())

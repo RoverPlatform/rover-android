@@ -6,8 +6,8 @@ import io.rover.sdk.services.MeasurementService
 import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.Text
 import io.rover.sdk.data.domain.TextAlignment
+import io.rover.sdk.data.mapToFont
 import io.rover.sdk.logging.log
-import io.rover.sdk.platform.mapToFont
 import io.rover.sdk.ui.RectF
 import io.rover.sdk.ui.asAndroidColor
 

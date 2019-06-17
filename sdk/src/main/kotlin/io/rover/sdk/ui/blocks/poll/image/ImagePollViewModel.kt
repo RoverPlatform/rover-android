@@ -5,8 +5,8 @@ import io.rover.sdk.assets.AssetService
 import io.rover.sdk.assets.ImageOptimizationService
 import io.rover.sdk.data.domain.Image
 import io.rover.sdk.data.domain.ImagePollBlock
+import io.rover.sdk.data.getFontAppearance
 import io.rover.sdk.logging.log
-import io.rover.sdk.platform.getFontAppearance
 import io.rover.sdk.services.MeasurementService
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.Publishers

@@ -14,15 +14,20 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import io.rover.sdk.data.domain.ImagePollBlockOptionStyle
+import io.rover.sdk.data.mapToFont
 import io.rover.sdk.platform.create
 import io.rover.sdk.platform.imageView
-import io.rover.sdk.platform.mapToFont
 import io.rover.sdk.platform.setupLayoutParams
 import io.rover.sdk.platform.textView
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.poll.RoundRect
 import io.rover.sdk.ui.dpAsPx
 
+/**
+ * Custom view that is "externally bound", the "bind" methods on this class are externally called
+ * as opposed to other views which subscribe to a ViewModel. This means that this view and the views
+ * that interact with it operate in a more MVP type approach than the other MVVM-esque views.
+ */
 internal class ImageOptionView(context: Context?) : LinearLayout(context) {
     private val optionTextView = textView {
         ellipsize = TextUtils.TruncateAt.END

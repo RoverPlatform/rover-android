@@ -93,10 +93,7 @@ internal class ImagePollViewModel(
 
             Publishers.combineLatest(optimizedImages) {
                 it
-            }.onErrorReturn { error ->
-                log.w("Problem fetching images: $error, ignoring.")
-                null
-            }.filterNulls()
+            }
         }
     }
 }

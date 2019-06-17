@@ -11,6 +11,7 @@ import android.graphics.Typeface
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
 import io.rover.sdk.data.domain.ImagePollBlockOptionStyle
 import io.rover.sdk.platform.create
@@ -58,6 +59,7 @@ internal class ImageOptionView(context: Context?) : LinearLayout(context) {
 
     fun bindOptionImageSize(imageLength: Int) {
         optionImageView.run {
+            scaleType = ImageView.ScaleType.FIT_XY
             layoutParams = LayoutParams(imageLength, imageLength)
         }
     }

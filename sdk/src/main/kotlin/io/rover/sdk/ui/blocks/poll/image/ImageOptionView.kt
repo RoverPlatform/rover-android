@@ -8,16 +8,21 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Typeface
+import android.support.v4.view.ViewCompat
+import android.support.v7.widget.AppCompatTextView
 import android.text.TextUtils
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import io.rover.sdk.data.domain.ImagePollBlockOptionStyle
 import io.rover.sdk.data.mapToFont
 import io.rover.sdk.platform.create
 import io.rover.sdk.platform.imageView
 import io.rover.sdk.platform.setupLayoutParams
+import io.rover.sdk.platform.setupRelativeLayoutParams
 import io.rover.sdk.platform.textView
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.poll.RoundRect
@@ -30,17 +35,46 @@ import io.rover.sdk.ui.dpAsPx
  */
 internal class ImageOptionView(context: Context?) : LinearLayout(context) {
     private val optionTextView = textView {
-        val padding = 8f.dpAsPx(this.resources.displayMetrics)
+        id = ViewCompat.generateViewId()
         ellipsize = TextUtils.TruncateAt.END
         maxLines = 1
         gravity = Gravity.CENTER
         setupLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,
-            height = 40f.dpAsPx(this.resources.displayMetrics),
-            leftPadding = padding,
-            topPadding = padding,
-            rightPadding = padding,
-            bottomPadding = padding
+            height = 40f.dpAsPx(this.resources.displayMetrics)
+        )
+    }
+
+    private val votePercentageView = textView {
+        id = ViewCompat.generateViewId()
+        visibility = View.GONE
+        maxLines = 1
+        gravity = Gravity.CENTER_VERTICAL
+        textAlignment = View.TEXT_ALIGNMENT_TEXT_END
+
+        val marginInDp = 16.dpAsPx(resources.displayMetrics)
+
+        setupRelativeLayoutParams(
+            width = RelativeLayout.LayoutParams.WRAP_CONTENT, height = RelativeLayout.LayoutParams.MATCH_PARENT,
+            leftMargin = marginInDp, rightMargin = marginInDp
+        ) {
+            addRule(RelativeLayout.ALIGN_PARENT_RIGHT)
+        }
+    }
+
+    private val voteIndicator: AppCompatTextView = textView {
+        id = ViewCompat.generateViewId()
+        visibility = View.GONE
+        maxLines = 1
+        gravity = Gravity.CENTER_VERTICAL
+        textAlignment = View.TEXT_ALIGNMENT_TEXT_START
+
+        val marginInPixels = 8.dpAsPx(resources.displayMetrics)
+
+        setupRelativeLayoutParams(
+            width = RelativeLayout.LayoutParams.WRAP_CONTENT,
+            height = RelativeLayout.LayoutParams.MATCH_PARENT,
+            leftMargin = marginInPixels
         )
     }
 
@@ -57,15 +91,21 @@ internal class ImageOptionView(context: Context?) : LinearLayout(context) {
 
         addView(optionImageView)
         addView(optionTextView)
+        addView(votePercentageView)
     }
 
     fun bindOptionView(option: String, optionStyle: ImagePollBlockOptionStyle) {
+        val padding = 8f.dpAsPx(this.resources.displayMetrics)
+        val borderWidth = optionStyle.border.width.dpAsPx(this.resources.displayMetrics)
         optionTextView.run {
             text = option
             textSize = optionStyle.font.size.toFloat()
             setTextColor(optionStyle.color.asAndroidColor())
             val font = optionStyle.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
+            layoutParams = layoutParams.apply {
+                setPadding(padding + borderWidth, padding, padding + borderWidth,padding + borderWidth)
+            }
         }
     }
 

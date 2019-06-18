@@ -18,6 +18,7 @@ import io.rover.sdk.streams.observeOn
 import io.rover.sdk.streams.onErrorReturn
 import io.rover.sdk.ui.PixelSize
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
+import io.rover.sdk.ui.blocks.poll.VotingState
 import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.dpAsPx
@@ -63,6 +64,17 @@ internal class ImagePollViewModel(
     private val measurementsSubject = PublishSubject<MeasuredSize>()
 
     private val imagesList: List<Image> = imagePollBlock.options.map { it.image }
+
+    override fun castVote(selectedOption: Int) {
+        //TODO: Add voting logic
+        setResultsState(selectedOption, listOf(12, 14, 67))
+    }
+
+    override val votingState = PublishSubject<VotingState>()
+
+    private fun setResultsState(selectedOption: Int, votingShare: List<Int>) {
+        votingState.onNext(VotingState.Results(selectedOption, votingShare))
+    }
 
     override val multiImageUpdates: Publisher<List<ImagePollViewModelInterface.ImageUpdate>> =
         measurementsSubject
@@ -117,4 +129,7 @@ internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
     fun informImagePollOptionDimensions(
         measuredSize: MeasuredSize
     )
+
+    fun castVote(selectedOption: Int)
+    val votingState: PublishSubject<VotingState>
 }

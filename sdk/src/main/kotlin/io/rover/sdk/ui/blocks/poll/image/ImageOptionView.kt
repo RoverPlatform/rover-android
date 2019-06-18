@@ -30,12 +30,17 @@ import io.rover.sdk.ui.dpAsPx
  */
 internal class ImageOptionView(context: Context?) : LinearLayout(context) {
     private val optionTextView = textView {
+        val padding = 8f.dpAsPx(this.resources.displayMetrics)
         ellipsize = TextUtils.TruncateAt.END
         maxLines = 1
         gravity = Gravity.CENTER
         setupLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,
-            height = 40f.dpAsPx(this.resources.displayMetrics)
+            height = 40f.dpAsPx(this.resources.displayMetrics),
+            leftPadding = padding,
+            topPadding = padding,
+            rightPadding = padding,
+            bottomPadding = padding
         )
     }
 
@@ -44,6 +49,8 @@ internal class ImageOptionView(context: Context?) : LinearLayout(context) {
     private var roundRect: RoundRect? = null
 
     private var borderPaint = Paint()
+
+    private var inResultsState = false
 
     init {
         orientation = VERTICAL
@@ -73,6 +80,13 @@ internal class ImageOptionView(context: Context?) : LinearLayout(context) {
         optionImageView.run {
             setImageBitmap(bitmap)
         }
+    }
+
+    fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, optionStyle: ImagePollBlockOptionStyle) {
+        if (inResultsState) return
+        inResultsState = true
+
+
     }
 
     fun initializeOptionViewLayout(optionStyle: ImagePollBlockOptionStyle) {

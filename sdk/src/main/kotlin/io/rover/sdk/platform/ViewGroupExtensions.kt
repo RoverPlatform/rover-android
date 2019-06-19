@@ -11,6 +11,7 @@ import android.widget.RelativeLayout
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
 import io.rover.sdk.ui.blocks.poll.TextOptionView
 import io.rover.sdk.ui.blocks.poll.image.ImagePollOptionView
+import io.rover.sdk.ui.blocks.poll.image.VotingIndicator
 
 // Extension functions to reduce the amount of boilerplate when programmatically creating
 // and modifying views
@@ -27,20 +28,38 @@ internal fun ViewGroup.imageView(builder: AppCompatImageView.() -> Unit): AppCom
     }
 }
 
-internal fun LinearLayout.button(builder: AppCompatButton.() -> Unit): AppCompatButton {
+internal fun ViewGroup.button(builder: AppCompatButton.() -> Unit): AppCompatButton {
     return AppCompatButton(context).apply {
         builder()
     }
 }
 
-internal fun LinearLayout.optionView(builder: TextOptionView.() -> Unit): TextOptionView {
+internal fun ViewGroup.optionView(builder: TextOptionView.() -> Unit): TextOptionView {
     return TextOptionView(context).apply {
         builder()
     }
 }
 
-internal fun LinearLayout.imageOptionView(builder: ImagePollOptionView.() -> Unit): ImagePollOptionView {
+internal fun ViewGroup.imageOptionView(builder: ImagePollOptionView.() -> Unit): ImagePollOptionView {
     return ImagePollOptionView(context).apply {
+        builder()
+    }
+}
+
+internal fun ViewGroup.votingIndicator(builder: VotingIndicator.() -> Unit): VotingIndicator {
+    return VotingIndicator(context).apply {
+        builder()
+    }
+}
+
+internal fun ViewGroup.relativeLayout(builder: RelativeLayout.() -> Unit): RelativeLayout {
+    return RelativeLayout(context).apply {
+        builder()
+    }
+}
+
+internal fun ViewGroup.linearLayout(builder: LinearLayout.() -> Unit): LinearLayout {
+    return LinearLayout(context).apply {
         builder()
     }
 }

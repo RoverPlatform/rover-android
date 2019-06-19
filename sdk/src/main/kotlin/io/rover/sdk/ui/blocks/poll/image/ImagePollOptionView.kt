@@ -24,9 +24,12 @@ import io.rover.sdk.data.domain.ImagePollBlockOptionStyle
 import io.rover.sdk.data.mapToFont
 import io.rover.sdk.platform.create
 import io.rover.sdk.platform.imageView
+import io.rover.sdk.platform.linearLayout
+import io.rover.sdk.platform.relativeLayout
 import io.rover.sdk.platform.setupLinearLayoutParams
 import io.rover.sdk.platform.setupRelativeLayoutParams
 import io.rover.sdk.platform.textView
+import io.rover.sdk.platform.votingIndicator
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.poll.RoundRect
 import io.rover.sdk.ui.dpAsPx
@@ -47,7 +50,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
             height = 40f.dpAsPx(this.resources.displayMetrics))
     }
 
-    private val votingIndicatorBar = VotingIndicator(this.context).apply {
+    private val votingIndicatorBar = votingIndicator {
         id = ViewCompat.generateViewId()
         visibility = View.GONE
     }
@@ -61,7 +64,8 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     }
 
     private val topSection = RelativeLayout(context)
-    private val bottomSection = RelativeLayout(context).apply {
+
+    private val bottomSection = relativeLayout {
         gravity = Gravity.CENTER
         setupLinearLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,
@@ -69,7 +73,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         )
     }
 
-    private val bottomSectionLinear = LinearLayout(context).apply {
+    private val bottomSectionLinear = linearLayout {
         gravity = Gravity.CENTER
         setupRelativeLayoutParams(
             width = ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -195,7 +199,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     }
 
     private fun bindVoteIndicatorText(optionStyle: ImagePollBlockOptionStyle) {
-        voteIndicatorView.run{
+        voteIndicatorView.run {
             text = "\u2022"
             textSize = optionStyle.font.size * 1.05f
             setTextColor(optionStyle.color.asAndroidColor())

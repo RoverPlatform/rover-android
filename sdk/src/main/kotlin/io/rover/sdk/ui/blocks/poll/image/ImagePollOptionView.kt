@@ -6,13 +6,10 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
-import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Typeface
-import android.opengl.Visibility
 import android.support.v4.view.ViewCompat
 import android.support.v7.widget.AppCompatTextView
-import android.text.Layout
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
@@ -24,19 +21,14 @@ import android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM
 import android.widget.RelativeLayout.CENTER_HORIZONTAL
 import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.ImagePollBlockOptionStyle
-import io.rover.sdk.data.domain.TextAlignment
-import io.rover.sdk.data.domain.TextPollBlockOptionStyle
 import io.rover.sdk.data.mapToFont
-import io.rover.sdk.logging.log
 import io.rover.sdk.platform.create
 import io.rover.sdk.platform.imageView
-import io.rover.sdk.platform.setupLayoutParams
 import io.rover.sdk.platform.setupLinearLayoutParams
 import io.rover.sdk.platform.setupRelativeLayoutParams
 import io.rover.sdk.platform.textView
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.poll.RoundRect
-import io.rover.sdk.ui.blocks.poll.TextOptionView
 import io.rover.sdk.ui.dpAsPx
 
 /**
@@ -46,18 +38,13 @@ import io.rover.sdk.ui.dpAsPx
  */
 internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     private val optionTextView = textView {
-        val padding = 8f.dpAsPx(this.resources.displayMetrics)
         id = ViewCompat.generateViewId()
         ellipsize = TextUtils.TruncateAt.END
         maxLines = 1
         gravity = Gravity.CENTER_VERTICAL
         setupLinearLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,
-            height = 40f.dpAsPx(this.resources.displayMetrics),
-            leftPadding = padding,
-            rightPadding = padding,
-            bottomPadding = padding,
-            topPadding = padding)
+            height = 40f.dpAsPx(this.resources.displayMetrics))
     }
 
     private val votingIndicatorBar = VotingIndicator(this.context).apply {
@@ -106,14 +93,12 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     }
 
     private val optionImageView = imageView {}
-
     private var roundRect: RoundRect? = null
-
     private var borderPaint = Paint()
-
     private var inResultsState = false
 
     init {
+        setLayerType(View.LAYER_TYPE_SOFTWARE, null)
         orientation = VERTICAL
         topSection.addView(optionImageView)
         topSection.addView(votePercentageView)
@@ -127,8 +112,9 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
 
     fun bindOptionView(option: String, optionStyle: ImagePollBlockOptionStyle) {
         val borderWidth = optionStyle.border.width.dpAsPx(this.resources.displayMetrics)
+        val horizontalMargin = 8f.dpAsPx(this.resources.displayMetrics)
         bottomSection.layoutParams = (bottomSection.layoutParams as MarginLayoutParams).apply {
-            setMargins(borderWidth, 0, borderWidth, borderWidth)
+            setMargins(borderWidth + horizontalMargin, 0, borderWidth + horizontalMargin, borderWidth * 2)
         }
 
         optionTextView.run {
@@ -165,14 +151,14 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
 
         optionTextView.run {
             gravity = Gravity.CENTER_VERTICAL
-            val padding = 8f.dpAsPx(this.resources.displayMetrics)
             setupLinearLayoutParams(
                 width = RelativeLayout.LayoutParams.WRAP_CONTENT,
-                height = RelativeLayout.LayoutParams.MATCH_PARENT,
-                leftPadding = 0,
-                rightPadding = 0,
-                bottomPadding = padding,
-                topPadding = padding)
+                height = RelativeLayout.LayoutParams.MATCH_PARENT)
+
+            if (isSelectedOption) {
+                voteIndicatorView.measure(0, 0)
+                maxWidth = bottomSection.width - voteIndicatorView.measuredWidth + (voteIndicatorView.layoutParams as MarginLayoutParams).marginStart
+            }
         }
     }
 
@@ -199,8 +185,8 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
             visibility = View.VISIBLE
             setupRelativeLayoutParams(
                 width = RelativeLayout.LayoutParams.MATCH_PARENT,
-                height = 10f.dpAsPx(this.resources.displayMetrics),
-                bottomMargin = 10f.dpAsPx(this.resources.displayMetrics),
+                height = 8f.dpAsPx(this.resources.displayMetrics),
+                bottomMargin = 8f.dpAsPx(this.resources.displayMetrics),
                 leftMargin = optionStyle.border.width.dpAsPx(this.resources.displayMetrics),
                 rightMargin = optionStyle.border.width.dpAsPx(this.resources.displayMetrics)) {
                 addRule(ALIGN_PARENT_BOTTOM)
@@ -229,26 +215,21 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         borderPaint = Paint().create(
             optionStyle.border.color.asAndroidColor(),
             Paint.Style.STROKE,
-            borderStrokeWidth
+            borderStrokeWidth * 2
         )
 
-        val halfStrokeWidth = borderStrokeWidth / 2
-        val rect = RectF(halfStrokeWidth, halfStrokeWidth,
-            width.toFloat() - halfStrokeWidth,
-            height.toFloat() - halfStrokeWidth
-        )
-        roundRect = RoundRect(rect, borderRadius, halfStrokeWidth)
+        val rect = RectF(0f, 0f, width.toFloat(), height.toFloat())
+        roundRect = RoundRect(rect, borderRadius, borderStrokeWidth)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        val halfStrokeWidth = roundRect?.halfBorderStrokeWidth ?: 0f
         roundRect = roundRect?.copy(
             rectF = RectF(
-                halfStrokeWidth,
-                halfStrokeWidth,
-                width.toFloat() - (halfStrokeWidth),
-                height.toFloat() - halfStrokeWidth
+                0f,
+                0f,
+                width.toFloat(),
+                height.toFloat()
             )
         )
     }

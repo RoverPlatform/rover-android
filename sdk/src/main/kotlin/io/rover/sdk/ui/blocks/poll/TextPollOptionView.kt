@@ -176,13 +176,15 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         val votePercentageMargins =
             (votePercentageText.layoutParams as MarginLayoutParams).marginEnd + (votePercentageText.layoutParams as MarginLayoutParams).marginStart
         val votePercentageWidth = votePercentageText.measuredWidth + votePercentageMargins
-        val borderWidth = (optionStyle.borderWidth.dpAsPx(resources.displayMetrics) * 2)
+        val borderWidth = (optionStyle.borderWidth.dpAsPx(resources.displayMetrics))
         val optionEndMargin = (findViewById<AppCompatTextView>(optionTextId).layoutParams as MarginLayoutParams).marginStart
 
         return voteIndicatorWidth + optionEndMargin + votePercentageWidth + borderWidth
     }
 
     init {
+        setLayerType(View.LAYER_TYPE_HARDWARE, null)
+
         addView {
             textView {
                 id = optionTextId

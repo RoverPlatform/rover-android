@@ -29,7 +29,7 @@ import io.rover.sdk.platform.relativeLayout
 import io.rover.sdk.platform.setupLinearLayoutParams
 import io.rover.sdk.platform.setupRelativeLayoutParams
 import io.rover.sdk.platform.textView
-import io.rover.sdk.platform.votingIndicator
+import io.rover.sdk.platform.votingIndicatorBar
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.poll.RoundRect
 import io.rover.sdk.ui.dpAsPx
@@ -50,7 +50,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
             height = 40f.dpAsPx(this.resources.displayMetrics))
     }
 
-    private val votingIndicatorBar = votingIndicator {
+    private val votingIndicatorBar = votingIndicatorBar {
         id = ViewCompat.generateViewId()
         visibility = View.GONE
     }
@@ -266,7 +266,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     }
 }
 
-class VotingIndicator(context: Context?): View(context) {
+class VotingIndicatorBar(context: Context?): View(context) {
 
     private val borderPaint = Paint().create(Color.RED, Paint.Style.FILL)
     private val inset = 4f.dpAsPx(resources.displayMetrics).toFloat()

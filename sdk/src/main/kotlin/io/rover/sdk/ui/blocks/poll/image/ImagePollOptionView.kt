@@ -40,6 +40,8 @@ import io.rover.sdk.ui.dpAsPx
  * that interact with it operate in a more MVP type approach than the other MVVM-esque views.
  */
 internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
+    private val bottomSectionHeight = 40f.dpAsPx(this.resources.displayMetrics)
+
     private val optionTextView = textView {
         id = ViewCompat.generateViewId()
         ellipsize = TextUtils.TruncateAt.END
@@ -47,7 +49,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         gravity = Gravity.CENTER_VERTICAL
         setupLinearLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,
-            height = 40f.dpAsPx(this.resources.displayMetrics))
+            height = bottomSectionHeight)
     }
 
     private val votingIndicatorBar = votingIndicatorBar {
@@ -69,7 +71,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         gravity = Gravity.CENTER
         setupLinearLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,
-            height = 40f.dpAsPx(this.resources.displayMetrics)
+            height = bottomSectionHeight
         )
     }
 
@@ -77,7 +79,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         gravity = Gravity.CENTER
         setupRelativeLayoutParams(
             width = ViewGroup.LayoutParams.WRAP_CONTENT,
-            height = 40f.dpAsPx(this.resources.displayMetrics)
+            height = bottomSectionHeight
         )
     }
 
@@ -91,7 +93,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
 
         setupLinearLayoutParams(
             width = LayoutParams.WRAP_CONTENT,
-            height = 40f.dpAsPx(this.resources.displayMetrics),
+            height = bottomSectionHeight,
             leftMargin = marginInPixels
         )
     }
@@ -270,10 +272,10 @@ class VotingIndicatorBar(context: Context?): View(context) {
 
     private val borderPaint = Paint().create(Color.RED, Paint.Style.FILL)
     private val inset = 4f.dpAsPx(resources.displayMetrics).toFloat()
+    private val rectF by lazy { RectF(inset, 0f, this.width.toFloat() - inset, this.height.toFloat()) }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val rectF = RectF(inset, 0f, this.width.toFloat() - inset, this.height.toFloat())
         canvas.drawRoundRect(rectF, 20f, 20f, borderPaint)
     }
 }

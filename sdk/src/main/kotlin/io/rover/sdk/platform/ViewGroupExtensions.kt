@@ -11,7 +11,6 @@ import android.widget.RelativeLayout
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
 import io.rover.sdk.ui.blocks.poll.TextOptionView
 import io.rover.sdk.ui.blocks.poll.image.ImagePollOptionView
-import io.rover.sdk.ui.blocks.poll.image.VotingIndicator
 import io.rover.sdk.ui.blocks.poll.image.VotingIndicatorBar
 
 // Extension functions to reduce the amount of boilerplate when programmatically creating
@@ -77,7 +76,7 @@ internal fun View.setBackgroundWithoutPaddingChange(backgroundDrawable: Backgrou
 internal fun View.setupLayoutParams(width: Int = 0, height: Int = 0, leftPadding: Int = 0,
                             topPadding: Int = 0, rightPadding: Int = 0, bottomPadding: Int = 0, leftMargin: Int = 0, topMargin: Int = 0, rightMargin: Int = 0 ,
                             bottomMargin: Int = 0) {
-    this.layoutParams = ViewGroup.MarginLayoutParams(width, height).apply {
+    layoutParams = ViewGroup.MarginLayoutParams(width, height).apply {
         setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
         setMargins(leftMargin, topMargin, rightMargin, bottomMargin)
     }
@@ -86,7 +85,7 @@ internal fun View.setupLayoutParams(width: Int = 0, height: Int = 0, leftPadding
 internal fun View.setupLinearLayoutParams(width: Int = 0, height: Int = 0, leftPadding: Int = 0,
                                     topPadding: Int = 0, rightPadding: Int = 0, bottomPadding: Int = 0, leftMargin: Int = 0, topMargin: Int = 0, rightMargin: Int = 0 ,
                                     bottomMargin: Int = 0) {
-    this.layoutParams = LinearLayout.LayoutParams(width, height).apply {
+    layoutParams = LinearLayout.LayoutParams(width, height).apply {
         setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
         setMargins(leftMargin, topMargin, rightMargin, bottomMargin)
     }
@@ -95,7 +94,7 @@ internal fun View.setupLinearLayoutParams(width: Int = 0, height: Int = 0, leftP
 internal fun View.setupRelativeLayoutParams(width: Int = 0, height: Int = 0, leftPadding: Int = 0,
                                     topPadding: Int = 0, rightPadding: Int = 0, bottomPadding: Int = 0, leftMargin: Int = 0, topMargin: Int = 0, rightMargin: Int = 0 ,
                                     bottomMargin: Int = 0, rulesBuilder: (RelativeLayout.LayoutParams.() -> Unit) = {}) {
-    this.layoutParams = RelativeLayout.LayoutParams(width, height).apply {
+    layoutParams = RelativeLayout.LayoutParams(width, height).apply {
         setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
         setMargins(leftMargin, topMargin, rightMargin, bottomMargin)
         rulesBuilder()

@@ -1,14 +1,11 @@
 package io.rover.sdk.ui.blocks.poll.image
 
 import android.graphics.Typeface
-import android.support.v4.view.ViewCompat
-import android.support.v7.widget.AppCompatTextView
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import io.rover.sdk.data.domain.ImagePollBlock
 import io.rover.sdk.data.mapToFont
 import io.rover.sdk.logging.log
-import io.rover.sdk.platform.addView
 import io.rover.sdk.platform.imageOptionView
 import io.rover.sdk.platform.setupLayoutParams
 import io.rover.sdk.platform.textView
@@ -30,7 +27,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             height = ViewGroup.LayoutParams.WRAP_CONTENT
         )
     }
-    private lateinit var optionViews: List<ImageOptionView>
+    private lateinit var pollOptionViews: List<ImagePollOptionView>
 
     init {
         view.addView(questionView)
@@ -55,7 +52,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             setupOptionViews(viewModel, imageLength)
 
             viewModel.multiImageUpdates.androidLifecycleDispose(this.view).subscribe({ imageList ->
-                optionViews.forEachIndexed { index, imageOptionView ->
+                pollOptionViews.forEachIndexed { index, imageOptionView ->
                     imageOptionView.bindOptionImage(imageList[index].bitmap)
                 }
             }, { error -> log.w("Problem fetching poll images: $error, ignoring.") }, { subscription ->  subscriptionCallback(subscription) })
@@ -82,7 +79,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
 
     private fun setVoteResultsReceived(votingResults: VotingState.Results) {
         votingResults.votingShare.forEachIndexed { index, votingShare ->
-            val option = optionViews[index]
+            val option = pollOptionViews[index]
             val isSelectedOption = index == votingResults.selectedOption
             viewModelBinding?.viewModel?.let {
                 option.goToResultsState(votingShare, isSelectedOption, it.imagePollBlock.optionStyle)
@@ -102,18 +99,21 @@ internal class ViewImagePoll(override val view: LinearLayout) :
     }
 
     private fun setupOptionViews(viewModel: ImagePollViewModelInterface, imageLength: Int) {
-        optionViews = createOptionViews(viewModel.imagePollBlock, imageLength)
+        pollOptionViews = createOptionViews(viewModel.imagePollBlock, imageLength)
 
         when {
-            optionViews.size == 2 -> createTwoOptionLayout()
-            optionViews.size == 4 -> createFourOptionLayout()
+            pollOptionViews.size == 2 -> createTwoOptionLayout()
+            pollOptionViews.size == 4 -> createFourOptionLayout()
         }
     }
 
     private fun createTwoOptionLayout() {
         val row = LinearLayout(view.context)
         view.addView(row)
-        optionViews.forEach { optionView -> row.addView(optionView) }
+        pollOptionViews.forEachIndexed { index, imagePollOptionView ->
+            row.addView(imagePollOptionView)
+            imagePollOptionView.setOnClickListener { viewModelBinding?.viewModel?.castVote(index) }
+        }
     }
 
     private fun createFourOptionLayout() {
@@ -122,13 +122,14 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         view.addView(row1)
         view.addView(row2)
 
-        optionViews.forEachIndexed { index, optionView ->
+        pollOptionViews.forEachIndexed { index, imagePollOptionView ->
             val isOnFirstRow = index < 2
-            if (isOnFirstRow) row1.addView(optionView) else row2.addView(optionView)
+            if (isOnFirstRow) row1.addView(imagePollOptionView) else row2.addView(imagePollOptionView)
+            imagePollOptionView.setOnClickListener { viewModelBinding?.viewModel?.castVote(index) }
         }
     }
 
-    private fun createOptionViews(imagePollBlock: ImagePollBlock, imageLength: Int): List<ImageOptionView> {
+    private fun createOptionViews(imagePollBlock: ImagePollBlock, imageLength: Int): List<ImagePollOptionView> {
         val optionTextHeight = OPTION_TEXT_HEIGHT.dpAsPx(view.resources.displayMetrics)
         val horizontalSpacing =
             imagePollBlock.optionStyle.horizontalSpacing.dpAsPx(view.resources.displayMetrics)

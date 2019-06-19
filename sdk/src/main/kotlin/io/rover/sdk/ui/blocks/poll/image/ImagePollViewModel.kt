@@ -23,6 +23,7 @@ import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.dpAsPx
 import org.reactivestreams.Publisher
+import java.lang.Exception
 
 internal class ImagePollViewModel(
     override val imagePollBlock: ImagePollBlock,
@@ -67,7 +68,7 @@ internal class ImagePollViewModel(
 
     override fun castVote(selectedOption: Int) {
         //TODO: Add voting logic
-        setResultsState(selectedOption, listOf(12, 14, 67))
+        setResultsState(selectedOption, listOf(12, 14, 67, 92))
     }
 
     override val votingState = PublishSubject<VotingState>()

@@ -10,7 +10,7 @@ import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
 import io.rover.sdk.ui.blocks.poll.TextOptionView
-import io.rover.sdk.ui.blocks.poll.image.ImageOptionView
+import io.rover.sdk.ui.blocks.poll.image.ImagePollOptionView
 
 // Extension functions to reduce the amount of boilerplate when programmatically creating
 // and modifying views
@@ -39,8 +39,8 @@ internal fun LinearLayout.optionView(builder: TextOptionView.() -> Unit): TextOp
     }
 }
 
-internal fun LinearLayout.imageOptionView(builder: ImageOptionView.() -> Unit): ImageOptionView {
-    return ImageOptionView(context).apply {
+internal fun LinearLayout.imageOptionView(builder: ImagePollOptionView.() -> Unit): ImagePollOptionView {
+    return ImagePollOptionView(context).apply {
         builder()
     }
 }
@@ -58,6 +58,15 @@ internal fun View.setupLayoutParams(width: Int = 0, height: Int = 0, leftPadding
                             topPadding: Int = 0, rightPadding: Int = 0, bottomPadding: Int = 0, leftMargin: Int = 0, topMargin: Int = 0, rightMargin: Int = 0 ,
                             bottomMargin: Int = 0) {
     this.layoutParams = ViewGroup.MarginLayoutParams(width, height).apply {
+        setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
+        setMargins(leftMargin, topMargin, rightMargin, bottomMargin)
+    }
+}
+
+internal fun View.setupLinearLayoutParams(width: Int = 0, height: Int = 0, leftPadding: Int = 0,
+                                    topPadding: Int = 0, rightPadding: Int = 0, bottomPadding: Int = 0, leftMargin: Int = 0, topMargin: Int = 0, rightMargin: Int = 0 ,
+                                    bottomMargin: Int = 0) {
+    this.layoutParams = LinearLayout.LayoutParams(width, height).apply {
         setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
         setMargins(leftMargin, topMargin, rightMargin, bottomMargin)
     }

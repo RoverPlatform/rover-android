@@ -1,0 +1,294 @@
+package io.rover.sdk.ui.blocks.poll.image
+
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.Rect
+import android.graphics.RectF
+import android.graphics.Typeface
+import android.opengl.Visibility
+import android.support.v4.view.ViewCompat
+import android.support.v7.widget.AppCompatTextView
+import android.text.Layout
+import android.text.TextUtils
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.RelativeLayout
+import android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM
+import android.widget.RelativeLayout.CENTER_HORIZONTAL
+import io.rover.sdk.data.domain.FontWeight
+import io.rover.sdk.data.domain.ImagePollBlockOptionStyle
+import io.rover.sdk.data.domain.TextAlignment
+import io.rover.sdk.data.domain.TextPollBlockOptionStyle
+import io.rover.sdk.data.mapToFont
+import io.rover.sdk.logging.log
+import io.rover.sdk.platform.create
+import io.rover.sdk.platform.imageView
+import io.rover.sdk.platform.setupLayoutParams
+import io.rover.sdk.platform.setupLinearLayoutParams
+import io.rover.sdk.platform.setupRelativeLayoutParams
+import io.rover.sdk.platform.textView
+import io.rover.sdk.ui.asAndroidColor
+import io.rover.sdk.ui.blocks.poll.RoundRect
+import io.rover.sdk.ui.blocks.poll.TextOptionView
+import io.rover.sdk.ui.dpAsPx
+
+/**
+ * Custom view that is "externally bound", the "bind" methods on this class are externally called
+ * as opposed to other views which subscribe to a ViewModel. This means that this view and the views
+ * that interact with it operate in a more MVP type approach than the other MVVM-esque views.
+ */
+internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
+    private val optionTextView = textView {
+        val padding = 8f.dpAsPx(this.resources.displayMetrics)
+        id = ViewCompat.generateViewId()
+        ellipsize = TextUtils.TruncateAt.END
+        maxLines = 1
+        gravity = Gravity.CENTER_VERTICAL
+        setupLinearLayoutParams(
+            width = ViewGroup.LayoutParams.MATCH_PARENT,
+            height = 40f.dpAsPx(this.resources.displayMetrics),
+            leftPadding = padding,
+            rightPadding = padding,
+            bottomPadding = padding,
+            topPadding = padding)
+    }
+
+    private val votingIndicatorBar = VotingIndicator(this.context).apply {
+        id = ViewCompat.generateViewId()
+        visibility = View.GONE
+    }
+
+    private val votePercentageView = textView {
+        id = ViewCompat.generateViewId()
+        visibility = View.GONE
+        maxLines = 1
+        gravity = Gravity.CENTER_VERTICAL
+        textAlignment = View.TEXT_ALIGNMENT_TEXT_END
+    }
+
+    private val topSection = RelativeLayout(context)
+    private val bottomSection = RelativeLayout(context).apply {
+        gravity = Gravity.CENTER
+        setupLinearLayoutParams(
+            width = ViewGroup.LayoutParams.MATCH_PARENT,
+            height = 40f.dpAsPx(this.resources.displayMetrics)
+        )
+    }
+
+    private val bottomSectionLinear = LinearLayout(context).apply {
+        gravity = Gravity.CENTER
+        setupRelativeLayoutParams(
+            width = ViewGroup.LayoutParams.WRAP_CONTENT,
+            height = 40f.dpAsPx(this.resources.displayMetrics)
+        )
+    }
+
+    private val voteIndicatorView: AppCompatTextView = textView {
+        id = ViewCompat.generateViewId()
+        visibility = View.GONE
+        maxLines = 1
+        gravity = Gravity.CENTER
+
+        val marginInPixels = 8.dpAsPx(resources.displayMetrics)
+
+        setupLinearLayoutParams(
+            width = LayoutParams.WRAP_CONTENT,
+            height = 40f.dpAsPx(this.resources.displayMetrics),
+            leftMargin = marginInPixels
+        )
+    }
+
+    private val optionImageView = imageView {}
+
+    private var roundRect: RoundRect? = null
+
+    private var borderPaint = Paint()
+
+    private var inResultsState = false
+
+    init {
+        orientation = VERTICAL
+        topSection.addView(optionImageView)
+        topSection.addView(votePercentageView)
+        topSection.addView(votingIndicatorBar)
+        bottomSectionLinear.addView(optionTextView)
+        bottomSectionLinear.addView(voteIndicatorView)
+        bottomSection.addView(bottomSectionLinear)
+        addView(topSection)
+        addView(bottomSection)
+    }
+
+    fun bindOptionView(option: String, optionStyle: ImagePollBlockOptionStyle) {
+        val borderWidth = optionStyle.border.width.dpAsPx(this.resources.displayMetrics)
+        bottomSection.layoutParams = (bottomSection.layoutParams as MarginLayoutParams).apply {
+            setMargins(borderWidth, 0, borderWidth, borderWidth)
+        }
+
+        optionTextView.run {
+            text = option
+            textSize = optionStyle.font.size.toFloat()
+            setTextColor(optionStyle.color.asAndroidColor())
+            val font = optionStyle.font.weight.mapToFont()
+            typeface = Typeface.create(font.fontFamily, font.fontStyle)
+        }
+    }
+
+    fun bindOptionImageSize(imageLength: Int) {
+        topSection.layoutParams = LayoutParams(imageLength, imageLength)
+        optionImageView.run {
+            scaleType = ImageView.ScaleType.FIT_XY
+            layoutParams = RelativeLayout.LayoutParams(imageLength, imageLength)
+        }
+    }
+
+    fun bindOptionImage(bitmap: Bitmap) {
+        optionImageView.run {
+            setImageBitmap(bitmap)
+        }
+    }
+
+    fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, optionStyle: ImagePollBlockOptionStyle) {
+        if (inResultsState) return
+        inResultsState = true
+
+        bindVoteIndicatorBar(optionStyle)
+        bindVotePercentageText(votingShare)
+        bindVoteIndicatorText(optionStyle)
+        if (isSelectedOption) voteIndicatorView.visibility = View.VISIBLE
+
+        optionTextView.run {
+            gravity = Gravity.CENTER_VERTICAL
+            val padding = 8f.dpAsPx(this.resources.displayMetrics)
+            setupLinearLayoutParams(
+                width = RelativeLayout.LayoutParams.WRAP_CONTENT,
+                height = RelativeLayout.LayoutParams.MATCH_PARENT,
+                leftPadding = 0,
+                rightPadding = 0,
+                bottomPadding = padding,
+                topPadding = padding)
+        }
+    }
+
+    private fun bindVotePercentageText(votingShare: Int) {
+        votePercentageView.run {
+            textSize = 16f
+            setTextColor(Color.WHITE)
+            text = "$votingShare%"
+            val font = FontWeight.Medium.mapToFont()
+            typeface = Typeface.create(font.fontFamily, font.fontStyle)
+            visibility = View.VISIBLE
+            setupRelativeLayoutParams(
+                width = RelativeLayout.LayoutParams.WRAP_CONTENT, height = RelativeLayout.LayoutParams.WRAP_CONTENT,
+                bottomMargin = 8f.dpAsPx(this.resources.displayMetrics)
+            ) {
+                addRule(RelativeLayout.ABOVE, votingIndicatorBar.id)
+                addRule(CENTER_HORIZONTAL)
+            }
+        }
+    }
+
+    private fun bindVoteIndicatorBar(optionStyle: ImagePollBlockOptionStyle) {
+        votingIndicatorBar.run {
+            visibility = View.VISIBLE
+            setupRelativeLayoutParams(
+                width = RelativeLayout.LayoutParams.MATCH_PARENT,
+                height = 10f.dpAsPx(this.resources.displayMetrics),
+                bottomMargin = 10f.dpAsPx(this.resources.displayMetrics),
+                leftMargin = optionStyle.border.width.dpAsPx(this.resources.displayMetrics),
+                rightMargin = optionStyle.border.width.dpAsPx(this.resources.displayMetrics)) {
+                addRule(ALIGN_PARENT_BOTTOM)
+            }
+        }
+    }
+
+    private fun bindVoteIndicatorText(optionStyle: ImagePollBlockOptionStyle) {
+        voteIndicatorView.run{
+            text = "\u2022"
+            textSize = optionStyle.font.size * 1.05f
+            setTextColor(optionStyle.color.asAndroidColor())
+            val font = optionStyle.font.weight.mapToFont()
+            typeface = Typeface.create(font.fontFamily, font.fontStyle)
+        }
+    }
+
+    fun initializeOptionViewLayout(optionStyle: ImagePollBlockOptionStyle) {
+        gravity = Gravity.CENTER_VERTICAL
+        alpha = optionStyle.opacity.toFloat()
+        setBackgroundColor(Color.TRANSPARENT)
+
+        val borderRadius = optionStyle.border.radius.dpAsPx(resources.displayMetrics).toFloat()
+        val borderStrokeWidth = optionStyle.border.width.dpAsPx(resources.displayMetrics).toFloat()
+
+        borderPaint = Paint().create(
+            optionStyle.border.color.asAndroidColor(),
+            Paint.Style.STROKE,
+            borderStrokeWidth
+        )
+
+        val halfStrokeWidth = borderStrokeWidth / 2
+        val rect = RectF(halfStrokeWidth, halfStrokeWidth,
+            width.toFloat() - halfStrokeWidth,
+            height.toFloat() - halfStrokeWidth
+        )
+        roundRect = RoundRect(rect, borderRadius, halfStrokeWidth)
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        val halfStrokeWidth = roundRect?.halfBorderStrokeWidth ?: 0f
+        roundRect = roundRect?.copy(
+            rectF = RectF(
+                halfStrokeWidth,
+                halfStrokeWidth,
+                width.toFloat() - (halfStrokeWidth),
+                height.toFloat() - halfStrokeWidth
+            )
+        )
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+
+        roundRect?.let { roundRect ->
+            roundRect.rectF.let {
+                if (roundRect.halfBorderStrokeWidth != 0f) {
+                    canvas.drawRoundRect(
+                        it,
+                        roundRect.borderRadius,
+                        roundRect.borderRadius,
+                        borderPaint)
+                }
+            }
+        }
+    }
+
+    override fun draw(canvas: Canvas?) {
+        roundRect?.let { roundRect ->
+            roundRect.rectF.let {
+                canvas?.clipPath(Path().apply {
+                    addRoundRect(it, roundRect.borderRadius, roundRect.borderRadius, Path.Direction.CW)
+                })
+            }
+        }
+        super.draw(canvas)
+    }
+}
+
+class VotingIndicator(context: Context?): View(context) {
+
+    private val borderPaint = Paint().create(Color.RED, Paint.Style.FILL)
+    private val inset = 4f.dpAsPx(resources.displayMetrics).toFloat()
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        val rectF = RectF(inset, 0f, this.width.toFloat() - inset, this.height.toFloat())
+        canvas.drawRoundRect(rectF, 20f, 20f, borderPaint)
+    }
+}

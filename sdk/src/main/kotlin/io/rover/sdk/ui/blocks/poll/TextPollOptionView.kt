@@ -223,6 +223,12 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         return voteIndicatorWidth + optionEndMargin + votePercentageWidth + borderWidth
     }
 
+    /**
+     * Setting the layer type to software disables hardware acceleration for this view. It is being disabled here due
+     * to issues with wrongly rendered pixel and invisible elements when using hardware acceleration in conjunction
+     * with custom views and drawing calls.
+     * https://developer.android.com/guide/topics/graphics/hardware-accel
+     */
     init {
         setLayerType(View.LAYER_TYPE_SOFTWARE, null)
 

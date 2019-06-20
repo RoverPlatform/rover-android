@@ -41,6 +41,12 @@ import io.rover.sdk.ui.dpAsPx
  */
 internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     private val bottomSectionHeight = 40f.dpAsPx(this.resources.displayMetrics)
+    private val bottomSectionHorizontalMargin = 8.dpAsPx(resources.displayMetrics)
+    private val voteIndicatorViewLeftMargin = 8.dpAsPx(resources.displayMetrics)
+    private val votePercentageTextBottomMargin = 8.dpAsPx(resources.displayMetrics)
+    private val votePercentageViewTextSize = 16f
+    private val votingIndicatorBarHeight = 8f.dpAsPx(this.resources.displayMetrics)
+    private val votingIndicatorBarBottomMargin = 8f.dpAsPx(this.resources.displayMetrics)
 
     private val optionTextView = textView {
         id = ViewCompat.generateViewId()
@@ -89,19 +95,16 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         maxLines = 1
         gravity = Gravity.CENTER
 
-        val marginInPixels = 8.dpAsPx(resources.displayMetrics)
-
         setupLinearLayoutParams(
             width = LayoutParams.WRAP_CONTENT,
             height = bottomSectionHeight,
-            leftMargin = marginInPixels
+            leftMargin = voteIndicatorViewLeftMargin
         )
     }
 
     private val optionImageView = imageView {}
     private var roundRect: RoundRect? = null
     private var borderPaint = Paint()
-    private var inResultsState = false
 
     init {
         setLayerType(View.LAYER_TYPE_SOFTWARE, null)
@@ -118,9 +121,8 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
 
     fun bindOptionView(option: String, optionStyle: ImagePollBlockOptionStyle) {
         val borderWidth = optionStyle.border.width.dpAsPx(this.resources.displayMetrics)
-        val horizontalMargin = 8f.dpAsPx(this.resources.displayMetrics)
         bottomSection.layoutParams = (bottomSection.layoutParams as MarginLayoutParams).apply {
-            setMargins(borderWidth + horizontalMargin, 0, borderWidth + horizontalMargin, borderWidth * 2)
+            setMargins(borderWidth + bottomSectionHorizontalMargin, 0, borderWidth + bottomSectionHorizontalMargin, borderWidth * 2)
         }
 
         optionTextView.run {
@@ -147,9 +149,6 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     }
 
     fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, optionStyle: ImagePollBlockOptionStyle) {
-        if (inResultsState) return
-        inResultsState = true
-
         bindVoteIndicatorBar(optionStyle)
         bindVotePercentageText(votingShare)
         bindVoteIndicatorText(optionStyle)
@@ -170,7 +169,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
 
     private fun bindVotePercentageText(votingShare: Int) {
         votePercentageView.run {
-            textSize = 16f
+            textSize = votePercentageViewTextSize
             setTextColor(Color.WHITE)
             text = "$votingShare%"
             val font = FontWeight.Medium.mapToFont()
@@ -178,7 +177,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
             visibility = View.VISIBLE
             setupRelativeLayoutParams(
                 width = RelativeLayout.LayoutParams.WRAP_CONTENT, height = RelativeLayout.LayoutParams.WRAP_CONTENT,
-                bottomMargin = 8f.dpAsPx(this.resources.displayMetrics)
+                bottomMargin = votePercentageTextBottomMargin
             ) {
                 addRule(RelativeLayout.ABOVE, votingIndicatorBar.id)
                 addRule(CENTER_HORIZONTAL)
@@ -191,8 +190,8 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
             visibility = View.VISIBLE
             setupRelativeLayoutParams(
                 width = RelativeLayout.LayoutParams.MATCH_PARENT,
-                height = 8f.dpAsPx(this.resources.displayMetrics),
-                bottomMargin = 8f.dpAsPx(this.resources.displayMetrics),
+                height = votingIndicatorBarHeight,
+                bottomMargin = votingIndicatorBarBottomMargin,
                 leftMargin = optionStyle.border.width.dpAsPx(this.resources.displayMetrics),
                 rightMargin = optionStyle.border.width.dpAsPx(this.resources.displayMetrics)) {
                 addRule(ALIGN_PARENT_BOTTOM)
@@ -203,7 +202,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     private fun bindVoteIndicatorText(optionStyle: ImagePollBlockOptionStyle) {
         voteIndicatorView.run {
             text = "\u2022"
-            textSize = optionStyle.font.size * 1.05f
+            textSize = optionStyle.font.size.toFloat()
             setTextColor(optionStyle.color.asAndroidColor())
             val font = optionStyle.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
@@ -245,7 +244,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
 
         roundRect?.let { roundRect ->
             roundRect.rectF.let {
-                if (roundRect.halfBorderStrokeWidth != 0f) {
+                if (roundRect.borderStrokeWidth != 0f) {
                     canvas.drawRoundRect(
                         it,
                         roundRect.borderRadius,
@@ -272,10 +271,14 @@ class VotingIndicatorBar(context: Context?): View(context) {
 
     private val borderPaint = Paint().create(Color.RED, Paint.Style.FILL)
     private val inset = 4f.dpAsPx(resources.displayMetrics).toFloat()
-    private val rectF by lazy { RectF(inset, 0f, this.width.toFloat() - inset, this.height.toFloat()) }
+    private val barRect by lazy { RectF(inset, 0f, this.width.toFloat() - inset, this.height.toFloat()) }
+
+    companion object {
+        private const val CORNER_RADIUS = 20f
+    }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawRoundRect(rectF, 20f, 20f, borderPaint)
+        canvas.drawRoundRect(barRect, CORNER_RADIUS, CORNER_RADIUS, borderPaint)
     }
 }

@@ -80,6 +80,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
     private fun setVoteResultsReceived(votingResults: VotingState.Results) {
         votingResults.votingShare.forEachIndexed { index, votingShare ->
             val option = pollOptionViews[index]
+            option.setOnClickListener(null)
             val isSelectedOption = index == votingResults.selectedOption
             viewModelBinding?.viewModel?.let {
                 option.goToResultsState(votingShare, isSelectedOption, it.imagePollBlock.optionStyle)
@@ -112,7 +113,9 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         view.addView(row)
         pollOptionViews.forEachIndexed { index, imagePollOptionView ->
             row.addView(imagePollOptionView)
-            imagePollOptionView.setOnClickListener { viewModelBinding?.viewModel?.castVote(index) }
+            imagePollOptionView.setOnClickListener {
+                viewModelBinding?.viewModel?.castVote(index)
+            }
         }
     }
 

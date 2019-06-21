@@ -95,6 +95,45 @@ internal fun <T, R> Publisher<T>.map(transform: (T) -> R): Publisher<R> {
     }
 }
 
+internal fun <T> Publisher<T>.retry(numberOfRetries: Int): Publisher<T> {
+    val prior = this
+
+    return Publisher { subscriber ->
+        var attemptedRetries = 0
+
+        prior.subscribe(
+        object : Subscriber<T> {
+            override fun onComplete() {
+                subscriber.onComplete()
+            }
+
+            override fun onSubscribe(subscription: Subscription) {
+                val consumerSubscription = object : Subscription {
+                    override fun cancel() { subscription.cancel() }
+                    override fun request(n: Long) {
+                        if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                        subscription.request(Long.MAX_VALUE)
+                    }
+                }
+                subscriber.onSubscribe(consumerSubscription)
+            }
+
+            override fun onNext(t: T) {
+                subscriber.onNext(t)
+            }
+
+            override fun onError(t: Throwable?) {
+                if (attemptedRetries < numberOfRetries) {
+                    prior.subscribe(this)
+                    attemptedRetries++
+                } else {
+                    subscriber.onError(t)
+                }
+            }
+        })
+    }
+}
+
 internal fun <T> Publisher<T>.filter(predicate: (T) -> Boolean): Publisher<T> {
     return Publisher { subscriber ->
         this@filter.subscribe(object : Subscriber<T> {

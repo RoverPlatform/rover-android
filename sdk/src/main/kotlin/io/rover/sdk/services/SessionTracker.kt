@@ -235,7 +235,6 @@ internal class SessionStore(
         }
     }
 
-
     data class ExpiredSession(
         val sessionKey: Any,
         val uuid: UUID,

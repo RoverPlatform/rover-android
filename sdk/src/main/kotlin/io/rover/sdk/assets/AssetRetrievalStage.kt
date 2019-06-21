@@ -24,7 +24,7 @@ internal class AssetRetrievalStage(
         // so now I am going to just *block* while waiting for the callback, since this is all being
         // run on a background executor.
         val streamResult = try {
-             imageDownloader
+            imageDownloader
                 .downloadStreamFromUrl(input)
                 .blockForResult(timeoutSeconds = 300)
                 .first()
@@ -48,22 +48,22 @@ internal class AssetRetrievalStage(
         // even with large experiences, it seems to work well.  The timeout given by
         // Publisher.blockForResult is a sufficient fail-safe against the pool overflow case.
         return when (streamResult) {
-                is ImageDownloader.HttpClientResponse.ConnectionFailure -> {
-                    PipelineStageResult.Failed(
-                        RuntimeException("Network or HTTP error downloading asset", streamResult.reason)
-                    )
-                }
-                is ImageDownloader.HttpClientResponse.ApplicationError -> {
-                    PipelineStageResult.Failed(
-                        RuntimeException("Remote HTTP API error downloading asset (code ${streamResult.responseCode}): ${streamResult.reportedReason}")
-                    )
-                }
-                is ImageDownloader.HttpClientResponse.Success -> {
-                    // we have the stream! pass it downstream for decoding.
-                    PipelineStageResult.Successful(
-                        streamResult.bufferedInputStream
-                    )
-                }
+            is ImageDownloader.HttpClientResponse.ConnectionFailure -> {
+                PipelineStageResult.Failed(
+                    RuntimeException("Network or HTTP error downloading asset", streamResult.reason)
+                )
             }
+            is ImageDownloader.HttpClientResponse.ApplicationError -> {
+                PipelineStageResult.Failed(
+                    RuntimeException("Remote HTTP API error downloading asset (code ${streamResult.responseCode}): ${streamResult.reportedReason}")
+                )
+            }
+            is ImageDownloader.HttpClientResponse.Success -> {
+                // we have the stream! pass it downstream for decoding.
+                PipelineStageResult.Successful(
+                    streamResult.bufferedInputStream
+                )
+            }
+        }
     }
 }

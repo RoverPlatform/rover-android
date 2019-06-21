@@ -1,6 +1,5 @@
 package io.rover.sdk.ui.layout.screen
 
-import io.rover.sdk.data.domain.Attributes
 import io.rover.sdk.logging.log
 import io.rover.sdk.streams.asPublisher
 import io.rover.sdk.streams.flatMap

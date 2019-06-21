@@ -19,7 +19,6 @@ import java.net.HttpURLConnection
 import java.util.zip.GZIPOutputStream
 import javax.net.ssl.HttpsURLConnection
 
-
 /**
  * HTTP client (used for both Rover API access and other tasks), powered by Android's stock
  * [HttpsURLConnection].
@@ -27,7 +26,7 @@ import javax.net.ssl.HttpsURLConnection
 internal class HttpClient(
     private val ioScheduler: Scheduler,
     private val appPackageInfo: PackageInfo
-)  {
+) {
     /**
      * When subscribed performs the given [HttpRequest] and then yields the result.
      *

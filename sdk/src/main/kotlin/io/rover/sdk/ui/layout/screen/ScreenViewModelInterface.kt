@@ -1,6 +1,5 @@
 package io.rover.sdk.ui.layout.screen
 
-import io.rover.sdk.data.domain.Attributes
 import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.domain.Row

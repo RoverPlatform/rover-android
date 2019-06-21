@@ -10,7 +10,6 @@ import io.rover.sdk.ui.blocks.concerns.layout.LayoutableView
 import io.rover.sdk.ui.blocks.concerns.layout.ViewBlock
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.ViewModelBinding
-import io.rover.sdk.data.domain.Font as ModelFont
 
 internal class TextPollBlockView(context: Context?) : LinearLayout(context),
     LayoutableView<TextPollBlockViewModel> {

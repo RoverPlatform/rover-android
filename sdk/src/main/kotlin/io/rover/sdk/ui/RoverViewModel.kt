@@ -72,9 +72,12 @@ internal class RoverViewModel(
     private fun fetchExperience(): Publisher<out ApiResult<Experience>> =
         graphQlApiService.fetchExperience(
             when (experienceRequest) {
-                is ExperienceRequest.ByUrl -> FetchExperienceRequest.ExperienceQueryIdentifier.ByUniversalLink(experienceRequest.url)
+                is ExperienceRequest.ByUrl -> FetchExperienceRequest.ExperienceQueryIdentifier.ByUniversalLink(
+                    experienceRequest.url
+                )
                 is ExperienceRequest.ById -> FetchExperienceRequest.ExperienceQueryIdentifier.ById(experienceRequest.experienceId)
-            }).observeOn(mainThreadScheduler)
+            }
+        ).observeOn(mainThreadScheduler)
 
     /**
      * Hold on to a reference to the navigation view model so that it can contribute to the Android
@@ -93,9 +96,11 @@ internal class RoverViewModel(
         actions.subscribe { action ->
             when (action!!) {
                 Action.BackPressedBeforeExperienceReady -> {
-                    eventsSubject.onNext(RoverViewModelInterface.Event.NavigateTo(
-                        ExperienceExternalNavigationEvent.Exit()
-                    ))
+                    eventsSubject.onNext(
+                        RoverViewModelInterface.Event.NavigateTo(
+                            ExperienceExternalNavigationEvent.Exit()
+                        )
+                    )
                 }
                 Action.Fetch -> {
                     fetchExperience()
@@ -138,17 +143,19 @@ internal class RoverViewModel(
         val experiences = PublishSubject<Experience>()
 
         fetchAttempts.subscribe { networkResult ->
-           loadingSubject.onNext(false)
-           when (networkResult) {
-               is ApiResult.Error -> {
-                   eventsSubject.onNext(RoverViewModelInterface.Event.DisplayError(
-                       networkResult.throwable.message ?: "Unknown"
-                   ))
-               }
-               is ApiResult.Success -> {
-                   experiences.onNext(networkResult.response)
-               }
-           }
+            loadingSubject.onNext(false)
+            when (networkResult) {
+                is ApiResult.Error -> {
+                    eventsSubject.onNext(
+                        RoverViewModelInterface.Event.DisplayError(
+                            networkResult.throwable.message ?: "Unknown"
+                        )
+                    )
+                }
+                is ApiResult.Success -> {
+                    experiences.onNext(networkResult.response)
+                }
+            }
         }
 
         // yields an experience navigation view model. used by both our view and some of the

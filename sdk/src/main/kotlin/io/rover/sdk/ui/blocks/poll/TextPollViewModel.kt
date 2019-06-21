@@ -13,7 +13,7 @@ internal class TextPollViewModel(
     override val textPollBlock: TextPollBlock,
     private val measurementService: MeasurementService,
     override val optionBackgroundViewModel: BackgroundViewModelInterface
-) : TextPollViewModelInterface{
+) : TextPollViewModelInterface {
 
     override fun intrinsicHeight(bounds: RectF): Float {
         // Roundtrip to avoid rounding when converting floats to ints causing mismatches in measured size vs views actual size
@@ -32,7 +32,7 @@ internal class TextPollViewModel(
     }
 
     override fun castVote(selectedOption: Int) {
-        //TODO: Add voting logic
+        // TODO: Add voting logic
         setResultsState(selectedOption, listOf(12, 14, 67))
     }
 
@@ -44,8 +44,8 @@ internal class TextPollViewModel(
 }
 
 sealed class VotingState {
-    object WaitingForVote: VotingState()
-    data class Results(val selectedOption: Int, val votingShare: List<Int>): VotingState()
+    object WaitingForVote : VotingState()
+    data class Results(val selectedOption: Int, val votingShare: List<Int>) : VotingState()
 }
 
 internal interface TextPollViewModelInterface : Measurable, BindableViewModel {

@@ -27,7 +27,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         )
     }
 
-    lateinit var optionViews: List<TextOptionView>
+    private lateinit var optionViews: List<TextOptionView>
 
     init {
         view.addView {
@@ -76,6 +76,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     private fun setVoteResultsReceived(votingResults: VotingState.Results) {
         votingResults.votingShare.forEachIndexed { index, votingShare ->
             val option = optionViews[index]
+            option.setOnClickListener(null)
             val isSelectedOption = index == votingResults.selectedOption
             viewModelBinding?.viewModel?.let {
                 option.goToResultsState(votingShare, isSelectedOption, it.textPollBlock.optionStyle)

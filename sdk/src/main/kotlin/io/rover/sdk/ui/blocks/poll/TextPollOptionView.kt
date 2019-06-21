@@ -17,7 +17,6 @@ import android.widget.RelativeLayout
 import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.TextPollBlockOptionStyle
 import io.rover.sdk.data.mapToFont
-import io.rover.sdk.platform.addView
 import io.rover.sdk.platform.create
 import io.rover.sdk.platform.setBackgroundWithoutPaddingChange
 import io.rover.sdk.platform.setupLayoutParams
@@ -40,8 +39,10 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         gravity = Gravity.CENTER_VERTICAL
         val marginInPixels = 16.dpAsPx(resources.displayMetrics)
 
-        setupRelativeLayoutParams(width = ViewGroup.LayoutParams.WRAP_CONTENT, height = ViewGroup.LayoutParams.MATCH_PARENT,
-            leftMargin = marginInPixels, rightMargin = marginInPixels) {
+        setupRelativeLayoutParams(
+            width = ViewGroup.LayoutParams.WRAP_CONTENT, height = ViewGroup.LayoutParams.MATCH_PARENT,
+            leftMargin = marginInPixels, rightMargin = marginInPixels
+        ) {
             addRule(ALIGN_PARENT_START)
         }
     }
@@ -96,7 +97,21 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     companion object {
         private const val RESULTS_TEXT_SCALE_FACTOR = 1.05f
     }
-    
+
+    /**
+     * Setting the layer type to software disables hardware acceleration for this view. It is being disabled here due
+     * to issues with wrongly rendered pixel and invisible elements when using hardware acceleration in conjunction
+     * with custom views and drawing calls.
+     * https://developer.android.com/guide/topics/graphics/hardware-accel
+     */
+    init {
+        setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+
+        addView(optionTextView)
+        addView(voteIndicatorView)
+        addView(votePercentageText)
+    }
+
     fun initializeOptionViewLayout(optionStyle: TextPollBlockOptionStyle) {
         val optionStyleHeight = optionStyle.height.dpAsPx(resources.displayMetrics)
         val optionMarginHeight = optionStyle.verticalSpacing.dpAsPx(resources.displayMetrics)
@@ -141,12 +156,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
         optionPaints = OptionPaints(borderPaint, fillPaint, resultPaint)
 
-        val rect = RectF(
-            0f,
-            0f,
-            width.toFloat(),
-            height.toFloat()
-        )
+        val rect = RectF(0f, 0f, width.toFloat(), height.toFloat())
         roundRect = RoundRect(rect, borderRadius, doubleBorderStrokeWidth)
     }
 
@@ -159,9 +169,24 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         super.onDraw(canvas)
         roundRect?.let { roundRect ->
             roundRect.rectF?.let {
-                if (backgroundImage == null) canvas.drawRoundRect(it, roundRect.borderRadius, roundRect.borderRadius, optionPaints.fillPaint)
-                if (inResultState) canvas.drawRoundRect(it, roundRect.borderRadius, roundRect.borderRadius, optionPaints.resultPaint)
-                if (roundRect.borderStrokeWidth != 0f) canvas.drawRoundRect(it, roundRect.borderRadius, roundRect.borderRadius, optionPaints.borderPaint)
+                if (backgroundImage == null) canvas.drawRoundRect(
+                    it,
+                    roundRect.borderRadius,
+                    roundRect.borderRadius,
+                    optionPaints.fillPaint
+                )
+                if (inResultState) canvas.drawRoundRect(
+                    it,
+                    roundRect.borderRadius,
+                    roundRect.borderRadius,
+                    optionPaints.resultPaint
+                )
+                if (roundRect.borderStrokeWidth != 0f) canvas.drawRoundRect(
+                    it,
+                    roundRect.borderRadius,
+                    roundRect.borderRadius,
+                    optionPaints.borderPaint
+                )
             }
         }
     }
@@ -195,11 +220,13 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             setupRelativeLayoutParams(
                 width = LayoutParams.WRAP_CONTENT,
                 height = LayoutParams.MATCH_PARENT,
-                leftMargin = marginInPixels) {
+                leftMargin = marginInPixels
+            ) {
                 addRule(ALIGN_PARENT_LEFT)
             }
 
-            val widthOfOtherViews = calculateWidthWithoutOptionText(voteIndicatorView, votePercentageText, isSelectedOption, optionStyle)
+            val widthOfOtherViews =
+                calculateWidthWithoutOptionText(voteIndicatorView, votePercentageText, isSelectedOption, optionStyle)
             maxWidth = this@TextOptionView.width - widthOfOtherViews
         }
     }
@@ -221,20 +248,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         val optionEndMargin = (optionTextView.layoutParams as MarginLayoutParams).marginStart
 
         return voteIndicatorWidth + optionEndMargin + votePercentageWidth + borderWidth
-    }
-
-    /**
-     * Setting the layer type to software disables hardware acceleration for this view. It is being disabled here due
-     * to issues with wrongly rendered pixel and invisible elements when using hardware acceleration in conjunction
-     * with custom views and drawing calls.
-     * https://developer.android.com/guide/topics/graphics/hardware-accel
-     */
-    init {
-        setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-
-        addView(optionTextView)
-        addView(voteIndicatorView)
-        addView(votePercentageText)
     }
 
     private fun bindVotePercentageText(
@@ -265,4 +278,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 }
 
-private data class OptionPaints(val borderPaint: Paint = Paint(), val fillPaint: Paint = Paint(), val resultPaint: Paint = Paint())
+private data class OptionPaints(
+    val borderPaint: Paint = Paint(),
+    val fillPaint: Paint = Paint(),
+    val resultPaint: Paint = Paint()
+)

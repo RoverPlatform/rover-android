@@ -6,16 +6,16 @@ import io.rover.sdk.assets.ImageOptimizationService
 import io.rover.sdk.data.domain.Image
 import io.rover.sdk.data.domain.ImagePollBlock
 import io.rover.sdk.data.getFontAppearance
-import io.rover.sdk.logging.log
 import io.rover.sdk.services.MeasurementService
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.Publishers
+import io.rover.sdk.streams.BehaviorSubject
 import io.rover.sdk.streams.Scheduler
-import io.rover.sdk.streams.filterNulls
 import io.rover.sdk.streams.flatMap
 import io.rover.sdk.streams.map
 import io.rover.sdk.streams.observeOn
-import io.rover.sdk.streams.onErrorReturn
+import io.rover.sdk.streams.retry
+import io.rover.sdk.streams.timeout
 import io.rover.sdk.ui.PixelSize
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
 import io.rover.sdk.ui.blocks.poll.VotingState
@@ -24,13 +24,14 @@ import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.dpAsPx
 import org.reactivestreams.Publisher
 import java.lang.Exception
+import java.util.concurrent.TimeUnit
 
 internal class ImagePollViewModel(
     override val imagePollBlock: ImagePollBlock,
     private val measurementService: MeasurementService,
     private val assetService: AssetService,
     private val imageOptimizationService: ImageOptimizationService,
-    mainScheduler: Scheduler
+    private val mainScheduler: Scheduler
 ) : ImagePollViewModelInterface {
 
     companion object {
@@ -62,7 +63,7 @@ internal class ImagePollViewModel(
         measurementsSubject.onNext(measuredSize)
     }
 
-    private val measurementsSubject = PublishSubject<MeasuredSize>()
+    private val measurementsSubject = BehaviorSubject<MeasuredSize>()
 
     private val imagesList: List<Image> = imagePollBlock.options.map { it.image }
 
@@ -79,34 +80,21 @@ internal class ImagePollViewModel(
 
     override val multiImageUpdates: Publisher<List<ImagePollViewModelInterface.ImageUpdate>> =
         measurementsSubject
-            .flatMap { measuredSize -> Publishers.just(measuredSize) }
             .imagesFetchTransform()
+            .retry(3)
+            // .timeout(50, TimeUnit.MILLISECONDS)
             .observeOn(mainScheduler)
 
     private fun Publisher<MeasuredSize>.imagesFetchTransform(): Publisher<List<ImagePollViewModelInterface.ImageUpdate>> {
         return flatMap { measuredSize ->
             val optimizedImages = imagesList.map {
-                val uriWithParameters = imageOptimizationService.optimizeImageBlock(
-                    it,
-                    imagePollBlock.optionStyle.border.width,
-                    PixelSize(
-                        measuredSize.width.dpAsPx(measuredSize.density),
-                        measuredSize.height.dpAsPx(measuredSize.density)
-                    ),
-                    measuredSize.density
-                )
+                val pixelSize = PixelSize(measuredSize.width.dpAsPx(measuredSize.density), measuredSize.height.dpAsPx(measuredSize.density))
+                val uriWithParameters = imageOptimizationService.optimizeImageBlock(it, imagePollBlock.optionStyle.border.width, pixelSize, measuredSize.density)
 
-                return@map assetService.imageByUrl(uriWithParameters.toURL())
-                    .map { bitmap ->
-                        ImagePollViewModelInterface.ImageUpdate(
-                            bitmap
-                        )
-                    }
+                return@map assetService.imageByUrl(uriWithParameters.toURL()).observeOn(mainScheduler).map {
+                    ImagePollViewModelInterface.ImageUpdate(it) }
             }
-
-            Publishers.combineLatest(optimizedImages) {
-                it
-            }
+            Publishers.combineLatest(optimizedImages) { it }
         }
     }
 }

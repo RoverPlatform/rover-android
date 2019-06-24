@@ -21,11 +21,15 @@ internal fun <T> Publisher<out T>.subscribe(
     subscriptionReceiver: ((Subscription) -> Unit)? = null
 ) {
     this.subscribe(object : Subscriber<T> {
-        override fun onComplete() { }
+        override fun onComplete() {}
 
-        override fun onError(error: Throwable) { onError(error) }
+        override fun onError(error: Throwable) {
+            onError(error)
+        }
 
-        override fun onNext(item: T) { onNext(item) }
+        override fun onNext(item: T) {
+            onNext(item)
+        }
 
         override fun onSubscribe(subscription: Subscription) {
             subscription.request(Long.MAX_VALUE)
@@ -38,13 +42,15 @@ internal fun <T> Publisher<out T>.subscribe(
 
 internal fun <T> Publisher<T>.subscribe(onNext: (item: T) -> Unit) {
     this.subscribe(object : Subscriber<T> {
-        override fun onComplete() { }
+        override fun onComplete() {}
 
         override fun onError(error: Throwable) {
             throw RuntimeException("Undeliverable (unhandled) exception", error)
         }
 
-        override fun onNext(item: T) { onNext(item) }
+        override fun onNext(item: T) {
+            onNext(item)
+        }
 
         override fun onSubscribe(subscription: Subscription) {
             subscription.request(Long.MAX_VALUE)
@@ -81,7 +87,10 @@ internal fun <T, R> Publisher<T>.map(transform: (T) -> R): Publisher<R> {
                     // consumer know that I have subscribed successfully on their behalf,
                     // and also allow them to pass cancellation through.
                     val consumerSubscription = object : Subscription {
-                        override fun cancel() { subscription.cancel() }
+                        override fun cancel() {
+                            subscription.cancel()
+                        }
+
                         override fun request(n: Long) {
                             if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
                             subscription.request(Long.MAX_VALUE)
@@ -97,40 +106,49 @@ internal fun <T, R> Publisher<T>.map(transform: (T) -> R): Publisher<R> {
 
 internal fun <T> Publisher<T>.retry(numberOfRetries: Int): Publisher<T> {
     val prior = this
+    var subscrip: Subscription? = null
 
     return Publisher { subscriber ->
         var attemptedRetries = 0
 
         prior.subscribe(
-        object : Subscriber<T> {
-            override fun onComplete() {
-                subscriber.onComplete()
-            }
+            object : Subscriber<T> {
+                override fun onComplete() {
+                    subscriber.onComplete()
+                }
 
-            override fun onSubscribe(subscription: Subscription) {
-                val consumerSubscription = object : Subscription {
-                    override fun cancel() { subscription.cancel() }
-                    override fun request(n: Long) {
-                        if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
-                        subscription.request(Long.MAX_VALUE)
+                override fun onSubscribe(subscription: Subscription) {
+                    subscrip = subscription
+                    val consumerSubscription = object : Subscription {
+                        override fun cancel() {
+                            subscription.cancel()
+                        }
+
+                        override fun request(n: Long) {
+                            if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                            subscription.request(Long.MAX_VALUE)
+                        }
+                    }
+                    subscriber.onSubscribe(consumerSubscription)
+                }
+
+                override fun onNext(t: T) {
+                    subscriber.onNext(t)
+                }
+
+                override fun onError(t: Throwable?) {
+                    if (attemptedRetries < numberOfRetries) {
+                        log.w("Retrying retry $attemptedRetries ${t.toString()}")
+                        attemptedRetries++
+                        subscrip?.cancel()
+                        prior.subscribe(this)
+                    } else {
+                        subscrip?.cancel()
+                        subscriber.onError(t)
+                        log.w("Stopped Retrying retry")
                     }
                 }
-                subscriber.onSubscribe(consumerSubscription)
-            }
-
-            override fun onNext(t: T) {
-                subscriber.onNext(t)
-            }
-
-            override fun onError(t: Throwable?) {
-                if (attemptedRetries < numberOfRetries) {
-                    prior.subscribe(this)
-                    attemptedRetries++
-                } else {
-                    subscriber.onError(t)
-                }
-            }
-        })
+            })
     }
 }
 
@@ -225,7 +243,7 @@ internal fun <T, R> Publisher<T>.flatMap(transform: (T) -> Publisher<out R>): Pu
                     }
 
                     override fun onSubscribe(subscription: Subscription) {
-                        if(outstanding[this] == true) {
+                        if (outstanding[this] == true) {
                             // only pass through subscription if not yet onComplete'd.
                             subscription.request(Long.MAX_VALUE)
                         }
@@ -241,7 +259,10 @@ internal fun <T, R> Publisher<T>.flatMap(transform: (T) -> Publisher<out R>): Pu
                 // consumer know that I have subscribed successfully on their behalf,
                 // and also allow them to pass cancellation through.
                 val subscriberSubscription = object : Subscription {
-                    override fun cancel() { subscription.cancel() }
+                    override fun cancel() {
+                        subscription.cancel()
+                    }
+
                     override fun request(n: Long) {
                         if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
                         subscription.request(Long.MAX_VALUE)
@@ -799,6 +820,54 @@ internal class PublishSubject<T> : Subject<T> {
 }
 
 /**
+ * Simultaneously a [Subscriber] and a [Publisher] at the same time.  Thus allows you to encapsulate
+ * an external event source into a [Publisher].
+ *
+ * Supports multiple [Subscriber]s.
+ */
+internal class BehaviorSubject<T> : Subject<T> {
+    private var subscribers: MutableSet<Subscriber<in T>> = mutableSetOf()
+    private var lastEmitted: T? = null
+
+    override fun subscribe(subscriber: Subscriber<in T>) {
+        val subscription = object : Subscription {
+            override fun request(n: Long) {
+                if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                // wire up the subscriber now that it has requested items.
+                subscribers.add(subscriber)
+            }
+
+            override fun cancel() {
+                subscribers.remove(subscriber)
+            }
+        }
+        subscriber.onSubscribe(subscription)
+        lastEmitted?.let {
+            subscriber.onNext(it)
+        }
+    }
+
+    override fun onComplete() {
+        subscribers.forEach { it.onComplete() }
+        subscribers.clear()
+    }
+
+    override fun onError(error: Throwable) {
+        subscribers.forEach { it.onError(error) }
+    }
+
+    override fun onSubscribe(subscription: Subscription) {
+        // when subscribed to something PublishSubject will just request immediately.
+        subscription.request(Long.MAX_VALUE)
+    }
+
+    override fun onNext(item: T) {
+        lastEmitted = item
+        subscribers.forEach { it.onNext(item) }
+    }
+}
+
+/**
  * Mirrors the source Publisher, but yields an error in the event that the given timeout runs
  * out before the source Publisher emits at least one item.
  *
@@ -887,7 +956,8 @@ internal fun <T> Collection<T>.asPublisher(): Publisher<T> {
                 subscriber.onComplete()
             }
 
-            override fun cancel() { /* we synchronously emit all (no backpressure), thus cancel is no-op */ }
+            override fun cancel() { /* we synchronously emit all (no backpressure), thus cancel is no-op */
+            }
         }
         subscriber.onSubscribe(subscription)
     }

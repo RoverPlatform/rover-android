@@ -19,7 +19,7 @@ internal interface SynchronousPipelineStage<in TInput, TOutput> {
 
 internal sealed class PipelineStageResult<TOutput> {
     class Successful<TOutput>(val output: TOutput) : PipelineStageResult<TOutput>()
-    class Failed<TOutput>(val reason: Throwable) : PipelineStageResult<TOutput>()
+    class Failed<TOutput>(val reason: Throwable, val retry: Boolean = false) : PipelineStageResult<TOutput>()
 }
 
 internal interface AssetService {
@@ -40,7 +40,7 @@ internal interface AssetService {
      */
     fun getImageByUrl(
         url: URL
-    ): Publisher<ApiResult<Bitmap>>
+    ): Publisher<PipelineStageResult<Bitmap>>
 
     // TODO: the aggregation behaviour will go in the Asset Service.
 

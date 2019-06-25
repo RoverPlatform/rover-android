@@ -1,7 +1,8 @@
 package io.rover.sdk.assets
 
 import android.graphics.Bitmap
-import io.rover.sdk.data.graphql.ApiResult
+import io.rover.sdk.logging.log
+import io.rover.sdk.platform.debugExplanation
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.Publishers
 import io.rover.sdk.streams.Scheduler
@@ -12,6 +13,7 @@ import io.rover.sdk.streams.flatMap
 import io.rover.sdk.streams.map
 import io.rover.sdk.streams.observeOn
 import io.rover.sdk.streams.onErrorReturn
+import io.rover.sdk.streams.retry
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.streams.subscribeOn
 import io.rover.sdk.streams.timeout
@@ -22,7 +24,7 @@ import java.util.concurrent.TimeUnit
 internal open class AndroidAssetService(
     imageDownloader: ImageDownloader,
     private val ioScheduler: Scheduler,
-    private val mainThreadScheduler: Scheduler
+    mainThreadScheduler: Scheduler
 ) : AssetService {
     private val synchronousImagePipeline = BitmapWarmGpuCacheStage(
         InMemoryBitmapCacheStage(
@@ -50,9 +52,10 @@ internal open class AndroidAssetService(
         requests.onNext(url)
     }
 
-    override fun getImageByUrl(url: URL): Publisher<ApiResult<Bitmap>> {
-        return Publishers.defer {
+    override fun getImageByUrl(url: URL): Publisher<PipelineStageResult<Bitmap>> {
+        return Publishers.defer<PipelineStageResult<Bitmap>> {
             Publishers.just(
+
                 // this block will be dispatched onto the ioExecutor by
                 // SynchronousOperationNetworkTask.
 
@@ -65,20 +68,9 @@ internal open class AndroidAssetService(
                 // most of the images in Rover experiences will be.
                 synchronousImagePipeline.request(url)
             )
-        }.subscribeOn(ioScheduler).map { pipelineResult ->
-            when (pipelineResult) {
-                is PipelineStageResult.Successful -> {
-                    ApiResult.Success(pipelineResult.output)
-                }
-                is PipelineStageResult.Failed -> {
-                    ApiResult.Error<Bitmap>(pipelineResult.reason, false)
-                }
-            }
-        }.onErrorReturn { error ->
-            ApiResult.Error<Bitmap>(error, false) as ApiResult<Bitmap>
-        }.observeOn(
-            mainThreadScheduler
-        )
+    }.onErrorReturn { error ->
+            PipelineStageResult.Failed<Bitmap>(error, false) as PipelineStageResult<Bitmap>
+        }
     }
 
     private data class ImageReadyEvent(
@@ -101,17 +93,29 @@ internal open class AndroidAssetService(
                 getImageByUrl(url)
                     .timeout(10, TimeUnit.SECONDS)
                     .onErrorReturn {
-                        ApiResult.Error<Bitmap>(it, false) as ApiResult<Bitmap>
+                        //TODO: change back to false by default
+                        PipelineStageResult.Failed<Bitmap>(it, false) as PipelineStageResult<Bitmap>
                     }
+                    .map { result ->
+                        if(result is PipelineStageResult.Failed<Bitmap> && result.retry) {
+                            throw Exception("Do Retry.", result.reason)
+                        }
+                        result
+                    }
+                    .retry(3)
                     .map { Pair(url, it) }
+                    .subscribeOn(ioScheduler)
             }
-            .subscribe { (url, result) ->
+            .observeOn(mainThreadScheduler)
+            .subscribe ({ (url, result) ->
                 synchronized(outstanding) { outstanding.remove(url) }
                 when (result) {
-                    is ApiResult.Success -> receivedImages.onNext(
-                        ImageReadyEvent(url, result.response)
+                    is PipelineStageResult.Successful -> receivedImages.onNext(
+                        ImageReadyEvent(url, result.output)
                     )
                 }
-            }
+            }, {
+                log.w("image request failed ${it.debugExplanation()}")
+            })
     }
 }

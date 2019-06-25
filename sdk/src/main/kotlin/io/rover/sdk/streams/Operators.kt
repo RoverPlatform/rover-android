@@ -5,6 +5,7 @@ package io.rover.sdk.streams
 import android.os.Handler
 import android.os.Looper
 import io.rover.sdk.logging.log
+import io.rover.sdk.platform.debugExplanation
 import org.reactivestreams.Processor
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
@@ -106,14 +107,14 @@ internal fun <T, R> Publisher<T>.map(transform: (T) -> R): Publisher<R> {
 
 internal fun <T> Publisher<T>.retry(numberOfRetries: Int): Publisher<T> {
     val prior = this
-    var subscrip: Subscription? = null
 
     return Publisher { subscriber ->
         var attemptedRetries = 0
-
+        var subscrip: Subscription? = null
         prior.subscribe(
             object : Subscriber<T> {
                 override fun onComplete() {
+                    log.w("Retrying retry on complete $attemptedRetries")
                     subscriber.onComplete()
                 }
 
@@ -133,12 +134,13 @@ internal fun <T> Publisher<T>.retry(numberOfRetries: Int): Publisher<T> {
                 }
 
                 override fun onNext(t: T) {
+                    log.w("Retrying retry on next $attemptedRetries ${t.toString()}")
                     subscriber.onNext(t)
                 }
 
-                override fun onError(t: Throwable?) {
+                override fun onError(t: Throwable) {
                     if (attemptedRetries < numberOfRetries) {
-                        log.w("Retrying retry $attemptedRetries ${t.toString()}")
+                        log.w("Retrying retry $attemptedRetries ${t.debugExplanation()}")
                         attemptedRetries++
                         subscrip?.cancel()
                         prior.subscribe(this)

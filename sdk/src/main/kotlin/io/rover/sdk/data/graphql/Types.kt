@@ -103,7 +103,7 @@ internal interface GraphQlRequest<out TInput> {
 
 /**
  * A network response.  Optionally either a success (with requested payload), or a failure (with the
- * reason why, and whether or not the caller ought to attempt to repeat the request.
+ * reason why), and whether or not the caller ought to attempt to repeat the request.
  */
 internal sealed class ApiResult<T> {
     data class Error<T>(

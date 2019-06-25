@@ -15,7 +15,6 @@ import io.rover.sdk.streams.flatMap
 import io.rover.sdk.streams.map
 import io.rover.sdk.streams.observeOn
 import io.rover.sdk.streams.retry
-import io.rover.sdk.streams.timeout
 import io.rover.sdk.ui.PixelSize
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
 import io.rover.sdk.ui.blocks.poll.VotingState
@@ -81,8 +80,6 @@ internal class ImagePollViewModel(
     override val multiImageUpdates: Publisher<List<ImagePollViewModelInterface.ImageUpdate>> =
         measurementsSubject
             .imagesFetchTransform()
-            .retry(3)
-            // .timeout(50, TimeUnit.MILLISECONDS)
             .observeOn(mainScheduler)
 
     private fun Publisher<MeasuredSize>.imagesFetchTransform(): Publisher<List<ImagePollViewModelInterface.ImageUpdate>> {

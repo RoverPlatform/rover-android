@@ -10,6 +10,7 @@ import io.rover.sdk.data.http.HttpRequest
 import io.rover.sdk.data.http.HttpVerb
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.dateAsIso8601
+import io.rover.sdk.platform.debugExplanation
 import io.rover.sdk.platform.setRoverUserAgent
 import io.rover.sdk.services.EventEmitter
 import io.rover.sdk.streams.subscribe
@@ -115,7 +116,7 @@ internal class AnalyticsService(
                     }
                 }
             } catch (e: Exception) {
-                this@AnalyticsService.log.w("$request : event analytics request failed ${e.message}")
+                this@AnalyticsService.log.w("$request : event analytics request failed ${e.debugExplanation()}")
             }
         }
     }

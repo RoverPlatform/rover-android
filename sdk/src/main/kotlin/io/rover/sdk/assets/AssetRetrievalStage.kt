@@ -1,6 +1,7 @@
 package io.rover.sdk.assets
 
 import io.rover.sdk.logging.log
+import io.rover.sdk.platform.debugExplanation
 import io.rover.sdk.streams.blockForResult
 import java.io.BufferedInputStream
 import java.lang.Exception
@@ -29,7 +30,7 @@ internal class AssetRetrievalStage(
                 .blockForResult(timeoutSeconds = 300)
                 .first()
         } catch (exception: Exception) {
-            log.w("Unable to download asset because: ${exception.message}")
+            log.w("Unable to download asset because: ${exception.debugExplanation()}")
             return PipelineStageResult.Failed<BufferedInputStream>(exception)
         }
 
@@ -55,7 +56,8 @@ internal class AssetRetrievalStage(
                 }
                 is ImageDownloader.HttpClientResponse.ApplicationError -> {
                     PipelineStageResult.Failed(
-                        RuntimeException("Remote HTTP API error downloading asset (code ${streamResult.responseCode}): ${streamResult.reportedReason}")
+                        RuntimeException("Remote HTTP API error downloading asset (code ${streamResult.responseCode}): ${streamResult.reportedReason}"),
+                        streamResult.responseCode >= 500
                     )
                 }
                 is ImageDownloader.HttpClientResponse.Success -> {

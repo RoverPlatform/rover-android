@@ -35,7 +35,7 @@ internal class MeasurementService(
         width: Float,
         textViewLineSpacing: Float = 1.0f
     ): Float {
-        val  spanned = SpannableString(text)
+        val spanned = SpannableString(text)
 
         val paint = TextPaint().apply {
             textSize = fontAppearance.fontSize * displayMetrics.scaledDensity
@@ -143,7 +143,7 @@ internal class MeasurementService(
     ): Float {
         return barcodeRenderingService.measureHeightNeededForBarcode(
             text,
-            when(type) {
+            when (type) {
                 BarcodeViewModelInterface.BarcodeType.Aztec -> BarcodeRenderingService.Format.Aztec
                 BarcodeViewModelInterface.BarcodeType.Code128 -> BarcodeRenderingService.Format.Code128
                 BarcodeViewModelInterface.BarcodeType.PDF417 -> BarcodeRenderingService.Format.Pdf417

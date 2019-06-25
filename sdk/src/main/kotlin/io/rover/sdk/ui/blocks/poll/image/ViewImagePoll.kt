@@ -55,7 +55,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                 pollOptionViews.forEachIndexed { index, imageOptionView ->
                     imageOptionView.bindOptionImage(imageList[index].bitmap)
                 }
-            }, { error -> log.w("Problem fetching poll images: $error, ignoring.") }, { subscription ->  subscriptionCallback(subscription) })
+            }, { error -> log.w("Problem fetching poll images: $error, ignoring.") }, { subscription -> subscriptionCallback(subscription) })
 
             viewModel.informImagePollOptionDimensions(
                 MeasuredSize(

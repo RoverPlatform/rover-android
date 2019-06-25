@@ -407,5 +407,4 @@ internal class NavigationViewModel(
         val experienceId: String,
         val campaignId: String?
     )
-
 }

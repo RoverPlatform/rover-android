@@ -273,7 +273,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     }
 }
 
-class VotingIndicatorBar(context: Context?): View(context) {
+class VotingIndicatorBar(context: Context?) : View(context) {
 
     private val borderPaint = Paint().create(Color.RED, Paint.Style.FILL)
     private val inset = 4f.dpAsPx(resources.displayMetrics).toFloat()

@@ -2,7 +2,6 @@ package io.rover.sdk.ui
 
 import android.os.Parcelable
 import android.view.WindowManager
-import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.ui.navigation.ExperienceExternalNavigationEvent
 import io.rover.sdk.ui.navigation.NavigationViewModelInterface
 import io.rover.sdk.ui.toolbar.ExperienceToolbarViewModelInterface

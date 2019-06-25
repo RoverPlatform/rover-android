@@ -215,7 +215,8 @@ open class Rover(
         @JvmOverloads
         fun initialize(
             application: Application,
-            accountToken: String, @ColorInt chromeTabColor: Int = Color.BLACK
+            accountToken: String,
+            @ColorInt chromeTabColor: Int = Color.BLACK
         ) {
             shared = Rover(
                 application = application,

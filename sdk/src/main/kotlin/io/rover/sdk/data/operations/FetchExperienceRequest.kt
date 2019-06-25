@@ -31,7 +31,7 @@ internal class FetchExperienceRequest(
             }
             is ExperienceQueryIdentifier.ByUniversalLink -> {
                 put("id", JSONObject.NULL)
-                put("campaignURL",  queryIdentifier.uri)
+                put("campaignURL", queryIdentifier.uri)
             }
         }
     }

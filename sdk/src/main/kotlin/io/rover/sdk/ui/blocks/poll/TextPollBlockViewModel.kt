@@ -15,6 +15,6 @@ internal class TextPollBlockViewModel(
     BlockViewModelInterface by blockViewModel,
     BackgroundViewModelInterface by backgroundViewModel,
     BorderViewModelInterface by borderViewModel,
-    TextPollViewModelInterface by textPollViewModel{
+    TextPollViewModelInterface by textPollViewModel {
     override val viewType: ViewType = ViewType.TextPoll
 }

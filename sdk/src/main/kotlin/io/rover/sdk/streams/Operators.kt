@@ -869,6 +869,59 @@ internal class BehaviorSubject<T> : Subject<T> {
     }
 }
 
+
+/**
+ * [Timestamped] class to be used in conjunction with the timestamp operator.
+ * See http://reactivex.io/RxJava/javadoc/index.html?rx/schedulers/Timestamped.html.
+ */
+data class Timestamped<T>(val timestampMillis: Long, val value: T)
+
+/**
+ * [timestamp] operator which wraps an item emitted from the upstream publisher into a [Timestamped] object, with a value
+ * and the time of emission in milliseconds. See http://reactivex.io/documentation/operators/timestamp.html.
+ */
+internal fun <T> Publisher<T>.timestamp(): Publisher<Timestamped<T>> {
+    val prior = this
+
+    return Publisher { subscriber ->
+        prior.subscribe(
+            object : Subscriber<T> {
+                override fun onComplete() {
+                    subscriber.onComplete()
+                }
+
+                override fun onError(error: Throwable) {
+                    subscriber.onError(error)
+                }
+
+                override fun onNext(item: T) {
+                    subscriber.onNext(Timestamped(System.currentTimeMillis(), item))
+                }
+
+                override fun onSubscribe(subscription: Subscription) {
+                    // for clarity, this is called when I have subscribed
+                    // successfully to the source.  I then want to let the downstream
+                    // consumer know that I have subscribed successfully on their behalf,
+                    // and also allow them to pass cancellation through.
+                    val consumerSubscription = object : Subscription {
+                        override fun cancel() {
+                            subscription.cancel()
+                        }
+
+                        override fun request(n: Long) {
+                            if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                            subscription.request(Long.MAX_VALUE)
+                        }
+                    }
+
+                    subscriber.onSubscribe(consumerSubscription)
+                }
+            }
+        )
+    }
+
+}
+
 /**
  * Mirrors the source Publisher, but yields an error in the event that the given timeout runs
  * out before the source Publisher emits at least one item.

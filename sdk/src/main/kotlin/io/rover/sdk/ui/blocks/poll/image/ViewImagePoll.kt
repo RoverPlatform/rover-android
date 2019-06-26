@@ -53,7 +53,8 @@ internal class ViewImagePoll(override val view: LinearLayout) :
 
             viewModel.multiImageUpdates.androidLifecycleDispose(this.view).subscribe({ imageList ->
                 pollOptionViews.forEachIndexed { index, imageOptionView ->
-                    imageOptionView.bindOptionImage(imageList[index].bitmap)
+                    imageOptionView.bindOptionImage(imageList[index].bitmap, imageList[index].shouldFade, viewModel.imagePollBlock.optionStyle.opacity.toFloat())
+                    log.w("Index $index Image should fade: ${imageList[index].shouldFade}")
                 }
             }, { error -> log.w("Problem fetching poll images: $error, ignoring.") }, { subscription ->  subscriptionCallback(subscription) })
 

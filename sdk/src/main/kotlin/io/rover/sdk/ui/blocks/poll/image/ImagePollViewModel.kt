@@ -10,13 +10,11 @@ import io.rover.sdk.logging.log
 import io.rover.sdk.services.MeasurementService
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.Publishers
-import io.rover.sdk.streams.BehaviorSubject
 import io.rover.sdk.streams.Scheduler
 import io.rover.sdk.streams.Timestamped
 import io.rover.sdk.streams.flatMap
 import io.rover.sdk.streams.map
 import io.rover.sdk.streams.observeOn
-import io.rover.sdk.streams.retry
 import io.rover.sdk.streams.timestamp
 import io.rover.sdk.ui.PixelSize
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
@@ -25,15 +23,13 @@ import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.dpAsPx
 import org.reactivestreams.Publisher
-import java.lang.Exception
-import java.util.concurrent.TimeUnit
 
 internal class ImagePollViewModel(
     override val imagePollBlock: ImagePollBlock,
     private val measurementService: MeasurementService,
     private val assetService: AssetService,
     private val imageOptimizationService: ImageOptimizationService,
-    private val mainScheduler: Scheduler
+    mainScheduler: Scheduler
 ) : ImagePollViewModelInterface {
 
     companion object {
@@ -94,9 +90,7 @@ internal class ImagePollViewModel(
                 val uriWithParameters = imageOptimizationService.optimizeImageBlock(it, imagePollBlock.optionStyle.border.width, pixelSize, measuredSize.density)
 
                 return@map assetService.imageByUrl(uriWithParameters.toURL()).map { bitmap ->
-
                     val shouldFade = System.currentTimeMillis() - timestampMillis > IMAGE_FADE_IN_MINIMUM_TIME
-                    log.w("Current ${System.currentTimeMillis()}, Timestamp $timestampMillis, Should fade $shouldFade")
                     ImagePollViewModelInterface.ImageUpdate(bitmap, shouldFade) }
             }
             Publishers.combineLatest(optimizedImages) { it }

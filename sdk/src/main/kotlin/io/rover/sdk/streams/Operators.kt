@@ -105,6 +105,12 @@ internal fun <T, R> Publisher<T>.map(transform: (T) -> R): Publisher<R> {
     }
 }
 
+/**
+ * Retry operator that when given a number of retries will not emit onError calls further downstream but will instead
+ * resubscribe to the publisher that it was previously subscribed to until the attempted number of retries is equal to the
+ * given number of retries, at this point, another onError call from upstream will be emitted downstream.
+ */
+
 internal fun <T> Publisher<T>.retry(numberOfRetries: Int): Publisher<T> {
     val prior = this
 
@@ -826,6 +832,7 @@ internal class PublishSubject<T> : Subject<T> {
  * an external event source into a [Publisher].
  *
  * Supports multiple [Subscriber]s.
+ * [BehaviorSubject] emits the last emitted (if any) event to new subscribers
  */
 internal class BehaviorSubject<T> : Subject<T> {
     private var subscribers: MutableSet<Subscriber<in T>> = mutableSetOf()

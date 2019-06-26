@@ -55,7 +55,6 @@ internal open class AndroidAssetService(
     override fun getImageByUrl(url: URL): Publisher<PipelineStageResult<Bitmap>> {
         return Publishers.defer<PipelineStageResult<Bitmap>> {
             Publishers.just(
-
                 // this block will be dispatched onto the ioExecutor by
                 // SynchronousOperationNetworkTask.
 
@@ -93,7 +92,6 @@ internal open class AndroidAssetService(
                 getImageByUrl(url)
                     .timeout(10, TimeUnit.SECONDS)
                     .onErrorReturn {
-                        //TODO: change back to false by default
                         PipelineStageResult.Failed<Bitmap>(it, false) as PipelineStageResult<Bitmap>
                     }
                     .map { result ->

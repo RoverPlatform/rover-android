@@ -26,37 +26,11 @@ internal object Publishers {
                     }
 
                     override fun cancel() {
+                        // TODO: Determine a more elegant solution for this
+                        // Cancellation present to prevent completed being emitted downstream when an error occurs downstream
+                        // This provides compatibility with the retry operator
                         cancelled = true
-                        /* this yields immediately, cancel can have no effect */
-
                     }
-                }
-            )
-        }
-    }
-
-    fun <T> just(vararg items: T): Publisher<T> {
-        return Publisher { subscriber ->
-            var completed = false
-            subscriber.onSubscribe(
-                object : Subscription {
-                    override fun request(n: Long) {
-                        if (n != Long.MAX_VALUE) {
-                            throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
-                        }
-                        if (completed) return
-                        for (item in items) {
-                            if (item == null) {
-                                subscriber.onError(Throwable())
-                            } else {
-                                subscriber.onNext(item)
-                            }
-                        }
-                        subscriber.onComplete()
-                        completed = true
-                    }
-
-                    override fun cancel() { /* this yields immediately, cancel can have no effect */ }
                 }
             )
         }

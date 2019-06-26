@@ -89,7 +89,8 @@ internal class ImagePollViewModel(
                 val uriWithParameters = imageOptimizationService.optimizeImageBlock(it, imagePollBlock.optionStyle.border.width, pixelSize, measuredSize.density)
 
                 return@map assetService.imageByUrl(uriWithParameters.toURL()).map { bitmap ->
-                    val shouldFade = System.currentTimeMillis() - timestampMillis > IMAGE_FADE_IN_MINIMUM_TIME
+                    val timeElapsed = System.currentTimeMillis() - timestampMillis
+                    val shouldFade = timeElapsed > IMAGE_FADE_IN_MINIMUM_TIME
                     ImagePollViewModelInterface.ImageUpdate(bitmap, shouldFade) }
             }
             Publishers.combineLatest(optimizedImages) { it }

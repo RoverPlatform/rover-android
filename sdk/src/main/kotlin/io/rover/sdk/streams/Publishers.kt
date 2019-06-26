@@ -21,7 +21,7 @@ internal object Publishers {
                         }
                         if (completed) return
                         subscriber.onNext(item)
-                        if(!cancelled) subscriber.onComplete()
+                        if (!cancelled) subscriber.onComplete()
                         completed = true
                     }
 

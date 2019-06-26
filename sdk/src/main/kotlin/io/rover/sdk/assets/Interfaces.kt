@@ -1,7 +1,6 @@
 package io.rover.sdk.assets
 
 import android.graphics.Bitmap
-import io.rover.sdk.data.graphql.ApiResult
 import org.reactivestreams.Publisher
 import java.net.URL
 

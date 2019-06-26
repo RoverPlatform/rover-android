@@ -140,7 +140,7 @@ internal fun <T> Publisher<T>.retry(numberOfRetries: Int): Publisher<T> {
                 }
 
                 override fun onNext(t: T) {
-                    log.w("Retrying retry on next $attemptedRetries ${t.toString()}")
+                    log.w("Retrying retry on next $attemptedRetries $t")
                     subscriber.onNext(t)
                 }
 
@@ -876,7 +876,6 @@ internal class BehaviorSubject<T> : Subject<T> {
     }
 }
 
-
 /**
  * [Timestamped] class to be used in conjunction with the timestamp operator.
  * See http://reactivex.io/RxJava/javadoc/index.html?rx/schedulers/Timestamped.html.
@@ -926,7 +925,6 @@ internal fun <T> Publisher<T>.timestamp(): Publisher<Timestamped<T>> {
             }
         )
     }
-
 }
 
 /**

@@ -95,7 +95,7 @@ internal open class AndroidAssetService(
                         PipelineStageResult.Failed<Bitmap>(it, false) as PipelineStageResult<Bitmap>
                     }
                     .map { result ->
-                        if(result is PipelineStageResult.Failed<Bitmap> && result.retry) {
+                        if (result is PipelineStageResult.Failed<Bitmap> && result.retry) {
                             throw Exception("Do Retry.", result.reason)
                         }
                         result
@@ -105,7 +105,7 @@ internal open class AndroidAssetService(
                     .subscribeOn(ioScheduler)
             }
             .observeOn(mainThreadScheduler)
-            .subscribe ({ (url, result) ->
+            .subscribe({ (url, result) ->
                 synchronized(outstanding) { outstanding.remove(url) }
                 when (result) {
                     is PipelineStageResult.Successful -> receivedImages.onNext(

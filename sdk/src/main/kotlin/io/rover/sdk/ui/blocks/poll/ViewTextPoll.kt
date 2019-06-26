@@ -27,7 +27,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         )
     }
 
-    private val optionViews = mutableListOf<TextOptionView>()
+    private var optionViews = listOf<TextOptionView>()
 
     init {
         view.addView {
@@ -41,8 +41,8 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
             if (optionViews.isNotEmpty()) {
                 optionViews.forEach { view.removeView(it) }
-                optionViews.clear()
             }
+
             setupOptionViews(viewModel)
             informOptionBackgroundAboutSize(viewModel)
 
@@ -57,7 +57,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     }
 
     private fun setupOptionViews(viewModel: TextPollViewModelInterface) {
-        optionViews.addAll(createOptionViews(viewModel.textPollBlock))
+        optionViews = createOptionViews(viewModel.textPollBlock)
         startListeningForOptionImageUpdates(viewModel.optionBackgroundViewModel, optionViews)
         optionViews.forEachIndexed { index, optionView ->
             view.addView(optionView)

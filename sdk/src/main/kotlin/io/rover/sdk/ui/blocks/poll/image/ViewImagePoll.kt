@@ -27,7 +27,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             height = ViewGroup.LayoutParams.WRAP_CONTENT
         )
     }
-    private val optionViews = mutableListOf<ImagePollOptionView>()
+    private var optionViews = listOf<ImagePollOptionView>()
 
     init {
         view.addView(questionView)
@@ -50,7 +50,6 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             bindQuestion(viewModel.imagePollBlock)
             if (optionViews.isNotEmpty()) {
                 optionViews.forEach { view.removeView(it) }
-                optionViews.clear()
             }
             setupOptionViews(viewModel, imageLength)
 
@@ -106,7 +105,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
     }
 
     private fun setupOptionViews(viewModel: ImagePollViewModelInterface, imageLength: Int) {
-        optionViews.addAll(createOptionViews(viewModel.imagePollBlock, imageLength))
+        optionViews = createOptionViews(viewModel.imagePollBlock, imageLength)
 
         when {
             optionViews.size == 2 -> createTwoOptionLayout()

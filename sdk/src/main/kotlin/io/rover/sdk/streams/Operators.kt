@@ -186,7 +186,7 @@ internal fun <T, R> Publisher<T>.flatMap(transform: (T) -> Publisher<out R>): Pu
                     }
 
                     override fun onSubscribe(subscription: Subscription) {
-                        if(outstanding[this] == true) {
+                        if (outstanding[this] == true) {
                             // only pass through subscription if not yet onComplete'd.
                             subscription.request(Long.MAX_VALUE)
                         }

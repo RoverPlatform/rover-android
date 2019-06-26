@@ -6,16 +6,13 @@ import io.rover.sdk.assets.ImageOptimizationService
 import io.rover.sdk.data.domain.Image
 import io.rover.sdk.data.domain.ImagePollBlock
 import io.rover.sdk.data.getFontAppearance
-import io.rover.sdk.logging.log
 import io.rover.sdk.services.MeasurementService
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.Publishers
 import io.rover.sdk.streams.Scheduler
-import io.rover.sdk.streams.filterNulls
 import io.rover.sdk.streams.flatMap
 import io.rover.sdk.streams.map
 import io.rover.sdk.streams.observeOn
-import io.rover.sdk.streams.onErrorReturn
 import io.rover.sdk.ui.PixelSize
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
 import io.rover.sdk.ui.blocks.poll.VotingState
@@ -23,7 +20,6 @@ import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.dpAsPx
 import org.reactivestreams.Publisher
-import java.lang.Exception
 
 internal class ImagePollViewModel(
     override val imagePollBlock: ImagePollBlock,
@@ -67,7 +63,7 @@ internal class ImagePollViewModel(
     private val imagesList: List<Image> = imagePollBlock.options.map { it.image }
 
     override fun castVote(selectedOption: Int) {
-        //TODO: Add voting logic
+        // TODO: Add voting logic
         setResultsState(selectedOption, listOf(12, 14, 67, 92))
     }
 

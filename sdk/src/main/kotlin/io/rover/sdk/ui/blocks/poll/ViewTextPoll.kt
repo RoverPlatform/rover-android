@@ -63,7 +63,6 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             view.addView(optionView)
             optionView.setOnClickListener { viewModelBinding?.viewModel?.castVote(index) }
         }
-
     }
 
     private fun informOptionBackgroundAboutSize(viewModel: TextPollViewModelInterface) {
@@ -90,7 +89,8 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     }
 
     private fun startListeningForOptionImageUpdates(
-        viewModel: BackgroundViewModelInterface, textOptionViews: List<TextOptionView>
+        viewModel: BackgroundViewModelInterface,
+        textOptionViews: List<TextOptionView>
     ) {
         viewModel.backgroundUpdates.androidLifecycleDispose(view)
             .subscribe { (bitmap, fadeIn, backgroundImageConfiguration) ->

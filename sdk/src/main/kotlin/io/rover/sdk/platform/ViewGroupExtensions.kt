@@ -147,4 +147,3 @@ internal fun Paint.create(paintColor: Int, paintStyle: Paint.Style, paintStrokeW
         strokeWidth = paintStrokeWidth
     }
 }
-

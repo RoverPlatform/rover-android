@@ -30,7 +30,7 @@ internal class ViewBarcode(
         if (viewModel != null) {
             val bitmap = barcodeRenderingService.renderBarcode(
                 viewModel.barcodeValue,
-                when(viewModel.barcodeType) {
+                when (viewModel.barcodeType) {
                     BarcodeViewModelInterface.BarcodeType.Aztec -> BarcodeRenderingService.Format.Aztec
                     BarcodeViewModelInterface.BarcodeType.Code128 -> BarcodeRenderingService.Format.Code128
                     BarcodeViewModelInterface.BarcodeType.PDF417 -> BarcodeRenderingService.Format.Pdf417
@@ -57,6 +57,6 @@ internal class ViewBarcode(
         }
     }
 
-    private val barcodeRenderingService = Rover.shared?.barcodeRenderingService ?:
-        throw RuntimeException("Rover not usable until Rover.initialize has been called.")
+    private val barcodeRenderingService = Rover.shared?.barcodeRenderingService
+        ?: throw RuntimeException("Rover not usable until Rover.initialize has been called.")
 }

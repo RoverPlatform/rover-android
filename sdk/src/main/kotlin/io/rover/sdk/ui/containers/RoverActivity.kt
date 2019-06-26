@@ -118,7 +118,7 @@ open class RoverActivity : AppCompatActivity() {
      */
     private val webDisplay: EmbeddedWebBrowserDisplay? by lazy {
         val rover = Rover.shared
-        if(rover == null) {
+        if (rover == null) {
             log.w("RoverActivity cannot work unless Rover has been initialized.")
             finish()
             null
@@ -145,7 +145,7 @@ open class RoverActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val rover = Rover.shared
-        if(rover == null) {
+        if (rover == null) {
             log.w("RoverActivity cannot work unless Rover has been initialized.")
             finish()
             return

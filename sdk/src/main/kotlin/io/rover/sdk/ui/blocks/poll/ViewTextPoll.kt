@@ -27,7 +27,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         )
     }
 
-    private lateinit var optionViews: List<TextOptionView>
+    private var optionViews = listOf<TextOptionView>()
 
     init {
         view.addView {
@@ -38,6 +38,11 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
         binding?.viewModel?.let { viewModel ->
             bindQuestion(viewModel.textPollBlock)
+
+            if (optionViews.isNotEmpty()) {
+                optionViews.forEach { view.removeView(it) }
+            }
+
             setupOptionViews(viewModel)
             informOptionBackgroundAboutSize(viewModel)
 

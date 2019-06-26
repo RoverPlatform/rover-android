@@ -45,8 +45,6 @@ internal class ViewBackground(
                         backgroundImageConfiguration
                     )
                     view.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom)
-
-
                 }, { error -> throw error }, { subscriptionCallback(it) })
 
             binding.viewModel.informDimensions(

@@ -72,7 +72,7 @@ internal class ViewExperienceToolbar(
             }
             .subscribe({ (actionBar, menu) ->
                 actionBar.setDisplayHomeAsUpEnabled(true)
-                
+
                 // we must keep a hold of this so we can remove it on unsubscribe
                 retrievedMenu = menu
 

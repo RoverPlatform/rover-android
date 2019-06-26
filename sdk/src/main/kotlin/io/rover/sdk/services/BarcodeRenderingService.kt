@@ -58,7 +58,7 @@ internal class BarcodeRenderingService {
             // we want the minimum size, pixel exact.  we'll scale it later in the view layer.
             0,
             0,
-            when(format) {
+            when (format) {
                 Format.Pdf417 -> hashMapOf<EncodeHintType, Any>(
                     // We'll furnish our own margin (see contributedPadding).  Some -- but not all --
                     // of the barcode types look for this margin parameter and if they don't
@@ -86,7 +86,7 @@ internal class BarcodeRenderingService {
                 )
             }
         ).toAndroidBitmap().let { bitmap ->
-            when(format) {
+            when (format) {
                 Format.Code128 -> {
                     // post process to transform the barcode into 2D and add a 2px border around it to be consistent
                     // with the other formats, and also add margin on all sides.
@@ -151,7 +151,6 @@ internal class BarcodeRenderingService {
                     )
 
                     newBitmap
-
                 }
                 else -> bitmap
             }

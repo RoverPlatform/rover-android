@@ -6,7 +6,6 @@ import io.rover.sdk.ui.PixelSize
 import io.rover.sdk.data.domain.Background
 import io.rover.sdk.data.domain.BackgroundContentMode
 import io.rover.sdk.data.domain.BackgroundScale
-import io.rover.sdk.data.domain.Block
 import io.rover.sdk.data.domain.Image
 import io.rover.sdk.ui.BackgroundImageConfiguration
 import io.rover.sdk.ui.Rect
@@ -14,7 +13,7 @@ import io.rover.sdk.ui.dpAsPx
 import java.net.URI
 import kotlin.math.roundToInt
 
-internal class ImageOptimizationService  {
+internal class ImageOptimizationService {
 
     private val urlOptimizationEnabled = true
 

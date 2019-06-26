@@ -27,7 +27,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         )
     }
 
-    private lateinit var optionViews: List<TextOptionView>
+    private var optionViews = listOf<TextOptionView>()
 
     init {
         view.addView {
@@ -38,6 +38,11 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
         binding?.viewModel?.let { viewModel ->
             bindQuestion(viewModel.textPollBlock)
+
+            if (optionViews.isNotEmpty()) {
+                optionViews.forEach { view.removeView(it) }
+            }
+
             setupOptionViews(viewModel)
             informOptionBackgroundAboutSize(viewModel)
 
@@ -58,7 +63,6 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             view.addView(optionView)
             optionView.setOnClickListener { viewModelBinding?.viewModel?.castVote(index) }
         }
-
     }
 
     private fun informOptionBackgroundAboutSize(viewModel: TextPollViewModelInterface) {
@@ -85,7 +89,8 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     }
 
     private fun startListeningForOptionImageUpdates(
-        viewModel: BackgroundViewModelInterface, textOptionViews: List<TextOptionView>
+        viewModel: BackgroundViewModelInterface,
+        textOptionViews: List<TextOptionView>
     ) {
         viewModel.backgroundUpdates.androidLifecycleDispose(view)
             .subscribe { (bitmap, fadeIn, backgroundImageConfiguration) ->

@@ -27,7 +27,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             height = ViewGroup.LayoutParams.WRAP_CONTENT
         )
     }
-    private lateinit var pollOptionViews: List<ImagePollOptionView>
+    private var optionViews = listOf<ImagePollOptionView>()
 
     init {
         view.addView(questionView)
@@ -42,20 +42,25 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         binding?.viewModel?.let { viewModel ->
             val width = binding.measuredSize?.width ?: 0f
 
-            val verticalSpacing = viewModel.imagePollBlock.optionStyle.verticalSpacing
+            val horizontalSpacing = viewModel.imagePollBlock.optionStyle.horizontalSpacing
 
             val imageLength =
-                (width.dpAsPx(view.resources.displayMetrics) - verticalSpacing.dpAsPx(view.resources.displayMetrics)) / 2
+                (width.dpAsPx(view.resources.displayMetrics) - horizontalSpacing.dpAsPx(view.resources.displayMetrics)) / 2
 
             bindQuestion(viewModel.imagePollBlock)
-
+            if (optionViews.isNotEmpty()) {
+                optionViews.forEach { view.removeView(it) }
+            }
             setupOptionViews(viewModel, imageLength)
 
-            viewModel.multiImageUpdates.androidLifecycleDispose(this.view).subscribe({ imageList ->
-                pollOptionViews.forEachIndexed { index, imageOptionView ->
-                    imageOptionView.bindOptionImage(imageList[index].bitmap, imageList[index].shouldFade, viewModel.imagePollBlock.optionStyle.opacity.toFloat())
-                }
-            }, { error -> log.w("Problem fetching poll images: $error, ignoring.") }, { subscription ->  subscriptionCallback(subscription) })
+            viewModel.multiImageUpdates.androidLifecycleDispose(this.view).subscribe(
+                { imageList ->
+                    optionViews.forEachIndexed { index, imageOptionView ->
+                        imageOptionView.bindOptionImage(imageList[index].bitmap, imageList[index].shouldFade, viewModel.imagePollBlock.optionStyle.opacity.toFloat())
+                    }
+                },
+                { error -> log.w("Problem fetching poll images: $error, ignoring.") },
+                { subscription -> subscriptionCallback(subscription) })
 
             viewModel.informImagePollOptionDimensions(
                 MeasuredSize(
@@ -79,7 +84,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
 
     private fun setVoteResultsReceived(votingResults: VotingState.Results) {
         votingResults.votingShare.forEachIndexed { index, votingShare ->
-            val option = pollOptionViews[index]
+            val option = optionViews[index]
             option.setOnClickListener(null)
             val isSelectedOption = index == votingResults.selectedOption
             viewModelBinding?.viewModel?.let {
@@ -100,18 +105,18 @@ internal class ViewImagePoll(override val view: LinearLayout) :
     }
 
     private fun setupOptionViews(viewModel: ImagePollViewModelInterface, imageLength: Int) {
-        pollOptionViews = createOptionViews(viewModel.imagePollBlock, imageLength)
+        optionViews = createOptionViews(viewModel.imagePollBlock, imageLength)
 
         when {
-            pollOptionViews.size == 2 -> createTwoOptionLayout()
-            pollOptionViews.size == 4 -> createFourOptionLayout()
+            optionViews.size == 2 -> createTwoOptionLayout()
+            optionViews.size == 4 -> createFourOptionLayout()
         }
     }
 
     private fun createTwoOptionLayout() {
         val row = LinearLayout(view.context)
         view.addView(row)
-        pollOptionViews.forEachIndexed { index, imagePollOptionView ->
+        optionViews.forEachIndexed { index, imagePollOptionView ->
             row.addView(imagePollOptionView)
             imagePollOptionView.setOnClickListener {
                 viewModelBinding?.viewModel?.castVote(index)
@@ -125,7 +130,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         view.addView(row1)
         view.addView(row2)
 
-        pollOptionViews.forEachIndexed { index, imagePollOptionView ->
+        optionViews.forEachIndexed { index, imagePollOptionView ->
             val isOnFirstRow = index < 2
             if (isOnFirstRow) row1.addView(imagePollOptionView) else row2.addView(imagePollOptionView)
             imagePollOptionView.setOnClickListener { viewModelBinding?.viewModel?.castVote(index) }

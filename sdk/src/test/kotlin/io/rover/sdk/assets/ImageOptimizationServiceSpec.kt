@@ -14,7 +14,8 @@ import java.net.URLDecoder
 
 object ImageOptimizationServiceSpec : Spek({
     fun decodeUriParams(uri: URI): Map<String, String> {
-        return uri.query.split("&").map { it.split("=").map { URLDecoder.decode(it, "UTF-8") } }.associate { Pair(it[0], it[1]) }
+        return uri.query.split("&").map { it.split("=").map { URLDecoder.decode(it, "UTF-8") } }
+            .associate { Pair(it[0], it[1]) }
     }
 
     val imageOptimizationService = ImageOptimizationService()
@@ -116,7 +117,7 @@ object ImageOptimizationServiceSpec : Spek({
 
             image,
 
-           BackgroundScale.X3
+            BackgroundScale.X3
         )
 
         context("optimized to display in exactly the same size block on same density display") {

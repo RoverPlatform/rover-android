@@ -2,7 +2,6 @@
 
 package io.rover.sdk.data.operations.data
 
-import android.net.Uri
 import io.rover.sdk.data.domain.Background
 import io.rover.sdk.data.domain.BackgroundContentMode
 import io.rover.sdk.data.domain.BackgroundScale
@@ -727,7 +726,7 @@ fun QuestionStyle.Companion.decodeJson(json: JSONObject): QuestionStyle {
     )
 }
 
-fun ImagePollBlockOptionStyle.Companion.decodeJson(json: JSONObject) : ImagePollBlockOptionStyle {
+fun ImagePollBlockOptionStyle.Companion.decodeJson(json: JSONObject): ImagePollBlockOptionStyle {
     return ImagePollBlockOptionStyle(
         opacity = json.getDouble("opacity"),
         color = Color.decodeJson(json.getJSONObject("color")),
@@ -793,7 +792,6 @@ fun decodeToTextPollBlock(json: JSONObject): TextPollBlock {
         optionStyle = TextPollBlockOptionStyle.decodeJson(json.getJSONObject("optionStyle"))
     )
 }
-
 
 internal fun Block.TapBehavior.encodeJson(): JSONObject {
     return JSONObject().apply {

@@ -119,7 +119,6 @@ internal fun <T> Publisher<T>.retry(numberOfRetries: Int): Publisher<T> {
         prior.subscribe(
             object : Subscriber<T> {
                 override fun onComplete() {
-                    log.w("Retrying retry on complete $attemptedRetries")
                     subscriber.onComplete()
                 }
 
@@ -142,13 +141,11 @@ internal fun <T> Publisher<T>.retry(numberOfRetries: Int): Publisher<T> {
                 }
 
                 override fun onNext(t: T) {
-                    log.w("Retrying retry on next $attemptedRetries $t")
                     subscriber.onNext(t)
                 }
 
                 override fun onError(t: Throwable) {
                     if (attemptedRetries < numberOfRetries) {
-                        log.w("Retrying retry $attemptedRetries ${t.debugExplanation()}")
                         attemptedRetries++
                         subscrip?.cancel()
                         prior.subscribe(this)
@@ -156,7 +153,6 @@ internal fun <T> Publisher<T>.retry(numberOfRetries: Int): Publisher<T> {
                     } else {
                         subscrip?.cancel()
                         subscriber.onError(Exception("Retries exceeded in Publisher.retry().", t))
-                        log.w("Stopped Retrying retry")
                     }
                 }
             })

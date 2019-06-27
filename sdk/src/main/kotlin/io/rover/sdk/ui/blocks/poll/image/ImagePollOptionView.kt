@@ -245,9 +245,8 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         )
     }
 
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-
+    override fun dispatchDraw(canvas: Canvas) {
+        super.dispatchDraw(canvas)
         roundRect?.let { roundRect ->
             roundRect.rectF.let {
                 if (roundRect.borderStrokeWidth != 0f) {

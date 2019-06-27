@@ -110,7 +110,6 @@ internal fun <T, R> Publisher<T>.map(transform: (T) -> R): Publisher<R> {
  * resubscribe to the publisher that it was previously subscribed to until the attempted number of retries is equal to the
  * given number of retries, at this point, another onError call from upstream will be emitted downstream.
  */
-
 internal fun <T> Publisher<T>.retry(numberOfRetries: Int): Publisher<T> {
     val prior = this
 
@@ -126,17 +125,20 @@ internal fun <T> Publisher<T>.retry(numberOfRetries: Int): Publisher<T> {
 
                 override fun onSubscribe(subscription: Subscription) {
                     subscrip = subscription
-                    val consumerSubscription = object : Subscription {
-                        override fun cancel() {
-                            subscription.cancel()
-                        }
 
-                        override fun request(n: Long) {
-                            if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
-                            subscription.request(Long.MAX_VALUE)
+                    if (attemptedRetries == 0) {
+                        val consumerSubscription = object : Subscription {
+                            override fun cancel() {
+                                subscrip?.cancel()
+                            }
+
+                            override fun request(n: Long) {
+                                if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                                subscrip?.request(Long.MAX_VALUE)
+                            }
                         }
+                        subscriber.onSubscribe(consumerSubscription)
                     }
-                    subscriber.onSubscribe(consumerSubscription)
                 }
 
                 override fun onNext(t: T) {
@@ -150,9 +152,10 @@ internal fun <T> Publisher<T>.retry(numberOfRetries: Int): Publisher<T> {
                         attemptedRetries++
                         subscrip?.cancel()
                         prior.subscribe(this)
+                        subscrip?.request(Long.MAX_VALUE)
                     } else {
                         subscrip?.cancel()
-                        subscriber.onError(t)
+                        subscriber.onError(Exception("Retries exceeded in Publisher.retry().", t))
                         log.w("Stopped Retrying retry")
                     }
                 }

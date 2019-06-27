@@ -67,7 +67,7 @@ internal open class AndroidAssetService(
                 // most of the images in Rover experiences will be.
                 synchronousImagePipeline.request(url)
             )
-    }.onErrorReturn { error ->
+        }.onErrorReturn { error ->
             PipelineStageResult.Failed<Bitmap>(error, false) as PipelineStageResult<Bitmap>
         }
     }
@@ -91,6 +91,7 @@ internal open class AndroidAssetService(
             .flatMap { url ->
                 getImageByUrl(url)
                     .timeout(10, TimeUnit.SECONDS)
+                    // handle any unexpected failures in the image processing pipeline
                     .onErrorReturn {
                         PipelineStageResult.Failed<Bitmap>(it, false) as PipelineStageResult<Bitmap>
                     }
@@ -108,9 +109,11 @@ internal open class AndroidAssetService(
             .subscribe({ (url, result) ->
                 synchronized(outstanding) { outstanding.remove(url) }
                 when (result) {
-                    is PipelineStageResult.Successful -> receivedImages.onNext(
-                        ImageReadyEvent(url, result.output)
-                    )
+                    is PipelineStageResult.Successful -> {
+                        receivedImages.onNext(
+                            ImageReadyEvent(url, result.output)
+                        )
+                    }
                 }
             }, {
                 log.w("image request failed ${it.debugExplanation()}")

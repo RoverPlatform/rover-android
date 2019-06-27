@@ -31,7 +31,7 @@ internal class AssetRetrievalStage(
                 .first()
         } catch (exception: Exception) {
             log.w("Unable to download asset because: ${exception.debugExplanation()}")
-            return PipelineStageResult.Failed<BufferedInputStream>(exception)
+            return PipelineStageResult.Failed<BufferedInputStream>(exception, true)
         }
 
         // My use of blockForResult() here has an unfortunate side-effect: because downloadStreamFromUrl()
@@ -52,7 +52,7 @@ internal class AssetRetrievalStage(
             is ImageDownloader.HttpClientResponse.ConnectionFailure -> {
                 PipelineStageResult.Failed(
                     RuntimeException("Network or HTTP error downloading asset", streamResult.reason)
-                )
+                , true)
             }
             is ImageDownloader.HttpClientResponse.ApplicationError -> {
                 PipelineStageResult.Failed(

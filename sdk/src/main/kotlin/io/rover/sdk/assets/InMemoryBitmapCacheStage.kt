@@ -56,7 +56,7 @@ internal class InMemoryBitmapCacheStage(
         return try {
             PipelineStageResult.Successful(lruCache[input])
         } catch (e: UnableToCreateEntryException) {
-            PipelineStageResult.Failed(e.reason)
+            PipelineStageResult.Failed(e.reason, false)
         }
     }
 

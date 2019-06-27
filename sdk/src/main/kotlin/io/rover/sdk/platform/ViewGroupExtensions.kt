@@ -64,6 +64,12 @@ internal fun ViewGroup.linearLayout(builder: LinearLayout.() -> Unit): LinearLay
     }
 }
 
+internal fun ViewGroup.view(builder: View.() -> Unit): View {
+    return View(context).apply {
+        builder()
+    }
+}
+
 internal fun View.setBackgroundWithoutPaddingChange(backgroundDrawable: BackgroundColorDrawableWrapper) {
     val paddingLeft = paddingLeft
     val paddingTop = paddingTop

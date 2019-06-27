@@ -29,6 +29,7 @@ import io.rover.sdk.platform.relativeLayout
 import io.rover.sdk.platform.setupLinearLayoutParams
 import io.rover.sdk.platform.setupRelativeLayoutParams
 import io.rover.sdk.platform.textView
+import io.rover.sdk.platform.view
 import io.rover.sdk.platform.votingIndicatorBar
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.poll.RoundRect
@@ -89,6 +90,17 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         )
     }
 
+    private val topSectionResultsOverlayView = view {
+        id = ViewCompat.generateViewId()
+        visibility = View.GONE
+        alpha = 0.3f
+        setBackgroundColor(Color.BLACK)
+        setupRelativeLayoutParams {
+            width = ViewGroup.LayoutParams.MATCH_PARENT
+            height = ViewGroup.LayoutParams.MATCH_PARENT
+        }
+    }
+
     private val voteIndicatorView: AppCompatTextView = textView {
         id = ViewCompat.generateViewId()
         visibility = View.GONE
@@ -116,6 +128,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         setLayerType(View.LAYER_TYPE_SOFTWARE, null)
         orientation = VERTICAL
         topSection.addView(optionImageView)
+        topSection.addView(topSectionResultsOverlayView)
         topSection.addView(votePercentageView)
         topSection.addView(votingIndicatorBar)
         bottomSectionLinear.addView(optionTextView)
@@ -159,6 +172,8 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         bindVotePercentageText(votingShare)
         bindVoteIndicatorText(optionStyle)
         if (isSelectedOption) voteIndicatorView.visibility = View.VISIBLE
+
+        topSectionResultsOverlayView.visibility = View.VISIBLE
 
         optionTextView.run {
             gravity = Gravity.CENTER_VERTICAL
@@ -276,8 +291,14 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
 class VotingIndicatorBar(context: Context?) : View(context) {
 
     private val borderPaint = Paint().create(Color.RED, Paint.Style.FILL)
+    private val overlayBarPaint = Paint().apply {
+        color = Color.WHITE
+        alpha = 128
+        Paint.Style.FILL
+    }
     private val inset = 4f.dpAsPx(resources.displayMetrics).toFloat()
-    private val barRect by lazy { RectF(inset, 0f, this.width.toFloat() - inset, this.height.toFloat()) }
+    private val barRect by lazy { RectF(inset, 0f, this.width.toFloat() - inset - 40, this.height.toFloat()) }
+    private val overlayRect by lazy { RectF(inset, 0f, this.width.toFloat() - inset, this.height.toFloat()) }
 
     companion object {
         private const val CORNER_RADIUS = 20f
@@ -285,6 +306,7 @@ class VotingIndicatorBar(context: Context?) : View(context) {
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        canvas.drawRoundRect(overlayRect, CORNER_RADIUS, CORNER_RADIUS, overlayBarPaint)
         canvas.drawRoundRect(barRect, CORNER_RADIUS, CORNER_RADIUS, borderPaint)
     }
 }

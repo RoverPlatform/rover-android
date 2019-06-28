@@ -3,6 +3,7 @@ package io.rover.sdk.assets
 import android.net.http.HttpResponseCache
 import io.rover.sdk.data.http.HttpClient
 import io.rover.sdk.logging.log
+import io.rover.sdk.platform.debugExplanation
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscription
 import java.io.BufferedInputStream
@@ -71,7 +72,7 @@ internal class ImageDownloader(
                             connection.responseCode
                         } catch (e: IOException) {
                             // yield error to publisher.
-                            log.w("$url -> connection failure: ${e.message}")
+                            log.w("$url -> connection failure: ${e.debugExplanation()}")
 
                             if (!cancelled) subscriber.onNext(
                                 HttpClientResponse.ConnectionFailure(

@@ -48,6 +48,12 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     private val votingIndicatorBarHeight = 8f.dpAsPx(this.resources.displayMetrics)
     private val votingIndicatorBarBottomMargin = 8f.dpAsPx(this.resources.displayMetrics)
 
+    companion object {
+        private const val IMAGE_STARTING_ALPHA = 0f
+    }
+
+    private val shortAnimationDuration = resources.getInteger(android.R.integer.config_shortAnimTime)
+
     private val optionTextView = textView {
         id = ViewCompat.generateViewId()
         ellipsize = TextUtils.TruncateAt.END
@@ -148,9 +154,18 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         }
     }
 
-    fun bindOptionImage(bitmap: Bitmap) {
+    fun bindOptionImage(bitmap: Bitmap, shouldFade: Boolean, opacity: Float) {
         optionImageView.run {
+            alpha = IMAGE_STARTING_ALPHA
             setImageBitmap(bitmap)
+            if (shouldFade) {
+                animate()
+                    .alpha(opacity)
+                    .setDuration(shortAnimationDuration.toLong())
+                    .start()
+            } else {
+                alpha = opacity
+            }
         }
     }
 

@@ -7,6 +7,7 @@ import io.rover.sdk.data.graphql.safeGetString
 import io.rover.sdk.data.graphql.safeOptInt
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.LocalStorage
+import io.rover.sdk.platform.debugExplanation
 import io.rover.sdk.platform.whenNotNull
 import org.json.JSONObject
 import java.util.Date
@@ -150,7 +151,7 @@ internal class SessionStore(
             try {
                 SessionEntry.decodeJson(it)
             } catch (exception: Exception) {
-                log.w("Invalid JSON appeared in Session Store, ignoring: ${exception.message}")
+                log.w("Invalid JSON appeared in Session Store, ignoring: ${exception.debugExplanation()}")
                 null
             }
         }

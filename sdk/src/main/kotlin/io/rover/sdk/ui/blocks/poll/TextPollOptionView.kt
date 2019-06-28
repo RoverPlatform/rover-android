@@ -86,6 +86,10 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         }
     }
 
+    private val borderView = TextPollBorderView(this.context).apply {
+        setupRelativeLayoutParams(width = ViewGroup.LayoutParams.MATCH_PARENT, height = ViewGroup.LayoutParams.MATCH_PARENT)
+    }
+
     private var roundRect: RoundRect? = null
     private var optionPaints: OptionPaints = OptionPaints()
     private var inResultState = false
@@ -102,17 +106,12 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         private const val RESULTS_TEXT_SCALE_FACTOR = 1.05f
     }
 
-    /**
-     * Setting the layer type to software disables hardware acceleration for this view. It is being disabled here due
-     * to issues with wrongly rendered pixel and invisible elements when using hardware acceleration in conjunction
-     * with custom views and drawing calls.
-     * https://developer.android.com/guide/topics/graphics/hardware-accel
-     */
     init {
-        // setLayerType(View.LAYER_TYPE_SOFTWARE, null)
         addView(optionTextView)
         addView(voteIndicatorView)
-        addView(votePercentageText) }
+        addView(votePercentageText)
+        addView(borderView)
+    }
 
     fun initializeOptionViewLayout(optionStyle: TextPollBlockOptionStyle) {
         val optionStyleHeight = optionStyle.height.dpAsPx(resources.displayMetrics)
@@ -125,9 +124,9 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         setupLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,
             height = optionStyleHeight + (borderWidth * 2),
-            topMargin = optionMarginHeight,
-            leftPadding = borderWidth,
-            rightPadding = borderWidth
+            topMargin = optionMarginHeight
+            // leftPadding = borderWidth,
+            // rightPadding = borderWidth
         )
 
         initializeViewStyle(optionStyle)
@@ -156,15 +155,19 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         val fillPaint = Paint().create(optionStyle.background.color.asAndroidColor(), Paint.Style.FILL)
         val resultPaint = Paint().create(optionStyle.resultFillColor.asAndroidColor(), Paint.Style.FILL)
 
+        borderView.borderPaint = borderPaint
+
         optionPaints = OptionPaints(borderPaint, fillPaint, resultPaint)
 
         val rect = RectF(0f, 0f, width.toFloat(), height.toFloat())
         roundRect = RoundRect(rect, borderRadius, doubleBorderStrokeWidth)
+        borderView.borderRoundRect = roundRect
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         roundRect = roundRect?.copy(rectF = RectF(0f, 0f, width.toFloat(), height.toFloat()))
+        borderView.borderRoundRect = roundRect
     }
 
     private var resultRect = RectF(0f, 0f, 0f, 0f)
@@ -182,7 +185,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
                 if (inResultState) {
                     canvas.drawRect(resultRect, optionPaints.resultPaint)
                 }
-                if (roundRect.borderStrokeWidth != 0f) canvas.drawRoundRect(it, roundRect.borderRadius, roundRect.borderRadius, optionPaints.borderPaint)
             }
         }
     }
@@ -308,6 +310,31 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             setTextColor(optionStyle.color.asAndroidColor())
             val font = optionStyle.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
+        }
+    }
+}
+
+internal class TextPollBorderView(context: Context?) : View(context) {
+    var borderPaint = Paint()
+    var borderRoundRect: RoundRect? = null
+
+
+    /**
+     * Setting the layer type to software disables hardware acceleration for this view. It is being disabled here due
+     * to issues with wrongly rendered pixel and invisible elements when using hardware acceleration in conjunction
+     * with custom views and drawing calls.
+     * https://developer.android.com/guide/topics/graphics/hardware-accel
+     */
+    init {
+        setLayerType(LAYER_TYPE_SOFTWARE, null)
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        if (borderRoundRect?.borderStrokeWidth != 0f) {
+            borderRoundRect?.let {
+                canvas.drawRoundRect(it.rectF, it.borderRadius, it.borderRadius, borderPaint)
+            }
         }
     }
 }

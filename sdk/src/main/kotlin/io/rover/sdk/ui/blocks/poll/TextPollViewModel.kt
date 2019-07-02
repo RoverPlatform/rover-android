@@ -18,14 +18,13 @@ internal class TextPollViewModel(
     override fun intrinsicHeight(bounds: RectF): Float {
         // Roundtrip to avoid rounding when converting floats to ints causing mismatches in measured size vs views actual size
         val optionStyleHeight = measurementService.snapToPixValue(textPollBlock.optionStyle.height)
-        val borderWidth = measurementService.snapToPixValue(textPollBlock.optionStyle.borderWidth)
         val verticalSpacing = measurementService.snapToPixValue(textPollBlock.optionStyle.verticalSpacing)
 
         val questionHeight = measurementService.measureHeightNeededForMultiLineTextInTextView(
             textPollBlock.question,
             textPollBlock.questionStyle.font.getFontAppearance(textPollBlock.questionStyle.color, textPollBlock.questionStyle.textAlignment),
             bounds.width())
-        val optionsHeight = ((optionStyleHeight + (borderWidth * 2)) * textPollBlock.options.size)
+        val optionsHeight = optionStyleHeight * textPollBlock.options.size
         val optionSpacing = verticalSpacing * (textPollBlock.options.size)
 
         return optionsHeight + optionSpacing + questionHeight
@@ -33,7 +32,7 @@ internal class TextPollViewModel(
 
     override fun castVote(selectedOption: Int) {
         // TODO: Add voting logic
-        setResultsState(selectedOption, listOf(12, 14, 67))
+        setResultsState(selectedOption, listOf(100, 14, 67))
     }
 
     override val votingState = PublishSubject<VotingState>()

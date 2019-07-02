@@ -116,17 +116,14 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     fun initializeOptionViewLayout(optionStyle: TextPollBlockOptionStyle) {
         val optionStyleHeight = optionStyle.height.dpAsPx(resources.displayMetrics)
         val optionMarginHeight = optionStyle.verticalSpacing.dpAsPx(resources.displayMetrics)
-        val borderWidth = optionStyle.borderWidth.dpAsPx(resources.displayMetrics)
 
         gravity = Gravity.CENTER_VERTICAL
         alpha = optionStyle.opacity.toFloat()
         setBackgroundColor(Color.TRANSPARENT)
         setupLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,
-            height = optionStyleHeight + (borderWidth * 2),
+            height = optionStyleHeight,
             topMargin = optionMarginHeight
-            // leftPadding = borderWidth,
-            // rightPadding = borderWidth
         )
 
         initializeViewStyle(optionStyle)
@@ -224,7 +221,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             }
 
             val widthOfOtherViews =
-                calculateWidthWithoutOptionText(voteIndicatorView, votePercentageText, isSelectedOption, optionStyle)
+                calculateWidthWithoutOptionText(voteIndicatorView, votePercentageText, isSelectedOption)
             maxWidth = this@TextOptionView.width - widthOfOtherViews
         }
 
@@ -270,8 +267,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     private fun calculateWidthWithoutOptionText(
         voteIndicatorView: AppCompatTextView,
         votePercentageText: AppCompatTextView,
-        isSelectedOption: Boolean,
-        optionStyle: TextPollBlockOptionStyle
+        isSelectedOption: Boolean
     ): Int {
         voteIndicatorView.measure(0, 0)
         votePercentageText.measure(0, 0)
@@ -280,10 +276,9 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         val votePercentageMargins =
             (votePercentageText.layoutParams as MarginLayoutParams).marginEnd + (votePercentageText.layoutParams as MarginLayoutParams).marginStart
         val votePercentageWidth = votePercentageText.measuredWidth + votePercentageMargins
-        val borderWidth = (optionStyle.borderWidth.dpAsPx(resources.displayMetrics))
         val optionEndMargin = (optionTextView.layoutParams as MarginLayoutParams).marginStart
 
-        return voteIndicatorWidth + optionEndMargin + votePercentageWidth + borderWidth
+        return voteIndicatorWidth + optionEndMargin + votePercentageWidth
     }
 
     private fun bindVotePercentageText(

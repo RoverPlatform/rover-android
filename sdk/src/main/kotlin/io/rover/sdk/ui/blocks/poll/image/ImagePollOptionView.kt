@@ -139,9 +139,8 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     }
 
     fun bindOptionView(option: String, optionStyle: ImagePollBlockOptionStyle) {
-        val borderWidth = optionStyle.border.width.dpAsPx(this.resources.displayMetrics)
         bottomSection.layoutParams = (bottomSection.layoutParams as MarginLayoutParams).apply {
-            setMargins(borderWidth + bottomSectionHorizontalMargin, 0, borderWidth + bottomSectionHorizontalMargin, borderWidth * 2)
+            setMargins(bottomSectionHorizontalMargin, 0, bottomSectionHorizontalMargin, 0)
         }
 
         optionTextView.run {
@@ -168,7 +167,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     }
 
     fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, optionStyle: ImagePollBlockOptionStyle) {
-        bindVoteIndicatorBar(optionStyle)
+        bindVoteIndicatorBar()
         bindVotePercentageText(votingShare)
         bindVoteIndicatorText(optionStyle)
         if (isSelectedOption) voteIndicatorView.visibility = View.VISIBLE
@@ -206,15 +205,13 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         }
     }
 
-    private fun bindVoteIndicatorBar(optionStyle: ImagePollBlockOptionStyle) {
+    private fun bindVoteIndicatorBar() {
         votingIndicatorBar.run {
             visibility = View.VISIBLE
             setupRelativeLayoutParams(
                 width = RelativeLayout.LayoutParams.MATCH_PARENT,
                 height = votingIndicatorBarHeight,
-                bottomMargin = votingIndicatorBarBottomMargin,
-                leftMargin = optionStyle.border.width.dpAsPx(this.resources.displayMetrics),
-                rightMargin = optionStyle.border.width.dpAsPx(this.resources.displayMetrics)) {
+                bottomMargin = votingIndicatorBarBottomMargin) {
                 addRule(ALIGN_PARENT_BOTTOM)
             }
         }

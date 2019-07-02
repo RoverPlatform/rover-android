@@ -86,7 +86,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         }
     }
 
-    private val borderView = TextPollBorderView(this.context).apply {
+    private val borderView = PollBorderView(this.context).apply {
         setupRelativeLayoutParams(width = ViewGroup.LayoutParams.MATCH_PARENT, height = ViewGroup.LayoutParams.MATCH_PARENT)
     }
 
@@ -309,7 +309,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 }
 
-internal class TextPollBorderView(context: Context?) : View(context) {
+internal class PollBorderView(context: Context?) : View(context) {
     var borderPaint = Paint()
     var borderRoundRect: RoundRect? = null
 

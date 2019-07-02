@@ -64,7 +64,7 @@ internal class ImagePollViewModel(
 
     override fun castVote(selectedOption: Int) {
         // TODO: Add voting logic
-        setResultsState(selectedOption, listOf(12, 14, 67, 92))
+        setResultsState(selectedOption, listOf(20, 42, 67, 100))
     }
 
     override val votingState = PublishSubject<VotingState>()

@@ -36,6 +36,7 @@ import io.rover.sdk.platform.textView
 import io.rover.sdk.platform.view
 import io.rover.sdk.platform.votingIndicatorBar
 import io.rover.sdk.ui.asAndroidColor
+import io.rover.sdk.ui.blocks.poll.PollBorderView
 import io.rover.sdk.ui.blocks.poll.RoundRect
 import io.rover.sdk.ui.dpAsPx
 
@@ -66,6 +67,10 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     private val votingIndicatorBar = votingIndicatorBar {
         id = ViewCompat.generateViewId()
         visibility = View.GONE
+    }
+
+    private val borderView = PollBorderView(this.context).apply {
+        setupLinearLayoutParams(width = ViewGroup.LayoutParams.MATCH_PARENT, height = ViewGroup.LayoutParams.MATCH_PARENT)
     }
 
     private val votePercentageView = textView {
@@ -119,14 +124,8 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
 
     private val optionImageView = imageView {}
     private var roundRect: RoundRect? = null
-    private var borderPaint = Paint()
+    private var halfBorderWidth = 0f
 
-    /**
-     * Setting the layer type to software disables hardware acceleration for this view. It is being disabled here due
-     * to issues with wrongly rendered pixel and invisible elements when using hardware acceleration in conjunction
-     * with custom views and drawing calls.
-     * https://developer.android.com/guide/topics/graphics/hardware-accel
-     */
     init {
         orientation = VERTICAL
         topSection.addView(optionImageView)
@@ -281,14 +280,18 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         val borderRadius = optionStyle.border.radius.dpAsPx(resources.displayMetrics).toFloat()
         val borderStrokeWidth = optionStyle.border.width.dpAsPx(resources.displayMetrics).toFloat()
 
-        borderPaint = Paint().create(
+        borderView.borderPaint = Paint().create(
             optionStyle.border.color.asAndroidColor(),
             Paint.Style.STROKE,
-            borderStrokeWidth * 2
+            borderStrokeWidth
         )
 
         val rect = RectF(0f, 0f, width.toFloat(), height.toFloat())
         roundRect = RoundRect(rect, borderRadius, borderStrokeWidth)
+        halfBorderWidth = (optionStyle.border.width / 2).dpAsPx(resources.displayMetrics).toFloat()
+        borderView.borderRoundRect = roundRect?.copy(rectF = RectF(halfBorderWidth, halfBorderWidth,
+            width.toFloat() - halfBorderWidth,
+            height.toFloat() - halfBorderWidth))
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -301,22 +304,14 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
                 height.toFloat()
             )
         )
+        borderView.borderRoundRect = roundRect?.copy(rectF = RectF(halfBorderWidth, halfBorderWidth,
+            width.toFloat() - halfBorderWidth,
+            height.toFloat() - halfBorderWidth))
     }
 
-    override fun onDraw(canvas: Canvas) {
+    override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
-
-        roundRect?.let { roundRect ->
-            roundRect.rectF.let {
-                if (roundRect.borderStrokeWidth != 0f) {
-                    canvas.drawRoundRect(
-                        it,
-                        roundRect.borderRadius,
-                        roundRect.borderRadius,
-                        borderPaint)
-                }
-            }
-        }
+        borderView.draw(canvas)
     }
 
     override fun draw(canvas: Canvas?) {

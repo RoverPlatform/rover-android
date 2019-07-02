@@ -91,6 +91,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 
     private var roundRect: RoundRect? = null
+    private var halfBorderWidth = 0f
     private var optionPaints: OptionPaints = OptionPaints()
     private var inResultState = false
 
@@ -142,12 +143,12 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     private fun initializeViewStyle(optionStyle: TextPollBlockOptionStyle) {
         val borderRadius = optionStyle.borderRadius.dpAsPx(resources.displayMetrics).toFloat()
         val borderStrokeWidth = optionStyle.borderWidth.dpAsPx(resources.displayMetrics).toFloat()
-        val doubleBorderStrokeWidth = borderStrokeWidth * 2
+
 
         val borderPaint = Paint().create(
             optionStyle.borderColor.asAndroidColor(),
             Paint.Style.STROKE,
-            doubleBorderStrokeWidth
+            borderStrokeWidth
         )
         val fillPaint = Paint().create(optionStyle.background.color.asAndroidColor(), Paint.Style.FILL)
         val resultPaint = Paint().create(optionStyle.resultFillColor.asAndroidColor(), Paint.Style.FILL)
@@ -157,14 +158,19 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         optionPaints = OptionPaints(borderPaint, fillPaint, resultPaint)
 
         val rect = RectF(0f, 0f, width.toFloat(), height.toFloat())
-        roundRect = RoundRect(rect, borderRadius, doubleBorderStrokeWidth)
-        borderView.borderRoundRect = roundRect
+        roundRect = RoundRect(rect, borderRadius, borderStrokeWidth)
+        halfBorderWidth = (optionStyle.borderWidth / 2).dpAsPx(resources.displayMetrics).toFloat()
+        borderView.borderRoundRect = roundRect?.copy(rectF = RectF(halfBorderWidth, halfBorderWidth,
+            width.toFloat() - halfBorderWidth,
+            height.toFloat() - halfBorderWidth))
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         roundRect = roundRect?.copy(rectF = RectF(0f, 0f, width.toFloat(), height.toFloat()))
-        borderView.borderRoundRect = roundRect
+        borderView.borderRoundRect = roundRect?.copy(rectF = RectF(halfBorderWidth, halfBorderWidth,
+            width.toFloat() - halfBorderWidth,
+            height.toFloat() - halfBorderWidth))
     }
 
     private var resultRect = RectF(0f, 0f, 0f, 0f)
@@ -312,17 +318,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 internal class PollBorderView(context: Context?) : View(context) {
     var borderPaint = Paint()
     var borderRoundRect: RoundRect? = null
-
-
-    /**
-     * Setting the layer type to software disables hardware acceleration for this view. It is being disabled here due
-     * to issues with wrongly rendered pixel and invisible elements when using hardware acceleration in conjunction
-     * with custom views and drawing calls.
-     * https://developer.android.com/guide/topics/graphics/hardware-accel
-     */
-    init {
-        setLayerType(LAYER_TYPE_SOFTWARE, null)
-    }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)

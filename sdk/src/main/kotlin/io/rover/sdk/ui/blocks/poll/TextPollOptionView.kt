@@ -248,11 +248,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         val resultFillAlphaAnimator = ValueAnimator.ofInt(0, 255).apply {
             duration = RESULT_FILL_ALPHA_DURATION
             addUpdateListener {
-                optionPaints = optionPaints.copy(resultPaint = Paint().apply {
-                    color = optionStyle.resultFillColor.asAndroidColor()
-                    Paint.Style.FILL
-                    alpha = it.animatedValue as Int
-                })
+                optionPaints.resultPaint.alpha = it.animatedValue as Int
             }
         }
 

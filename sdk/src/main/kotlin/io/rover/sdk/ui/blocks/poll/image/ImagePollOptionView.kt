@@ -236,7 +236,14 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
             duration = PROGRESS_ALPHA_DURATION
             addUpdateListener {
                 val animatedValue = it.animatedValue as Int
-                votingIndicatorBar.fillAlpha = animatedValue
+                votingIndicatorBar.overlayBarFillAlpha = animatedValue
+            }
+        }
+
+        val resultVotingBarAlphaAnimator = ValueAnimator.ofInt(0, 255).apply {
+            duration = PROGRESS_ALPHA_DURATION
+            addUpdateListener {
+                votingIndicatorBar.resultFillAlpha = it.animatedValue as Int
             }
         }
 
@@ -264,7 +271,8 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
             }
         }
         AnimatorSet().apply {
-            playTogether(alphaAnimator, whiteVotingBarAlphaAnimator, overlayAlphaAnimator, resultProgressFillAnimator)
+            playTogether(alphaAnimator, whiteVotingBarAlphaAnimator, overlayAlphaAnimator, resultProgressFillAnimator,
+                resultVotingBarAlphaAnimator)
             interpolator = easeInEaseOutInterpolator
         }.start()
     }
@@ -373,14 +381,15 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
 }
 
 class VotingIndicatorBar(context: Context?) : View(context) {
-    var fillAlpha = 0
+    var overlayBarFillAlpha = 0
         set(value) {
             field = value
-            overlayBarPaint = Paint().apply {
-                color = Color.WHITE
-                Paint.Style.FILL
-                alpha = fillAlpha
-            }
+            overlayBarPaint.alpha = overlayBarFillAlpha
+        }
+    var resultFillAlpha = 0
+        set(value) {
+            field = value
+            fillPaint.alpha = field
         }
     var barValue = 0f
         set(value) {
@@ -390,7 +399,7 @@ class VotingIndicatorBar(context: Context?) : View(context) {
         }
     var fillPaint = Paint()
 
-    private var overlayBarPaint = Paint()
+    private var overlayBarPaint = Paint().create(Color.WHITE, Paint.Style.FILL)
     private val inset = 4f.dpAsPx(resources.displayMetrics).toFloat()
     private var barRect = RectF(inset, 0f, ((width.toFloat() - inset) * barValue), height.toFloat())
     private val overlayRect by lazy { RectF(inset, 0f, width.toFloat() - inset, height.toFloat()) }
@@ -401,7 +410,7 @@ class VotingIndicatorBar(context: Context?) : View(context) {
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawRoundRect(overlayRect, CORNER_RADIUS, CORNER_RADIUS, overlayBarPaint)
         canvas.drawRoundRect(barRect, CORNER_RADIUS, CORNER_RADIUS, fillPaint)
+        canvas.drawRoundRect(overlayRect, CORNER_RADIUS, CORNER_RADIUS, overlayBarPaint)
     }
 }

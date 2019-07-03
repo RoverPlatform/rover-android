@@ -375,7 +375,6 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
 }
 
 class VotingIndicatorBar(context: Context?) : View(context) {
-
     var fillAlpha = 0
         set(value) {
             field = value

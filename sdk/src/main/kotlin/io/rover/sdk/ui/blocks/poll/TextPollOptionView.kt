@@ -92,7 +92,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     private var roundRect: RoundRect? = null
     private var halfBorderWidth = 0f
     private var optionPaints: OptionPaints = OptionPaints()
-    private var inResultState = false
 
     var backgroundImage: BackgroundColorDrawableWrapper? = null
         set(value) {
@@ -175,7 +174,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             height.toFloat() - halfBorderWidth))
     }
 
-    private var resultRect = RectF(0f, 0f, 0f, 0f)
+    private var resultRect: RectF? = null
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -187,7 +186,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
                     roundRect.borderRadius,
                     optionPaints.fillPaint
                 )
-                if (inResultState) {
+                resultRect?.let { resultRect ->
                     canvas.drawRect(resultRect, optionPaints.resultPaint)
                 }
             }
@@ -206,9 +205,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 
     fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, optionStyle: TextPollBlockOptionStyle) {
-        if (inResultState) return
-        inResultState = true
-
         bindVotePercentageText(votingShare, optionStyle)
         votePercentageText.visibility = View.VISIBLE
 

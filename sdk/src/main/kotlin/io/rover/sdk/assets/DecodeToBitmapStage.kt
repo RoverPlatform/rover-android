@@ -31,7 +31,7 @@ internal class DecodeToBitmapStage(
                 stream.output.close()
                 result
             }
-            is PipelineStageResult.Failed -> PipelineStageResult.Failed(stream.reason)
+            is PipelineStageResult.Failed -> PipelineStageResult.Failed(stream.reason, false)
         }
     }
 }

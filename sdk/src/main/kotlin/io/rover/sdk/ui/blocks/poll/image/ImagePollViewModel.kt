@@ -10,9 +10,11 @@ import io.rover.sdk.services.MeasurementService
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.Publishers
 import io.rover.sdk.streams.Scheduler
+import io.rover.sdk.streams.Timestamped
 import io.rover.sdk.streams.flatMap
 import io.rover.sdk.streams.map
 import io.rover.sdk.streams.observeOn
+import io.rover.sdk.streams.timestamp
 import io.rover.sdk.ui.PixelSize
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
 import io.rover.sdk.ui.blocks.poll.VotingState
@@ -31,6 +33,7 @@ internal class ImagePollViewModel(
 
     companion object {
         private const val OPTION_TEXT_HEIGHT = 40
+        private const val IMAGE_FADE_IN_MINIMUM_TIME = 50L
     }
 
     override fun intrinsicHeight(bounds: io.rover.sdk.ui.RectF): Float {
@@ -75,34 +78,22 @@ internal class ImagePollViewModel(
 
     override val multiImageUpdates: Publisher<List<ImagePollViewModelInterface.ImageUpdate>> =
         measurementsSubject
-            .flatMap { measuredSize -> Publishers.just(measuredSize) }
+            .timestamp()
             .imagesFetchTransform()
             .observeOn(mainScheduler)
 
-    private fun Publisher<MeasuredSize>.imagesFetchTransform(): Publisher<List<ImagePollViewModelInterface.ImageUpdate>> {
-        return flatMap { measuredSize ->
+    private fun Publisher<Timestamped<MeasuredSize>>.imagesFetchTransform(): Publisher<List<ImagePollViewModelInterface.ImageUpdate>> {
+        return flatMap { (timestampMillis, measuredSize) ->
             val optimizedImages = imagesList.map {
-                val uriWithParameters = imageOptimizationService.optimizeImageBlock(
-                    it,
-                    imagePollBlock.optionStyle.border.width,
-                    PixelSize(
-                        measuredSize.width.dpAsPx(measuredSize.density),
-                        measuredSize.height.dpAsPx(measuredSize.density)
-                    ),
-                    measuredSize.density
-                )
+                val pixelSize = PixelSize(measuredSize.width.dpAsPx(measuredSize.density), measuredSize.height.dpAsPx(measuredSize.density))
+                val uriWithParameters = imageOptimizationService.optimizeImageBlock(it, imagePollBlock.optionStyle.border.width, pixelSize, measuredSize.density)
 
-                return@map assetService.imageByUrl(uriWithParameters.toURL())
-                    .map { bitmap ->
-                        ImagePollViewModelInterface.ImageUpdate(
-                            bitmap
-                        )
-                    }
+                return@map assetService.imageByUrl(uriWithParameters.toURL()).map { bitmap ->
+                    val timeElapsed = System.currentTimeMillis() - timestampMillis
+                    val shouldFade = timeElapsed > IMAGE_FADE_IN_MINIMUM_TIME
+                    ImagePollViewModelInterface.ImageUpdate(bitmap, shouldFade) }
             }
-
-            Publishers.combineLatest(optimizedImages) {
-                it
-            }
+            Publishers.combineLatest(optimizedImages) { it }
         }
     }
 }
@@ -115,7 +106,7 @@ internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
      */
     val multiImageUpdates: Publisher<List<ImageUpdate>>
 
-    data class ImageUpdate(val bitmap: Bitmap)
+    data class ImageUpdate(val bitmap: Bitmap, val shouldFade: Boolean)
 
     /**
      * Inform the view model of the display geometry of the image view, so that it may

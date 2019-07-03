@@ -11,20 +11,26 @@ import org.reactivestreams.Subscription
 internal object Publishers {
     fun <T> just(item: T): Publisher<T> {
         return Publisher { subscriber ->
-            var completed = false
             subscriber.onSubscribe(
                 object : Subscription {
+                    var cancelled = false
+                    var completed = false
                     override fun request(n: Long) {
                         if (n != Long.MAX_VALUE) {
                             throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
                         }
                         if (completed) return
                         subscriber.onNext(item)
-                        subscriber.onComplete()
+                        if (!cancelled) subscriber.onComplete()
                         completed = true
                     }
 
-                    override fun cancel() { /* this yields immediately, cancel can have no effect */ }
+                    override fun cancel() {
+                        // TODO: Determine a more elegant solution for this
+                        // Cancellation present to prevent completed being emitted downstream when an error occurs downstream
+                        // This provides compatibility with the retry operator
+                        cancelled = true
+                    }
                 }
             )
         }

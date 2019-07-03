@@ -1,6 +1,7 @@
 package io.rover.sdk.assets
 
 import io.rover.sdk.logging.log
+import io.rover.sdk.platform.debugExplanation
 import io.rover.sdk.streams.blockForResult
 import java.io.BufferedInputStream
 import java.lang.Exception
@@ -29,8 +30,8 @@ internal class AssetRetrievalStage(
                 .blockForResult(timeoutSeconds = 300)
                 .first()
         } catch (exception: Exception) {
-            log.w("Unable to download asset because: ${exception.message}")
-            return PipelineStageResult.Failed<BufferedInputStream>(exception)
+            log.w("Unable to download asset because: ${exception.debugExplanation()}")
+            return PipelineStageResult.Failed<BufferedInputStream>(exception, true)
         }
 
         // My use of blockForResult() here has an unfortunate side-effect: because downloadStreamFromUrl()
@@ -51,19 +52,20 @@ internal class AssetRetrievalStage(
             is ImageDownloader.HttpClientResponse.ConnectionFailure -> {
                 PipelineStageResult.Failed(
                     RuntimeException("Network or HTTP error downloading asset", streamResult.reason)
-                )
+                , true)
             }
             is ImageDownloader.HttpClientResponse.ApplicationError -> {
                 PipelineStageResult.Failed(
-                    RuntimeException("Remote HTTP API error downloading asset (code ${streamResult.responseCode}): ${streamResult.reportedReason}")
-                )
+                    RuntimeException("Remote HTTP API error downloading asset (code ${streamResult.responseCode}): ${streamResult.reportedReason}"),
+                        streamResult.responseCode >= 500
+                    )
+                }
+                is ImageDownloader.HttpClientResponse.Success -> {
+                    // we have the stream! pass it downstream for decoding.
+                    PipelineStageResult.Successful(
+                        streamResult.bufferedInputStream
+                    )
+                }
             }
-            is ImageDownloader.HttpClientResponse.Success -> {
-                // we have the stream! pass it downstream for decoding.
-                PipelineStageResult.Successful(
-                    streamResult.bufferedInputStream
-                )
-            }
-        }
     }
 }

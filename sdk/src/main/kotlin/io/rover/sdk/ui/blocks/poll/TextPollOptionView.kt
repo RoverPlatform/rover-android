@@ -20,7 +20,6 @@ import android.widget.RelativeLayout
 import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.TextPollBlockOptionStyle
 import io.rover.sdk.data.mapToFont
-import io.rover.sdk.logging.log
 import io.rover.sdk.platform.create
 import io.rover.sdk.platform.setBackgroundWithoutPaddingChange
 import io.rover.sdk.platform.setupLayoutParams
@@ -105,6 +104,9 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
     companion object {
         private const val RESULTS_TEXT_SCALE_FACTOR = 1.05f
+        private const val RESULT_FILL_PROGRESS_DURATION = 1000L
+        private const val ALPHA_DURATION = 750L
+        private const val RESULT_FILL_ALPHA_DURATION = 50L
     }
 
     init {
@@ -231,33 +233,36 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             maxWidth = this@TextOptionView.width - widthOfOtherViews
         }
 
-        performResultsAnimation(votingShare)
+        performResultsAnimation(votingShare, optionStyle)
     }
 
-    private fun performResultsAnimation(votingShare: Int) {
+    private fun performResultsAnimation(votingShare: Int, optionStyle: TextPollBlockOptionStyle) {
         val easeInEaseOutInterpolator = TimeInterpolator { input ->
             val inputSquared = input * input
             inputSquared / (2.0f * (inputSquared - input) + 1.0f)
         }
 
         val alphaAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 750L
+            duration = ALPHA_DURATION
             addUpdateListener {
                 voteIndicatorView.alpha = it.animatedFraction
                 votePercentageText.alpha = it.animatedFraction
-                log.w("animated fraction alpha: ${it.animatedFraction}")
             }
         }
 
-        val resultFillAlphaAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 50L
+        val resultFillAlphaAnimator = ValueAnimator.ofInt(0, 255).apply {
+            duration = RESULT_FILL_ALPHA_DURATION
             addUpdateListener {
-                log.w("animated fraction fill: ${it.animatedFraction}")
+                optionPaints = optionPaints.copy(resultPaint = Paint().apply {
+                    color = optionStyle.resultFillColor.asAndroidColor()
+                    Paint.Style.FILL
+                    alpha = it.animatedValue as Int
+                })
             }
         }
 
         val resultProgressFillAnimator = ValueAnimator.ofFloat(0f, votingShare.toFloat()).apply {
-            duration = 1000L
+            duration = RESULT_FILL_PROGRESS_DURATION
             addUpdateListener {
                 val animatedValue = it.animatedValue as Float
                 votePercentageText.text = "${animatedValue.toInt()}%"

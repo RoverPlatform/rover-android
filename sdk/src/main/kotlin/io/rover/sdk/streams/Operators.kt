@@ -5,7 +5,6 @@ package io.rover.sdk.streams
 import android.os.Handler
 import android.os.Looper
 import io.rover.sdk.logging.log
-import io.rover.sdk.platform.debugExplanation
 import org.reactivestreams.Processor
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber

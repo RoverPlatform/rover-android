@@ -145,7 +145,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         val borderRadius = optionStyle.borderRadius.dpAsPx(resources.displayMetrics).toFloat()
         val borderStrokeWidth = optionStyle.borderWidth.dpAsPx(resources.displayMetrics).toFloat()
 
-
         val borderPaint = Paint().create(
             optionStyle.borderColor.asAndroidColor(),
             Paint.Style.STROKE,
@@ -263,7 +262,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
                 val animatedValue = it.animatedValue as Float
                 votePercentageText.text = "${animatedValue.toInt()}%"
                 resultRect = RectF(0f, 0f, width.toFloat() / 100 * animatedValue, height.toFloat())
-
             }
         }
 

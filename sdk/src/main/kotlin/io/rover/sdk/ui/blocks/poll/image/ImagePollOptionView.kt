@@ -97,7 +97,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     private val topSection = RelativeLayout(context)
 
     private val bottomSection = relativeLayout {
-        //TODO: Change this to reflect the option style text alignment
+        // TODO: Change this to reflect the option style text alignment
         gravity = Gravity.CENTER
         setupLinearLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,
@@ -106,7 +106,7 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     }
 
     private val bottomSectionLinear = linearLayout {
-        //TODO: Change this to reflect the option style text alignment
+        // TODO: Change this to reflect the option style text alignment
         gravity = Gravity.CENTER
         setupRelativeLayoutParams(
             width = ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -198,7 +198,6 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         bindVotePercentageText(votingShare)
         bindVoteIndicatorText(optionStyle)
 
-
         topSectionResultsOverlayView.visibility = View.VISIBLE
 
         optionTextView.run {
@@ -214,7 +213,6 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
                     bottomSection.width - voteIndicatorView.measuredWidth - (voteIndicatorView.layoutParams as MarginLayoutParams).marginStart
             }
         }
-
 
         performResultsAnimation(votingShare, isSelectedOption)
     }

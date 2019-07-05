@@ -1,4 +1,4 @@
-package io.rover.sdk.ui.blocks.poll
+package io.rover.sdk.ui.blocks.poll.text
 
 import android.animation.AnimatorSet
 import android.animation.TimeInterpolator
@@ -27,6 +27,8 @@ import io.rover.sdk.platform.setupRelativeLayoutParams
 import io.rover.sdk.platform.textView
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
+import io.rover.sdk.ui.blocks.poll.PollBorderView
+import io.rover.sdk.ui.blocks.poll.RoundRect
 import io.rover.sdk.ui.dpAsPx
 
 /**
@@ -90,8 +92,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 
     private var roundRect: RoundRect? = null
-    private var halfBorderWidth = 0f
-    private var optionPaints: OptionPaints = OptionPaints()
+    private var optionPaints: OptionPaints =
+        OptionPaints()
 
     var backgroundImage: BackgroundColorDrawableWrapper? = null
         set(value) {
@@ -142,35 +144,21 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 
     private fun initializeViewStyle(optionStyle: TextPollBlockOptionStyle) {
-        val borderRadius = optionStyle.borderRadius.dpAsPx(resources.displayMetrics).toFloat()
-        val borderStrokeWidth = optionStyle.borderWidth.dpAsPx(resources.displayMetrics).toFloat()
-
-        val borderPaint = Paint().create(
-            optionStyle.borderColor.asAndroidColor(),
-            Paint.Style.STROKE,
-            borderStrokeWidth
-        )
+        val borderRadius = optionStyle.border.radius.dpAsPx(resources.displayMetrics).toFloat()
+        val borderStrokeWidth = optionStyle.border.width.dpAsPx(resources.displayMetrics).toFloat()
         val fillPaint = Paint().create(optionStyle.background.color.asAndroidColor(), Paint.Style.FILL)
         val resultPaint = Paint().create(optionStyle.resultFillColor.asAndroidColor(), Paint.Style.FILL)
 
-        borderView.borderPaint = borderPaint
-
-        optionPaints = OptionPaints(borderPaint, fillPaint, resultPaint)
+        optionPaints = OptionPaints(fillPaint, resultPaint)
 
         val rect = RectF(0f, 0f, width.toFloat(), height.toFloat())
         roundRect = RoundRect(rect, borderRadius, borderStrokeWidth)
-        halfBorderWidth = (optionStyle.borderWidth / 2).dpAsPx(resources.displayMetrics).toFloat()
-        borderView.borderRoundRect = roundRect?.copy(rectF = RectF(halfBorderWidth, halfBorderWidth,
-            width.toFloat() - halfBorderWidth,
-            height.toFloat() - halfBorderWidth))
+        borderView.border = optionStyle.border
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         roundRect = roundRect?.copy(rectF = RectF(0f, 0f, width.toFloat(), height.toFloat()))
-        borderView.borderRoundRect = roundRect?.copy(rectF = RectF(halfBorderWidth, halfBorderWidth,
-            width.toFloat() - halfBorderWidth,
-            height.toFloat() - halfBorderWidth))
     }
 
     private var resultRect: RectF? = null
@@ -228,10 +216,10 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             maxWidth = this@TextOptionView.width - widthOfOtherViews
         }
 
-        performResultsAnimation(votingShare, optionStyle)
+        performResultsAnimation(votingShare)
     }
 
-    private fun performResultsAnimation(votingShare: Int, optionStyle: TextPollBlockOptionStyle) {
+    private fun performResultsAnimation(votingShare: Int) {
         val easeInEaseOutInterpolator = TimeInterpolator { input ->
             val inputSquared = input * input
             inputSquared / (2.0f * (inputSquared - input) + 1.0f)
@@ -306,20 +294,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             setTextColor(optionStyle.color.asAndroidColor())
             val font = optionStyle.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
-        }
-    }
-}
-
-internal class PollBorderView(context: Context?) : View(context) {
-    var borderPaint = Paint()
-    var borderRoundRect: RoundRect? = null
-
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-        if (borderRoundRect?.borderStrokeWidth != 0f) {
-            borderRoundRect?.let {
-                canvas.drawRoundRect(it.rectF, it.borderRadius, it.borderRadius, borderPaint)
-            }
         }
     }
 }

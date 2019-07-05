@@ -1,4 +1,4 @@
-package io.rover.sdk.ui.blocks.poll
+package io.rover.sdk.ui.blocks.poll.text
 
 import io.rover.sdk.data.domain.TextPollBlock
 import io.rover.sdk.data.getFontAppearance

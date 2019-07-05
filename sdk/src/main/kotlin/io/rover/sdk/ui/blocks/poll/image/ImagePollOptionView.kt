@@ -139,7 +139,6 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
 
     private val optionImageView = imageView {}
     private var roundRect: RoundRect? = null
-    private var halfBorderWidth = 0f
 
     init {
         orientation = VERTICAL
@@ -326,22 +325,9 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         val borderRadius = optionStyle.border.radius.dpAsPx(resources.displayMetrics).toFloat()
         val borderStrokeWidth = optionStyle.border.width.dpAsPx(resources.displayMetrics).toFloat()
 
-        borderView.borderPaint = Paint().create(
-            optionStyle.border.color.asAndroidColor(),
-            Paint.Style.STROKE,
-            borderStrokeWidth
-        )
-
         val rect = RectF(0f, 0f, width.toFloat(), height.toFloat())
         roundRect = RoundRect(rect, borderRadius, borderStrokeWidth)
-        halfBorderWidth = (optionStyle.border.width / 2).dpAsPx(resources.displayMetrics).toFloat()
-        borderView.borderRoundRect = roundRect?.copy(
-            rectF = RectF(
-                halfBorderWidth, halfBorderWidth,
-                width.toFloat() - halfBorderWidth,
-                height.toFloat() - halfBorderWidth
-            )
-        )
+        borderView.border = optionStyle.border
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -352,13 +338,6 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
                 0f,
                 width.toFloat(),
                 height.toFloat()
-            )
-        )
-        borderView.borderRoundRect = roundRect?.copy(
-            rectF = RectF(
-                halfBorderWidth, halfBorderWidth,
-                width.toFloat() - halfBorderWidth,
-                height.toFloat() - halfBorderWidth
             )
         )
     }

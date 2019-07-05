@@ -1,4 +1,4 @@
-package io.rover.sdk.ui.blocks.poll
+package io.rover.sdk.ui.blocks.poll.text
 
 import android.graphics.Typeface
 import android.view.ViewGroup

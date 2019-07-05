@@ -9,7 +9,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
-import io.rover.sdk.ui.blocks.poll.TextOptionView
+import io.rover.sdk.ui.blocks.poll.text.TextOptionView
 import io.rover.sdk.ui.blocks.poll.image.ImagePollOptionView
 import io.rover.sdk.ui.blocks.poll.image.VotingIndicatorBar
 

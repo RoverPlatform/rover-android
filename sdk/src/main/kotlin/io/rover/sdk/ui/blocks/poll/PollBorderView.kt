@@ -11,7 +11,7 @@ import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.dpAsPx
 
 internal class PollBorderView(context: Context?) : View(context) {
-    var borderPaint = Paint()
+    private var borderPaint = Paint()
     private var borderRoundRect: RoundRect? = null
 
     var border: Border? = null
@@ -24,6 +24,7 @@ internal class PollBorderView(context: Context?) : View(context) {
 
     private fun setBorderRoundRect(border: Border) {
         val halfBorderWidth = border.width.dpAsPx(resources.displayMetrics).toFloat() / 2
+
         borderRoundRect = RoundRect(rectF = RectF(halfBorderWidth, halfBorderWidth,
             width.toFloat() - halfBorderWidth,
             height.toFloat() - halfBorderWidth),

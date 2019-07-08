@@ -21,9 +21,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.LinearLayout.VERTICAL
 import android.widget.RelativeLayout
-import android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM
-import android.widget.RelativeLayout.CENTER_HORIZONTAL
 import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.ImagePollBlockOptionStyle
 import io.rover.sdk.data.mapToFont
@@ -46,7 +45,7 @@ import io.rover.sdk.ui.dpAsPx
  * as opposed to other views which subscribe to a ViewModel. This means that this view and the views
  * that interact with it operate in a more MVP type approach than the other MVVM-esque views.
  */
-internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
+internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) {
     private val bottomSectionHeight = 40f.dpAsPx(this.resources.displayMetrics)
     private val bottomSectionHorizontalMargin = 8.dpAsPx(resources.displayMetrics)
     private val voteIndicatorViewLeftMargin = 8.dpAsPx(resources.displayMetrics)
@@ -74,13 +73,21 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         )
     }
 
+    private val overallLinearLayout = linearLayout {
+        orientation = VERTICAL
+        setupRelativeLayoutParams(
+            width = ViewGroup.LayoutParams.MATCH_PARENT,
+            height = ViewGroup.LayoutParams.MATCH_PARENT
+        )
+    }
+
     private val votingIndicatorBar = votingIndicatorBar {
         id = ViewCompat.generateViewId()
         visibility = View.GONE
     }
 
     private val borderView = PollBorderView(context).apply {
-        setupLinearLayoutParams(
+        setupRelativeLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,
             height = ViewGroup.LayoutParams.MATCH_PARENT
         )
@@ -141,7 +148,6 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     private var roundRect: RoundRect? = null
 
     init {
-        orientation = VERTICAL
         topSection.addView(optionImageView)
         topSection.addView(topSectionResultsOverlayView)
         topSection.addView(votePercentageView)
@@ -149,8 +155,10 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
         bottomSectionLinear.addView(optionTextView)
         bottomSectionLinear.addView(voteIndicatorView)
         bottomSection.addView(bottomSectionLinear)
-        addView(topSection)
-        addView(bottomSection)
+        overallLinearLayout.addView(topSection)
+        overallLinearLayout.addView(bottomSection)
+        addView(overallLinearLayout)
+        addView(borderView)
     }
 
     fun bindOptionView(option: String, optionStyle: ImagePollBlockOptionStyle) {
@@ -170,10 +178,10 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
     }
 
     fun bindOptionImageSize(imageLength: Int) {
-        topSection.layoutParams = LayoutParams(imageLength, imageLength)
+        topSection.layoutParams = LinearLayout.LayoutParams(imageLength, imageLength)
         optionImageView.run {
             scaleType = ImageView.ScaleType.FIT_XY
-            layoutParams = RelativeLayout.LayoutParams(imageLength, imageLength)
+            layoutParams = LayoutParams(imageLength, imageLength)
         }
     }
 
@@ -340,11 +348,6 @@ internal class ImagePollOptionView(context: Context?) : LinearLayout(context) {
                 height.toFloat()
             )
         )
-    }
-
-    override fun dispatchDraw(canvas: Canvas?) {
-        super.dispatchDraw(canvas)
-        borderView.draw(canvas)
     }
 
     override fun draw(canvas: Canvas?) {

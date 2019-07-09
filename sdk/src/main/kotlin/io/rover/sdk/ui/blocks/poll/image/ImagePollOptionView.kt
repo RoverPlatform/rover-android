@@ -63,7 +63,6 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
     private val shortAnimationDuration = resources.getInteger(android.R.integer.config_shortAnimTime)
 
     private val optionTextView = textView {
-        id = ViewCompat.generateViewId()
         ellipsize = TextUtils.TruncateAt.END
         maxLines = 1
         gravity = Gravity.CENTER_VERTICAL
@@ -94,7 +93,6 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
     }
 
     private val votePercentageView = textView {
-        id = ViewCompat.generateViewId()
         visibility = View.GONE
         maxLines = 1
         gravity = Gravity.CENTER_VERTICAL
@@ -122,7 +120,6 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
     }
 
     private val topSectionResultsOverlayView = view {
-        id = ViewCompat.generateViewId()
         visibility = View.GONE
         setBackgroundColor(Color.BLACK)
         setupRelativeLayoutParams {
@@ -132,7 +129,6 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
     }
 
     private val voteIndicatorView: AppCompatTextView = textView {
-        id = ViewCompat.generateViewId()
         visibility = View.GONE
         maxLines = 1
         gravity = Gravity.CENTER

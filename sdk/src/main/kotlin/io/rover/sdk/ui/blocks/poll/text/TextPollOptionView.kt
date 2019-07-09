@@ -53,7 +53,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 
     private val voteIndicatorView = textView {
-        id = ViewCompat.generateViewId()
         visibility = View.GONE
         maxLines = 1
         gravity = Gravity.CENTER_VERTICAL

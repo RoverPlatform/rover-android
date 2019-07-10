@@ -65,9 +65,9 @@ import io.rover.sdk.ui.blocks.image.ImageViewModel
 import io.rover.sdk.ui.blocks.poll.image.ImagePollBlockView
 import io.rover.sdk.ui.blocks.poll.image.ImagePollBlockViewModel
 import io.rover.sdk.ui.blocks.poll.image.ImagePollViewModel
-import io.rover.sdk.ui.blocks.poll.TextPollBlockView
-import io.rover.sdk.ui.blocks.poll.TextPollBlockViewModel
-import io.rover.sdk.ui.blocks.poll.TextPollViewModel
+import io.rover.sdk.ui.blocks.poll.text.TextPollBlockView
+import io.rover.sdk.ui.blocks.poll.text.TextPollBlockViewModel
+import io.rover.sdk.ui.blocks.poll.text.TextPollViewModel
 import io.rover.sdk.ui.blocks.rectangle.RectangleBlockView
 import io.rover.sdk.ui.blocks.rectangle.RectangleBlockViewModel
 import io.rover.sdk.ui.blocks.text.TextBlockView

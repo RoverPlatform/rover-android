@@ -17,7 +17,7 @@ import io.rover.sdk.streams.observeOn
 import io.rover.sdk.streams.timestamp
 import io.rover.sdk.ui.PixelSize
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
-import io.rover.sdk.ui.blocks.poll.VotingState
+import io.rover.sdk.ui.blocks.poll.text.VotingState
 import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.dpAsPx
@@ -67,7 +67,7 @@ internal class ImagePollViewModel(
 
     override fun castVote(selectedOption: Int) {
         // TODO: Add voting logic
-        setResultsState(selectedOption, listOf(12, 14, 67, 92))
+        setResultsState(selectedOption, listOf(20, 42, 67, 100))
     }
 
     override val votingState = PublishSubject<VotingState>()

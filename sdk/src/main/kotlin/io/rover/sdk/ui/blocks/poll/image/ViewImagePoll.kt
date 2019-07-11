@@ -12,7 +12,7 @@ import io.rover.sdk.platform.textView
 import io.rover.sdk.streams.androidLifecycleDispose
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
-import io.rover.sdk.ui.blocks.poll.VotingState
+import io.rover.sdk.ui.blocks.poll.text.VotingState
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.concerns.ViewModelBinding

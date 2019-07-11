@@ -51,8 +51,7 @@ internal class AssetRetrievalStage(
         return when (streamResult) {
             is ImageDownloader.HttpClientResponse.ConnectionFailure -> {
                 PipelineStageResult.Failed(
-                    RuntimeException("Network or HTTP error downloading asset", streamResult.reason)
-                , true)
+                    RuntimeException("Network or HTTP error downloading asset", streamResult.reason), true)
             }
             is ImageDownloader.HttpClientResponse.ApplicationError -> {
                 PipelineStageResult.Failed(

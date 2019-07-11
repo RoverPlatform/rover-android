@@ -9,7 +9,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
-import io.rover.sdk.ui.blocks.poll.TextOptionView
+import io.rover.sdk.ui.blocks.poll.text.TextOptionView
 import io.rover.sdk.ui.blocks.poll.image.ImagePollOptionView
 import io.rover.sdk.ui.blocks.poll.image.VotingIndicatorBar
 
@@ -60,6 +60,12 @@ internal fun ViewGroup.relativeLayout(builder: RelativeLayout.() -> Unit): Relat
 
 internal fun ViewGroup.linearLayout(builder: LinearLayout.() -> Unit): LinearLayout {
     return LinearLayout(context).apply {
+        builder()
+    }
+}
+
+internal fun ViewGroup.view(builder: View.() -> Unit): View {
+    return View(context).apply {
         builder()
     }
 }

@@ -172,9 +172,7 @@ data class ImagePollBlock(
 data class TextPollBlockOptionStyle(
     val height: Int,
     val opacity: Double,
-    val borderRadius: Int,
-    val borderWidth: Int,
-    val borderColor: Color,
+    val border: Border,
     val color: Color,
     val font: Font,
     val textAlignment: TextAlignment,

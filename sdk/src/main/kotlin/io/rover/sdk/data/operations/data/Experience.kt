@@ -519,9 +519,7 @@ internal fun TextPollBlockOptionStyle.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, TextPollBlockOptionStyle::height, "height")
         putProp(this@encodeJson, TextPollBlockOptionStyle::opacity, "opacity")
-        putProp(this@encodeJson, TextPollBlockOptionStyle::borderRadius, "borderRadius")
-        putProp(this@encodeJson, TextPollBlockOptionStyle::borderWidth, "borderWidth")
-        putProp(this@encodeJson, TextPollBlockOptionStyle::borderColor, "borderColor") { it.encodeJson() }
+        putProp(this@encodeJson, TextPollBlockOptionStyle::border, "border") { it.encodeJson() }
         putProp(this@encodeJson, TextPollBlockOptionStyle::color, "color") { it.encodeJson() }
         putProp(this@encodeJson, TextPollBlockOptionStyle::font, "font") { it.encodeJson() }
         putProp(this@encodeJson, TextPollBlockOptionStyle::textAlignment, "textAlignment") { it.wireFormat }
@@ -762,9 +760,7 @@ fun TextPollBlockOptionStyle.Companion.decodeJson(json: JSONObject): TextPollBlo
     return TextPollBlockOptionStyle(
         height = json.getInt("height"),
         opacity = json.getDouble("opacity"),
-        borderRadius = json.getInt("borderRadius"),
-        borderWidth = json.getInt("borderWidth"),
-        borderColor = Color.decodeJson(json.getJSONObject("borderColor")),
+        border = Border.decodeJson(json.getJSONObject("border")),
         color = Color.decodeJson(json.getJSONObject("color")),
         background = Background.decodeJson(json.getJSONObject("background")),
         font = Font.decodeJson(json.getJSONObject("font")),

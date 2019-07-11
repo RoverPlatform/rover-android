@@ -18,7 +18,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import io.rover.sdk.data.domain.FontWeight
-import io.rover.sdk.data.domain.TextPollBlockOptionStyle
+import io.rover.sdk.data.domain.TextPollOption
 import io.rover.sdk.data.mapToFont
 import io.rover.sdk.platform.create
 import io.rover.sdk.platform.setBackgroundWithoutPaddingChange
@@ -116,9 +116,9 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         addView(borderView)
     }
 
-    fun initializeOptionViewLayout(optionStyle: TextPollBlockOptionStyle) {
+    fun initializeOptionViewLayout(optionStyle: TextPollOption) {
         val optionStyleHeight = optionStyle.height.dpAsPx(resources.displayMetrics)
-        val optionMarginHeight = optionStyle.verticalSpacing.dpAsPx(resources.displayMetrics)
+        val optionMarginHeight = optionStyle.topMargin.dpAsPx(resources.displayMetrics)
 
         gravity = Gravity.CENTER_VERTICAL
         alpha = optionStyle.opacity.toFloat()
@@ -132,17 +132,17 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         initializeViewStyle(optionStyle)
     }
 
-    fun bindOptionView(option: String, optionStyle: TextPollBlockOptionStyle) {
+    fun bindOptionView(option: TextPollOption) {
         optionTextView.run {
-            text = option
-            textSize = optionStyle.font.size.toFloat()
-            setTextColor(optionStyle.color.asAndroidColor())
-            val font = optionStyle.font.weight.mapToFont()
+            text = option.text.rawValue
+            textSize = option.text.font.size.toFloat()
+            setTextColor(option.text.color.asAndroidColor())
+            val font = option.text.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
         }
     }
 
-    private fun initializeViewStyle(optionStyle: TextPollBlockOptionStyle) {
+    private fun initializeViewStyle(optionStyle: TextPollOption) {
         val borderRadius = optionStyle.border.radius.dpAsPx(resources.displayMetrics).toFloat()
         val borderStrokeWidth = optionStyle.border.width.dpAsPx(resources.displayMetrics).toFloat()
         val fillPaint = Paint().create(optionStyle.background.color.asAndroidColor(), Paint.Style.FILL)
@@ -190,7 +190,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         super.draw(canvas)
     }
 
-    fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, optionStyle: TextPollBlockOptionStyle) {
+    fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, optionStyle: TextPollOption) {
         bindVotePercentageText(votingShare, optionStyle)
         votePercentageText.visibility = View.VISIBLE
 
@@ -271,13 +271,13 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
     private fun bindVotePercentageText(
         votingShare: Int,
-        optionStyle: TextPollBlockOptionStyle
+        optionStyle: TextPollOption
     ) {
         votePercentageText.run {
-            textSize = (optionStyle.font.size * RESULTS_TEXT_SCALE_FACTOR)
+            textSize = (optionStyle.text.font.size * RESULTS_TEXT_SCALE_FACTOR)
             votePercentageText.text = "$votingShare%"
-            setTextColor(optionStyle.color.asAndroidColor())
-            val font = optionStyle.font.weight.getIncreasedFontWeight().mapToFont()
+            setTextColor(optionStyle.text.color.asAndroidColor())
+            val font = optionStyle.text.font.weight.getIncreasedFontWeight().mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
         }
     }
@@ -286,12 +286,12 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         return FontWeight.values().getOrElse(this.ordinal + 2) { FontWeight.Black }
     }
 
-    private fun bindVoteIndicatorText(optionStyle: TextPollBlockOptionStyle) {
+    private fun bindVoteIndicatorText(optionStyle: TextPollOption) {
         voteIndicatorView.run {
             text = "\u2022"
-            textSize = optionStyle.font.size.toFloat()
-            setTextColor(optionStyle.color.asAndroidColor())
-            val font = optionStyle.font.weight.mapToFont()
+            textSize = optionStyle.text.font.size.toFloat()
+            setTextColor(optionStyle.text.color.asAndroidColor())
+            val font = optionStyle.text.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
         }
     }

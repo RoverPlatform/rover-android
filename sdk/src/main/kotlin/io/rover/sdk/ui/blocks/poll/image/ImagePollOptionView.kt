@@ -24,7 +24,7 @@ import android.widget.LinearLayout
 import android.widget.LinearLayout.VERTICAL
 import android.widget.RelativeLayout
 import io.rover.sdk.data.domain.FontWeight
-import io.rover.sdk.data.domain.ImagePollBlockOptionStyle
+import io.rover.sdk.data.domain.ImagePollBlockOption
 import io.rover.sdk.data.mapToFont
 import io.rover.sdk.platform.create
 import io.rover.sdk.platform.imageView
@@ -157,20 +157,20 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
         addView(borderView)
     }
 
-    fun bindOptionView(option: String, optionStyle: ImagePollBlockOptionStyle) {
+    fun bindOptionView(option: ImagePollBlockOption) {
         bottomSection.layoutParams = (bottomSection.layoutParams as MarginLayoutParams).apply {
             setMargins(bottomSectionHorizontalMargin, 0, bottomSectionHorizontalMargin, 0)
         }
 
         optionTextView.run {
-            text = option
-            textSize = optionStyle.font.size.toFloat()
-            setTextColor(optionStyle.color.asAndroidColor())
-            val font = optionStyle.font.weight.mapToFont()
+            text = option.text.rawValue
+            textSize = option.text.font.size.toFloat()
+            setTextColor(option.text.color.asAndroidColor())
+            val font = option.text.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
         }
 
-        votingIndicatorBar.fillPaint = Paint().create(optionStyle.resultFillColor.asAndroidColor(), Paint.Style.FILL)
+        votingIndicatorBar.fillPaint = Paint().create(option.resultFillColor.asAndroidColor(), Paint.Style.FILL)
     }
 
     fun bindOptionImageSize(imageLength: Int) {
@@ -196,10 +196,10 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
         }
     }
 
-    fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, optionStyle: ImagePollBlockOptionStyle) {
+    fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, option: ImagePollBlockOption) {
         bindVoteIndicatorBar()
         bindVotePercentageText(votingShare)
-        bindVoteIndicatorText(optionStyle)
+        bindVoteIndicatorText(option)
 
         topSectionResultsOverlayView.visibility = View.VISIBLE
 
@@ -311,27 +311,27 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
         }
     }
 
-    private fun bindVoteIndicatorText(optionStyle: ImagePollBlockOptionStyle) {
+    private fun bindVoteIndicatorText(option: ImagePollBlockOption) {
         voteIndicatorView.run {
             text = "\u2022"
-            textSize = optionStyle.font.size.toFloat()
-            setTextColor(optionStyle.color.asAndroidColor())
-            val font = optionStyle.font.weight.mapToFont()
+            textSize = option.text.font.size.toFloat()
+            setTextColor(option.text.color.asAndroidColor())
+            val font = option.text.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
         }
     }
 
-    fun initializeOptionViewLayout(optionStyle: ImagePollBlockOptionStyle) {
+    fun initializeOptionViewLayout(option: ImagePollBlockOption) {
         gravity = Gravity.CENTER_VERTICAL
-        alpha = optionStyle.opacity.toFloat()
+        alpha = option.opacity.toFloat()
         setBackgroundColor(Color.TRANSPARENT)
 
-        val borderRadius = optionStyle.border.radius.dpAsPx(resources.displayMetrics).toFloat()
-        val borderStrokeWidth = optionStyle.border.width.dpAsPx(resources.displayMetrics).toFloat()
+        val borderRadius = option.border.radius.dpAsPx(resources.displayMetrics).toFloat()
+        val borderStrokeWidth = option.border.width.dpAsPx(resources.displayMetrics).toFloat()
 
         val rect = RectF(0f, 0f, width.toFloat(), height.toFloat())
         roundRect = RoundRect(rect, borderRadius, borderStrokeWidth)
-        borderView.border = optionStyle.border
+        borderView.border = option.border
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {

@@ -67,7 +67,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
     private fun informOptionBackgroundAboutSize(viewModel: TextPollViewModelInterface) {
         viewModelBinding?.measuredSize?.width?.let { measuredWidth ->
-            val optionStyleHeight = viewModel.textPollBlock.optionStyle.height.toFloat()
+            val optionStyleHeight = viewModel.textPollBlock.options.first().height.toFloat()
             val measuredSize = MeasuredSize(
                 measuredWidth,
                 optionStyleHeight,
@@ -83,7 +83,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             option.setOnClickListener(null)
             val isSelectedOption = index == votingResults.selectedOption
             viewModelBinding?.viewModel?.let {
-                option.goToResultsState(votingShare, isSelectedOption, it.textPollBlock.optionStyle)
+                option.goToResultsState(votingShare, isSelectedOption, it.textPollBlock.options[index])
             }
         }
     }
@@ -106,11 +106,11 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
     private fun bindQuestion(textPollBlock: TextPollBlock) {
         questionView.run {
-            text = textPollBlock.question
-            gravity = textPollBlock.questionStyle.textAlignment.convertToGravity()
-            textSize = textPollBlock.questionStyle.font.size.toFloat()
-            setTextColor(textPollBlock.questionStyle.color.asAndroidColor())
-            val font = textPollBlock.questionStyle.font.weight.mapToFont()
+            text = textPollBlock.question.rawValue
+            gravity = textPollBlock.question.alignment.convertToGravity()
+            textSize = textPollBlock.question.font.size.toFloat()
+            setTextColor(textPollBlock.question.color.asAndroidColor())
+            val font = textPollBlock.question.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
         }
     }
@@ -118,8 +118,8 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     private fun createOptionViews(textPollBlock: TextPollBlock): List<TextOptionView> {
         return textPollBlock.options.map { option ->
             view.optionView {
-                initializeOptionViewLayout(textPollBlock.optionStyle)
-                bindOptionView(option, textPollBlock.optionStyle)
+                initializeOptionViewLayout(option)
+                bindOptionView(option)
             }
         }
     }

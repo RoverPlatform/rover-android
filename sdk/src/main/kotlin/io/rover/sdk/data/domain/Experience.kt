@@ -118,30 +118,16 @@ interface Block {
     companion object
 }
 
-data class ImageBlockOption(
-    val text: String,
-    val image: Image
-) {
-    companion object
-}
-
-data class QuestionStyle(
-    val color: Color,
-    val font: Font,
-    val textAlignment: TextAlignment
-) {
-    companion object
-}
-
-data class ImagePollBlockOptionStyle(
-    val opacity: Double,
-    val color: Color,
+data class ImagePollBlockOption(
+    val id: String,
+    val text: Text,
+    val image: Image,
+    val background: Background,
     val border: Border,
-    val font: Font,
-    val textAlignment: TextAlignment,
-    val resultFillColor: Color,
-    val verticalSpacing: Int,
-    val horizontalSpacing: Int
+    val opacity: Double,
+    val topMargin: Int,
+    val leftMargin: Int,
+    val resultFillColor: Color
 ) {
     companion object
 }
@@ -161,25 +147,9 @@ data class ImagePollBlock(
     override val border: Border,
     override val name: String,
     override val tags: List<String>,
-    val question: String,
-    val options: List<ImageBlockOption>,
-    val questionStyle: QuestionStyle,
-    val optionStyle: ImagePollBlockOptionStyle
+    val question: Text,
+    val options: List<ImagePollBlockOption>
 ) : PollBlock() {
-    companion object
-}
-
-data class TextPollBlockOptionStyle(
-    val height: Int,
-    val opacity: Double,
-    val border: Border,
-    val color: Color,
-    val font: Font,
-    val textAlignment: TextAlignment,
-    val resultFillColor: Color,
-    val background: Background,
-    val verticalSpacing: Int
-) {
     companion object
 }
 
@@ -194,11 +164,21 @@ data class TextPollBlock(
     override val border: Border,
     override val name: String,
     override val tags: List<String>,
-    val question: String,
-    val options: List<String>,
-    val questionStyle: QuestionStyle,
-    val optionStyle: TextPollBlockOptionStyle
+    val question: Text,
+    val options: List<TextPollOption>
 ) : PollBlock() {
+    companion object
+}
+
+data class TextPollOption(
+    val id: String,
+    val text: Text,
+    val background: Background,
+    val border: Border,
+    val opacity: Double,
+    val height: Int,
+    val topMargin: Int,
+    val resultFillColor: Color) {
     companion object
 }
 

@@ -38,16 +38,16 @@ internal class ImagePollViewModel(
 
     override fun intrinsicHeight(bounds: io.rover.sdk.ui.RectF): Float {
         val questionHeight = measurementService.measureHeightNeededForMultiLineTextInTextView(
-            imagePollBlock.question,
-            imagePollBlock.questionStyle.font.getFontAppearance(imagePollBlock.questionStyle.color, imagePollBlock.questionStyle.textAlignment),
+            imagePollBlock.question.rawValue,
+            imagePollBlock.question.font.getFontAppearance(imagePollBlock.question.color, imagePollBlock.question.alignment),
             bounds.width()
         )
 
         val horizontalSpacing =
-            measurementService.snapToPixValue(imagePollBlock.optionStyle.horizontalSpacing)
+            measurementService.snapToPixValue(imagePollBlock.options[1].leftMargin)
         val optionTextHeight = measurementService.snapToPixValue(OPTION_TEXT_HEIGHT)
         val verticalSpacing =
-            measurementService.snapToPixValue(imagePollBlock.optionStyle.verticalSpacing)
+            measurementService.snapToPixValue(imagePollBlock.options.first().topMargin)
 
         val optionImageHeight = (bounds.width() - horizontalSpacing) / 2
 
@@ -86,7 +86,7 @@ internal class ImagePollViewModel(
         return flatMap { (timestampMillis, measuredSize) ->
             val optimizedImages = imagesList.map {
                 val pixelSize = PixelSize(measuredSize.width.dpAsPx(measuredSize.density), measuredSize.height.dpAsPx(measuredSize.density))
-                val uriWithParameters = imageOptimizationService.optimizeImageBlock(it, imagePollBlock.optionStyle.border.width, pixelSize, measuredSize.density)
+                val uriWithParameters = imageOptimizationService.optimizeImageBlock(it, imagePollBlock.options.first().border.width, pixelSize, measuredSize.density)
 
                 return@map assetService.imageByUrl(uriWithParameters.toURL()).map { bitmap ->
                     val timeElapsed = System.currentTimeMillis() - timestampMillis

@@ -42,7 +42,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         binding?.viewModel?.let { viewModel ->
             val width = binding.measuredSize?.width ?: 0f
 
-            val horizontalSpacing = viewModel.imagePollBlock.optionStyle.horizontalSpacing
+            val horizontalSpacing = viewModel.imagePollBlock.options[1].leftMargin
 
             val imageLength =
                 (width.dpAsPx(view.resources.displayMetrics) - horizontalSpacing.dpAsPx(view.resources.displayMetrics)) / 2
@@ -56,7 +56,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             viewModel.multiImageUpdates.androidLifecycleDispose(this.view).subscribe(
                 { imageList ->
                     optionViews.forEachIndexed { index, imageOptionView ->
-                        imageOptionView.bindOptionImage(imageList[index].bitmap, imageList[index].shouldFade, viewModel.imagePollBlock.optionStyle.opacity.toFloat())
+                        imageOptionView.bindOptionImage(imageList[index].bitmap, imageList[index].shouldFade, viewModel.imagePollBlock.options[index].opacity.toFloat())
                     }
                 },
                 { error -> log.w("Problem fetching poll images: $error, ignoring.") },
@@ -88,18 +88,18 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             option.setOnClickListener(null)
             val isSelectedOption = index == votingResults.selectedOption
             viewModelBinding?.viewModel?.let {
-                option.goToResultsState(votingShare, isSelectedOption, it.imagePollBlock.optionStyle)
+                option.goToResultsState(votingShare, isSelectedOption, it.imagePollBlock.options[index])
             }
         }
     }
 
     private fun bindQuestion(imagePollBlock: ImagePollBlock) {
         questionView.run {
-            text = imagePollBlock.question
-            gravity = imagePollBlock.questionStyle.textAlignment.convertToGravity()
-            textSize = imagePollBlock.questionStyle.font.size.toFloat()
-            setTextColor(imagePollBlock.questionStyle.color.asAndroidColor())
-            val font = imagePollBlock.questionStyle.font.weight.mapToFont()
+            text = imagePollBlock.question.rawValue
+            gravity = imagePollBlock.question.alignment.convertToGravity()
+            textSize = imagePollBlock.question.font.size.toFloat()
+            setTextColor(imagePollBlock.question.color.asAndroidColor())
+            val font = imagePollBlock.question.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
         }
     }
@@ -139,23 +139,17 @@ internal class ViewImagePoll(override val view: LinearLayout) :
 
     private fun createOptionViews(imagePollBlock: ImagePollBlock, imageLength: Int): List<ImagePollOptionView> {
         val optionTextHeight = OPTION_TEXT_HEIGHT.dpAsPx(view.resources.displayMetrics)
-        val horizontalSpacing =
-            imagePollBlock.optionStyle.horizontalSpacing.dpAsPx(view.resources.displayMetrics)
-        val verticalSpacing =
-            imagePollBlock.optionStyle.verticalSpacing.dpAsPx(view.resources.displayMetrics)
 
         return imagePollBlock.options.mapIndexed { index, option ->
-            val isInFirstColumn = index == 0 || index == 2
-
             view.imageOptionView {
-                initializeOptionViewLayout(imagePollBlock.optionStyle)
-                bindOptionView(option.text, imagePollBlock.optionStyle)
+                initializeOptionViewLayout(option)
+                bindOptionView(option)
                 bindOptionImageSize(imageLength)
                 setupLayoutParams(
                     width = imageLength,
                     height = imageLength + optionTextHeight,
-                    rightMargin = if (isInFirstColumn) horizontalSpacing else 0,
-                    topMargin = verticalSpacing
+                    leftMargin = option.leftMargin.dpAsPx(view.resources.displayMetrics),
+                    topMargin = option.topMargin.dpAsPx(view.resources.displayMetrics)
                 )
             }
         }

@@ -102,7 +102,6 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
     private val topSection = RelativeLayout(context)
 
     private val bottomSection = relativeLayout {
-        // TODO: Change this to reflect the option style text alignment
         gravity = Gravity.CENTER
         setupLinearLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,
@@ -111,7 +110,6 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
     }
 
     private val bottomSectionLinear = linearLayout {
-        // TODO: Change this to reflect the option style text alignment
         gravity = Gravity.CENTER
         setupRelativeLayoutParams(
             width = ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -161,6 +159,11 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
         bottomSection.layoutParams = (bottomSection.layoutParams as MarginLayoutParams).apply {
             setMargins(bottomSectionHorizontalMargin, 0, bottomSectionHorizontalMargin, 0)
         }
+
+        setBackgroundColor(option.background.color.asAndroidColor())
+
+        bottomSection.gravity = option.text.alignment.convertToGravity()
+        bottomSectionLinear.gravity = option.text.alignment.convertToGravity()
 
         optionTextView.run {
             text = option.text.rawValue

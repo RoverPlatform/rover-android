@@ -20,9 +20,13 @@ internal class VotingService(
     private val httpClient: HttpClient,
     private val httpResultMapper: HttpResultMapper = HttpResultMapper()
 ) {
-    fun getResults(pollId: String): Publisher<ApiResult<OptionResults>> {
+    fun getResults(pollId: String, optionIds: List<String>): Publisher<ApiResult<OptionResults>> {
         val uri = Uri.parse(endpoint).buildUpon().apply {
             appendPath(pollId)
+            optionIds.forEach {
+                appendQueryParameter("options", it)
+            }
+
         }
         val url = URL(uri.toString())
         val urlRequest = HttpRequest(url, hashMapOf("Content-Type" to "application/json"), HttpVerb.POST)

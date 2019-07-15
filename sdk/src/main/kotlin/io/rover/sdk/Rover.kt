@@ -62,7 +62,9 @@ import io.rover.sdk.ui.blocks.concerns.text.TextViewModel
 import io.rover.sdk.ui.blocks.image.ImageBlockView
 import io.rover.sdk.ui.blocks.image.ImageBlockViewModel
 import io.rover.sdk.ui.blocks.image.ImageViewModel
+import io.rover.sdk.ui.blocks.poll.VotingRepository
 import io.rover.sdk.ui.blocks.poll.VotingService
+import io.rover.sdk.ui.blocks.poll.VotingStorage
 import io.rover.sdk.ui.blocks.poll.image.ImagePollBlockView
 import io.rover.sdk.ui.blocks.poll.image.ImagePollBlockViewModel
 import io.rover.sdk.ui.blocks.poll.image.ImagePollViewModel
@@ -170,6 +172,10 @@ open class Rover(
     private val pollsEndpoint = "https://polls.rover.io/v1/polls"
 
     private val pollVotingService: VotingService = VotingService(pollsEndpoint, httpClient)
+
+    private val pollVotingStorage: VotingStorage = VotingStorage(localStorage.getKeyValueStorageFor("voting"))
+
+    private val pollVotingRepository = VotingRepository(pollVotingService, pollVotingStorage)
 
     private val apiService: GraphQlApiService =
         GraphQlApiService(URL(endpoint), accountToken, httpClient)

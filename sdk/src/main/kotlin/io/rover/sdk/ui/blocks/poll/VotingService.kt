@@ -12,7 +12,6 @@ import io.rover.sdk.data.http.HttpVerb
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.KeyValueStorage
 import io.rover.sdk.streams.PublishSubject
-import io.rover.sdk.streams.doOnNext
 import io.rover.sdk.streams.map
 import io.rover.sdk.streams.subscribe
 import org.json.JSONException
@@ -25,27 +24,19 @@ internal class VotingService(
     private val endpoint: String,
     private val httpClient: HttpClient,
     private val httpResultMapper: HttpResultMapper = HttpResultMapper(),
-    private val urlBuilder: URLBuilder = URLBuilder(),
-    private val keyValueStorage: KeyValueStorage
+    private val urlBuilder: URLBuilder = URLBuilder()
 ) {
-    fun fetchResults(pollId: String, optionIds: List<String>) {
-        val url = urlBuilder.build(endpoint, listOf(pollId), optionIds.associateBy { "option" })
+    fun fetchResults(pollId: String, optionIds: List<String>): Publisher<ApiResult<OptionResults>> {
+        val url = urlBuilder.build(endpoint, listOf(pollId), optionIds.map { "options" to it })
         val urlRequest = HttpRequest(url, hashMapOf(), HttpVerb.GET)
 
         return httpClient.request(urlRequest, null).map { httpClientResponse ->
             httpResultMapper.mapResultWithBody(httpClientResponse) {
                 OptionResults.decodeJson(JSONObject(it))
             }
-        }.subscribe {
-            if(it is ApiResult.Success<OptionResults>) {
-                keyValueStorage["$pollId-results"] = it.response.encodeJson().toString()
-                optionResults.onNext(it.response)
-            }
         }
     }
 
-    val optionResults: PublishSubject<OptionResults> = PublishSubject()
-    
     fun castVote(pollId: String, optionId: String) {
         val url = urlBuilder.build(endpoint, listOf(pollId, "vote"))
         val urlRequest = HttpRequest(url, hashMapOf("Content-Type" to "application/json"), HttpVerb.POST)
@@ -60,6 +51,38 @@ internal class VotingService(
                 else -> log.w("voting failed")
             }
         }
+    }
+}
+
+internal class VotingRepository(
+    private val votingService: VotingService,
+    private val votingStorage: VotingStorage) {
+
+
+    //TODO: ensure when listening only list for desired poll id
+    val optionResults: PublishSubject<OptionResults> = PublishSubject()
+
+    fun fetchVotingResults(pollId: String, optionIds: List<String>) {
+        votingService.fetchResults(pollId, optionIds).subscribe {
+            if(it is ApiResult.Success<OptionResults>) {
+                it.response.encodeJson().toString()
+                votingStorage.setPollResults(pollId, it.response.encodeJson().toString())
+                optionResults.onNext(it.response)
+            }
+        }
+    }
+
+    fun castVote(pollId: String, optionId: String) {
+        votingStorage.incrementSavedPollState(pollId, optionId)
+        votingService.castVote(pollId, optionId)
+    }
+
+    fun getSavedPollState(pollId: String) = votingStorage.getSavedPollState(pollId)
+}
+
+internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
+    fun setPollResults(pollId: String, value: String) {
+        keyValueStorage["$pollId-results"] = value
     }
 
     fun incrementSavedPollState(pollId: String, optionId: String) {
@@ -100,10 +123,10 @@ internal class VotingService(
 }
 
 internal class URLBuilder {
-    fun build(url: String, pathParams: List<String>? = null, queryParams: Map<String, String>? = null): URL {
+    fun build(url: String, pathParams: List<String>? = null, queryParams: List<Pair<String, String>>? = null): URL {
         val uri = Uri.parse(url).buildUpon().apply {
             pathParams?.forEach { appendPath(it) }
-            queryParams?.forEach { appendQueryParameter(it.key, it.value) }
+            queryParams?.forEach { appendQueryParameter(it.first, it.second) }
         }.toString()
 
         return URL(uri)

@@ -26,10 +26,8 @@ internal class VotingService(
             optionIds.forEach {
                 appendQueryParameter("options", it)
             }
-
-        }
-        val url = URL(uri.toString())
-        val urlRequest = HttpRequest(url, hashMapOf("Content-Type" to "application/json"), HttpVerb.POST)
+        }.toString()
+        val urlRequest = HttpRequest(URL(uri), hashMapOf(), HttpVerb.GET)
 
         return httpClient.request(urlRequest, null).map { httpClientResponse ->
             httpResultMapper.mapResultWithBody(httpClientResponse) {
@@ -43,7 +41,7 @@ internal class VotingService(
             appendPath(pollId)
             appendPath("vote")
         }
-        val urlRequest = HttpRequest(URL(uri.toString()), hashMapOf(), HttpVerb.POST)
+        val urlRequest = HttpRequest(URL(uri.toString()), hashMapOf("Content-Type" to "application/json"), HttpVerb.POST)
 
         val body = JSONObject().apply {
             put("option", optionId)
@@ -51,12 +49,8 @@ internal class VotingService(
 
         httpClient.request(urlRequest, body, false).subscribe {
             when (it) {
-                is HttpClientResponse.Success -> {
-                    log.v("vote in poll $pollId with option $optionId succeeded")
-                }
-                else -> {
-                    log.w("voting failed")
-                }
+                is HttpClientResponse.Success -> log.v("vote in poll $pollId with option $optionId succeeded")
+                else -> log.w("voting failed")
             }
         }
     }

@@ -18,16 +18,12 @@ import java.net.URL
 internal class VotingService(
     private val endpoint: String,
     private val httpClient: HttpClient,
-    private val httpResultMapper: HttpResultMapper = HttpResultMapper()
+    private val httpResultMapper: HttpResultMapper = HttpResultMapper(),
+    private val urlBuilder: URLBuilder = URLBuilder()
 ) {
     fun getResults(pollId: String, optionIds: List<String>): Publisher<ApiResult<OptionResults>> {
-        val uri = Uri.parse(endpoint).buildUpon().apply {
-            appendPath(pollId)
-            optionIds.forEach {
-                appendQueryParameter("options", it)
-            }
-        }.toString()
-        val urlRequest = HttpRequest(URL(uri), hashMapOf(), HttpVerb.GET)
+        val url = urlBuilder.build(endpoint, listOf(pollId), optionIds.associateBy { "option" })
+        val urlRequest = HttpRequest(url, hashMapOf(), HttpVerb.GET)
 
         return httpClient.request(urlRequest, null).map { httpClientResponse ->
             httpResultMapper.mapResultWithBody(httpClientResponse) {
@@ -37,11 +33,8 @@ internal class VotingService(
     }
 
     fun castVote(pollId: String, optionId: String) {
-        val uri = Uri.parse(endpoint).buildUpon().apply {
-            appendPath(pollId)
-            appendPath("vote")
-        }
-        val urlRequest = HttpRequest(URL(uri.toString()), hashMapOf("Content-Type" to "application/json"), HttpVerb.POST)
+        val url = urlBuilder.build(endpoint, listOf(pollId, "vote"))
+        val urlRequest = HttpRequest(url, hashMapOf("Content-Type" to "application/json"), HttpVerb.POST)
 
         val body = JSONObject().apply {
             put("option", optionId)
@@ -54,7 +47,17 @@ internal class VotingService(
             }
         }
     }
+}
 
+internal class URLBuilder {
+    fun build(url: String, pathParams: List<String>? = null, queryParams: Map<String, String>? = null): URL {
+        val uri = Uri.parse(url).buildUpon().apply {
+            pathParams?.forEach { appendPath(it) }
+            queryParams?.forEach { appendQueryParameter(it.key, it.value) }
+        }.toString()
+
+        return URL(uri)
+    }
 }
 
 internal data class OptionResults(val results: Map<String, Int>) {

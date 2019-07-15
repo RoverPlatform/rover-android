@@ -54,74 +54,6 @@ internal class VotingService(
     }
 }
 
-internal class VotingRepository(
-    private val votingService: VotingService,
-    private val votingStorage: VotingStorage) {
-
-
-    //TODO: ensure when listening only list for desired poll id
-    val optionResults: PublishSubject<OptionResults> = PublishSubject()
-
-    fun fetchVotingResults(pollId: String, optionIds: List<String>) {
-        votingService.fetchResults(pollId, optionIds).subscribe {
-            if(it is ApiResult.Success<OptionResults>) {
-                it.response.encodeJson().toString()
-                votingStorage.setPollResults(pollId, it.response.encodeJson().toString())
-                optionResults.onNext(it.response)
-            }
-        }
-    }
-
-    fun castVote(pollId: String, optionId: String) {
-        votingStorage.incrementSavedPollState(pollId, optionId)
-        votingService.castVote(pollId, optionId)
-    }
-
-    fun getSavedPollState(pollId: String) = votingStorage.getSavedPollState(pollId)
-}
-
-internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
-    fun setPollResults(pollId: String, value: String) {
-        keyValueStorage["$pollId-results"] = value
-    }
-
-    fun incrementSavedPollState(pollId: String, optionId: String) {
-        keyValueStorage["$pollId-vote"] = optionId
-
-        val optionResultsJson = keyValueStorage["$pollId-results"]
-
-        optionResultsJson?.let {
-            try {
-                val optionResults = OptionResults.decodeJson(JSONObject(it))
-                val resultsMap = optionResults.results.toMutableMap()
-                resultsMap[optionId] = resultsMap[optionId]!!.plus(1)
-                val resultsToInsert = optionResults.copy(results = resultsMap)
-
-                keyValueStorage["$pollId-results"] = resultsToInsert.encodeJson().toString()
-            } catch (e: JSONException) {
-                log.w("Poll JSON decode problem details: $e, ${e.stackTrace.joinToString("\n")}")
-                null
-            } catch (e: Exception) {
-                log.w("problem incrementing poll state: $e, ${e.stackTrace.joinToString("\n")}\"")
-            }
-        }
-    }
-
-    fun getSavedPollState(pollId: String): OptionResultsWithUserVote? {
-        val optionResultsJson = keyValueStorage["$pollId-results"]
-        val optionResultsVoteJson = keyValueStorage["$pollId-vote"]
-
-        return optionResultsJson?.let {
-            try {
-                OptionResultsWithUserVote(OptionResults.decodeJson(JSONObject(optionResultsJson)), optionResultsVoteJson)
-            } catch (e: JSONException) {
-                log.w("Poll JSON decode problem details: $e, ${e.stackTrace.joinToString("\n")}")
-                null
-            }
-        }
-    }
-}
-
 internal class URLBuilder {
     fun build(url: String, pathParams: List<String>? = null, queryParams: List<Pair<String, String>>? = null): URL {
         val uri = Uri.parse(url).buildUpon().apply {
@@ -132,21 +64,3 @@ internal class URLBuilder {
         return URL(uri)
     }
 }
-
-internal data class OptionResults(val results: Map<String, Int>) {
-    fun encodeJson(): JSONObject {
-        return JSONObject().apply {
-            putProp(this@OptionResults, OptionResults::results) { JSONObject(it) }
-        }
-    }
-
-    companion object {
-        fun decodeJson(jsonObject: JSONObject): OptionResults {
-            return OptionResults(
-                results = jsonObject.getJSONObject("results").toStringIntHash()
-            )
-        }
-    }
-}
-
-internal data class OptionResultsWithUserVote(val optionResults: OptionResults, val userVote: String?)

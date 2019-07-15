@@ -2,6 +2,7 @@ package io.rover.sdk.ui.blocks.poll
 
 import android.net.Uri
 import io.rover.sdk.data.graphql.ApiResult
+import io.rover.sdk.data.graphql.putProp
 import io.rover.sdk.data.graphql.toStringIntHash
 import io.rover.sdk.data.http.HttpClient
 import io.rover.sdk.data.http.HttpClientResponse
@@ -9,17 +10,22 @@ import io.rover.sdk.data.http.HttpRequest
 import io.rover.sdk.data.http.HttpResultMapper
 import io.rover.sdk.data.http.HttpVerb
 import io.rover.sdk.logging.log
+import io.rover.sdk.platform.KeyValueStorage
+import io.rover.sdk.streams.doOnNext
 import io.rover.sdk.streams.map
 import io.rover.sdk.streams.subscribe
+import org.json.JSONException
 import org.json.JSONObject
 import org.reactivestreams.Publisher
+import java.lang.Exception
 import java.net.URL
 
 internal class VotingService(
     private val endpoint: String,
     private val httpClient: HttpClient,
     private val httpResultMapper: HttpResultMapper = HttpResultMapper(),
-    private val urlBuilder: URLBuilder = URLBuilder()
+    private val urlBuilder: URLBuilder = URLBuilder(),
+    private val keyValueStorage: KeyValueStorage
 ) {
     fun getResults(pollId: String, optionIds: List<String>): Publisher<ApiResult<OptionResults>> {
         val url = urlBuilder.build(endpoint, listOf(pollId), optionIds.associateBy { "option" })
@@ -29,6 +35,8 @@ internal class VotingService(
             httpResultMapper.mapResultWithBody(httpClientResponse) {
                 OptionResults.decodeJson(JSONObject(it))
             }
+        }.doOnNext {
+            if(it is ApiResult.Success<OptionResults>) keyValueStorage["$pollId-results"] = it.response.encodeJson().toString()
         }
     }
 
@@ -47,6 +55,42 @@ internal class VotingService(
             }
         }
     }
+
+    fun incrementSavedPollState(pollId: String, optionId: String) {
+        keyValueStorage["$pollId-vote"] = optionId
+
+        val optionResultsJson = keyValueStorage["$pollId-results"]
+
+        optionResultsJson?.let {
+            try {
+                val optionResults = OptionResults.decodeJson(JSONObject(it))
+                val resultsMap = optionResults.results.toMutableMap()
+                resultsMap[optionId] = resultsMap[optionId]!!.plus(1)
+                val resultsToInsert = optionResults.copy(results = resultsMap)
+
+                keyValueStorage["$pollId-results"] = resultsToInsert.encodeJson().toString()
+            } catch (e: JSONException) {
+                log.w("Poll JSON decode problem details: $e, ${e.stackTrace.joinToString("\n")}")
+                null
+            } catch (e: Exception) {
+                log.w("problem incrementing poll state: $e, ${e.stackTrace.joinToString("\n")}\"")
+            }
+        }
+    }
+
+    fun getSavedPollState(pollId: String): OptionResultsWithUserVote? {
+        val optionResultsJson = keyValueStorage["$pollId-results"]
+        val optionResultsVoteJson = keyValueStorage["$pollId-vote"]
+
+        return optionResultsJson?.let {
+            try {
+                OptionResultsWithUserVote(OptionResults.decodeJson(JSONObject(optionResultsJson)), optionResultsVoteJson)
+            } catch (e: JSONException) {
+                log.w("Poll JSON decode problem details: $e, ${e.stackTrace.joinToString("\n")}")
+                null
+            }
+        }
+    }
 }
 
 internal class URLBuilder {
@@ -61,6 +105,12 @@ internal class URLBuilder {
 }
 
 internal data class OptionResults(val results: Map<String, Int>) {
+    fun encodeJson(): JSONObject {
+        return JSONObject().apply {
+            putProp(this@OptionResults, OptionResults::results) { JSONObject(it) }
+        }
+    }
+
     companion object {
         fun decodeJson(jsonObject: JSONObject): OptionResults {
             return OptionResults(
@@ -69,3 +119,5 @@ internal data class OptionResults(val results: Map<String, Int>) {
         }
     }
 }
+
+internal data class OptionResultsWithUserVote(val optionResults: OptionResults, val userVote: String?)

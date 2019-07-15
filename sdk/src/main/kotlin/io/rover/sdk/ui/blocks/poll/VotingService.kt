@@ -2,11 +2,11 @@ package io.rover.sdk.ui.blocks.poll
 
 import android.net.Uri
 import io.rover.sdk.data.graphql.ApiResult
-import io.rover.sdk.data.graphql.HttpResultMapper
 import io.rover.sdk.data.graphql.toStringIntHash
 import io.rover.sdk.data.http.HttpClient
 import io.rover.sdk.data.http.HttpClientResponse
 import io.rover.sdk.data.http.HttpRequest
+import io.rover.sdk.data.http.HttpResultMapper
 import io.rover.sdk.data.http.HttpVerb
 import io.rover.sdk.logging.log
 import io.rover.sdk.streams.map

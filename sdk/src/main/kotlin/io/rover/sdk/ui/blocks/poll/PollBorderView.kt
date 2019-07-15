@@ -24,12 +24,18 @@ internal class PollBorderView(context: Context?) : View(context) {
 
     private fun setBorderRoundRect(border: Border) {
         val halfBorderWidth = border.width.dpAsPx(resources.displayMetrics).toFloat() / 2
+        val borderRadius = border.radius.dpAsPx(resources.displayMetrics).toFloat()
+        val borderStrokeWidth = border.width.dpAsPx(resources.displayMetrics).toFloat()
+
+        // This is in order to maintain the same distance between the middle of the view border and outer edge of the clipped
+        // parent view so that the border extends all the way to the edge of the clipped view.
+        val compensatedBorderRadius = if(borderRadius - halfBorderWidth > 0) borderRadius - halfBorderWidth else 0f
 
         borderRoundRect = RoundRect(rectF = RectF(halfBorderWidth, halfBorderWidth,
             width.toFloat() - halfBorderWidth,
             height.toFloat() - halfBorderWidth),
-            borderRadius = border.radius.dpAsPx(resources.displayMetrics).toFloat(),
-            borderStrokeWidth = border.width.dpAsPx(resources.displayMetrics).toFloat())
+            borderRadius = compensatedBorderRadius,
+            borderStrokeWidth = borderStrokeWidth)
 
         borderPaint = Paint().create(
             border.color.asAndroidColor(),

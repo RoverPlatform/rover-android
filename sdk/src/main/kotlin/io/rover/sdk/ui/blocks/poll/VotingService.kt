@@ -11,6 +11,7 @@ import io.rover.sdk.data.http.HttpResultMapper
 import io.rover.sdk.data.http.HttpVerb
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.KeyValueStorage
+import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.doOnNext
 import io.rover.sdk.streams.map
 import io.rover.sdk.streams.subscribe
@@ -27,7 +28,7 @@ internal class VotingService(
     private val urlBuilder: URLBuilder = URLBuilder(),
     private val keyValueStorage: KeyValueStorage
 ) {
-    fun getResults(pollId: String, optionIds: List<String>): Publisher<ApiResult<OptionResults>> {
+    fun fetchResults(pollId: String, optionIds: List<String>) {
         val url = urlBuilder.build(endpoint, listOf(pollId), optionIds.associateBy { "option" })
         val urlRequest = HttpRequest(url, hashMapOf(), HttpVerb.GET)
 
@@ -35,11 +36,16 @@ internal class VotingService(
             httpResultMapper.mapResultWithBody(httpClientResponse) {
                 OptionResults.decodeJson(JSONObject(it))
             }
-        }.doOnNext {
-            if(it is ApiResult.Success<OptionResults>) keyValueStorage["$pollId-results"] = it.response.encodeJson().toString()
+        }.subscribe {
+            if(it is ApiResult.Success<OptionResults>) {
+                keyValueStorage["$pollId-results"] = it.response.encodeJson().toString()
+                optionResults.onNext(it.response)
+            }
         }
     }
 
+    val optionResults: PublishSubject<OptionResults> = PublishSubject()
+    
     fun castVote(pollId: String, optionId: String) {
         val url = urlBuilder.build(endpoint, listOf(pollId, "vote"))
         val urlRequest = HttpRequest(url, hashMapOf("Content-Type" to "application/json"), HttpVerb.POST)

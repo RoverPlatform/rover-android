@@ -517,7 +517,7 @@ internal fun ImagePollBlock.encodeJson(): JSONObject {
     return encodeSharedJson().apply {
         put("__typename", "PollBlock")
         put("blockType", "image-poll-block")
-        putProp(this@encodeJson, ImagePollBlock::question, "question")
+        putProp(this@encodeJson, ImagePollBlock::question, "question") { it.encodeJson() }
         putProp(this@encodeJson, ImagePollBlock::options, "options") { JSONArray(it.map { it.encodeJson() }) }
     }
 }
@@ -526,7 +526,7 @@ internal fun TextPollBlock.encodeJson(): JSONObject {
     return encodeSharedJson().apply {
         put("__typename", "PollBlock")
         put("blockType", "text-poll-block")
-        putProp(this@encodeJson, TextPollBlock::question, "question")
+        putProp(this@encodeJson, TextPollBlock::question, "question") { it.encodeJson() }
         putProp(this@encodeJson, TextPollBlock::options, "options") { JSONArray(it.map { it.encodeJson()}) }
     }
 }

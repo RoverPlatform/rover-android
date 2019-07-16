@@ -32,8 +32,8 @@ internal class ImagePollBlockView(context: Context?) : LinearLayout(context),
         viewImagePoll.viewModelBinding = binding
     }
 
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
+    override fun draw(canvas: Canvas) {
+        super.draw(canvas)
         viewComposition.afterOnDraw(canvas)
     }
 }

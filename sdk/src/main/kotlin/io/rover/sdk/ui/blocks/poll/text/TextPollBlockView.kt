@@ -32,8 +32,8 @@ internal class TextPollBlockView(context: Context?) : LinearLayout(context),
         viewTextPoll.viewModelBinding = binding
     }
 
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
+    override fun draw(canvas: Canvas) {
+        super.draw(canvas)
         viewComposition.afterOnDraw(canvas)
     }
 }

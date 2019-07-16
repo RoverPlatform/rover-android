@@ -63,7 +63,7 @@ internal class ImagePollViewModel(
 
     private val measurementsSubject = PublishSubject<MeasuredSize>()
 
-    private val imagesList: List<Image> = imagePollBlock.options.map { it.image }
+    private val imagesList: List<Image> = imagePollBlock.options.mapNotNull { it.image }
 
     override fun castVote(selectedOption: Int) {
         // TODO: Add voting logic

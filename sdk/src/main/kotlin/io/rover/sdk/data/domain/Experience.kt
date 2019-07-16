@@ -121,7 +121,7 @@ interface Block {
 data class ImagePollBlockOption(
     val id: String,
     val text: Text,
-    val image: Image,
+    val image: Image?,
     val background: Background,
     val border: Border,
     val opacity: Double,

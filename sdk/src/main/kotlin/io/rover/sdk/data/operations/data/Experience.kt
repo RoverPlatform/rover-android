@@ -489,7 +489,7 @@ internal fun ImagePollBlockOption.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, ImagePollBlockOption::id, "id")
         putProp(this@encodeJson, ImagePollBlockOption::text, "text")
-        putProp(this@encodeJson, ImagePollBlockOption::image, "image") { it.encodeJson() }
+        putProp(this@encodeJson, ImagePollBlockOption::image, "image") { it.optEncodeJson() ?: JSONObject.NULL }
         putProp(this@encodeJson, ImagePollBlockOption::background, "background") { it.encodeJson() }
         putProp(this@encodeJson, ImagePollBlockOption::border, "border") { it.encodeJson() }
         putProp(this@encodeJson, ImagePollBlockOption::opacity, "opacity")
@@ -693,7 +693,7 @@ fun ImagePollBlockOption.Companion.decodeJson(json: JSONObject): ImagePollBlockO
     return ImagePollBlockOption(
         id = json.safeGetString("id"),
         text = Text.decodeJson(json.getJSONObject("text")),
-        image = Image.decodeJson(json.getJSONObject("image")),
+        image = Image.optDecodeJSON(json.getJSONObject("image")),
         background = Background.decodeJson(json.getJSONObject("background")),
         border = Border.decodeJson(json.getJSONObject("border")),
         opacity = json.getDouble("opacity"),

@@ -147,12 +147,10 @@
                   "opacity": 1,
                   "topMargin": 0,
                   "resultFillColor": {
-                    "color": {
                       "red": 129,
                       "green": 129,
                       "blue": 129,
                       "alpha": 1
-                    }
                   }
                 },
                 {
@@ -196,12 +194,10 @@
                   "opacity": 1,
                   "topMargin": 0,
                   "resultFillColor": {
-                    "color": {
                       "red": 129,
                       "green": 129,
                       "blue": 129,
                       "alpha": 1
-                    }
                   }
                 }
               ]

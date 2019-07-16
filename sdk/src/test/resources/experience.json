@@ -147,10 +147,10 @@
                   "opacity": 1,
                   "topMargin": 0,
                   "resultFillColor": {
-                      "red": 129,
-                      "green": 129,
-                      "blue": 129,
-                      "alpha": 1
+                    "red": 129,
+                    "green": 129,
+                    "blue": 129,
+                    "alpha": 1
                   }
                 },
                 {
@@ -194,10 +194,10 @@
                   "opacity": 1,
                   "topMargin": 0,
                   "resultFillColor": {
-                      "red": 129,
-                      "green": 129,
-                      "blue": 129,
-                      "alpha": 1
+                    "red": 129,
+                    "green": 129,
+                    "blue": 129,
+                    "alpha": 1
                   }
                 }
               ]
@@ -378,7 +378,6 @@
                     "alpha": 1
                   }
                 }
-
               ]
             },
             {

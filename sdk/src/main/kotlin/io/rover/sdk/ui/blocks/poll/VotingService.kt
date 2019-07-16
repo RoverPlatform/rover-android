@@ -37,11 +37,11 @@ internal class VotingService(
         }
     }
 
-    fun castVote(pollId: String, optionId: String) {
+    fun castVote(pollId: String, optionId: String, jsonObject: JSONObject = JSONObject()) {
         val url = urlBuilder.build(endpoint, listOf(pollId, "vote"))
         val urlRequest = HttpRequest(url, hashMapOf("Content-Type" to "application/json"), HttpVerb.POST)
 
-        val body = JSONObject().apply {
+        val body = jsonObject.apply {
             put("option", optionId)
         }.toString()
 

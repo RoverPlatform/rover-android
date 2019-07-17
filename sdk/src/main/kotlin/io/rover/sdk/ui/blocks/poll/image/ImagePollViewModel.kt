@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import io.rover.sdk.assets.AssetService
 import io.rover.sdk.assets.ImageOptimizationService
 import io.rover.sdk.data.domain.Image
-import io.rover.sdk.data.domain.ImagePollBlock
+import io.rover.sdk.data.domain.ImagePoll
 import io.rover.sdk.data.getFontAppearance
 import io.rover.sdk.services.MeasurementService
 import io.rover.sdk.streams.PublishSubject
@@ -24,7 +24,7 @@ import io.rover.sdk.ui.dpAsPx
 import org.reactivestreams.Publisher
 
 internal class ImagePollViewModel(
-    override val imagePollBlock: ImagePollBlock,
+    override val imagePoll: ImagePoll,
     private val measurementService: MeasurementService,
     private val assetService: AssetService,
     private val imageOptimizationService: ImageOptimizationService,
@@ -38,20 +38,20 @@ internal class ImagePollViewModel(
 
     override fun intrinsicHeight(bounds: io.rover.sdk.ui.RectF): Float {
         val questionHeight = measurementService.measureHeightNeededForMultiLineTextInTextView(
-            imagePollBlock.question.rawValue,
-            imagePollBlock.question.font.getFontAppearance(imagePollBlock.question.color, imagePollBlock.question.alignment),
+            imagePoll.question.rawValue,
+            imagePoll.question.font.getFontAppearance(imagePoll.question.color, imagePoll.question.alignment),
             bounds.width()
         )
 
         val horizontalSpacing =
-            measurementService.snapToPixValue(imagePollBlock.options[1].leftMargin)
+            measurementService.snapToPixValue(imagePoll.options[1].leftMargin)
         val optionTextHeight = measurementService.snapToPixValue(OPTION_TEXT_HEIGHT)
         val verticalSpacing =
-            measurementService.snapToPixValue(imagePollBlock.options.first().topMargin)
+            measurementService.snapToPixValue(imagePoll.options.first().topMargin)
 
         val optionImageHeight = (bounds.width() - horizontalSpacing) / 2
 
-        return when (imagePollBlock.options.size) {
+        return when (imagePoll.options.size) {
             2 -> verticalSpacing + optionTextHeight + optionImageHeight + questionHeight
             else -> 2 * (verticalSpacing + optionTextHeight + optionImageHeight) + questionHeight
         }
@@ -63,7 +63,7 @@ internal class ImagePollViewModel(
 
     private val measurementsSubject = PublishSubject<MeasuredSize>()
 
-    private val imagesList: List<Image> = imagePollBlock.options.mapNotNull { it.image }
+    private val imagesList: List<Image> = imagePoll.options.mapNotNull { it.image }
 
     override fun castVote(selectedOption: Int) {
         // TODO: Add voting logic
@@ -86,7 +86,7 @@ internal class ImagePollViewModel(
         return flatMap { (timestampMillis, measuredSize) ->
             val optimizedImages = imagesList.map {
                 val pixelSize = PixelSize(measuredSize.width.dpAsPx(measuredSize.density), measuredSize.height.dpAsPx(measuredSize.density))
-                val uriWithParameters = imageOptimizationService.optimizeImageBlock(it, imagePollBlock.options.first().border.width, pixelSize, measuredSize.density)
+                val uriWithParameters = imageOptimizationService.optimizeImageBlock(it, imagePoll.options.first().border.width, pixelSize, measuredSize.density)
 
                 return@map assetService.imageByUrl(uriWithParameters.toURL()).map { bitmap ->
                     val timeElapsed = System.currentTimeMillis() - timestampMillis
@@ -99,7 +99,7 @@ internal class ImagePollViewModel(
 }
 
 internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
-    val imagePollBlock: ImagePollBlock
+    val imagePoll: ImagePoll
 
     /**
      * Subscribe to be informed of the images becoming ready.

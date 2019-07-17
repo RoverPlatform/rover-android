@@ -39,11 +39,12 @@
           },
           "blocks": [
             {
+              "__typename": "TextPollBlock",
               "background": {
                 "color": {
-                  "red": 238,
-                  "green": 238,
-                  "blue": 238,
+                  "red": 0,
+                  "green": 0,
+                  "blue": 0,
                   "alpha": 0
                 },
                 "contentMode": "ORIGINAL",
@@ -52,16 +53,16 @@
               },
               "border": {
                 "color": {
-                  "red": 129,
-                  "green": 129,
-                  "blue": 129,
+                  "red": 0,
+                  "green": 0,
+                  "blue": 0,
                   "alpha": 0
                 },
                 "radius": 0,
                 "width": 0
               },
-              "id": "textYz",
-              "name": "Text Poll Block",
+              "id": "BJe48v6NWS",
+              "name": "Text Poll",
               "insets": {
                 "bottom": 0,
                 "left": 0,
@@ -71,16 +72,17 @@
               "opacity": 1,
               "position": {
                 "horizontalAlignment": {
-                  "__typename": "HorizontalAlignmentCenter",
-                  "offset": 0,
-                  "width": 400
+                  "__typename": "HorizontalAlignmentFill",
+                  "leftOffset": 20,
+                  "rightOffset": 20
                 },
                 "verticalAlignment": {
                   "__typename": "VerticalAlignmentStacked",
-                  "topOffset": 0,
-                  "bottomOffset": 0,
+                  "topOffset": 20,
+                  "bottomOffset": 20,
                   "height": {
-                    "__typename": "HeightIntrinsic"
+                    "__typename": "HeightStatic",
+                    "value": 274
                   }
                 }
               },
@@ -89,125 +91,173 @@
               },
               "keys": {},
               "tags": [],
-              "__typename": "PollBlock",
-              "blockType": "text-poll-block",
-              "question": {
-                "rawValue": "The Rover team's Faves",
-                "alignment": "CENTER",
-                "color": {
-                  "red": 0,
-                  "green": 0,
-                  "blue": 0,
-                  "alpha": 1
-                },
-                "font": {
-                  "size": 32,
-                  "weight": "REGULAR"
-                }
-              },
-              "options": [
-                {
-                  "id": "this option",
-                  "text": {
-                    "rawValue": "The Rover team's Faves",
-                    "alignment": "CENTER",
-                    "color": {
-                      "red": 0,
-                      "green": 0,
-                      "blue": 0,
-                      "alpha": 1
-                    },
-                    "font": {
-                      "size": 16,
-                      "weight": "REGULAR"
-                    }
-                  },
-                  "background": {
-                    "color": {
-                      "red": 238,
-                      "green": 238,
-                      "blue": 238,
-                      "alpha": 0
-                    },
-                    "contentMode": "ORIGINAL",
-                    "image": null,
-                    "scale": "X1"
-                  },
-                  "border": {
-                    "color": {
-                      "red": 129,
-                      "green": 129,
-                      "blue": 129,
-                      "alpha": 1
-                    },
-                    "radius": 0,
-                    "width": 0
-                  },
-                  "height": 40,
-                  "opacity": 1,
-                  "topMargin": 0,
-                  "resultFillColor": {
-                    "red": 129,
-                    "green": 129,
-                    "blue": 129,
+              "textPoll": {
+                "question": {
+                  "rawValue": "Which is the best?",
+                  "alignment": "CENTER",
+                  "color": {
+                    "red": 0,
+                    "green": 0,
+                    "blue": 0,
                     "alpha": 1
+                  },
+                  "font": {
+                    "size": 16,
+                    "weight": "SEMI_BOLD"
                   }
                 },
-                {
-                  "id": "this option",
-                  "text": {
-                    "rawValue": "The Rover team's Faves",
-                    "alignment": "CENTER",
-                    "color": {
-                      "red": 0,
-                      "green": 0,
-                      "blue": 0,
-                      "alpha": 1
+                "options": [
+                  {
+                    "height": 50,
+                    "id": "VGhpcyBvbmU_",
+                    "text": {
+                      "rawValue": "This one?",
+                      "alignment": "LEFT",
+                      "color": {
+                        "red": 92,
+                        "green": 93,
+                        "blue": 92,
+                        "alpha": 1
+                      },
+                      "font": {
+                        "size": 16,
+                        "weight": "REGULAR"
+                      }
                     },
-                    "font": {
-                      "size": 16,
-                      "weight": "REGULAR"
+                    "background": {
+                      "color": {
+                        "red": 255,
+                        "green": 255,
+                        "blue": 255,
+                        "alpha": 1
+                      },
+                      "contentMode": "ORIGINAL",
+                      "image": null,
+                      "scale": "X1"
+                    },
+                    "border": {
+                      "color": {
+                        "red": 216,
+                        "green": 216,
+                        "blue": 216,
+                        "alpha": 1
+                      },
+                      "radius": 15,
+                      "width": 8
+                    },
+                    "opacity": 1,
+                    "topMargin": 20,
+                    "resultFillColor": {
+                      "red": 160,
+                      "green": 216,
+                      "blue": 255,
+                      "alpha": 1
                     }
                   },
-                  "background": {
-                    "color": {
-                      "red": 238,
-                      "green": 238,
-                      "blue": 238,
-                      "alpha": 0
+                  {
+                    "height": 50,
+                    "id": "VGhpcyBPdGhlciBPbmU_",
+                    "text": {
+                      "rawValue": "This Other One?",
+                      "alignment": "LEFT",
+                      "color": {
+                        "red": 92,
+                        "green": 93,
+                        "blue": 92,
+                        "alpha": 1
+                      },
+                      "font": {
+                        "size": 16,
+                        "weight": "REGULAR"
+                      }
                     },
-                    "contentMode": "ORIGINAL",
-                    "image": null,
-                    "scale": "X1"
-                  },
-                  "border": {
-                    "color": {
-                      "red": 129,
-                      "green": 129,
-                      "blue": 129,
+                    "background": {
+                      "color": {
+                        "red": 255,
+                        "green": 255,
+                        "blue": 255,
+                        "alpha": 1
+                      },
+                      "contentMode": "ORIGINAL",
+                      "image": null,
+                      "scale": "X1"
+                    },
+                    "border": {
+                      "color": {
+                        "red": 216,
+                        "green": 216,
+                        "blue": 216,
+                        "alpha": 1
+                      },
+                      "radius": 15,
+                      "width": 8
+                    },
+                    "opacity": 1,
+                    "topMargin": 20,
+                    "resultFillColor": {
+                      "red": 160,
+                      "green": 216,
+                      "blue": 255,
                       "alpha": 1
-                    },
-                    "radius": 0,
-                    "width": 0
+                    }
                   },
-                  "height": 40,
-                  "opacity": 1,
-                  "topMargin": 0,
-                  "resultFillColor": {
-                    "red": 129,
-                    "green": 129,
-                    "blue": 129,
-                    "alpha": 1
+                  {
+                    "height": 50,
+                    "id": "T3B0aW9uIDM=",
+                    "text": {
+                      "rawValue": "Option 3",
+                      "alignment": "LEFT",
+                      "color": {
+                        "red": 92,
+                        "green": 93,
+                        "blue": 92,
+                        "alpha": 1
+                      },
+                      "font": {
+                        "size": 16,
+                        "weight": "REGULAR"
+                      }
+                    },
+                    "background": {
+                      "color": {
+                        "red": 255,
+                        "green": 255,
+                        "blue": 255,
+                        "alpha": 1
+                      },
+                      "contentMode": "ORIGINAL",
+                      "image": null,
+                      "scale": "X1"
+                    },
+                    "border": {
+                      "color": {
+                        "red": 216,
+                        "green": 216,
+                        "blue": 216,
+                        "alpha": 1
+                      },
+                      "radius": 15,
+                      "width": 8
+                    },
+                    "opacity": 1,
+                    "topMargin": 20,
+                    "resultFillColor": {
+                      "red": 160,
+                      "green": 216,
+                      "blue": 255,
+                      "alpha": 1
+                    }
                   }
-                }
-              ]
+                ]
+              }
             },
             {
+              "__typename": "ImagePollBlock",
               "background": {
                 "color": {
-                  "red": 238,
-                  "green": 238,
-                  "blue": 238,
+                  "red": 0,
+                  "green": 0,
+                  "blue": 0,
                   "alpha": 0
                 },
                 "contentMode": "ORIGINAL",
@@ -216,16 +266,16 @@
               },
               "border": {
                 "color": {
-                  "red": 129,
-                  "green": 129,
-                  "blue": 129,
+                  "red": 0,
+                  "green": 0,
+                  "blue": 0,
                   "alpha": 0
                 },
                 "radius": 0,
                 "width": 0
               },
-              "id": "imageYz",
-              "name": "Image Poll Block",
+              "id": "rygDKT02WS",
+              "name": "Image Poll",
               "insets": {
                 "bottom": 0,
                 "left": 0,
@@ -235,16 +285,17 @@
               "opacity": 1,
               "position": {
                 "horizontalAlignment": {
-                  "__typename": "HorizontalAlignmentCenter",
-                  "offset": 0,
-                  "width": 400
+                  "__typename": "HorizontalAlignmentFill",
+                  "leftOffset": 20,
+                  "rightOffset": 20
                 },
                 "verticalAlignment": {
                   "__typename": "VerticalAlignmentStacked",
-                  "topOffset": 0,
-                  "bottomOffset": 0,
+                  "topOffset": 20,
+                  "bottomOffset": 20,
                   "height": {
-                    "__typename": "HeightIntrinsic"
+                    "__typename": "HeightStatic",
+                    "value": 233.5
                   }
                 }
               },
@@ -253,132 +304,134 @@
               },
               "keys": {},
               "tags": [],
-              "__typename": "PollBlock",
-              "blockType": "image-poll-block",
-              "question": {
-                "rawValue": "The Rover team's Faves",
-                "alignment": "CENTER",
-                "color": {
-                  "red": 0,
-                  "green": 0,
-                  "blue": 0,
-                  "alpha": 1
-                },
-                "font": {
-                  "size": 32,
-                  "weight": "REGULAR"
-                }
-              },
-              "options": [
-                {
-                  "id": "this option",
-                  "text": {
-                    "rawValue": "The Rover team's Faves",
-                    "alignment": "CENTER",
-                    "color": {
-                      "red": 0,
-                      "green": 0,
-                      "blue": 0,
-                      "alpha": 1
-                    },
-                    "font": {
-                      "size": 16,
-                      "weight": "REGULAR"
-                    }
-                  },
-                  "background": {
-                    "color": {
-                      "red": 238,
-                      "green": 0,
-                      "blue": 0,
-                      "alpha": 1
-                    },
-                    "contentMode": "ORIGINAL",
-                    "image": null,
-                    "scale": "X1"
-                  },
-                  "border": {
-                    "color": {
-                      "red": 0,
-                      "green": 129,
-                      "blue": 0,
-                      "alpha": 1
-                    },
-                    "radius": 5,
-                    "width": 10
-                  },
-                  "image": {
-                    "height": 561,
-                    "name": "tex-mex-lasagna-main.png",
-                    "size": 593477,
-                    "width": 936,
-                    "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/5156d40b-11ed-40c2-8f41-9ed681842c61-tex-mex-lasagna-main.png"
-                  },
-                  "opacity": 1,
-                  "topMargin": 10,
-                  "leftMargin": 0,
-                  "resultFillColor": {
-                    "red": 129,
-                    "green": 129,
-                    "blue": 129,
+              "imagePoll": {
+                "question": {
+                  "rawValue": "fdfsfd",
+                  "alignment": "LEFT",
+                  "color": {
+                    "red": 0,
+                    "green": 0,
+                    "blue": 0,
                     "alpha": 1
+                  },
+                  "font": {
+                    "size": 16,
+                    "weight": "SEMI_BOLD"
                   }
                 },
-                {
-                  "id": "this option",
-                  "text": {
-                    "rawValue": "The Rover team's Faves",
-                    "alignment": "CENTER",
-                    "color": {
-                      "red": 0,
-                      "green": 0,
-                      "blue": 0,
-                      "alpha": 1
+                "options": [
+                  {
+                    "id": "aHR0cHM6Ly9pbWFnZXMtcm92ZXItaW8uaW1naXgubmV0L3VwbG9hZHMvMjAyY2I5NjJhYzU5MDc1Yjk2NGIwNzE1MmQyMzRiNzAvNmE2MDMyMDEtY2E1MC00MWVhLWE5ZGYtY2MxNjBiNzhlOTBlLTEyMDU1ODQ4LXR2LWNvbG9yLXRlc3QtcGF0dGVybi10ZXN0LWNhcmQtZm9yLXBhbC1hbmQtbnRzYy5qcGc=",
+                    "text": {
+                      "rawValue": "dfds",
+                      "alignment": "CENTER",
+                      "color": {
+                        "red": 92,
+                        "green": 93,
+                        "blue": 92,
+                        "alpha": 1
+                      },
+                      "font": {
+                        "size": 16,
+                        "weight": "SEMI_BOLD"
+                      }
                     },
-                    "font": {
-                      "size": 16,
-                      "weight": "REGULAR"
+                    "image": {
+                      "height": 993,
+                      "isURLOptimizationEnabled": true,
+                      "name": "12055848-tv-color-test-pattern-test-card-for-pal-and-ntsc.jpg",
+                      "size": 120001,
+                      "width": 1300,
+                      "url": "https://images-rover-io.imgix.net/uploads/202cb962ac59075b964b07152d234b70/6a603201-ca50-41ea-a9df-cc160b78e90e-12055848-tv-color-test-pattern-test-card-for-pal-and-ntsc.jpg"
+                    },
+                    "background": {
+                      "color": {
+                        "red": 255,
+                        "green": 255,
+                        "blue": 255,
+                        "alpha": 1
+                      },
+                      "contentMode": "ORIGINAL",
+                      "image": null,
+                      "scale": "X1"
+                    },
+                    "border": {
+                      "color": {
+                        "red": 220,
+                        "green": 220,
+                        "blue": 220,
+                        "alpha": 1
+                      },
+                      "radius": 1,
+                      "width": 1
+                    },
+                    "opacity": 1,
+                    "topMargin": 20,
+                    "leftMargin": 0,
+                    "resultFillColor": {
+                      "red": 160,
+                      "green": 216,
+                      "blue": 255,
+                      "alpha": 1
                     }
                   },
-                  "background": {
-                    "color": {
-                      "red": 238,
-                      "green": 0,
-                      "blue": 0,
-                      "alpha": 1
+                  {
+                    "id": "aHR0cHM6Ly9pbWFnZXMtcm92ZXItaW8uaW1naXgubmV0L3VwbG9hZHMvMjAyY2I5NjJhYzU5MDc1Yjk2NGIwNzE1MmQyMzRiNzAvMzRjNDdmYWYtNGFmNC00N2Y0LTljZmQtZTIxNjgxMDAwNDk1LTEyMDU1ODQ4LXR2LWNvbG9yLXRlc3QtcGF0dGVybi10ZXN0LWNhcmQtZm9yLXBhbC1hbmQtbnRzYy5qcGc=",
+                    "text": {
+                      "rawValue": "fdsdfs",
+                      "alignment": "CENTER",
+                      "color": {
+                        "red": 92,
+                        "green": 93,
+                        "blue": 92,
+                        "alpha": 1
+                      },
+                      "font": {
+                        "size": 16,
+                        "weight": "SEMI_BOLD"
+                      }
                     },
-                    "contentMode": "ORIGINAL",
-                    "image": null,
-                    "scale": "X1"
-                  },
-                  "border": {
-                    "color": {
-                      "red": 0,
-                      "green": 129,
-                      "blue": 0,
-                      "alpha": 1
+                    "image": {
+                      "height": 993,
+                      "isURLOptimizationEnabled": true,
+                      "name": "12055848-tv-color-test-pattern-test-card-for-pal-and-ntsc.jpg",
+                      "size": 120001,
+                      "width": 1300,
+                      "url": "https://images-rover-io.imgix.net/uploads/202cb962ac59075b964b07152d234b70/34c47faf-4af4-47f4-9cfd-e21681000495-12055848-tv-color-test-pattern-test-card-for-pal-and-ntsc.jpg"
                     },
-                    "radius": 5,
-                    "width": 10
-                  },
-                  "image": {
-                    "height": 561,
-                    "name": "tex-mex-lasagna-main.png",
-                    "size": 593477,
-                    "width": 936,
-                    "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/5156d40b-11ed-40c2-8f41-9ed681842c61-tex-mex-lasagna-main.png"
-                  },
-                  "opacity": 1,
-                  "topMargin": 10,
-                  "leftMargin": 5,
-                  "resultFillColor": {
-                    "red": 129,
-                    "green": 129,
-                    "blue": 129,
-                    "alpha": 1
+                    "background": {
+                      "color": {
+                        "red": 255,
+                        "green": 255,
+                        "blue": 255,
+                        "alpha": 1
+                      },
+                      "contentMode": "ORIGINAL",
+                      "image": null,
+                      "scale": "X1"
+                    },
+                    "border": {
+                      "color": {
+                        "red": 220,
+                        "green": 220,
+                        "blue": 220,
+                        "alpha": 1
+                      },
+                      "radius": 1,
+                      "width": 1
+                    },
+                    "opacity": 1,
+                    "topMargin": 20,
+                    "leftMargin": 20,
+                    "resultFillColor": {
+                      "red": 160,
+                      "green": 216,
+                      "blue": 255,
+                      "alpha": 1
+                    }
                   }
-                }
-              ]
+                ]
+              }
             },
             {
               "__typename": "ImageBlock",

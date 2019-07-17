@@ -132,10 +132,6 @@ data class ImagePollBlockOption(
     companion object
 }
 
-sealed class PollBlock : Block {
-    companion object
-}
-
 data class ImagePollBlock(
     override val id: String,
     override val insets: Insets,
@@ -147,9 +143,12 @@ data class ImagePollBlock(
     override val border: Border,
     override val name: String,
     override val tags: List<String>,
-    val question: Text,
-    val options: List<ImagePollBlockOption>
-) : PollBlock() {
+    val imagePoll: ImagePoll
+) : Block {
+    companion object
+}
+
+data class ImagePoll(val question: Text, val options: List<ImagePollBlockOption>) {
     companion object
 }
 
@@ -164,9 +163,12 @@ data class TextPollBlock(
     override val border: Border,
     override val name: String,
     override val tags: List<String>,
-    val question: Text,
-    val options: List<TextPollOption>
-) : PollBlock() {
+    val textPoll: TextPoll
+) : Block {
+    companion object
+}
+
+data class TextPoll(val question: Text, val options: List<TextPollOption>) {
     companion object
 }
 

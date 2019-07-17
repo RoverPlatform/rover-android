@@ -19,10 +19,10 @@ import io.rover.sdk.data.domain.Height
 import io.rover.sdk.data.domain.HorizontalAlignment
 import io.rover.sdk.data.domain.Image
 import io.rover.sdk.data.domain.ImageBlock
+import io.rover.sdk.data.domain.ImagePoll
 import io.rover.sdk.data.domain.ImagePollBlock
 import io.rover.sdk.data.domain.ImagePollBlockOption
 import io.rover.sdk.data.domain.Insets
-import io.rover.sdk.data.domain.PollBlock
 import io.rover.sdk.data.domain.Position
 import io.rover.sdk.data.domain.RectangleBlock
 import io.rover.sdk.data.domain.Row
@@ -32,6 +32,7 @@ import io.rover.sdk.data.domain.StatusBarStyle
 import io.rover.sdk.data.domain.Text
 import io.rover.sdk.data.domain.TextAlignment
 import io.rover.sdk.data.domain.TextBlock
+import io.rover.sdk.data.domain.TextPoll
 import io.rover.sdk.data.domain.TextPollBlock
 import io.rover.sdk.data.domain.TextPollOption
 import io.rover.sdk.data.domain.TitleBar
@@ -458,7 +459,8 @@ internal fun Block.encodeJson(): JSONObject {
         is RectangleBlock -> this.encodeJson()
         is TextBlock -> this.encodeJson()
         is WebViewBlock -> this.encodeJson()
-        is PollBlock -> this.encodeJson()
+        is TextPollBlock -> this.encodeJson()
+        is ImagePollBlock -> this.encodeJson()
         else -> throw RuntimeException("Unsupported Block type for serialization")
     }
 }
@@ -475,13 +477,6 @@ internal fun Block.encodeSharedJson(): JSONObject {
         putProp(this@encodeSharedJson, Block::keys, "keys") { JSONObject(it) }
         putProp(this@encodeSharedJson, Block::name, "name") { it }
         putProp(this@encodeSharedJson, Block::tags) { JSONArray(it) }
-    }
-}
-
-internal fun PollBlock.encodeJson(): JSONObject {
-    return when (this) {
-        is ImagePollBlock -> this.encodeJson()
-        is TextPollBlock -> this.encodeJson()
     }
 }
 
@@ -515,19 +510,29 @@ internal fun TextPollOption.encodeJson(): JSONObject {
 
 internal fun ImagePollBlock.encodeJson(): JSONObject {
     return encodeSharedJson().apply {
-        put("__typename", "PollBlock")
-        put("blockType", "image-poll-block")
-        putProp(this@encodeJson, ImagePollBlock::question, "question") { it.encodeJson() }
-        putProp(this@encodeJson, ImagePollBlock::options, "options") { JSONArray(it.map { it.encodeJson() }) }
+        put("__typename", "ImagePollBlock")
+        putProp(this@encodeJson, ImagePollBlock::imagePoll, "imagePoll") { it.encodeJson() }
+    }
+}
+
+internal fun ImagePoll.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, ImagePoll::question, "question") { it.encodeJson() }
+        putProp(this@encodeJson, ImagePoll::options, "options") { JSONArray(it.map { it.encodeJson() }) }
+    }
+}
+
+internal fun TextPoll.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, TextPoll::question, "question") { it.encodeJson() }
+        putProp(this@encodeJson, TextPoll::options, "options") { JSONArray(it.map { it.encodeJson()}) }
     }
 }
 
 internal fun TextPollBlock.encodeJson(): JSONObject {
     return encodeSharedJson().apply {
-        put("__typename", "PollBlock")
-        put("blockType", "text-poll-block")
-        putProp(this@encodeJson, TextPollBlock::question, "question") { it.encodeJson() }
-        putProp(this@encodeJson, TextPollBlock::options, "options") { JSONArray(it.map { it.encodeJson()}) }
+        put("__typename", "TextPollBlock")
+        putProp(this@encodeJson, TextPollBlock::textPoll, "textPoll") { it.encodeJson() }
     }
 }
 
@@ -681,13 +686,6 @@ internal fun Block.TapBehavior.Companion.decodeJson(json: JSONObject): Block.Tap
         else -> throw JSONException("Unsupported Block TapBehavior type `$typeName`.")
     }
 }
-internal fun PollBlock.Companion.decodeJson(json: JSONObject): PollBlock {
-    return when (json.safeGetString("blockType")) {
-        "image-poll-block" -> { decodeToImagePollBlock(json) }
-        "text-poll-block" -> { decodeToTextPollBlock(json) }
-        else -> throw JSONException("Unsupported poll block type")
-    }
-}
 
 fun ImagePollBlockOption.Companion.decodeJson(json: JSONObject): ImagePollBlockOption {
     return ImagePollBlockOption(
@@ -703,7 +701,7 @@ fun ImagePollBlockOption.Companion.decodeJson(json: JSONObject): ImagePollBlockO
     )
 }
 
-fun decodeToImagePollBlock(json: JSONObject): ImagePollBlock {
+fun ImagePollBlock.Companion.decodeJson(json: JSONObject): ImagePollBlock {
     return ImagePollBlock(
         id = json.safeGetString("id"),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
@@ -715,9 +713,13 @@ fun decodeToImagePollBlock(json: JSONObject): ImagePollBlock {
         border = Border.decodeJson(json.getJSONObject("border")),
         name = json.safeGetString("name"),
         tags = json.getJSONArray("tags").getStringIterable().toList(),
-        question = Text.decodeJson(json.getJSONObject("question")),
-        options = json.getJSONArray("options").getObjectIterable().map { ImagePollBlockOption.decodeJson(it) }
+        imagePoll = ImagePoll.decodeJson(json.getJSONObject("imagePoll"))
     )
+}
+
+fun ImagePoll.Companion.decodeJson(json: JSONObject): ImagePoll {
+    return ImagePoll(question = Text.decodeJson(json.getJSONObject("question")),
+        options = json.getJSONArray("options").getObjectIterable().map { ImagePollBlockOption.decodeJson(it) })
 }
 
 fun TextPollOption.Companion.decodeJson(json: JSONObject): TextPollOption {
@@ -733,7 +735,14 @@ fun TextPollOption.Companion.decodeJson(json: JSONObject): TextPollOption {
     )
 }
 
-fun decodeToTextPollBlock(json: JSONObject): TextPollBlock {
+fun TextPoll.Companion.decodeJson(json: JSONObject): TextPoll {
+    return TextPoll(
+        question = Text.decodeJson(json.getJSONObject("question")),
+        options = json.getJSONArray("options").getObjectIterable().map { TextPollOption.decodeJson(it) }
+    )
+}
+
+fun TextPollBlock.Companion.decodeJson(json: JSONObject): TextPollBlock {
     return TextPollBlock(
         id = json.safeGetString("id"),
         insets = Insets.decodeJson(json.getJSONObject("insets")),
@@ -745,8 +754,7 @@ fun decodeToTextPollBlock(json: JSONObject): TextPollBlock {
         border = Border.decodeJson(json.getJSONObject("border")),
         name = json.safeGetString("name"),
         tags = json.getJSONArray("tags").getStringIterable().toList(),
-        question = Text.decodeJson(json.getJSONObject("question")),
-        options = json.getJSONArray("options").getObjectIterable().map { TextPollOption.decodeJson(it) }
+        textPoll = TextPoll.decodeJson(json.getJSONObject("textPoll"))
     )
 }
 
@@ -781,7 +789,8 @@ internal val RectangleBlock.Companion.resourceName get() = "RectangleBlock"
 internal val WebViewBlock.Companion.resourceName get() = "WebViewBlock"
 internal val TextBlock.Companion.resourceName get() = "TextBlock"
 internal val ImageBlock.Companion.resourceName get() = "ImageBlock"
-internal val PollBlock.Companion.resourceName get() = "PollBlock"
+internal val TextPollBlock.Companion.resourceName get() = "TextPollBlock"
+internal val ImagePollBlock.Companion.resourceName get() = "ImagePollBlock"
 
 internal fun Block.Companion.decodeJson(json: JSONObject): Block {
     // Block has subclasses, so we need to delegate to the appropriate deserializer for each
@@ -795,7 +804,8 @@ internal fun Block.Companion.decodeJson(json: JSONObject): Block {
         WebViewBlock.resourceName -> WebViewBlock.decodeJson(json)
         TextBlock.resourceName -> TextBlock.decodeJson(json)
         ImageBlock.resourceName -> ImageBlock.decodeJson(json)
-        PollBlock.resourceName -> PollBlock.decodeJson(json)
+        TextPollBlock.resourceName -> TextPollBlock.decodeJson(json)
+        ImagePollBlock.resourceName -> ImagePollBlock.decodeJson(json)
         else -> throw RuntimeException("Unsupported Block type '$typeName'.")
     }
 }

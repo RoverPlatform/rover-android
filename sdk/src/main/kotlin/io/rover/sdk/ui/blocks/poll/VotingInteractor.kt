@@ -4,7 +4,7 @@ import io.rover.sdk.data.graphql.ApiResult
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.subscribe
 
-internal class VotingRepository(
+internal class VotingInteractor(
     private val votingService: VotingService,
     private val votingStorage: VotingStorage,
     val optionResults: PublishSubject<OptionResults> = PublishSubject()) {

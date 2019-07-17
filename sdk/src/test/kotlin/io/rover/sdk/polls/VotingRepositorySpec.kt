@@ -1,5 +1,7 @@
 package io.rover.sdk.polls
 
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
@@ -33,7 +35,7 @@ object VotingRepositorySpec : Spek({
         it("increments saved poll state and casts vote") {
             votingRepository.castVote(pollId, optionId)
             verify(votingStorage).incrementSavedPollState(pollId, optionId)
-            verify(votingService).castVote(pollId, optionId)
+            verify(votingService).castVote(eq(pollId), eq(optionId), any())
         }
     }
 

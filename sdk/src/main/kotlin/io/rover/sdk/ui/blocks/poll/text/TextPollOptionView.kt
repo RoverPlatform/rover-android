@@ -298,7 +298,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 }
 
 private data class OptionPaints(
-    val borderPaint: Paint = Paint(),
     val fillPaint: Paint = Paint(),
     val resultPaint: Paint = Paint()
 )

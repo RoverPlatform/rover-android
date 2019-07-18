@@ -215,10 +215,10 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             maxWidth = this@TextOptionView.width - widthOfOtherViews
         }
 
-        performResultsAnimation(votingShare)
+        performResultsAnimation(votingShare, (optionStyle.resultFillColor.alpha * 255).toInt())
     }
 
-    private fun performResultsAnimation(votingShare: Int) {
+    private fun performResultsAnimation(votingShare: Int, resultFillAlpha: Int) {
         val easeInEaseOutInterpolator = TimeInterpolator { input ->
             val inputSquared = input * input
             inputSquared / (2.0f * (inputSquared - input) + 1.0f)
@@ -232,10 +232,10 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             }
         }
 
-        val resultFillAlphaAnimator = ValueAnimator.ofInt(0, 255).apply {
+        val resultFillAlphaAnimator = ValueAnimator.ofInt(0, resultFillAlpha).apply {
             duration = RESULT_FILL_ALPHA_DURATION
             addUpdateListener {
-                optionPaints.resultPaint.alpha = it.animatedValue as Int
+                optionPaints.resultPaint.alpha = (it.animatedValue as Int)
             }
         }
 

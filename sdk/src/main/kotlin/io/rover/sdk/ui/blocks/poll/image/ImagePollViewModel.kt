@@ -67,7 +67,7 @@ internal class ImagePollViewModel(
 
     override fun castVote(selectedOption: Int) {
         // TODO: Add voting logic
-        setResultsState(selectedOption, listOf(20, 42, 67, 100))
+        setResultsState(selectedOption, listOf(20, 42, 15, 18))
     }
 
     override val votingState = PublishSubject<VotingState>()
@@ -86,7 +86,7 @@ internal class ImagePollViewModel(
         return flatMap { (timestampMillis, measuredSize) ->
             val optimizedImages = imagesList.map {
                 val pixelSize = PixelSize(measuredSize.width.dpAsPx(measuredSize.density), measuredSize.height.dpAsPx(measuredSize.density))
-                val uriWithParameters = imageOptimizationService.optimizeImageBlock(it, imagePoll.options.first().border.width, pixelSize, measuredSize.density)
+                val uriWithParameters = imageOptimizationService.optimizeImageBlockForFill(it, pixelSize)
 
                 return@map assetService.imageByUrl(uriWithParameters.toURL()).map { bitmap ->
                     val timeElapsed = System.currentTimeMillis() - timestampMillis

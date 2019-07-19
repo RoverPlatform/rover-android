@@ -8,7 +8,7 @@ import org.json.JSONObject
  *
  * @param TInput This is the type of the reply you expect to arrive back from the cloud API.
  */
-internal interface GraphQlRequest<out TInput> {
+internal interface GraphQlRequest<out TInput>{
     /**
      * A GraphQL operation name that should be selected out of the query.  Optional.
      */

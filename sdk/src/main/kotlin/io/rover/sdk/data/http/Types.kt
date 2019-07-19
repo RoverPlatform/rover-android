@@ -16,7 +16,7 @@ internal data class HttpRequest(
 )
 
 internal sealed class HttpClientResponse {
-    class Success(
+    data class Success(
         /**
          * The HTTP request has gotten a successful reply, and now the server is streaming the
          * response body to us.
@@ -30,12 +30,12 @@ internal sealed class HttpClientResponse {
      * A a session layer or below onError (HTTP protocol onError, network onError, and so on)
      * occurred. Likely culprit is local connectivity issues or possibly even a Rover API outage.
      */
-    class ConnectionFailure(val reason: Throwable) : HttpClientResponse()
+    data class ConnectionFailure(val reason: Throwable) : HttpClientResponse()
 
     /**
      * An application layer (HTTP) onError occurred (ie., a non-2xx status code).
      */
-    class ApplicationError(
+    data class ApplicationError(
         val responseCode: Int,
         val reportedReason: String
     ) : HttpClientResponse()

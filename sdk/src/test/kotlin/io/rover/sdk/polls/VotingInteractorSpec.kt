@@ -6,8 +6,8 @@ import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.rover.sdk.data.graphql.ApiResult
-import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.Publishers
+import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.blocks.poll.OptionResults
 import io.rover.sdk.ui.blocks.poll.VotingInteractor
 import io.rover.sdk.ui.blocks.poll.VotingService
@@ -19,14 +19,13 @@ import org.spekframework.spek2.style.specification.describe
 object VotingInteractorSpec : Spek({
     val votingService: VotingService = mock()
     val votingStorage: VotingStorage = mock()
-    val optionResultsSubject: PublishSubject<OptionResults> = mock()
     val jsonObject: JSONObject = mock()
 
     val apiResult: ApiResult.Success<OptionResults> = mock()
     val optionResult: OptionResults = mock()
     val optionResultResponse = ""
 
-    val votingInteractor = VotingInteractor(votingService, votingStorage, optionResultsSubject)
+    val votingInteractor = VotingInteractor(votingService, votingStorage)
     val pollId = "poll id"
     val optionId = "option id"
     val optionIds = listOf(optionId)
@@ -52,6 +51,11 @@ object VotingInteractorSpec : Spek({
         whenever(optionResult.encodeJson()).thenReturn(jsonObject)
         whenever(jsonObject.toString()).thenReturn(optionResultResponse)
 
+        var optionYielded = false
+        votingInteractor.optionResults.subscribe {
+            optionYielded = true
+        }
+
         votingInteractor.fetchVotingResults(pollId, optionIds)
 
         it("sets poll results in storage") {
@@ -59,7 +63,7 @@ object VotingInteractorSpec : Spek({
         }
 
         it("updates option results subject") {
-            verify(optionResultsSubject).onNext(optionResult)
+            assert(optionYielded)
         }
     }
 })

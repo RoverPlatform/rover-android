@@ -25,10 +25,10 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
 
                 keyValueStorage["$pollId-results"] = resultsToInsert.encodeJson().toString()
             } catch (e: JSONException) {
-                log.w("Poll JSON decode problem details: $e, ${e.stackTrace.joinToString("\n")}")
+                log.w("Poll JSON decode problem details: $e")
                 null
             } catch (e: Exception) {
-                log.w("problem incrementing poll state: $e, ${e.stackTrace.joinToString("\n")}\"")
+                log.w("problem incrementing poll state: $e")
             }
         }
     }
@@ -41,9 +41,11 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
             try {
                 OptionResultsWithUserVote(OptionResults.decodeJson(JSONObject(optionResultsJson)), optionResultsVoteJson)
             } catch (e: JSONException) {
-                log.w("Poll JSON decode problem details: $e, ${e.stackTrace.joinToString("\n")}")
+                log.w("Poll JSON decode problem details: $e")
                 null
             }
         }
     }
 }
+
+private typealias OptionResultsWithUserVote = Pair<OptionResults, String?>

@@ -2,22 +2,16 @@ package io.rover.sdk.ui.blocks.poll
 
 import android.net.Uri
 import io.rover.sdk.data.graphql.ApiResult
-import io.rover.sdk.data.graphql.putProp
-import io.rover.sdk.data.graphql.toStringIntHash
 import io.rover.sdk.data.http.HttpClient
 import io.rover.sdk.data.http.HttpClientResponse
 import io.rover.sdk.data.http.HttpRequest
 import io.rover.sdk.data.http.HttpResultMapper
 import io.rover.sdk.data.http.HttpVerb
 import io.rover.sdk.logging.log
-import io.rover.sdk.platform.KeyValueStorage
-import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.map
 import io.rover.sdk.streams.subscribe
-import org.json.JSONException
 import org.json.JSONObject
 import org.reactivestreams.Publisher
-import java.lang.Exception
 import java.net.URL
 
 internal class VotingService(
@@ -48,7 +42,7 @@ internal class VotingService(
         httpClient.request(urlRequest, body, false).subscribe {
             when (it) {
                 is HttpClientResponse.Success -> log.v("vote in poll $pollId with option $optionId succeeded")
-                else -> log.w("voting failed")
+                is HttpClientResponse.ApplicationError, is HttpClientResponse.ConnectionFailure -> log.w("voting faled $it")
             }
         }
     }

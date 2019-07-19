@@ -6,8 +6,9 @@ import io.rover.sdk.streams.subscribe
 
 internal class VotingInteractor(
     private val votingService: VotingService,
-    private val votingStorage: VotingStorage,
-    val optionResults: PublishSubject<OptionResults> = PublishSubject()) {
+    private val votingStorage: VotingStorage) {
+
+    val optionResults: PublishSubject<OptionResults> = PublishSubject()
 
     fun fetchVotingResults(pollId: String, optionIds: List<String>) {
         votingService.fetchResults(pollId, optionIds).subscribe {

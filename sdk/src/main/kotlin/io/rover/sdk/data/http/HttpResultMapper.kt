@@ -35,8 +35,7 @@ internal class HttpResultMapper {
                                 log.w("API error: $e")
                                 ApiResult.Error<TEntity>(
                                     ApiError.InvalidResponseData(e.message ?: "API returned unknown error."),
-                                    // retry is not appropriate when we're getting a domain-level
-                                    // error from the GraphQL API.
+                                    // retry is not appropriate when we're getting a domain-level error.
                                     false
                                 )
                             } catch (e: JSONException) {
@@ -47,8 +46,7 @@ internal class HttpResultMapper {
 
                                 ApiResult.Error<TEntity>(
                                     ApiError.InvalidResponseData(e.message ?: "API returned unknown error."),
-                                    // retry is not appropriate when we're getting a domain-level
-                                    // error from the GraphQL API.
+                                    // retry is not appropriate when we're getting a domain-level error.
                                     false
                                 )
                             }

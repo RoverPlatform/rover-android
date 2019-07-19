@@ -19,5 +19,3 @@ internal data class OptionResults(val results: Map<String, Int>) {
         }
     }
 }
-
-internal data class OptionResultsWithUserVote(val optionResults: OptionResults, val userVote: String?)

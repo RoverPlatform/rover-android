@@ -44,9 +44,8 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             }
 
             setupOptionViews(viewModel)
-            informOptionBackgroundAboutSize(viewModel)
 
-            viewModel.votingState.androidLifecycleDispose(view).subscribe({ votingState ->
+            viewModel.votingState.subscribe({ votingState ->
                 when (votingState) {
                     is VotingState.WaitingForVote -> {
                     }
@@ -61,8 +60,11 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         startListeningForOptionImageUpdates(viewModel.optionBackgroundViewModel, optionViews)
         optionViews.forEachIndexed { index, optionView ->
             view.addView(optionView)
-            optionView.setOnClickListener { viewModelBinding?.viewModel?.castVote(index) }
+            optionView.setOnClickListener {
+                viewModelBinding?.viewModel?.castVote(index) }
         }
+
+        informOptionBackgroundAboutSize(viewModel)
     }
 
     private fun informOptionBackgroundAboutSize(viewModel: TextPollViewModelInterface) {
@@ -94,13 +96,15 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     ) {
         viewModel.backgroundUpdates.androidLifecycleDispose(view)
             .subscribe { (bitmap, fadeIn, backgroundImageConfiguration) ->
-                val backgroundDrawable = bitmap.createBackgroundDrawable(
-                    view,
-                    viewModel.backgroundColor,
-                    fadeIn,
-                    backgroundImageConfiguration
-                )
-                textOptionViews.forEach { it.backgroundImage = backgroundDrawable }
+                textOptionViews.forEach {
+                    val backgroundDrawable = bitmap.createBackgroundDrawable(
+                        view,
+                        viewModel.backgroundColor,
+                        fadeIn,
+                        backgroundImageConfiguration
+                    )
+                    it.backgroundImage = backgroundDrawable
+                }
             }
     }
 

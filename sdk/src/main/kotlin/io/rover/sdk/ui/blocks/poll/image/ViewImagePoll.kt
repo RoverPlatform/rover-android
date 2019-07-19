@@ -53,7 +53,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             }
             setupOptionViews(viewModel, imageLength)
 
-            viewModel.multiImageUpdates.androidLifecycleDispose(this.view).subscribe(
+            viewModel.multiImageUpdates.subscribe(
                 { imageList ->
                     optionViews.forEachIndexed { index, imageOptionView ->
                         imageOptionView.bindOptionImage(imageList[index].bitmap, imageList[index].shouldFade, viewModel.imagePoll.options[index].opacity.toFloat())
@@ -70,7 +70,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                 )
             )
 
-            viewModel.votingState.androidLifecycleDispose(view).subscribe({ votingState ->
+            viewModel.votingState.subscribe({ votingState ->
                 when (votingState) {
                     is VotingState.WaitingForVote -> {
                     }

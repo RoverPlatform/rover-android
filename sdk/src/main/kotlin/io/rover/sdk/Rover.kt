@@ -205,7 +205,8 @@ open class Rover(
             sessionTracker,
             imageOptimizationService,
             assetService,
-            measurementService
+            measurementService,
+            pollVotingInteractor
         )
     }
 
@@ -259,7 +260,8 @@ internal class ViewModels(
     private val sessionTracker: SessionTracker,
     private val imageOptimizationService: ImageOptimizationService,
     private val assetService: AndroidAssetService,
-    private val measurementService: MeasurementService
+    private val measurementService: MeasurementService,
+    private val pollVotingInteractor: VotingInteractor
 ) {
     fun experienceViewModel(
         experienceRequest: RoverViewModel.ExperienceRequest,
@@ -419,7 +421,8 @@ internal class ViewModels(
             measurementService = measurementService,
             imageOptimizationService = imageOptimizationService,
             assetService = assetService,
-            mainScheduler = mainScheduler
+            mainScheduler = mainScheduler,
+            pollVotingInteractor= pollVotingInteractor
         )
     }
 
@@ -429,7 +432,8 @@ internal class ViewModels(
         return TextPollViewModel(
             textPoll,
             measurementService,
-            backgroundViewModel(textPoll.options.first().background)
+            backgroundViewModel(textPoll.options.first().background),
+            pollVotingInteractor
         )
     }
 

@@ -17,6 +17,7 @@ import io.rover.sdk.streams.observeOn
 import io.rover.sdk.streams.timestamp
 import io.rover.sdk.ui.PixelSize
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
+import io.rover.sdk.ui.blocks.poll.VotingInteractor
 import io.rover.sdk.ui.blocks.poll.text.VotingState
 import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.ui.concerns.MeasuredSize
@@ -28,7 +29,8 @@ internal class ImagePollViewModel(
     private val measurementService: MeasurementService,
     private val assetService: AssetService,
     private val imageOptimizationService: ImageOptimizationService,
-    mainScheduler: Scheduler
+    mainScheduler: Scheduler,
+    private val pollVotingInteractor: VotingInteractor
 ) : ImagePollViewModelInterface {
 
     companion object {

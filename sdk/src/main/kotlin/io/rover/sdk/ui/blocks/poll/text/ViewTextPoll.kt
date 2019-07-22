@@ -27,7 +27,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         )
     }
 
-    private var optionViews = listOf<TextOptionView>()
+    private var optionViews = mapOf<String, TextOptionView>()
 
     init {
         view.addView {
@@ -40,28 +40,29 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             bindQuestion(viewModel.textPoll)
 
             if (optionViews.isNotEmpty()) {
-                optionViews.forEach { view.removeView(it) }
+                optionViews.forEach { view.removeView(it.value) }
             }
 
             setupOptionViews(viewModel)
 
             viewModel.votingState.subscribe({ votingState ->
                 when (votingState) {
-                    is VotingState.WaitingForVote -> {
-                    }
+                    is VotingState.WaitingForVote -> { }
                     is VotingState.Results -> setVoteResultsReceived(votingState)
                 }
             }, { throw (it) }, { subscriptionCallback(it) })
+
+            viewModel.checkIfAlreadyVoted(optionViews.keys.toList())
         }
     }
 
     private fun setupOptionViews(viewModel: TextPollViewModelInterface) {
         optionViews = createOptionViews(viewModel.textPoll)
         startListeningForOptionImageUpdates(viewModel.optionBackgroundViewModel, optionViews)
-        optionViews.forEachIndexed { index, optionView ->
+        optionViews.forEach { (optionId, optionView) ->
             view.addView(optionView)
             optionView.setOnClickListener {
-                viewModelBinding?.viewModel?.castVote(index) }
+                viewModelBinding?.viewModel?.castVote(optionId, viewModel.textPoll.options.map { it.id }) }
         }
 
         informOptionBackgroundAboutSize(viewModel)
@@ -80,19 +81,19 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     }
 
     private fun setVoteResultsReceived(votingResults: VotingState.Results) {
-        votingResults.votingShare.forEachIndexed { index, votingShare ->
-            val option = optionViews[index]
-            option.setOnClickListener(null)
-            val isSelectedOption = index == votingResults.selectedOption
+        votingResults.optionResults.results.forEach { (id, votingShare) ->
+            val option = optionViews[id]
+            option?.setOnClickListener(null)
+            val isSelectedOption = id == votingResults.selectedOption
             viewModelBinding?.viewModel?.let {
-                option.goToResultsState(votingShare, isSelectedOption, it.textPoll.options[index])
+                option?.goToResultsState(votingShare, isSelectedOption, it.textPoll.options.first())
             }
         }
     }
 
     private fun startListeningForOptionImageUpdates(
         viewModel: BackgroundViewModelInterface,
-        textOptionViews: List<TextOptionView>
+        textOptionViews: Map<String, TextOptionView>
     ) {
         viewModel.backgroundUpdates.androidLifecycleDispose(view)
             .subscribe { (bitmap, fadeIn, backgroundImageConfiguration) ->
@@ -103,7 +104,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                         fadeIn,
                         backgroundImageConfiguration
                     )
-                    it.backgroundImage = backgroundDrawable
+                    it.value.backgroundImage = backgroundDrawable
                 }
             }
     }
@@ -119,9 +120,9 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         }
     }
 
-    private fun createOptionViews(textPoll: TextPoll): List<TextOptionView> {
-        return textPoll.options.map { option ->
-            view.optionView {
+    private fun createOptionViews(textPoll: TextPoll): Map<String, TextOptionView> {
+        return textPoll.options.associate { option ->
+            option.id to view.optionView {
                 initializeOptionViewLayout(option)
                 bindOptionView(option)
             }

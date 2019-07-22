@@ -9,7 +9,6 @@ import io.rover.sdk.logging.log
 import io.rover.sdk.platform.imageOptionView
 import io.rover.sdk.platform.setupLayoutParams
 import io.rover.sdk.platform.textView
-import io.rover.sdk.streams.androidLifecycleDispose
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.poll.text.VotingState
@@ -27,7 +26,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             height = ViewGroup.LayoutParams.WRAP_CONTENT
         )
     }
-    private var optionViews = listOf<ImagePollOptionView>()
+    private var optionViews = mapOf<String, ImagePollOptionView>()
 
     init {
         view.addView(questionView)
@@ -49,14 +48,16 @@ internal class ViewImagePoll(override val view: LinearLayout) :
 
             bindQuestion(viewModel.imagePoll)
             if (optionViews.isNotEmpty()) {
-                optionViews.forEach { view.removeView(it) }
+                optionViews.forEach { view.removeView(it.value) }
             }
             setupOptionViews(viewModel, imageLength)
 
             viewModel.multiImageUpdates.subscribe(
                 { imageList ->
-                    optionViews.forEachIndexed { index, imageOptionView ->
-                        imageOptionView.bindOptionImage(imageList[index].bitmap, imageList[index].shouldFade, viewModel.imagePoll.options[index].opacity.toFloat())
+                    optionViews.forEach { (index, imageOptionView) ->
+                        imageList[index]?.let {
+                            imageOptionView.bindOptionImage(it.bitmap, it.shouldFade, viewModel.imagePoll.options.first().opacity.toFloat())
+                        }
                     }
                 },
                 { error -> log.w("Problem fetching poll images: $error, ignoring.") },
@@ -83,12 +84,12 @@ internal class ViewImagePoll(override val view: LinearLayout) :
     }
 
     private fun setVoteResultsReceived(votingResults: VotingState.Results) {
-        votingResults.votingShare.forEachIndexed { index, votingShare ->
-            val option = optionViews[index]
-            option.setOnClickListener(null)
-            val isSelectedOption = index == votingResults.selectedOption
+        votingResults.optionResults.results.forEach { (id, votingShare) ->
+            val option = optionViews[id]
+            option?.setOnClickListener(null)
+            val isSelectedOption = id == votingResults.selectedOption
             viewModelBinding?.viewModel?.let {
-                option.goToResultsState(votingShare, isSelectedOption, it.imagePoll.options[index])
+                option?.goToResultsState(votingShare, isSelectedOption, it.imagePoll.options.first())
             }
         }
     }
@@ -116,10 +117,10 @@ internal class ViewImagePoll(override val view: LinearLayout) :
     private fun createTwoOptionLayout() {
         val row = LinearLayout(view.context)
         view.addView(row)
-        optionViews.forEachIndexed { index, imagePollOptionView ->
+        optionViews.forEach { (id, imagePollOptionView) ->
             row.addView(imagePollOptionView)
             imagePollOptionView.setOnClickListener {
-                viewModelBinding?.viewModel?.castVote(index)
+                viewModelBinding?.viewModel?.castVote(id, optionViews.keys.toList())
             }
         }
     }
@@ -130,26 +131,28 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         view.addView(row1)
         view.addView(row2)
 
-        optionViews.forEachIndexed { index, imagePollOptionView ->
-            val isOnFirstRow = index < 2
+        var viewsAdded = 0
+        optionViews.forEach { (id, imagePollOptionView) ->
+            val isOnFirstRow = viewsAdded < 2
             if (isOnFirstRow) row1.addView(imagePollOptionView) else row2.addView(imagePollOptionView)
-            imagePollOptionView.setOnClickListener { viewModelBinding?.viewModel?.castVote(index) }
+            viewsAdded ++
+            imagePollOptionView.setOnClickListener { viewModelBinding?.viewModel?.castVote(id, optionViews.keys.toList()) }
         }
     }
 
-    private fun createOptionViews(imagePoll: ImagePoll, imageLength: Int): List<ImagePollOptionView> {
+    private fun createOptionViews(imagePoll: ImagePoll, imageLength: Int): Map<String, ImagePollOptionView> {
         val optionTextHeight = OPTION_TEXT_HEIGHT.dpAsPx(view.resources.displayMetrics)
 
-        return imagePoll.options.mapIndexed { index, option ->
-            view.imageOptionView {
-                initializeOptionViewLayout(option)
-                bindOptionView(option)
+        return imagePoll.options.associate {
+            it.id to view.imageOptionView {
+                initializeOptionViewLayout(it)
+                bindOptionView(it)
                 bindOptionImageSize(imageLength)
                 setupLayoutParams(
                     width = imageLength,
                     height = imageLength + optionTextHeight,
-                    leftMargin = option.leftMargin.dpAsPx(view.resources.displayMetrics),
-                    topMargin = option.topMargin.dpAsPx(view.resources.displayMetrics)
+                    leftMargin = it.leftMargin.dpAsPx(view.resources.displayMetrics),
+                    topMargin = it.topMargin.dpAsPx(view.resources.displayMetrics)
                 )
             }
         }

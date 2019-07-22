@@ -33,13 +33,14 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
         }
     }
 
-    fun getSavedPollState(pollId: String): OptionResultsWithUserVote? {
+    fun getSavedVoteState(pollId: String) = keyValueStorage["$pollId-vote"]
+
+    fun getSavedPollState(pollId: String): OptionResults? {
         val optionResultsJson = keyValueStorage["$pollId-results"]
-        val optionResultsVoteJson = keyValueStorage["$pollId-vote"]
 
         return optionResultsJson?.let {
             try {
-                OptionResultsWithUserVote(OptionResults.decodeJson(JSONObject(optionResultsJson)), optionResultsVoteJson)
+                OptionResults.decodeJson(JSONObject(optionResultsJson))
             } catch (e: JSONException) {
                 log.w("Poll JSON decode problem details: $e")
                 null
@@ -48,4 +49,4 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
     }
 }
 
-private typealias OptionResultsWithUserVote = Pair<OptionResults, String?>
+internal typealias OptionResultsWithUserVote = Pair<OptionResults, String?>

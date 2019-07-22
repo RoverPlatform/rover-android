@@ -4,15 +4,15 @@ import io.rover.sdk.data.domain.TextPoll
 import io.rover.sdk.data.getFontAppearance
 import io.rover.sdk.services.MeasurementService
 import io.rover.sdk.streams.PublishSubject
-import io.rover.sdk.streams.androidLifecycleDispose
-import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.RectF
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
+import io.rover.sdk.ui.blocks.poll.OptionResults
 import io.rover.sdk.ui.blocks.poll.VotingInteractor
 import io.rover.sdk.ui.concerns.BindableViewModel
 
 internal class TextPollViewModel(
+    val id: String,
     override val textPoll: TextPoll,
     private val measurementService: MeasurementService,
     override val optionBackgroundViewModel: BackgroundViewModelInterface,
@@ -34,50 +34,26 @@ internal class TextPollViewModel(
         return optionsHeight + optionSpacing + questionHeight
     }
 
-    override fun castVote(selectedOption: Int) {
-        // TODO: Add voting logic
-        setResultsState(selectedOption, listOf(100, 14, 67))
+    override fun castVote(selectedOption: String, optionIds: List<String>) {
+        pollVotingInteractor.castVote(id, selectedOption, optionIds)
     }
 
-    fun castVote(pollId: String, optionId: String, optionIds: List<String>) {
-
-        //TODO: overwrite saved poll state if none
-        pollVotingInteractor.castVote(pollId, optionId)
-
-        getPollState(pollId, optionIds)
+    override fun checkIfAlreadyVoted(optionIds: List<String>) {
+        pollVotingInteractor.checkIfAlreadyVotedAndHaveResults(id, optionIds)
     }
 
-    override val votingState = PublishSubject<VotingState>()
-
-    fun getPollState(pollId: String, optionIds: List<String>) {
-        val savedPollState = pollVotingInteractor.getSavedPollState(pollId)
-        val noNewOptionIds = savedPollState?.first?.results?.filterKeys { it in optionIds }?.size == optionIds.size
-
-        if(savedPollState != null && noNewOptionIds) {
-            val alreadyVoted = savedPollState.second != null && savedPollState.second in optionIds
-
-            if (alreadyVoted) {
-                //TODO: set results state
-                setResultsState()
-            }
-        } else {
-            pollVotingInteractor.fetchVotingResults(pollId, optionIds)
-        }
-    }
-
-    private fun setResultsState(selectedOption: Int, votingShare: List<Int>) {
-        votingState.onNext(VotingState.Results(selectedOption, votingShare))
-    }
+    override val votingState = pollVotingInteractor.votingState
 }
 
-sealed class VotingState {
+internal sealed class VotingState {
     object WaitingForVote : VotingState()
-    data class Results(val selectedOption: Int, val votingShare: List<Int>) : VotingState()
+    data class Results(val selectedOption: String, val optionResults: OptionResults) : VotingState()
 }
 
 internal interface TextPollViewModelInterface : Measurable, BindableViewModel {
     val textPoll: TextPoll
     val optionBackgroundViewModel: BackgroundViewModelInterface
-    fun castVote(selectedOption: Int)
+    fun castVote(selectedOption: String, optionIds: List<String>)
+    fun checkIfAlreadyVoted(optionIds: List<String>)
     val votingState: PublishSubject<VotingState>
 }

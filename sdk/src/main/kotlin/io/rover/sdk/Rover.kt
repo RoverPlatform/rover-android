@@ -206,7 +206,8 @@ open class Rover(
             imageOptimizationService,
             assetService,
             measurementService,
-            pollVotingInteractor
+            pollVotingService,
+            pollVotingStorage
         )
     }
 
@@ -261,7 +262,8 @@ internal class ViewModels(
     private val imageOptimizationService: ImageOptimizationService,
     private val assetService: AndroidAssetService,
     private val measurementService: MeasurementService,
-    private val pollVotingInteractor: VotingInteractor
+    private val pollVotingService: VotingService,
+    private val pollVotingStorage: VotingStorage
 ) {
     fun experienceViewModel(
         experienceRequest: RoverViewModel.ExperienceRequest,
@@ -392,7 +394,7 @@ internal class ViewModels(
                 )
             }
             is TextPollBlock -> {
-                val textPollViewModel = textPollViewModel(block.textPoll)
+                val textPollViewModel = textPollViewModel(block.textPoll, block.id)
                 return TextPollBlockViewModel(
                     textPollViewModel = textPollViewModel,
                     blockViewModel = blockViewModel(block, setOf(), textPollViewModel),
@@ -401,7 +403,7 @@ internal class ViewModels(
                 )
             }
             is ImagePollBlock -> {
-                val imagePollViewModel = imagePollViewModel(block.imagePoll)
+                val imagePollViewModel = imagePollViewModel(block.imagePoll, block.id)
                 return ImagePollBlockViewModel(
                     imagePollViewModel = imagePollViewModel,
                     blockViewModel = blockViewModel(block, setOf(), imagePollViewModel),
@@ -415,25 +417,28 @@ internal class ViewModels(
         }
     }
 
-    private fun imagePollViewModel(imagePoll: ImagePoll): ImagePollViewModel {
+    private fun imagePollViewModel(imagePoll: ImagePoll, id: String): ImagePollViewModel {
         return ImagePollViewModel(
+            id = id,
             imagePoll = imagePoll,
             measurementService = measurementService,
             imageOptimizationService = imageOptimizationService,
             assetService = assetService,
             mainScheduler = mainScheduler,
-            pollVotingInteractor= pollVotingInteractor
+            pollVotingInteractor = VotingInteractor(pollVotingService, pollVotingStorage)
         )
     }
 
     private fun textPollViewModel(
-        textPoll: TextPoll
+        textPoll: TextPoll,
+        id: String
     ): TextPollViewModel {
         return TextPollViewModel(
+            id,
             textPoll,
             measurementService,
             backgroundViewModel(textPoll.options.first().background),
-            pollVotingInteractor
+            VotingInteractor(pollVotingService, pollVotingStorage)
         )
     }
 

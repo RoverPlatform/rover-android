@@ -86,7 +86,7 @@ internal class ImagePollViewModel(
         return flatMap { (timestampMillis, measuredSize) ->
             val optimizedImages = imagesList.map {
                 val pixelSize = PixelSize(measuredSize.width.dpAsPx(measuredSize.density), measuredSize.height.dpAsPx(measuredSize.density))
-                val uriWithParameters = imageOptimizationService.optimizeImageBlockForFill(it, pixelSize)
+                val uriWithParameters = imageOptimizationService.optimizeImageForFill(it, pixelSize)
 
                 return@map assetService.imageByUrl(uriWithParameters.toURL()).map { bitmap ->
                     val timeElapsed = System.currentTimeMillis() - timestampMillis

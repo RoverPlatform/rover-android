@@ -370,7 +370,8 @@ internal class ImageOptimizationService {
         )
     }
 
-    fun optimizeImageBlockForFill(
+    // This is only used for polls until this class is refactored to not be tightly coupled with backgrounds
+    fun optimizeImageForFill(
         image: Image,
         targetViewPixelSize: PixelSize
     ): URI {

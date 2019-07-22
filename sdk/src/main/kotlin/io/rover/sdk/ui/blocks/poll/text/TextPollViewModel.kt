@@ -44,11 +44,7 @@ internal class TextPollViewModel(
         //TODO: overwrite saved poll state if none
         pollVotingInteractor.castVote(pollId, optionId)
 
-        if (pollVotingInteractor.getSavedPollState(pollId) != null) {
-            //TODO: set results state
-        } else {
-            getPollState(pollId, optionIds)
-        }
+        getPollState(pollId, optionIds)
     }
 
     override val votingState = PublishSubject<VotingState>()
@@ -62,8 +58,7 @@ internal class TextPollViewModel(
 
             if (alreadyVoted) {
                 //TODO: set results state
-            } else {
-
+                setResultsState()
             }
         } else {
             pollVotingInteractor.fetchVotingResults(pollId, optionIds)

@@ -16,6 +16,7 @@ import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.RelativeLayout
 import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.TextPollOption
@@ -191,6 +192,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 
     fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, optionStyle: TextPollOption) {
+
         bindVotePercentageText(votingShare, optionStyle)
         votePercentageText.visibility = View.VISIBLE
 
@@ -201,6 +203,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         optionTextView.run {
             gravity = Gravity.CENTER_VERTICAL
             val marginInPixels = 16.dpAsPx(resources.displayMetrics)
+
+            text = optionStyle.text.rawValue
 
             setupRelativeLayoutParams(
                 width = LayoutParams.WRAP_CONTENT,
@@ -216,6 +220,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
             val widthOfOtherViews =
                 calculateWidthWithoutOptionText(voteIndicatorView, maxVotingText, isSelectedOption)
+
             maxWidth = this@TextOptionView.width - widthOfOtherViews
         }
 

@@ -86,7 +86,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             option?.setOnClickListener(null)
             val isSelectedOption = id == votingResults.selectedOption
             viewModelBinding?.viewModel?.let {
-                option?.goToResultsState(votingShare, isSelectedOption, it.textPoll.options.first())
+                option?.goToResultsState(votingShare, isSelectedOption, it.textPoll.options.find { it.id == id }!!)
             }
         }
     }

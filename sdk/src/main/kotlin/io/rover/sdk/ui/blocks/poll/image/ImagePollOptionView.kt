@@ -208,6 +208,9 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
 
         optionTextView.run {
             gravity = Gravity.CENTER_VERTICAL
+
+            text = option.text.rawValue
+
             setupLinearLayoutParams(
                 width = RelativeLayout.LayoutParams.WRAP_CONTENT,
                 height = RelativeLayout.LayoutParams.MATCH_PARENT
@@ -375,14 +378,15 @@ class VotingIndicatorBar(context: Context?) : View(context) {
     var barValue = 0f
         set(value) {
             field = value
-            barRect = RectF(inset, 0f, ((width.toFloat() - inset) * (barValue / 100)), height.toFloat())
+            val barWidth = (width.toFloat() - inset) * (barValue / 100)
+            barRect = RectF(inset, 0f, if (barWidth < inset) inset else barWidth, height.toFloat())
             invalidate()
         }
     var fillPaint = Paint()
 
     private var overlayBarPaint = Paint().create(Color.WHITE, Paint.Style.FILL)
     private val inset = 4f.dpAsPx(resources.displayMetrics).toFloat()
-    private var barRect = RectF(inset, 0f, ((width.toFloat() - inset) * barValue), height.toFloat())
+    private var barRect = RectF(inset, 0f, 0f, height.toFloat())
     private val overlayRect by lazy { RectF(inset, 0f, width.toFloat() - inset, height.toFloat()) }
 
     companion object {

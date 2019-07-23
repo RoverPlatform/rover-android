@@ -26,7 +26,6 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
                 keyValueStorage["$pollId-results"] = resultsToInsert.encodeJson().toString()
             } catch (e: JSONException) {
                 log.w("Poll JSON decode problem details: $e")
-                null
             } catch (e: Exception) {
                 log.w("problem incrementing poll state: $e")
             }

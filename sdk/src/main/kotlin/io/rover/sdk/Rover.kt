@@ -171,13 +171,13 @@ open class Rover(
         eventEmitter
     )
 
-    private val pollsEndpoint = "https://polls.rover.io/v1/polls"
+    private val pollsEndpoint = "https://polls.staging.rover.io/v1/polls"
 
     private val pollVotingService: VotingService = VotingService(pollsEndpoint, httpClient)
 
     private val pollVotingStorage: VotingStorage = VotingStorage(localStorage.getKeyValueStorageFor("voting"))
 
-    private val pollVotingInteractor = VotingInteractor(pollVotingService, pollVotingStorage)
+    private val pollVotingInteractor = VotingInteractor(pollVotingService, pollVotingStorage, mainScheduler)
 
     private val apiService: GraphQlApiService =
         GraphQlApiService(URL(endpoint), accountToken, httpClient)
@@ -425,7 +425,7 @@ internal class ViewModels(
             imageOptimizationService = imageOptimizationService,
             assetService = assetService,
             mainScheduler = mainScheduler,
-            pollVotingInteractor = VotingInteractor(pollVotingService, pollVotingStorage)
+            pollVotingInteractor = VotingInteractor(pollVotingService, pollVotingStorage, mainScheduler)
         )
     }
 
@@ -438,7 +438,7 @@ internal class ViewModels(
             textPoll,
             measurementService,
             backgroundViewModel(textPoll.options.first().background),
-            VotingInteractor(pollVotingService, pollVotingStorage)
+            VotingInteractor(pollVotingService, pollVotingStorage, mainScheduler)
         )
     }
 

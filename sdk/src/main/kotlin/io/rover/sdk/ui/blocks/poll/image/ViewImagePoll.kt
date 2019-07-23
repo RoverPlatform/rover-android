@@ -79,7 +79,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                 }
             }, { throw (it) }, { subscriptionCallback(it) })
 
-            binding.viewModel
+            viewModel.checkIfAlreadyVoted(optionViews.keys.toList())
         }
     }
 

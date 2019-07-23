@@ -9,8 +9,6 @@ import io.rover.sdk.streams.observeOn
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.blocks.poll.text.VotingState
 import org.reactivestreams.Publisher
-import kotlin.math.nextDown
-import kotlin.math.roundToInt
 
 internal class VotingInteractor(
     private val votingService: VotingService,
@@ -20,32 +18,31 @@ internal class VotingInteractor(
     val votingState = PublishSubject<VotingState>()
 
     fun checkIfAlreadyVotedAndHaveResults(pollId: String, optionIds: List<String>, forceNetwork: Boolean = false, update: Boolean = true) {
-        val savedVoteState = getSavedVoteState(pollId)
+        val savedVoteState = votingStorage.getSavedVoteState(pollId)
 
-        getPollState(pollId, optionIds, forceNetwork, update).observeOn(mainScheduler).subscribe {
+        getPollState(pollId, optionIds, forceNetwork).observeOn(mainScheduler).subscribe {
             if (savedVoteState != null) {
                 if (it.results.filterKeys { key -> key in optionIds }.size == optionIds.size && savedVoteState in optionIds) {
                     votingState.onNext(changeVotesToPercentages(VotingState.Results(savedVoteState, it)))
+
+                    if (update) checkIfAlreadyVotedAndHaveResults(pollId, optionIds, true, false)
                 }
             }
         }
     }
 
-    data class VotesWithFractional(val key: String, var votePercentage: Int, val fractional: Float)
-
     fun castVote(pollId: String, optionId: String, optionIds: List<String>) {
         votingStorage.incrementSavedPollState(pollId, optionId)
         votingService.castVote(pollId, optionId)
+
+        // Don't want to update immediately after casting vote
         checkIfAlreadyVotedAndHaveResults(pollId, optionIds, false, false)
     }
 
-    private fun getPollState(pollId: String, optionIds: List<String>, forceNetwork: Boolean, update: Boolean = true): Publisher<OptionResults> {
+    private fun getPollState(pollId: String, optionIds: List<String>, forceNetwork: Boolean): Publisher<OptionResults> {
         val savedState = votingStorage.getSavedPollState(pollId)
         return when {
-            savedState != null && !forceNetwork -> {
-                if (update) updatePollResults(pollId, optionIds)
-                Publishers.just(savedState)
-            }
+            savedState != null && !forceNetwork -> Publishers.just(savedState)
             else -> fetchVotingResults(pollId, optionIds)
         }
     }
@@ -60,12 +57,6 @@ internal class VotingInteractor(
             }
         }
     }
-
-    private fun updatePollResults(pollId: String, optionIds: List<String>) {
-        checkIfAlreadyVotedAndHaveResults(pollId, optionIds, true, false)
-    }
-
-    private fun getSavedVoteState(pollId: String) = votingStorage.getSavedVoteState(pollId)
 
     private fun changeVotesToPercentages(results: VotingState.Results): VotingState.Results {
         // https://en.wikipedia.org/wiki/Largest_remainder_method
@@ -90,4 +81,6 @@ internal class VotingInteractor(
 
         return results.copy(optionResults = results.optionResults.copy(results = votesListWithRemainderShared))
     }
+
+    data class VotesWithFractional(val key: String, var votePercentage: Int, val fractional: Float)
 }

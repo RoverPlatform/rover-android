@@ -16,7 +16,6 @@ import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewTreeObserver
 import android.widget.RelativeLayout
 import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.TextPollOption
@@ -94,6 +93,9 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     private var roundRect: RoundRect? = null
     private var optionPaints: OptionPaints =
         OptionPaints()
+
+    //used to set starting point for update animations
+    private var currentVote = 0
 
     var backgroundImage: BackgroundColorDrawableWrapper? = null
         set(value) {
@@ -227,11 +229,15 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         performResultsAnimation(votingShare, (optionStyle.resultFillColor.alpha * 255).toInt())
     }
 
+    private val easeInEaseOutInterpolator = TimeInterpolator { input ->
+        val inputSquared = input * input
+        inputSquared / (2.0f * (inputSquared - input) + 1.0f)
+    }
+
+    var resultsAnimation = AnimatorSet()
+
     private fun performResultsAnimation(votingShare: Int, resultFillAlpha: Int) {
-        val easeInEaseOutInterpolator = TimeInterpolator { input ->
-            val inputSquared = input * input
-            inputSquared / (2.0f * (inputSquared - input) + 1.0f)
-        }
+        currentVote = votingShare
 
         val alphaAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = ALPHA_DURATION
@@ -252,13 +258,30 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             duration = RESULT_FILL_PROGRESS_DURATION
             addUpdateListener {
                 val animatedValue = it.animatedValue as Float
+
                 votePercentageText.text = "${animatedValue.toInt()}%"
                 resultRect = RectF(0f, 0f, width.toFloat() / 100 * animatedValue, height.toFloat())
             }
         }
 
-        AnimatorSet().apply { playTogether(alphaAnimator, resultFillAlphaAnimator, resultProgressFillAnimator)
-        interpolator = easeInEaseOutInterpolator }.start()
+        resultsAnimation = resultsAnimation.apply { playTogether(alphaAnimator, resultFillAlphaAnimator, resultProgressFillAnimator)
+        interpolator = easeInEaseOutInterpolator }
+
+        resultsAnimation.start()
+    }
+
+    fun updateResults(votingShare: Int) {
+        val resultProgressFillAnimator = ValueAnimator.ofFloat(currentVote.toFloat(), votingShare.toFloat()).apply {
+            duration = RESULT_FILL_PROGRESS_DURATION
+            addUpdateListener {
+                val animatedValue = it.animatedValue as Float
+                votePercentageText.text = "${animatedValue.toInt()}%"
+                resultRect = RectF(0f, 0f, width.toFloat() / 100 * animatedValue, height.toFloat())
+            }
+            interpolator = easeInEaseOutInterpolator
+        }
+        if (resultsAnimation.isRunning) resultProgressFillAnimator.startDelay = 1000L
+        resultProgressFillAnimator.start()
     }
 
     private fun calculateWidthWithoutOptionText(

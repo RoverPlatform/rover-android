@@ -226,11 +226,34 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
         performResultsAnimation(votingShare, isSelectedOption)
     }
 
-    private fun performResultsAnimation(votingShare: Int, isSelectedOption: Boolean) {
-        val easeInEaseOutInterpolator = TimeInterpolator { input ->
-            val inputSquared = input * input
-            inputSquared / (2.0f * (inputSquared - input) + 1.0f)
+    private val easeInEaseOutInterpolator = TimeInterpolator { input ->
+        val inputSquared = input * input
+        inputSquared / (2.0f * (inputSquared - input) + 1.0f)
+    }
+
+    //used to set starting point for update animations
+    private var currentVote = 0
+
+    fun updateResults(votingShare: Int) {
+        val resultProgressFillAnimator = ValueAnimator.ofFloat(currentVote.toFloat(), votingShare.toFloat()).apply {
+            duration = RESULT_FILL_PROGRESS_DURATION
+            addUpdateListener {
+                val animatedValue = it.animatedValue as Float
+                votePercentageView.text = "${animatedValue.toInt()}%"
+                votingIndicatorBar.barValue = animatedValue
+            }
+
+            interpolator = easeInEaseOutInterpolator
         }
+
+        if (resultsAnimation.isRunning) resultProgressFillAnimator.startDelay = 1000L
+        resultProgressFillAnimator.start()
+    }
+
+    var resultsAnimation = AnimatorSet()
+
+    private fun performResultsAnimation(votingShare: Int, isSelectedOption: Boolean) {
+        currentVote = votingShare
 
         bottomSectionLinear.layoutTransition = LayoutTransition().apply {
             setDuration(PROGRESS_ALPHA_DURATION)
@@ -279,11 +302,13 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
                 votingIndicatorBar.barValue = animatedValue
             }
         }
-        AnimatorSet().apply {
+        resultsAnimation = AnimatorSet().apply {
             playTogether(alphaAnimator, whiteVotingBarAlphaAnimator, overlayAlphaAnimator, resultProgressFillAnimator,
                 resultVotingBarAlphaAnimator)
             interpolator = easeInEaseOutInterpolator
-        }.start()
+        }
+
+        resultsAnimation.start()
     }
 
     private fun bindVotePercentageText(votingShare: Int) {

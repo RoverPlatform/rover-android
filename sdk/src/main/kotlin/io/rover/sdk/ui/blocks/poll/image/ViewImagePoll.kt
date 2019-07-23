@@ -73,13 +73,23 @@ internal class ViewImagePoll(override val view: LinearLayout) :
 
             viewModel.votingState.subscribe({ votingState ->
                 when (votingState) {
-                    is VotingState.WaitingForVote -> {
-                    }
+                    is VotingState.WaitingForVote -> {}
                     is VotingState.Results -> setVoteResultsReceived(votingState)
+                    is VotingState.Update -> setVoteResultUpdate(votingState)
                 }
             }, { throw (it) }, { subscriptionCallback(it) })
 
             viewModel.checkIfAlreadyVoted(optionViews.keys.toList())
+        }
+    }
+
+    private fun setVoteResultUpdate(votingUpdate: VotingState.Update) {
+        votingUpdate.optionResults.results.forEach { (id, votingShare) ->
+            val option = optionViews[id]
+
+            viewModelBinding?.viewModel?.let {
+                option?.updateResults(votingShare)
+            }
         }
     }
 

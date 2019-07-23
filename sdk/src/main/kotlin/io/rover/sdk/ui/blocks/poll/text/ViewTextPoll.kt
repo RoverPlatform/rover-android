@@ -49,6 +49,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                 when (votingState) {
                     is VotingState.WaitingForVote -> { }
                     is VotingState.Results -> setVoteResultsReceived(votingState)
+                    is VotingState.Update -> setVoteResultUpdate(votingState)
                 }
             }, { throw (it) }, { subscriptionCallback(it) })
 
@@ -77,6 +78,16 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                 view.resources.displayMetrics.density
             )
             viewModel.optionBackgroundViewModel.informDimensions(measuredSize)
+        }
+    }
+
+    private fun setVoteResultUpdate(votingUpdate: VotingState.Update) {
+        votingUpdate.optionResults.results.forEach { (id, votingShare) ->
+            val option = optionViews[id]
+
+            viewModelBinding?.viewModel?.let {
+                option?.updateResults(votingShare)
+            }
         }
     }
 

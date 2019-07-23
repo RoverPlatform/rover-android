@@ -17,16 +17,25 @@ internal class VotingInteractor(
 ) {
     val votingState = PublishSubject<VotingState>()
 
-    fun checkIfAlreadyVotedAndHaveResults(pollId: String, optionIds: List<String>, forceNetwork: Boolean = false, update: Boolean = true) {
+    fun checkIfAlreadyVotedAndHaveResults(pollId: String, optionIds: List<String>, update: Boolean = true) {
         val savedVoteState = votingStorage.getSavedVoteState(pollId)
 
-        getPollState(pollId, optionIds, forceNetwork).observeOn(mainScheduler).subscribe {
-            if (savedVoteState != null) {
-                if (it.results.filterKeys { key -> key in optionIds }.size == optionIds.size && savedVoteState in optionIds) {
-                    votingState.onNext(changeVotesToPercentages(VotingState.Results(savedVoteState, it)))
+        getPollState(pollId, optionIds, false).observeOn(mainScheduler).subscribe {
+            val resultsSameKeysAsShown = it.results.filterKeys { key -> key in optionIds }.size == optionIds.size
+            if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
+                votingState.onNext(VotingState.Results(savedVoteState, changeVotesToPercentages(it)))
+                if (update) votingResultsUpdate(pollId, optionIds)
+            }
+        }
+    }
 
-                    if (update) checkIfAlreadyVotedAndHaveResults(pollId, optionIds, true, false)
-                }
+    private fun votingResultsUpdate(pollId: String, optionIds: List<String>) {
+        val savedVoteState = votingStorage.getSavedVoteState(pollId)
+
+        getPollState(pollId, optionIds, true).observeOn(mainScheduler).subscribe {
+            val resultsSameKeysAsShown = it.results.filterKeys { key -> key in optionIds }.size == optionIds.size
+            if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
+                votingState.onNext(VotingState.Update(changeVotesToPercentages(it)))
             }
         }
     }
@@ -36,7 +45,7 @@ internal class VotingInteractor(
         votingService.castVote(pollId, optionId)
 
         // Don't want to update immediately after casting vote
-        checkIfAlreadyVotedAndHaveResults(pollId, optionIds, false, false)
+        checkIfAlreadyVotedAndHaveResults(pollId, optionIds, false)
     }
 
     private fun getPollState(pollId: String, optionIds: List<String>, forceNetwork: Boolean): Publisher<OptionResults> {
@@ -58,16 +67,16 @@ internal class VotingInteractor(
         }
     }
 
-    private fun changeVotesToPercentages(results: VotingState.Results): VotingState.Results {
+    private fun changeVotesToPercentages(results: OptionResults): OptionResults {
         // https://en.wikipedia.org/wiki/Largest_remainder_method
-        val total = results.optionResults.results.values.sum().toFloat()
-        val votes = results.optionResults.results.mapValues { (it.value.toFloat() / total * 100)  }
+        val total = results.results.values.sum().toFloat()
+        val votes = results.results.mapValues { (it.value.toFloat() / total * 100)  }
 
         val votesWithFractional = votes.toList().map { VotesWithFractional(it.first, it.second.toInt(), it.second - it.second.toInt()) }
 
         var differenceBetweenVotesAndTotalPercentage = 100 - votesWithFractional.sumBy { it.votePercentage }
 
-        val votesList = votesWithFractional.sortedBy { it.fractional }.toMutableList()
+        val votesList = votesWithFractional.sortedByDescending { it.fractional }.toMutableList()
         val maxIndex = votesList.size - 1
         var currentIndex = 0
 
@@ -79,7 +88,7 @@ internal class VotingInteractor(
 
         val votesListWithRemainderShared = votesList.associate { it.key to it.votePercentage }
 
-        return results.copy(optionResults = results.optionResults.copy(results = votesListWithRemainderShared))
+        return results.copy(results = votesListWithRemainderShared)
     }
 
     data class VotesWithFractional(val key: String, var votePercentage: Int, val fractional: Float)

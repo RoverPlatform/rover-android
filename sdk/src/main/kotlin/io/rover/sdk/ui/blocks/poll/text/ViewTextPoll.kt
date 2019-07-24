@@ -3,7 +3,7 @@ package io.rover.sdk.ui.blocks.poll.text
 import android.graphics.Typeface
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import io.rover.sdk.data.domain.TextPollBlock
+import io.rover.sdk.data.domain.TextPoll
 import io.rover.sdk.data.mapToFont
 import io.rover.sdk.platform.addView
 import io.rover.sdk.platform.optionView
@@ -37,16 +37,15 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
     override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
         binding?.viewModel?.let { viewModel ->
-            bindQuestion(viewModel.textPollBlock)
+            bindQuestion(viewModel.textPoll)
 
             if (optionViews.isNotEmpty()) {
                 optionViews.forEach { view.removeView(it) }
             }
 
             setupOptionViews(viewModel)
-            informOptionBackgroundAboutSize(viewModel)
 
-            viewModel.votingState.androidLifecycleDispose(view).subscribe({ votingState ->
+            viewModel.votingState.subscribe({ votingState ->
                 when (votingState) {
                     is VotingState.WaitingForVote -> {
                     }
@@ -57,17 +56,20 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     }
 
     private fun setupOptionViews(viewModel: TextPollViewModelInterface) {
-        optionViews = createOptionViews(viewModel.textPollBlock)
+        optionViews = createOptionViews(viewModel.textPoll)
         startListeningForOptionImageUpdates(viewModel.optionBackgroundViewModel, optionViews)
         optionViews.forEachIndexed { index, optionView ->
             view.addView(optionView)
-            optionView.setOnClickListener { viewModelBinding?.viewModel?.castVote(index) }
+            optionView.setOnClickListener {
+                viewModelBinding?.viewModel?.castVote(index) }
         }
+
+        informOptionBackgroundAboutSize(viewModel)
     }
 
     private fun informOptionBackgroundAboutSize(viewModel: TextPollViewModelInterface) {
         viewModelBinding?.measuredSize?.width?.let { measuredWidth ->
-            val optionStyleHeight = viewModel.textPollBlock.optionStyle.height.toFloat()
+            val optionStyleHeight = viewModel.textPoll.options.first().height.toFloat()
             val measuredSize = MeasuredSize(
                 measuredWidth,
                 optionStyleHeight,
@@ -83,7 +85,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             option.setOnClickListener(null)
             val isSelectedOption = index == votingResults.selectedOption
             viewModelBinding?.viewModel?.let {
-                option.goToResultsState(votingShare, isSelectedOption, it.textPollBlock.optionStyle)
+                option.goToResultsState(votingShare, isSelectedOption, it.textPoll.options[index])
             }
         }
     }
@@ -94,32 +96,34 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     ) {
         viewModel.backgroundUpdates.androidLifecycleDispose(view)
             .subscribe { (bitmap, fadeIn, backgroundImageConfiguration) ->
-                val backgroundDrawable = bitmap.createBackgroundDrawable(
-                    view,
-                    viewModel.backgroundColor,
-                    fadeIn,
-                    backgroundImageConfiguration
-                )
-                textOptionViews.forEach { it.backgroundImage = backgroundDrawable }
+                textOptionViews.forEach {
+                    val backgroundDrawable = bitmap.createBackgroundDrawable(
+                        view,
+                        viewModel.backgroundColor,
+                        fadeIn,
+                        backgroundImageConfiguration
+                    )
+                    it.backgroundImage = backgroundDrawable
+                }
             }
     }
 
-    private fun bindQuestion(textPollBlock: TextPollBlock) {
+    private fun bindQuestion(textPoll: TextPoll) {
         questionView.run {
-            text = textPollBlock.question
-            gravity = textPollBlock.questionStyle.textAlignment.convertToGravity()
-            textSize = textPollBlock.questionStyle.font.size.toFloat()
-            setTextColor(textPollBlock.questionStyle.color.asAndroidColor())
-            val font = textPollBlock.questionStyle.font.weight.mapToFont()
+            text = textPoll.question.rawValue
+            gravity = textPoll.question.alignment.convertToGravity()
+            textSize = textPoll.question.font.size.toFloat()
+            setTextColor(textPoll.question.color.asAndroidColor())
+            val font = textPoll.question.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
         }
     }
 
-    private fun createOptionViews(textPollBlock: TextPollBlock): List<TextOptionView> {
-        return textPollBlock.options.map { option ->
+    private fun createOptionViews(textPoll: TextPoll): List<TextOptionView> {
+        return textPoll.options.map { option ->
             view.optionView {
-                initializeOptionViewLayout(textPollBlock.optionStyle)
-                bindOptionView(option, textPollBlock.optionStyle)
+                initializeOptionViewLayout(option)
+                bindOptionView(option)
             }
         }
     }

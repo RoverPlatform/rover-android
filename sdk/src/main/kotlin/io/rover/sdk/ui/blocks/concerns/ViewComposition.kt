@@ -29,12 +29,12 @@ internal class ViewComposition : ViewCompositionInterface {
         afterDraws.add(stage)
     }
 
-    override fun beforeOnDraw(canvas: Canvas) {
+    override fun beforeDraw(canvas: Canvas) {
         // allow to inject behaviour before main view draw (here)
         beforeDraws.forEach { it(canvas) }
     }
 
-    override fun afterOnDraw(canvas: Canvas) {
+    override fun afterDraw(canvas: Canvas) {
         // capture the background draw after the beforeDraws() are called (rather than before
         // like it is here)
         afterDraws.forEach { it(canvas) }
@@ -66,13 +66,13 @@ interface ViewCompositionInterface {
      * In the view containing this mixin, implement the [View.onDraw] template method, and call this
      * method before calling super.
      */
-    fun beforeOnDraw(canvas: Canvas)
+    fun beforeDraw(canvas: Canvas)
 
     /**
      * In the view containing this mixin, implement the [View.onDraw] template method, and call this
      * method after calling super.
      */
-    fun afterOnDraw(canvas: Canvas)
+    fun afterDraw(canvas: Canvas)
 
     /**
      * In the view containing this mixin, implement the [View.onSizeChanged] template method, and

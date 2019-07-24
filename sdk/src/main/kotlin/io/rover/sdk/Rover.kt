@@ -19,12 +19,14 @@ import io.rover.sdk.data.domain.ButtonBlock
 import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.domain.Image
 import io.rover.sdk.data.domain.ImageBlock
+import io.rover.sdk.data.domain.ImagePoll
 import io.rover.sdk.data.domain.ImagePollBlock
 import io.rover.sdk.data.domain.RectangleBlock
 import io.rover.sdk.data.domain.Row
 import io.rover.sdk.data.domain.Screen
 import io.rover.sdk.data.domain.Text
 import io.rover.sdk.data.domain.TextBlock
+import io.rover.sdk.data.domain.TextPoll
 import io.rover.sdk.data.domain.TextPollBlock
 import io.rover.sdk.data.domain.WebView
 import io.rover.sdk.data.domain.WebViewBlock
@@ -388,7 +390,7 @@ internal class ViewModels(
                 )
             }
             is TextPollBlock -> {
-                val textPollViewModel = textPollViewModel(block)
+                val textPollViewModel = textPollViewModel(block.textPoll)
                 return TextPollBlockViewModel(
                     textPollViewModel = textPollViewModel,
                     blockViewModel = blockViewModel(block, setOf(), textPollViewModel),
@@ -397,7 +399,7 @@ internal class ViewModels(
                 )
             }
             is ImagePollBlock -> {
-                val imagePollViewModel = imagePollViewModel(block)
+                val imagePollViewModel = imagePollViewModel(block.imagePoll)
                 return ImagePollBlockViewModel(
                     imagePollViewModel = imagePollViewModel,
                     blockViewModel = blockViewModel(block, setOf(), imagePollViewModel),
@@ -411,9 +413,9 @@ internal class ViewModels(
         }
     }
 
-    private fun imagePollViewModel(imagePollBlock: ImagePollBlock): ImagePollViewModel {
+    private fun imagePollViewModel(imagePoll: ImagePoll): ImagePollViewModel {
         return ImagePollViewModel(
-            imagePollBlock = imagePollBlock,
+            imagePoll = imagePoll,
             measurementService = measurementService,
             imageOptimizationService = imageOptimizationService,
             assetService = assetService,
@@ -422,12 +424,12 @@ internal class ViewModels(
     }
 
     private fun textPollViewModel(
-        textPollBlock: TextPollBlock
+        textPoll: TextPoll
     ): TextPollViewModel {
         return TextPollViewModel(
-            textPollBlock,
+            textPoll,
             measurementService,
-            backgroundViewModel(textPollBlock.optionStyle.background)
+            backgroundViewModel(textPoll.options.first().background)
         )
     }
 

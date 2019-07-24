@@ -370,6 +370,21 @@ internal class ImageOptimizationService {
         )
     }
 
+    // This is only used for polls until this class is refactored to not be tightly coupled with backgrounds
+    fun optimizeImageForFill(
+        image: Image,
+        targetViewPixelSize: PixelSize
+    ): URI {
+        return setQueryParameters(
+            image.url,
+            mapOf(
+                Pair("w", targetViewPixelSize.width.toString()),
+                Pair("h", targetViewPixelSize.height.toString()),
+                Pair("fit", "min")
+            )
+        )
+    }
+
     /**
      * Map the 1X, 2X, and 3X background scale values (which are an iOS convention) to DPI values.
      */

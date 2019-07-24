@@ -11,6 +11,7 @@ import io.rover.sdk.ui.blocks.poll.text.VotingState
 import org.reactivestreams.Publisher
 import java.util.Timer
 import java.util.TimerTask
+import kotlin.concurrent.fixedRateTimer
 
 internal class VotingInteractor(
     private val votingService: VotingService,
@@ -22,7 +23,7 @@ internal class VotingInteractor(
     fun checkIfAlreadyVotedAndHaveResults(pollId: String, optionIds: List<String>) {
         getPollState(pollId, optionIds).observeOn(mainScheduler).subscribe { optionResults ->
             doIfCanShowResultsState(votingStorage.getSavedVoteState(pollId), optionIds, optionResults) { vote ->
-                votingState.onNext(VotingState.Results(vote, changeVotesToPercentages(optionResults), false))
+                votingState.onNext(VotingState.Results(pollId, vote, changeVotesToPercentages(optionResults), false))
             }
         }
     }
@@ -30,12 +31,12 @@ internal class VotingInteractor(
     private fun getFirstTimeResults(pollId: String, optionIds: List<String>) {
         getPollState(pollId, optionIds).observeOn(mainScheduler).subscribe { optionResults ->
             doIfCanShowResultsState(votingStorage.getSavedVoteState(pollId), optionIds, optionResults) { vote ->
-                votingState.onNext(VotingState.Results(vote, changeVotesToPercentages(optionResults), true))
+                votingState.onNext(VotingState.Results(pollId, vote, changeVotesToPercentages(optionResults), true))
             }
         }
     }
 
-    private fun votingResultsUpdate(pollId: String, optionIds: List<String>) {
+    fun votingResultsUpdate(pollId: String, optionIds: List<String>) {
         getPollStateFromNetwork(pollId, optionIds).observeOn(mainScheduler).subscribe { optionResults ->
             doIfCanShowResultsState(votingStorage.getSavedVoteState(pollId), optionIds, optionResults) {
                 votingState.onNext(VotingState.Update(changeVotesToPercentages(optionResults)))

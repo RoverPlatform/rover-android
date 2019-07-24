@@ -278,7 +278,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 
     fun updateResults(votingShare: Int) {
-        currentVote = votingShare
         val resultProgressFillAnimator = ValueAnimator.ofFloat(currentVote.toFloat(), votingShare.toFloat()).apply {
             duration = RESULT_FILL_PROGRESS_DURATION
             addUpdateListener {
@@ -289,6 +288,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             interpolator = easeInEaseOutInterpolator
         }
         resultProgressFillAnimator.start()
+        currentVote = votingShare
+
     }
 
     private fun calculateWidthWithoutOptionText(

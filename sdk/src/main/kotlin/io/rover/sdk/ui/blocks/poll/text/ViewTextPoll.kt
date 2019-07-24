@@ -19,6 +19,7 @@ import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.concerns.ViewModelBinding
 import java.util.Timer
 import java.util.TimerTask
+import kotlin.concurrent.fixedRateTimer
 
 internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInterface {
 
@@ -37,6 +38,8 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         }
     }
 
+    private var timer: Timer? = null
+
     override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
         binding?.viewModel?.let { viewModel ->
             bindQuestion(viewModel.textPoll)
@@ -47,11 +50,16 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
             setupOptionViews(viewModel)
 
+            timer?.cancel()
+
             viewModel.votingState.subscribe({ votingState ->
                 when (votingState) {
                     is VotingState.WaitingForVote -> { }
                     is VotingState.Results -> {
                         setVoteResultsReceived(votingState)
+                        timer = fixedRateTimer(period = 5000L, initialDelay = 5000L) {
+                            viewModel.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
+                        }
                     }
                     is VotingState.Update -> setVoteResultUpdate(votingState)
                 }

@@ -34,6 +34,10 @@ internal class TextPollViewModel(
         return optionsHeight + optionSpacing + questionHeight
     }
 
+    override fun checkForUpdate(pollId: String, optionIds: List<String>) {
+        pollVotingInteractor.votingResultsUpdate(pollId, optionIds)
+    }
+
     override fun castVote(selectedOption: String, optionIds: List<String>) {
         pollVotingInteractor.castVote(id, selectedOption, optionIds)
     }
@@ -47,7 +51,7 @@ internal class TextPollViewModel(
 
 internal sealed class VotingState {
     object WaitingForVote : VotingState()
-    data class Results(val selectedOption: String, val optionResults: OptionResults, val shouldAnimate: Boolean) : VotingState()
+    data class Results(val pollId: String, val selectedOption: String, val optionResults: OptionResults, val shouldAnimate: Boolean) : VotingState()
     data class Update(val optionResults: OptionResults) : VotingState()
 }
 
@@ -56,5 +60,6 @@ internal interface TextPollViewModelInterface : Measurable, BindableViewModel {
     val optionBackgroundViewModel: BackgroundViewModelInterface
     fun castVote(selectedOption: String, optionIds: List<String>)
     fun checkIfAlreadyVoted(optionIds: List<String>)
+    fun checkForUpdate(pollId: String, optionIds: List<String>)
     val votingState: PublishSubject<VotingState>
 }

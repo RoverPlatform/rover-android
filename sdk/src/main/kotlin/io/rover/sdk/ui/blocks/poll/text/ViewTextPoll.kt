@@ -17,6 +17,8 @@ import io.rover.sdk.ui.blocks.concerns.background.createBackgroundDrawable
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.concerns.ViewModelBinding
+import java.util.Timer
+import java.util.TimerTask
 
 internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInterface {
 
@@ -48,7 +50,9 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             viewModel.votingState.subscribe({ votingState ->
                 when (votingState) {
                     is VotingState.WaitingForVote -> { }
-                    is VotingState.Results -> setVoteResultsReceived(votingState)
+                    is VotingState.Results -> {
+                        setVoteResultsReceived(votingState)
+                    }
                     is VotingState.Update -> setVoteResultUpdate(votingState)
                 }
             }, { throw (it) }, { subscriptionCallback(it) })
@@ -96,8 +100,9 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             val option = optionViews[id]
             option?.setOnClickListener(null)
             val isSelectedOption = id == votingResults.selectedOption
+
             viewModelBinding?.viewModel?.let {
-                option?.goToResultsState(votingShare, isSelectedOption, it.textPoll.options.find { it.id == id }!!)
+                option?.goToResultsState(votingShare, isSelectedOption, it.textPoll.options.find { it.id == id }!!, votingResults.shouldAnimate)
             }
         }
     }

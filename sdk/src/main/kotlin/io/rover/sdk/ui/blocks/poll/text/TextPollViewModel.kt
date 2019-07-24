@@ -47,7 +47,7 @@ internal class TextPollViewModel(
 
 internal sealed class VotingState {
     object WaitingForVote : VotingState()
-    data class Results(val selectedOption: String, val optionResults: OptionResults) : VotingState()
+    data class Results(val selectedOption: String, val optionResults: OptionResults, val shouldAnimate: Boolean) : VotingState()
     data class Update(val optionResults: OptionResults) : VotingState()
 }
 

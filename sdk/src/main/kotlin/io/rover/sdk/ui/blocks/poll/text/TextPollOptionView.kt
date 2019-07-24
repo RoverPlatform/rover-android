@@ -91,8 +91,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 
     private var roundRect: RoundRect? = null
-    private var optionPaints: OptionPaints =
-        OptionPaints()
+    private var optionPaints: OptionPaints = OptionPaints()
 
     //used to set starting point for update animations
     private var currentVote = 0
@@ -114,9 +113,9 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
     init {
         addView(optionTextView)
-        addView(voteIndicatorView)
         addView(votePercentageText)
         addView(borderView)
+        addView(voteIndicatorView)
     }
 
     fun initializeOptionViewLayout(optionStyle: TextPollOption) {
@@ -193,7 +192,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         super.draw(canvas)
     }
 
-    fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, optionStyle: TextPollOption) {
+    fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, optionStyle: TextPollOption, shouldAnimate: Boolean) {
 
         bindVotePercentageText(votingShare, optionStyle)
         votePercentageText.visibility = View.VISIBLE
@@ -226,15 +225,26 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             maxWidth = this@TextOptionView.width - widthOfOtherViews
         }
 
-        performResultsAnimation(votingShare, (optionStyle.resultFillColor.alpha * 255).toInt())
+        if (shouldAnimate) {
+            performResultsAnimation(votingShare, (optionStyle.resultFillColor.alpha * 255).toInt())
+        } else {
+            immediatelyGoToResultsState(votingShare, (optionStyle.resultFillColor.alpha * 255).toInt())
+        }
+    }
+
+    private fun immediatelyGoToResultsState(votingShare: Int, resultFillAlpha: Int) {
+        currentVote = votingShare
+        votePercentageText.alpha = 1f
+        optionPaints.resultPaint.alpha = resultFillAlpha
+        voteIndicatorView.alpha = 1f
+        votePercentageText.text = "$votingShare%"
+        resultRect = RectF(0f, 0f, width.toFloat() / 100 * votingShare, height.toFloat())
     }
 
     private val easeInEaseOutInterpolator = TimeInterpolator { input ->
         val inputSquared = input * input
         inputSquared / (2.0f * (inputSquared - input) + 1.0f)
     }
-
-    var resultsAnimation = AnimatorSet()
 
     private fun performResultsAnimation(votingShare: Int, resultFillAlpha: Int) {
         currentVote = votingShare
@@ -254,23 +264,21 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             }
         }
 
-        val resultProgressFillAnimator = ValueAnimator.ofFloat(0f, votingShare.toFloat()).apply {
+        val resultsAnimation = ValueAnimator.ofFloat(0f, votingShare.toFloat()).apply {
             duration = RESULT_FILL_PROGRESS_DURATION
             addUpdateListener {
                 val animatedValue = it.animatedValue as Float
-
                 votePercentageText.text = "${animatedValue.toInt()}%"
                 resultRect = RectF(0f, 0f, width.toFloat() / 100 * animatedValue, height.toFloat())
             }
         }
 
-        resultsAnimation = resultsAnimation.apply { playTogether(alphaAnimator, resultFillAlphaAnimator, resultProgressFillAnimator)
-        interpolator = easeInEaseOutInterpolator }
-
-        resultsAnimation.start()
+        AnimatorSet().apply { playTogether(alphaAnimator, resultFillAlphaAnimator, resultsAnimation)
+        interpolator = easeInEaseOutInterpolator }.start()
     }
 
     fun updateResults(votingShare: Int) {
+        currentVote = votingShare
         val resultProgressFillAnimator = ValueAnimator.ofFloat(currentVote.toFloat(), votingShare.toFloat()).apply {
             duration = RESULT_FILL_PROGRESS_DURATION
             addUpdateListener {
@@ -280,7 +288,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             }
             interpolator = easeInEaseOutInterpolator
         }
-        if (resultsAnimation.isRunning) resultProgressFillAnimator.startDelay = 1000L
         resultProgressFillAnimator.start()
     }
 

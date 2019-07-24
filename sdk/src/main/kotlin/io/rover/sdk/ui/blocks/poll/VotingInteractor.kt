@@ -9,6 +9,8 @@ import io.rover.sdk.streams.observeOn
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.blocks.poll.text.VotingState
 import org.reactivestreams.Publisher
+import java.util.Timer
+import java.util.TimerTask
 
 internal class VotingInteractor(
     private val votingService: VotingService,
@@ -17,25 +19,26 @@ internal class VotingInteractor(
 ) {
     val votingState = PublishSubject<VotingState>()
 
-    fun checkIfAlreadyVotedAndHaveResults(pollId: String, optionIds: List<String>, update: Boolean = true) {
-        val savedVoteState = votingStorage.getSavedVoteState(pollId)
+    fun checkIfAlreadyVotedAndHaveResults(pollId: String, optionIds: List<String>) {
+        getPollState(pollId, optionIds).observeOn(mainScheduler).subscribe { optionResults ->
+            doIfCanShowResultsState(votingStorage.getSavedVoteState(pollId), optionIds, optionResults) { vote ->
+                votingState.onNext(VotingState.Results(vote, changeVotesToPercentages(optionResults), false))
+            }
+        }
+    }
 
-        getPollState(pollId, optionIds, false).observeOn(mainScheduler).subscribe {
-            val resultsSameKeysAsShown = it.results.filterKeys { key -> key in optionIds }.size == optionIds.size
-            if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
-                votingState.onNext(VotingState.Results(savedVoteState, changeVotesToPercentages(it)))
-                if (update) votingResultsUpdate(pollId, optionIds)
+    private fun getFirstTimeResults(pollId: String, optionIds: List<String>) {
+        getPollState(pollId, optionIds).observeOn(mainScheduler).subscribe { optionResults ->
+            doIfCanShowResultsState(votingStorage.getSavedVoteState(pollId), optionIds, optionResults) { vote ->
+                votingState.onNext(VotingState.Results(vote, changeVotesToPercentages(optionResults), true))
             }
         }
     }
 
     private fun votingResultsUpdate(pollId: String, optionIds: List<String>) {
-        val savedVoteState = votingStorage.getSavedVoteState(pollId)
-
-        getPollState(pollId, optionIds, true).observeOn(mainScheduler).subscribe {
-            val resultsSameKeysAsShown = it.results.filterKeys { key -> key in optionIds }.size == optionIds.size
-            if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
-                votingState.onNext(VotingState.Update(changeVotesToPercentages(it)))
+        getPollStateFromNetwork(pollId, optionIds).observeOn(mainScheduler).subscribe { optionResults ->
+            doIfCanShowResultsState(votingStorage.getSavedVoteState(pollId), optionIds, optionResults) {
+                votingState.onNext(VotingState.Update(changeVotesToPercentages(optionResults)))
             }
         }
     }
@@ -44,15 +47,32 @@ internal class VotingInteractor(
         votingStorage.incrementSavedPollState(pollId, optionId)
         votingService.castVote(pollId, optionId)
 
-        // Don't want to update immediately after casting vote
-        checkIfAlreadyVotedAndHaveResults(pollId, optionIds, false)
+        getFirstTimeResults(pollId, optionIds)
     }
 
-    private fun getPollState(pollId: String, optionIds: List<String>, forceNetwork: Boolean): Publisher<OptionResults> {
+    private fun doIfCanShowResultsState(savedVoteState: String?, optionIds: List<String>, optionResults: OptionResults,
+        onComplete: (String) -> Unit) {
+        val resultsSameKeysAsShown = optionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
+
+        if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
+            onComplete(savedVoteState)
+        }
+    }
+
+    private fun getPollStateFromNetwork(pollId: String, optionIds: List<String>): Publisher<OptionResults> {
+        return fetchVotingResults(pollId, optionIds)
+    }
+
+    private fun getSavedPollState(pollId: String): Publisher<OptionResults> {
+        val savedState = votingStorage.getSavedPollState(pollId)
+        return savedState?.let { Publishers.just(savedState) } ?: Publishers.just(OptionResults(mapOf()))
+    }
+
+    private fun getPollState(pollId: String, optionIds: List<String>): Publisher<OptionResults> {
         val savedState = votingStorage.getSavedPollState(pollId)
         return when {
-            savedState != null && !forceNetwork -> Publishers.just(savedState)
-            else -> fetchVotingResults(pollId, optionIds)
+            savedState != null -> getSavedPollState(pollId)
+            else -> getPollStateFromNetwork(pollId, optionIds)
         }
     }
 

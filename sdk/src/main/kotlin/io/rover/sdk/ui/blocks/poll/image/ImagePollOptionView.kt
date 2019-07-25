@@ -199,7 +199,9 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
         }
     }
 
-    fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, option: ImagePollBlockOption) {
+    fun goToResultsState(votingShare: Int, isSelectedOption: Boolean,
+        option: ImagePollBlockOption, shouldAnimate: Boolean,
+        viewWidth: Int) {
         bindVoteIndicatorBar()
         bindVotePercentageText(votingShare)
         bindVoteIndicatorText(option)
@@ -219,16 +221,36 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
             if (isSelectedOption) {
                 voteIndicatorView.measure(0, 0)
                 maxWidth =
-                    bottomSection.width - voteIndicatorView.measuredWidth - (voteIndicatorView.layoutParams as MarginLayoutParams).marginStart
+                    viewWidth - voteIndicatorView.measuredWidth - (bottomSectionHorizontalMargin * 2) - (voteIndicatorView.layoutParams as MarginLayoutParams).marginStart
             }
         }
 
-        performResultsAnimation(votingShare, isSelectedOption)
+        if (shouldAnimate) {
+            performResultsAnimation(votingShare, isSelectedOption)
+        } else {
+            immediatelyGoToResultsState(votingShare, isSelectedOption, viewWidth)
+        }
     }
 
     private val easeInEaseOutInterpolator = TimeInterpolator { input ->
         val inputSquared = input * input
         inputSquared / (2.0f * (inputSquared - input) + 1.0f)
+    }
+
+    private fun immediatelyGoToResultsState(votingShare: Int, isSelectedOption: Boolean, viewWidth: Int) {
+        currentVote = votingShare
+        if (isSelectedOption) {
+            voteIndicatorView.visibility = View.VISIBLE
+        }
+
+        votingIndicatorBar.overlayBarFillAlpha = 128
+        votingIndicatorBar.resultFillAlpha = 255
+        topSectionResultsOverlayView.alpha = 0.3f
+        voteIndicatorView.alpha = 1f
+        votePercentageView.alpha = 1f
+        votePercentageView.text = "$votingShare%"
+        votingIndicatorBar.viewWidth = viewWidth.toFloat()
+        votingIndicatorBar.barValue = votingShare.toFloat()
     }
 
     //used to set starting point for update animations
@@ -248,9 +270,10 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
 
         if (resultsAnimation.isRunning) resultProgressFillAnimator.startDelay = 1000L
         resultProgressFillAnimator.start()
+        currentVote = votingShare
     }
 
-    var resultsAnimation = AnimatorSet()
+    private var resultsAnimation = AnimatorSet()
 
     private fun performResultsAnimation(votingShare: Int, isSelectedOption: Boolean) {
         currentVote = votingShare
@@ -390,6 +413,8 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
 }
 
 class VotingIndicatorBar(context: Context?) : View(context) {
+    private val barHeight = 8f.dpAsPx(this.resources.displayMetrics)
+
     var overlayBarFillAlpha = 0
         set(value) {
             field = value
@@ -400,19 +425,20 @@ class VotingIndicatorBar(context: Context?) : View(context) {
             field = value
             fillPaint.alpha = field
         }
+    var viewWidth: Float? = null
     var barValue = 0f
         set(value) {
             field = value
-            val barWidth = (width.toFloat() - inset) * (barValue / 100)
-            barRect = RectF(inset, 0f, if (barWidth < inset) inset else barWidth, height.toFloat())
+            val barWidth = ((viewWidth ?: this.width.toFloat()) - inset) * (barValue / 100)
+            barRect = RectF(inset, 0f, if (barWidth < inset) inset else barWidth, barHeight.toFloat())
             invalidate()
         }
     var fillPaint = Paint()
 
     private var overlayBarPaint = Paint().create(Color.WHITE, Paint.Style.FILL)
     private val inset = 4f.dpAsPx(resources.displayMetrics).toFloat()
-    private var barRect = RectF(inset, 0f, 0f, height.toFloat())
-    private val overlayRect by lazy { RectF(inset, 0f, width.toFloat() - inset, height.toFloat()) }
+    private var barRect = RectF(inset, 0f, 0f, barHeight.toFloat())
+    private val overlayRect by lazy { RectF(inset, 0f, (viewWidth ?: this.width.toFloat()) - inset, barHeight.toFloat()) }
 
     companion object {
         private const val CORNER_RADIUS = 20f

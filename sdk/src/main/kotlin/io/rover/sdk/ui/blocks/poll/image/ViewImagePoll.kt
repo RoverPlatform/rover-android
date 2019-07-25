@@ -9,14 +9,20 @@ import io.rover.sdk.logging.log
 import io.rover.sdk.platform.imageOptionView
 import io.rover.sdk.platform.setupLayoutParams
 import io.rover.sdk.platform.textView
+import io.rover.sdk.streams.ViewEvent
+import io.rover.sdk.streams.attachEvents
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
+import io.rover.sdk.ui.blocks.poll.text.ViewTextPoll
 import io.rover.sdk.ui.blocks.poll.text.VotingState
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.concerns.ViewModelBinding
 import io.rover.sdk.ui.dpAsPx
 import io.rover.sdk.ui.pxAsDp
+import org.reactivestreams.Subscription
+import java.util.Timer
+import kotlin.concurrent.fixedRateTimer
 
 internal class ViewImagePoll(override val view: LinearLayout) :
     ViewImagePollInterface {
@@ -34,7 +40,15 @@ internal class ViewImagePoll(override val view: LinearLayout) :
 
     companion object {
         private const val OPTION_TEXT_HEIGHT = 40f
+        private const val UPDATE_INTERVAL = 5000L
     }
+
+    private var timer: Timer? = null
+        set(value) {
+            field?.cancel()
+            field?.purge()
+            field = value
+        }
 
     override var viewModelBinding: MeasuredBindableView.Binding<ImagePollViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
 
@@ -46,10 +60,14 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             val imageLength =
                 (width.dpAsPx(view.resources.displayMetrics) - horizontalSpacing.dpAsPx(view.resources.displayMetrics)) / 2
 
-            bindQuestion(viewModel.imagePoll)
             if (optionViews.isNotEmpty()) {
-                optionViews.forEach { view.removeView(it.value) }
+                row1.removeAllViews()
+                row2.removeAllViews()
+                view.removeView(row1)
+                view.removeView(row2)
             }
+
+            bindQuestion(viewModel.imagePoll)
             setupOptionViews(viewModel, imageLength)
 
             viewModel.multiImageUpdates.subscribe(
@@ -74,13 +92,40 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             viewModel.votingState.subscribe({ votingState ->
                 when (votingState) {
                     is VotingState.WaitingForVote -> {}
-                    is VotingState.Results -> setVoteResultsReceived(votingState)
+                    is VotingState.Results -> {
+                        setVoteResultsReceived(votingState, imageLength)
+                        setUpdateTimer(votingState, subscriptionCallback)
+                    }
                     is VotingState.Update -> setVoteResultUpdate(votingState)
                 }
             }, { throw (it) }, { subscriptionCallback(it) })
 
             viewModel.checkIfAlreadyVoted(optionViews.keys.toList())
         }
+    }
+
+    private fun setUpdateTimer(votingState: VotingState.Results, subscriptionCallback: (Subscription) -> Unit) {
+        timer = fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
+            viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
+        }
+
+        view.attachEvents().subscribe ({
+            when (it) {
+                is ViewEvent.Attach -> {
+                    //In case view has been detached for a while, don't want to wait 5 seconds to update
+                    viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
+                    log.d("poll view attached for poll ${votingState.pollId}")
+                    timer = fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
+                        viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
+                    }
+                }
+                is ViewEvent.Detach -> {
+                    log.d("poll view detached")
+                    timer?.cancel()
+                    timer?.purge()
+                }
+            }
+        }, {}, {subscriptionCallback(it)})
     }
 
     private fun setVoteResultUpdate(votingUpdate: VotingState.Update) {
@@ -93,13 +138,13 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         }
     }
 
-    private fun setVoteResultsReceived(votingResults: VotingState.Results) {
+    private fun setVoteResultsReceived(votingResults: VotingState.Results, viewWidth: Int) {
         votingResults.optionResults.results.forEach { (id, votingShare) ->
             val option = optionViews[id]
             option?.setOnClickListener(null)
             val isSelectedOption = id == votingResults.selectedOption
             viewModelBinding?.viewModel?.let {
-                option?.goToResultsState(votingShare, isSelectedOption, it.imagePoll.options.first())
+                option?.goToResultsState(votingShare, isSelectedOption, it.imagePoll.options.find { it.id == id }!!, votingResults.shouldAnimate, viewWidth)
             }
         }
     }
@@ -125,19 +170,19 @@ internal class ViewImagePoll(override val view: LinearLayout) :
     }
 
     private fun createTwoOptionLayout() {
-        val row = LinearLayout(view.context)
-        view.addView(row)
+        view.addView(row1)
         optionViews.forEach { (id, imagePollOptionView) ->
-            row.addView(imagePollOptionView)
+            row1.addView(imagePollOptionView)
             imagePollOptionView.setOnClickListener {
                 viewModelBinding?.viewModel?.castVote(id, optionViews.keys.toList())
             }
         }
     }
 
+    private val row1 = LinearLayout(view.context)
+    private val row2 = LinearLayout(view.context)
+
     private fun createFourOptionLayout() {
-        val row1 = LinearLayout(view.context)
-        val row2 = LinearLayout(view.context)
         view.addView(row1)
         view.addView(row2)
 

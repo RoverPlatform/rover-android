@@ -64,6 +64,10 @@ internal class ImagePollViewModel(
         measurementsSubject.onNext(measuredSize)
     }
 
+    override fun checkForUpdate(pollId: String, optionIds: List<String>) {
+        pollVotingInteractor.votingResultsUpdate(pollId, optionIds)
+    }
+
     private val measurementsSubject = PublishSubject<MeasuredSize>()
 
     private val images: Map<String, Image> = imagePoll.options.filter { it.image != null }.associate { it.id to it.image!! }
@@ -121,6 +125,7 @@ internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
     )
 
     fun castVote(selectedOption: String, optionIds: List<String>)
+    fun checkForUpdate(pollId: String, optionIds: List<String>)
     fun checkIfAlreadyVoted(optionIds: List<String>)
     val votingState: PublishSubject<VotingState>
 }

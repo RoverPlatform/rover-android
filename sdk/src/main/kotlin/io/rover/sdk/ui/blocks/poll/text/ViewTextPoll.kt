@@ -5,11 +5,14 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import io.rover.sdk.data.domain.TextPoll
 import io.rover.sdk.data.mapToFont
+import io.rover.sdk.logging.log
 import io.rover.sdk.platform.addView
 import io.rover.sdk.platform.optionView
 import io.rover.sdk.platform.setupLayoutParams
 import io.rover.sdk.platform.textView
+import io.rover.sdk.streams.ViewEvent
 import io.rover.sdk.streams.androidLifecycleDispose
+import io.rover.sdk.streams.attachEvents
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundViewModelInterface
@@ -17,6 +20,7 @@ import io.rover.sdk.ui.blocks.concerns.background.createBackgroundDrawable
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.concerns.ViewModelBinding
+import org.reactivestreams.Subscription
 import java.util.Timer
 import java.util.TimerTask
 import kotlin.concurrent.fixedRateTimer
@@ -30,6 +34,10 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         )
     }
 
+    companion object {
+        private const val UPDATE_INTERVAL = 5000L
+    }
+
     private var optionViews = mapOf<String, TextOptionView>()
 
     init {
@@ -39,6 +47,11 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     }
 
     private var timer: Timer? = null
+    set(value) {
+        field?.cancel()
+        field?.purge()
+        field = value
+    }
 
     override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
         binding?.viewModel?.let { viewModel ->
@@ -50,16 +63,14 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
             setupOptionViews(viewModel)
 
-            timer?.cancel()
+            log.d("poll view bound")
 
             viewModel.votingState.subscribe({ votingState ->
                 when (votingState) {
                     is VotingState.WaitingForVote -> { }
                     is VotingState.Results -> {
                         setVoteResultsReceived(votingState)
-                        timer = fixedRateTimer(period = 5000L, initialDelay = 5000L) {
-                            viewModel.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
-                        }
+                        setUpdateTimer(votingState, subscriptionCallback)
                     }
                     is VotingState.Update -> setVoteResultUpdate(votingState)
                 }
@@ -67,6 +78,30 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
             viewModel.checkIfAlreadyVoted(optionViews.keys.toList())
         }
+    }
+
+    private fun setUpdateTimer(votingState: VotingState.Results, subscriptionCallback: (Subscription) -> Unit) {
+        timer = fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
+            viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
+        }
+
+        view.attachEvents().subscribe ({
+            when (it) {
+                is ViewEvent.Attach -> {
+                    //In case view has been detached for a while, don't want to wait 5 seconds to update
+                    viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
+                    log.d("poll view attached for poll ${votingState.pollId}")
+                    timer = fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
+                        viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
+                    }
+                }
+                is ViewEvent.Detach -> {
+                    log.d("poll view detached")
+                    timer?.cancel()
+                    timer?.purge()
+                }
+            }
+        }, {}, {subscriptionCallback(it)})
     }
 
     private fun setupOptionViews(viewModel: TextPollViewModelInterface) {
@@ -79,6 +114,26 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         }
 
         informOptionBackgroundAboutSize(viewModel)
+    }
+
+    private fun bindQuestion(textPoll: TextPoll) {
+        questionView.run {
+            text = textPoll.question.rawValue
+            gravity = textPoll.question.alignment.convertToGravity()
+            textSize = textPoll.question.font.size.toFloat()
+            setTextColor(textPoll.question.color.asAndroidColor())
+            val font = textPoll.question.font.weight.mapToFont()
+            typeface = Typeface.create(font.fontFamily, font.fontStyle)
+        }
+    }
+
+    private fun createOptionViews(textPoll: TextPoll): Map<String, TextOptionView> {
+        return textPoll.options.associate { option ->
+            option.id to view.optionView {
+                initializeOptionViewLayout(option)
+                bindOptionView(option)
+            }
+        }
     }
 
     private fun informOptionBackgroundAboutSize(viewModel: TextPollViewModelInterface) {
@@ -110,7 +165,8 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             val isSelectedOption = id == votingResults.selectedOption
 
             viewModelBinding?.viewModel?.let {
-                option?.goToResultsState(votingShare, isSelectedOption, it.textPoll.options.find { it.id == id }!!, votingResults.shouldAnimate)
+                option?.goToResultsState(votingShare, isSelectedOption, it.textPoll.options.find { it.id == id }!!, votingResults.shouldAnimate,
+                    viewModelBinding?.measuredSize?.width)
             }
         }
     }
@@ -131,26 +187,6 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                     it.value.backgroundImage = backgroundDrawable
                 }
             }
-    }
-
-    private fun bindQuestion(textPoll: TextPoll) {
-        questionView.run {
-            text = textPoll.question.rawValue
-            gravity = textPoll.question.alignment.convertToGravity()
-            textSize = textPoll.question.font.size.toFloat()
-            setTextColor(textPoll.question.color.asAndroidColor())
-            val font = textPoll.question.font.weight.mapToFont()
-            typeface = Typeface.create(font.fontFamily, font.fontStyle)
-        }
-    }
-
-    private fun createOptionViews(textPoll: TextPoll): Map<String, TextOptionView> {
-        return textPoll.options.associate { option ->
-            option.id to view.optionView {
-                initializeOptionViewLayout(option)
-                bindOptionView(option)
-            }
-        }
     }
 }
 

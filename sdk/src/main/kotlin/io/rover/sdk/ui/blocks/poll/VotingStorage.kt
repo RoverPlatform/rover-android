@@ -1,5 +1,7 @@
 package io.rover.sdk.ui.blocks.poll
 
+import io.rover.sdk.data.graphql.putProp
+import io.rover.sdk.data.graphql.toStringIntHash
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.KeyValueStorage
 import org.json.JSONException
@@ -48,4 +50,28 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
     }
 }
 
-internal typealias OptionResultsWithUserVote = Pair<OptionResults, String?>
+internal class PrefsQueue() {
+    companion object {
+        private const val MAX_SIZE = 100
+        private const val ITEM_NUMBER_KEY = "item-number"
+    }
+
+    fun addItemToPrefsQueue(keyValueStorage: KeyValueStorage) {
+        keyValueStorage["${getCurrentCount(keyValueStorage)}"] 
+    }
+
+    fun getCurrentCount(keyValueStorage: KeyValueStorage) = keyValueStorage[ITEM_NUMBER_KEY]?.toInt() ?: 0
+
+    fun checkIfOverLimit(keyValueStorage: KeyValueStorage) {
+        val currentCount = getCurrentCount(keyValueStorage)
+
+        if (currentCount > MAX_SIZE) {
+            val itemToDelete = currentCount - 100
+
+        }
+    }
+
+    fun deleteFirstIn(keyValueStorage: KeyValueStorage) {
+
+    }
+}

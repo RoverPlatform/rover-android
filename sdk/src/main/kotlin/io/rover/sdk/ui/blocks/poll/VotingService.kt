@@ -42,7 +42,7 @@ internal class VotingService(
         httpClient.request(urlRequest, body, false).subscribe {
             when (it) {
                 is HttpClientResponse.Success -> log.v("vote in poll $pollId with option $optionId succeeded")
-                is HttpClientResponse.ApplicationError, is HttpClientResponse.ConnectionFailure -> log.w("voting faled $it")
+                is HttpClientResponse.ApplicationError, is HttpClientResponse.ConnectionFailure -> log.w("voting failed $it")
             }
         }
     }

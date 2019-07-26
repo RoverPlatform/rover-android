@@ -13,6 +13,7 @@ import io.rover.sdk.ui.blocks.poll.VotingInteractor
 import io.rover.sdk.ui.blocks.poll.VotingService
 import io.rover.sdk.ui.blocks.poll.VotingStorage
 import org.json.JSONObject
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -63,7 +64,7 @@ object VotingInteractorSpec : Spek({
         }
 
         it("updates option results subject") {
-            assert(optionYielded)
+            assertTrue(optionYielded)
         }
     }
 })

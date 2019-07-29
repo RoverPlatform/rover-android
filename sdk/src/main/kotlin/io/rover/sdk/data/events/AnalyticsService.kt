@@ -13,9 +13,11 @@ import io.rover.sdk.platform.dateAsIso8601
 import io.rover.sdk.platform.debugExplanation
 import io.rover.sdk.platform.setRoverUserAgent
 import io.rover.sdk.services.EventEmitter
+import io.rover.sdk.streams.filter
 import io.rover.sdk.streams.subscribe
 import org.json.JSONObject
 import java.io.DataOutputStream
+import java.lang.RuntimeException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Date
@@ -59,14 +61,15 @@ internal class AnalyticsService(
     }
 
     private fun encodeBody(eventInformation: RoverEvent): String {
-        val (eventName, flatEvent) = when (eventInformation) {
-            is RoverEvent.ExperiencePresented -> "Experience Presented" to eventInformation.toFlat()
-            is RoverEvent.ExperienceDismissed -> "Experience Dismissed" to eventInformation.toFlat()
-            is RoverEvent.ExperienceViewed -> "Experience Viewed" to eventInformation.toFlat()
-            is RoverEvent.ScreenPresented -> "Screen Presented" to eventInformation.toFlat()
-            is RoverEvent.ScreenDismissed -> "Screen Dismissed" to eventInformation.toFlat()
-            is RoverEvent.ScreenViewed -> "Screen Viewed" to eventInformation.toFlat()
-            is RoverEvent.BlockTapped -> "Block Tapped" to eventInformation.toFlat()
+        val (eventName, flatEvent) = when {
+            eventInformation is RoverEvent.ExperiencePresented -> "Experience Presented" to eventInformation.toFlat()
+            eventInformation is RoverEvent.ExperienceDismissed -> "Experience Dismissed" to eventInformation.toFlat()
+            eventInformation is RoverEvent.ExperienceViewed -> "Experience Viewed" to eventInformation.toFlat()
+            eventInformation is RoverEvent.ScreenPresented -> "Screen Presented" to eventInformation.toFlat()
+            eventInformation is RoverEvent.ScreenDismissed -> "Screen Dismissed" to eventInformation.toFlat()
+            eventInformation is RoverEvent.ScreenViewed -> "Screen Viewed" to eventInformation.toFlat()
+            eventInformation is RoverEvent.BlockTapped -> "Block Tapped" to eventInformation.toFlat()
+            else -> throw RuntimeException("Event not supported")
         }
 
         return JSONObject().apply {
@@ -88,7 +91,7 @@ internal class AnalyticsService(
      * Initiates the [AnalyticsService] sending of analytics events.
      */
     init {
-        eventEmitter.trackedEvents.subscribe { sendRequest(it) }
+        eventEmitter.trackedEvents.filter { it !is RoverEvent.PollAnswered }.subscribe { sendRequest(it) }
     }
 
     private fun request(

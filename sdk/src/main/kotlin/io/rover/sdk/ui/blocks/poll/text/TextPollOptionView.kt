@@ -146,16 +146,24 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 
     private fun initializeViewStyle(optionStyle: TextPollOption) {
-        val borderRadius = optionStyle.border.radius.dpAsPx(resources.displayMetrics).toFloat()
-        val borderStrokeWidth = optionStyle.border.width.dpAsPx(resources.displayMetrics).toFloat()
-        val fillPaint = Paint().create(optionStyle.background.color.asAndroidColor(), Paint.Style.FILL)
-        val resultPaint = Paint().create(optionStyle.resultFillColor.asAndroidColor(), Paint.Style.FILL)
+        val adjustedBorderRadius = if(optionStyle.border.radius.toFloat() > optionStyle.height.toFloat() / 2) {
+            optionStyle.height / 2
+        } else {
+            optionStyle.border.radius
+        }
+
+        val adjustedOptionStyle = optionStyle.copy(border = optionStyle.border.copy(radius = adjustedBorderRadius))
+
+        val borderRadius = adjustedOptionStyle.border.radius.dpAsPx(resources.displayMetrics).toFloat()
+        val borderStrokeWidth = adjustedOptionStyle.border.width.dpAsPx(resources.displayMetrics).toFloat()
+        val fillPaint = Paint().create(adjustedOptionStyle.background.color.asAndroidColor(), Paint.Style.FILL)
+        val resultPaint = Paint().create(adjustedOptionStyle.resultFillColor.asAndroidColor(), Paint.Style.FILL)
 
         optionPaints = OptionPaints(fillPaint, resultPaint)
 
         val rect = RectF(0f, 0f, width.toFloat(), height.toFloat())
         roundRect = RoundRect(rect, borderRadius, borderStrokeWidth)
-        borderView.border = optionStyle.border
+        borderView.border = adjustedOptionStyle.border
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {

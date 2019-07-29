@@ -196,16 +196,14 @@ internal class ViewImagePoll(override val view: LinearLayout) :
     }
 
     private fun createOptionViews(imagePoll: ImagePoll, imageLength: Int): Map<String, ImagePollOptionView> {
-        val optionTextHeight = OPTION_TEXT_HEIGHT.dpAsPx(view.resources.displayMetrics)
-
         return imagePoll.options.associate {
             it.id to view.imageOptionView {
-                initializeOptionViewLayout(it)
+                initializeOptionViewLayout(it, imageLength + OPTION_TEXT_HEIGHT.toInt())
                 bindOptionView(it)
                 bindOptionImageSize(imageLength)
                 setupLayoutParams(
                     width = imageLength,
-                    height = imageLength + optionTextHeight,
+                    height = imageLength + OPTION_TEXT_HEIGHT.dpAsPx(view.resources.displayMetrics),
                     leftMargin = it.leftMargin.dpAsPx(view.resources.displayMetrics),
                     topMargin = it.topMargin.dpAsPx(view.resources.displayMetrics)
                 )

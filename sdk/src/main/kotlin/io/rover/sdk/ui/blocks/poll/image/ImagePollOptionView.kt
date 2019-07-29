@@ -375,17 +375,25 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
         }
     }
 
-    fun initializeOptionViewLayout(option: ImagePollBlockOption) {
+    fun initializeOptionViewLayout(option: ImagePollBlockOption, viewHeight: Int) {
         gravity = Gravity.CENTER_VERTICAL
         alpha = option.opacity.toFloat()
         setBackgroundColor(Color.TRANSPARENT)
 
-        val borderRadius = option.border.radius.dpAsPx(resources.displayMetrics).toFloat()
-        val borderStrokeWidth = option.border.width.dpAsPx(resources.displayMetrics).toFloat()
+        val adjustedBorderRadius = if(option.border.radius.toFloat() > viewHeight.toFloat() / 2) {
+            viewHeight / 2
+        } else {
+            option.border.radius
+        }
+
+        val adjustedOption = option.copy(border = option.border.copy(radius = adjustedBorderRadius))
+
+        val borderRadius = adjustedOption.border.radius.dpAsPx(resources.displayMetrics).toFloat()
+        val borderStrokeWidth = adjustedOption.border.width.dpAsPx(resources.displayMetrics).toFloat()
 
         val rect = RectF(0f, 0f, width.toFloat(), height.toFloat())
         roundRect = RoundRect(rect, borderRadius, borderStrokeWidth)
-        borderView.border = option.border
+        borderView.border = adjustedOption.border
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {

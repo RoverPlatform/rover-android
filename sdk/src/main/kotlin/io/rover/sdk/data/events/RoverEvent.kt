@@ -46,6 +46,23 @@ sealed class RoverEvent {
         }
     }
 
+    data class PollAnswered(
+        val experience: Experience,
+        val screen: Screen,
+        val block: Block,
+        val option: Option
+        ) : RoverEvent() {
+        override fun encodeJson(): JSONObject {
+            return JSONObject().apply {
+                putOpt(ANALYTICS_EVENT_TYPE, POLL_ANSWERED_CODE)
+                putProp(this@PollAnswered, PollAnswered::experience) { experience.encodeJson() }
+                putProp(this@PollAnswered, PollAnswered::screen) { screen.encodeJson() }
+                putProp(this@PollAnswered, PollAnswered::block) { block.encodeJson() }
+                putProp(this@PollAnswered, PollAnswered::option) { option.encodeJson() }
+            }
+        }
+    }
+
     data class ExperienceDismissed(
         val experience: Experience,
         val campaignId: String?
@@ -210,6 +227,7 @@ sealed class RoverEvent {
 
     internal companion object {
         private const val BLOCK_TAPPED_CODE = "BLOCK TAPPED"
+        private const val POLL_ANSWERED_CODE = "POLL ANSWERED"
         private const val EXPERIENCE_DISMISSED_CODE = "EXPERIENCE DISMISSED"
         private const val SCREEN_DISMISSED_CODE = "SCREEN DISMISSED"
         private const val EXPERIENCE_PRESENTED_CODE = "EXPERIENCE PRESENTED"
@@ -242,6 +260,16 @@ sealed class RoverEvent {
                     ScreenPresented.decodeJson(jsonObject)
                 }
             }
+        }
+    }
+}
+
+data class Option(val id: String, val text: String, val image: String? = null) {
+    fun encodeJson(): JSONObject {
+        return JSONObject().apply {
+            putProp(this@Option, Option::id)
+            putProp(this@Option, Option::text)
+            putProp(this@Option, Option::image)
         }
     }
 }

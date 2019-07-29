@@ -1,7 +1,13 @@
 package io.rover.sdk.ui.blocks.poll.text
 
+import io.rover.sdk.data.domain.Block
+import io.rover.sdk.data.domain.Experience
+import io.rover.sdk.data.domain.Screen
 import io.rover.sdk.data.domain.TextPoll
+import io.rover.sdk.data.events.Option
+import io.rover.sdk.data.events.RoverEvent
 import io.rover.sdk.data.getFontAppearance
+import io.rover.sdk.services.EventEmitter
 import io.rover.sdk.services.MeasurementService
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.ui.RectF
@@ -16,7 +22,11 @@ internal class TextPollViewModel(
     override val textPoll: TextPoll,
     private val measurementService: MeasurementService,
     override val optionBackgroundViewModel: BackgroundViewModelInterface,
-    private val pollVotingInteractor: VotingInteractor
+    private val pollVotingInteractor: VotingInteractor,
+    private val eventEmitter: EventEmitter,
+    private val block: Block,
+    private val screen: Screen,
+    private val experience: Experience
 ) : TextPollViewModelInterface {
 
     override fun intrinsicHeight(bounds: RectF): Float {
@@ -40,6 +50,9 @@ internal class TextPollViewModel(
 
     override fun castVote(selectedOption: String, optionIds: List<String>) {
         pollVotingInteractor.castVote(id, selectedOption, optionIds)
+        textPoll.options.find { it.id == selectedOption }?.let { option ->
+            eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(id, option.text.rawValue)))
+        }
     }
 
     override fun checkIfAlreadyVoted(optionIds: List<String>) {

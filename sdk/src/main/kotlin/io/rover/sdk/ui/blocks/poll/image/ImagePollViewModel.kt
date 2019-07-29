@@ -3,9 +3,15 @@ package io.rover.sdk.ui.blocks.poll.image
 import android.graphics.Bitmap
 import io.rover.sdk.assets.AssetService
 import io.rover.sdk.assets.ImageOptimizationService
+import io.rover.sdk.data.domain.Block
+import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.domain.Image
 import io.rover.sdk.data.domain.ImagePoll
+import io.rover.sdk.data.domain.Screen
+import io.rover.sdk.data.events.Option
+import io.rover.sdk.data.events.RoverEvent
 import io.rover.sdk.data.getFontAppearance
+import io.rover.sdk.services.EventEmitter
 import io.rover.sdk.services.MeasurementService
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.Publishers
@@ -31,7 +37,11 @@ internal class ImagePollViewModel(
     private val assetService: AssetService,
     private val imageOptimizationService: ImageOptimizationService,
     mainScheduler: Scheduler,
-    private val pollVotingInteractor: VotingInteractor
+    private val pollVotingInteractor: VotingInteractor,
+    private val eventEmitter: EventEmitter,
+    private val block: Block,
+    private val screen: Screen,
+    private val experience: Experience
 ) : ImagePollViewModelInterface {
 
     companion object {
@@ -95,6 +105,9 @@ internal class ImagePollViewModel(
 
     override fun castVote(selectedOption: String, optionIds: List<String>) {
         pollVotingInteractor.castVote(id, selectedOption, optionIds)
+        imagePoll.options.find { it.id == selectedOption }?.let { option ->
+            eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(id, option.text.rawValue, option.image?.url?.toString())))
+        }
     }
 
     override fun checkIfAlreadyVoted(optionIds: List<String>) {

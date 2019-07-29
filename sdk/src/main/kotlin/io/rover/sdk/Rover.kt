@@ -177,8 +177,6 @@ open class Rover(
 
     private val pollVotingStorage: VotingStorage = VotingStorage(localStorage.getKeyValueStorageFor("voting"))
 
-    private val pollVotingInteractor = VotingInteractor(pollVotingService, pollVotingStorage, mainScheduler)
-
     private val apiService: GraphQlApiService =
         GraphQlApiService(URL(endpoint), accountToken, httpClient)
 
@@ -297,7 +295,7 @@ internal class ViewModels(
             eventEmitter = eventEmitter,
             campaignId = campaignId,
             sessionTracker = sessionTracker,
-            resolveScreenViewModel = { screen -> screenViewModel(screen) },
+            resolveScreenViewModel = { screen -> screenViewModel(screen, experience) },
             resolveToolbarViewModel = { configuration -> experienceToolbarViewModel(configuration) },
             activityLifecycle = activityLifecycle,
             icicle = icicle
@@ -305,12 +303,13 @@ internal class ViewModels(
     }
 
     fun screenViewModel(
-        screen: Screen
+        screen: Screen,
+        experience: Experience
     ): ScreenViewModel {
         return ScreenViewModel(
             screen,
             backgroundViewModel(screen.background),
-            resolveRowViewModel = { row -> rowViewModel(row) }
+            resolveRowViewModel = { row -> rowViewModel(row, screen, experience) }
         )
     }
 
@@ -326,19 +325,23 @@ internal class ViewModels(
     }
 
     fun rowViewModel(
-        row: Row
+        row: Row,
+        screen: Screen,
+        experience: Experience
     ): RowViewModel {
         return RowViewModel(
             row = row,
             blockViewModelResolver = { block ->
-                blockContentsViewModel(block)
+                blockContentsViewModel(block, screen, experience)
             },
             backgroundViewModel = this.backgroundViewModel(row.background)
         )
     }
 
     private fun blockContentsViewModel(
-        block: Block
+        block: Block,
+        screen: Screen,
+        experience: Experience
     ): CompositeBlockViewModelInterface {
         when (block) {
             is RectangleBlock -> {
@@ -394,7 +397,7 @@ internal class ViewModels(
                 )
             }
             is TextPollBlock -> {
-                val textPollViewModel = textPollViewModel(block.textPoll, block.id)
+                val textPollViewModel = textPollViewModel(block.textPoll, block, screen, experience, "${experience.id}:${block.id}")
                 return TextPollBlockViewModel(
                     textPollViewModel = textPollViewModel,
                     blockViewModel = blockViewModel(block, setOf(), textPollViewModel),
@@ -403,7 +406,7 @@ internal class ViewModels(
                 )
             }
             is ImagePollBlock -> {
-                val imagePollViewModel = imagePollViewModel(block.imagePoll, block.id)
+                val imagePollViewModel = imagePollViewModel(block.imagePoll, block, screen, experience, "${experience.id}:${block.id}")
                 return ImagePollBlockViewModel(
                     imagePollViewModel = imagePollViewModel,
                     blockViewModel = blockViewModel(block, setOf(), imagePollViewModel),
@@ -417,7 +420,7 @@ internal class ViewModels(
         }
     }
 
-    private fun imagePollViewModel(imagePoll: ImagePoll, id: String): ImagePollViewModel {
+    private fun imagePollViewModel(imagePoll: ImagePoll, block: Block, screen: Screen, experience: Experience, id: String): ImagePollViewModel {
         return ImagePollViewModel(
             id = id,
             imagePoll = imagePoll,
@@ -425,12 +428,19 @@ internal class ViewModels(
             imageOptimizationService = imageOptimizationService,
             assetService = assetService,
             mainScheduler = mainScheduler,
-            pollVotingInteractor = VotingInteractor(pollVotingService, pollVotingStorage, mainScheduler)
+            pollVotingInteractor = VotingInteractor(pollVotingService, pollVotingStorage, mainScheduler),
+            eventEmitter = eventEmitter,
+            block = block,
+            screen = screen,
+            experience = experience
         )
     }
 
     private fun textPollViewModel(
         textPoll: TextPoll,
+        block: Block,
+        screen: Screen,
+        experience: Experience,
         id: String
     ): TextPollViewModel {
         return TextPollViewModel(
@@ -438,7 +448,11 @@ internal class ViewModels(
             textPoll,
             measurementService,
             backgroundViewModel(textPoll.options.first().background),
-            VotingInteractor(pollVotingService, pollVotingStorage, mainScheduler)
+            VotingInteractor(pollVotingService, pollVotingStorage, mainScheduler),
+            eventEmitter,
+            block,
+            screen,
+            experience
         )
     }
 

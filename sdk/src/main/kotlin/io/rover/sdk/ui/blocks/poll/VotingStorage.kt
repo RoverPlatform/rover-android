@@ -1,7 +1,5 @@
 package io.rover.sdk.ui.blocks.poll
 
-import io.rover.sdk.data.graphql.putProp
-import io.rover.sdk.data.graphql.toStringIntHash
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.KeyValueStorage
 import org.json.JSONException
@@ -9,7 +7,15 @@ import org.json.JSONObject
 import java.lang.Exception
 
 internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
+    companion object {
+        private const val MAX_SIZE = 100
+        private const val ITEM_NUMBER_KEY = "item-number"
+    }
+
     fun setPollResults(pollId: String, value: String) {
+        addItemToPrefsQueue(pollId)
+        deleteOldestIfOverLimit()
+
         keyValueStorage["$pollId-results"] = value
     }
 
@@ -48,30 +54,21 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
             }
         }
     }
-}
 
-internal class PrefsQueue() {
-    companion object {
-        private const val MAX_SIZE = 100
-        private const val ITEM_NUMBER_KEY = "item-number"
+    private fun addItemToPrefsQueue(pollId: String) {
+        keyValueStorage["${getCurrentCount()}"] = pollId
+        keyValueStorage.getInt(ITEM_NUMBER_KEY).inc()
     }
 
-    fun addItemToPrefsQueue(keyValueStorage: KeyValueStorage) {
-        keyValueStorage["${getCurrentCount(keyValueStorage)}"] 
-    }
+    private fun getCurrentCount() = keyValueStorage.getInt(ITEM_NUMBER_KEY)
 
-    fun getCurrentCount(keyValueStorage: KeyValueStorage) = keyValueStorage[ITEM_NUMBER_KEY]?.toInt() ?: 0
-
-    fun checkIfOverLimit(keyValueStorage: KeyValueStorage) {
-        val currentCount = getCurrentCount(keyValueStorage)
+    private fun deleteOldestIfOverLimit() {
+        val currentCount = getCurrentCount()
 
         if (currentCount > MAX_SIZE) {
             val itemToDelete = currentCount - 100
-
+            keyValueStorage.unset("$itemToDelete-results")
+            keyValueStorage.unset("$itemToDelete-vote")
         }
-    }
-
-    fun deleteFirstIn(keyValueStorage: KeyValueStorage) {
-
     }
 }

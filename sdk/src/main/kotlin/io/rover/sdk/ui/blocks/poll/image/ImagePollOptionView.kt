@@ -199,9 +199,13 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
         }
     }
 
-    fun goToResultsState(votingShare: Int, isSelectedOption: Boolean,
-        option: ImagePollBlockOption, shouldAnimate: Boolean,
-        viewWidth: Int) {
+    fun goToResultsState(
+        votingShare: Int,
+        isSelectedOption: Boolean,
+        option: ImagePollBlockOption,
+        shouldAnimate: Boolean,
+        viewWidth: Int
+    ) {
         bindVoteIndicatorBar()
         bindVotePercentageText(votingShare)
         bindVoteIndicatorText(option)
@@ -253,7 +257,7 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
         votingIndicatorBar.barValue = votingShare.toFloat()
     }
 
-    //used to set starting point for update animations
+    // used to set starting point for update animations
     private var currentVote = 0
 
     fun updateResults(votingShare: Int) {
@@ -380,7 +384,7 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
         alpha = option.opacity.toFloat()
         setBackgroundColor(Color.TRANSPARENT)
 
-        val adjustedBorderRadius = if(option.border.radius.toFloat() > viewHeight.toFloat() / 2) {
+        val adjustedBorderRadius = if (option.border.radius.toFloat() > viewHeight.toFloat() / 2) {
             viewHeight / 2
         } else {
             option.border.radius

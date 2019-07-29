@@ -51,7 +51,7 @@ sealed class RoverEvent {
         val screen: Screen,
         val block: Block,
         val option: Option
-        ) : RoverEvent() {
+    ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {
                 putOpt(ANALYTICS_EVENT_TYPE, POLL_ANSWERED_CODE)

@@ -22,7 +22,6 @@ import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.concerns.ViewModelBinding
 import org.reactivestreams.Subscription
 import java.util.Timer
-import java.util.TimerTask
 import kotlin.concurrent.fixedRateTimer
 
 internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInterface {
@@ -85,10 +84,10 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
         }
 
-        view.attachEvents().subscribe ({
+        view.attachEvents().subscribe({
             when (it) {
                 is ViewEvent.Attach -> {
-                    //In case view has been detached for a while, don't want to wait 5 seconds to update
+                    // In case view has been detached for a while, don't want to wait 5 seconds to update
                     viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
                     log.d("poll view attached for poll ${votingState.pollId}")
                     timer = fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
@@ -101,7 +100,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                     timer?.purge()
                 }
             }
-        }, {}, {subscriptionCallback(it)})
+        }, {}, { subscriptionCallback(it) })
     }
 
     private fun setupOptionViews(viewModel: TextPollViewModelInterface) {

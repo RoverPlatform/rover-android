@@ -31,7 +31,6 @@ object VotingServiceSpec : Spek({
     val pollId = "poll id"
     val optionIds = listOf("option id")
 
-
     describe("fetch results") {
         val httpClient: HttpClient = mock()
         val votingService = VotingService(endPoint, httpClient, httpResultMapper, urlBuilder)

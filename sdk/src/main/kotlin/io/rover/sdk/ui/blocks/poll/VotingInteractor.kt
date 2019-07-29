@@ -9,9 +9,6 @@ import io.rover.sdk.streams.observeOn
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.blocks.poll.text.VotingState
 import org.reactivestreams.Publisher
-import java.util.Timer
-import java.util.TimerTask
-import kotlin.concurrent.fixedRateTimer
 
 internal class VotingInteractor(
     private val votingService: VotingService,
@@ -51,8 +48,12 @@ internal class VotingInteractor(
         getFirstTimeResults(pollId, optionIds)
     }
 
-    private fun doIfCanShowResultsState(savedVoteState: String?, optionIds: List<String>, optionResults: OptionResults,
-        onComplete: (String) -> Unit) {
+    private fun doIfCanShowResultsState(
+        savedVoteState: String?,
+        optionIds: List<String>,
+        optionResults: OptionResults,
+        onComplete: (String) -> Unit
+    ) {
         val resultsSameKeysAsShown = optionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
 
         if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
@@ -91,7 +92,7 @@ internal class VotingInteractor(
     private fun changeVotesToPercentages(results: OptionResults): OptionResults {
         // https://en.wikipedia.org/wiki/Largest_remainder_method
         val total = results.results.values.sum().toFloat()
-        val votes = results.results.mapValues { (it.value.toFloat() / total * 100)  }
+        val votes = results.results.mapValues { (it.value.toFloat() / total * 100) }
 
         val votesWithFractional = votes.toList().map { VotesWithFractional(it.first, it.second.toInt(), it.second - it.second.toInt()) }
 

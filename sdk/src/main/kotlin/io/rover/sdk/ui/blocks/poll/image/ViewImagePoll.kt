@@ -13,7 +13,6 @@ import io.rover.sdk.streams.ViewEvent
 import io.rover.sdk.streams.attachEvents
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
-import io.rover.sdk.ui.blocks.poll.text.ViewTextPoll
 import io.rover.sdk.ui.blocks.poll.text.VotingState
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.MeasuredSize
@@ -109,10 +108,10 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
         }
 
-        view.attachEvents().subscribe ({
+        view.attachEvents().subscribe({
             when (it) {
                 is ViewEvent.Attach -> {
-                    //In case view has been detached for a while, don't want to wait 5 seconds to update
+                    // In case view has been detached for a while, don't want to wait 5 seconds to update
                     viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
                     log.d("poll view attached for poll ${votingState.pollId}")
                     timer = fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
@@ -125,7 +124,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                     timer?.purge()
                 }
             }
-        }, {}, {subscriptionCallback(it)})
+        }, {}, { subscriptionCallback(it) })
     }
 
     private fun setVoteResultUpdate(votingUpdate: VotingState.Update) {

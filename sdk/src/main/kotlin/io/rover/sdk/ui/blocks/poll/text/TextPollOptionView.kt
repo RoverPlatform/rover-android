@@ -20,7 +20,6 @@ import android.widget.RelativeLayout
 import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.TextPollOption
 import io.rover.sdk.data.mapToFont
-import io.rover.sdk.logging.log
 import io.rover.sdk.platform.create
 import io.rover.sdk.platform.setBackgroundWithoutPaddingChange
 import io.rover.sdk.platform.setupLayoutParams
@@ -94,7 +93,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     private var roundRect: RoundRect? = null
     private var optionPaints: OptionPaints = OptionPaints()
 
-    //used to set starting point for update animations
+    // used to set starting point for update animations
     private var currentVote = 0
 
     var backgroundImage: BackgroundColorDrawableWrapper? = null
@@ -146,7 +145,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 
     private fun initializeViewStyle(optionStyle: TextPollOption) {
-        val adjustedBorderRadius = if(optionStyle.border.radius.toFloat() > optionStyle.height.toFloat() / 2) {
+        val adjustedBorderRadius = if (optionStyle.border.radius.toFloat() > optionStyle.height.toFloat() / 2) {
             optionStyle.height / 2
         } else {
             optionStyle.border.radius
@@ -302,7 +301,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         }
         resultProgressFillAnimator.start()
         currentVote = votingShare
-
     }
 
     private fun calculateWidthWithoutOptionText(

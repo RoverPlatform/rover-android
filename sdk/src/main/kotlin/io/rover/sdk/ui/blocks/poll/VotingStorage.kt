@@ -65,10 +65,15 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
     private fun deleteOldestIfOverLimit() {
         val currentCount = getCurrentCount()
 
-        if (currentCount > MAX_SIZE) {
-            val itemToDelete = currentCount - 100
-            keyValueStorage.unset("$itemToDelete-results")
-            keyValueStorage.unset("$itemToDelete-vote")
+        if (currentCount >= MAX_SIZE) {
+            val itemCountToDelete = "${currentCount - MAX_SIZE}"
+            val itemToDelete = keyValueStorage[itemCountToDelete]
+
+            itemToDelete?.let {
+                keyValueStorage.unset(itemCountToDelete)
+                keyValueStorage.unset("$itemToDelete-results")
+                keyValueStorage.unset("$itemToDelete-vote")
+            }
         }
     }
 }

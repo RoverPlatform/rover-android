@@ -171,7 +171,7 @@ open class Rover(
         eventEmitter
     )
 
-    private val pollsEndpoint = "https://polls.staging.rover.io/v1/polls"
+    private val pollsEndpoint = "https://polls.rover.io/v1/polls"
 
     private val pollVotingService: VotingService = VotingService(pollsEndpoint, httpClient)
 

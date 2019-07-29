@@ -13,14 +13,14 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
     }
 
     fun setPollResults(pollId: String, value: String) {
-        addItemToPrefsQueue(pollId)
-        deleteOldestIfOverLimit()
-
         keyValueStorage["$pollId-results"] = value
     }
 
     fun incrementSavedPollState(pollId: String, optionId: String) {
         keyValueStorage["$pollId-vote"] = optionId
+
+        addItemToPrefsQueue(pollId)
+        deleteOldestIfOverLimit()
 
         val optionResultsJson = keyValueStorage["$pollId-results"]
 
@@ -57,7 +57,7 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
 
     private fun addItemToPrefsQueue(pollId: String) {
         keyValueStorage["${getCurrentCount()}"] = pollId
-        keyValueStorage.getInt(ITEM_NUMBER_KEY).inc()
+        keyValueStorage[ITEM_NUMBER_KEY] = keyValueStorage.getInt(ITEM_NUMBER_KEY).inc()
     }
 
     private fun getCurrentCount() = keyValueStorage.getInt(ITEM_NUMBER_KEY)

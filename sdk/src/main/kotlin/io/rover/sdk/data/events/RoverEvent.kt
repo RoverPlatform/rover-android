@@ -50,7 +50,8 @@ sealed class RoverEvent {
         val experience: Experience,
         val screen: Screen,
         val block: Block,
-        val option: Option
+        val option: Option,
+        val campaignId: String?
     ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {
@@ -59,6 +60,7 @@ sealed class RoverEvent {
                 putProp(this@PollAnswered, PollAnswered::screen) { screen.encodeJson() }
                 putProp(this@PollAnswered, PollAnswered::block) { block.encodeJson() }
                 putProp(this@PollAnswered, PollAnswered::option) { option.encodeJson() }
+                putProp(this@PollAnswered, PollAnswered::campaignId) { campaignId }
             }
         }
     }

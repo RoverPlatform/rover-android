@@ -41,7 +41,8 @@ internal class ImagePollViewModel(
     private val eventEmitter: EventEmitter,
     private val block: Block,
     private val screen: Screen,
-    private val experience: Experience
+    private val experience: Experience,
+    private val campaignId: String?
 ) : ImagePollViewModelInterface {
 
     companion object {
@@ -106,7 +107,7 @@ internal class ImagePollViewModel(
     override fun castVote(selectedOption: String, optionIds: List<String>) {
         pollVotingInteractor.castVote(id, selectedOption, optionIds)
         imagePoll.options.find { it.id == selectedOption }?.let { option ->
-            eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(id, option.text.rawValue, option.image?.url?.toString())))
+            eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(id, option.text.rawValue, option.image?.url?.toString()), campaignId))
         }
     }
 

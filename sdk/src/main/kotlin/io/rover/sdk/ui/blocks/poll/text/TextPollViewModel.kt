@@ -26,7 +26,8 @@ internal class TextPollViewModel(
     private val eventEmitter: EventEmitter,
     private val block: Block,
     private val screen: Screen,
-    private val experience: Experience
+    private val experience: Experience,
+    private val campaignId: String?
 ) : TextPollViewModelInterface {
 
     override fun intrinsicHeight(bounds: RectF): Float {
@@ -51,7 +52,7 @@ internal class TextPollViewModel(
     override fun castVote(selectedOption: String, optionIds: List<String>) {
         pollVotingInteractor.castVote(id, selectedOption, optionIds)
         textPoll.options.find { it.id == selectedOption }?.let { option ->
-            eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(id, option.text.rawValue)))
+            eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(id, option.text.rawValue), campaignId))
         }
     }
 

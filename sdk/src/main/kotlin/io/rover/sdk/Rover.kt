@@ -295,7 +295,7 @@ internal class ViewModels(
             eventEmitter = eventEmitter,
             campaignId = campaignId,
             sessionTracker = sessionTracker,
-            resolveScreenViewModel = { screen -> screenViewModel(screen, experience) },
+            resolveScreenViewModel = { screen -> screenViewModel(screen, experience, campaignId) },
             resolveToolbarViewModel = { configuration -> experienceToolbarViewModel(configuration) },
             activityLifecycle = activityLifecycle,
             icicle = icicle
@@ -304,12 +304,13 @@ internal class ViewModels(
 
     fun screenViewModel(
         screen: Screen,
-        experience: Experience
+        experience: Experience,
+        campaignId: String?
     ): ScreenViewModel {
         return ScreenViewModel(
             screen,
             backgroundViewModel(screen.background),
-            resolveRowViewModel = { row -> rowViewModel(row, screen, experience) }
+            resolveRowViewModel = { row -> rowViewModel(row, screen, experience, campaignId) }
         )
     }
 
@@ -327,12 +328,13 @@ internal class ViewModels(
     fun rowViewModel(
         row: Row,
         screen: Screen,
-        experience: Experience
+        experience: Experience,
+        campaignId: String?
     ): RowViewModel {
         return RowViewModel(
             row = row,
             blockViewModelResolver = { block ->
-                blockContentsViewModel(block, screen, experience)
+                blockContentsViewModel(block, screen, experience, campaignId)
             },
             backgroundViewModel = this.backgroundViewModel(row.background)
         )
@@ -341,7 +343,8 @@ internal class ViewModels(
     private fun blockContentsViewModel(
         block: Block,
         screen: Screen,
-        experience: Experience
+        experience: Experience,
+        campaignId: String?
     ): CompositeBlockViewModelInterface {
         when (block) {
             is RectangleBlock -> {
@@ -397,7 +400,7 @@ internal class ViewModels(
                 )
             }
             is TextPollBlock -> {
-                val textPollViewModel = textPollViewModel(block.textPoll, block, screen, experience, "${experience.id}:${block.id}")
+                val textPollViewModel = textPollViewModel(block.textPoll, block, screen, experience, "${experience.id}:${block.id}", campaignId)
                 return TextPollBlockViewModel(
                     textPollViewModel = textPollViewModel,
                     blockViewModel = blockViewModel(block, setOf(), textPollViewModel),
@@ -406,7 +409,7 @@ internal class ViewModels(
                 )
             }
             is ImagePollBlock -> {
-                val imagePollViewModel = imagePollViewModel(block.imagePoll, block, screen, experience, "${experience.id}:${block.id}")
+                val imagePollViewModel = imagePollViewModel(block.imagePoll, block, screen, experience, "${experience.id}:${block.id}", campaignId)
                 return ImagePollBlockViewModel(
                     imagePollViewModel = imagePollViewModel,
                     blockViewModel = blockViewModel(block, setOf(), imagePollViewModel),
@@ -420,7 +423,7 @@ internal class ViewModels(
         }
     }
 
-    private fun imagePollViewModel(imagePoll: ImagePoll, block: Block, screen: Screen, experience: Experience, id: String): ImagePollViewModel {
+    private fun imagePollViewModel(imagePoll: ImagePoll, block: Block, screen: Screen, experience: Experience, id: String, campaignId: String?): ImagePollViewModel {
         return ImagePollViewModel(
             id = id,
             imagePoll = imagePoll,
@@ -432,7 +435,8 @@ internal class ViewModels(
             eventEmitter = eventEmitter,
             block = block,
             screen = screen,
-            experience = experience
+            experience = experience,
+            campaignId = campaignId
         )
     }
 
@@ -441,7 +445,8 @@ internal class ViewModels(
         block: Block,
         screen: Screen,
         experience: Experience,
-        id: String
+        id: String,
+        campaignId: String?
     ): TextPollViewModel {
         return TextPollViewModel(
             id,
@@ -452,7 +457,8 @@ internal class ViewModels(
             eventEmitter,
             block,
             screen,
-            experience
+            experience,
+            campaignId
         )
     }
 

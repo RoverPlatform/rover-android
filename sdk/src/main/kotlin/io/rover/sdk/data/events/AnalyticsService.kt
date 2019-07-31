@@ -81,10 +81,14 @@ internal class AnalyticsService(
     }
 
     private fun sendRequest(eventInformation: RoverEvent) {
-        val urlRequest = buildRequest(URL(ANALYTICS_ENDPOINT), accountToken)
-        val bodyData = encodeBody(eventInformation)
+        try {
+            val urlRequest = buildRequest(URL(ANALYTICS_ENDPOINT), accountToken)
+            val bodyData = encodeBody(eventInformation)
 
-        request(urlRequest, bodyData)
+            request(urlRequest, bodyData)
+        } catch (e: Exception) {
+            log.w("Problem sending analytics: ${e.message}")
+        }
     }
 
     /**

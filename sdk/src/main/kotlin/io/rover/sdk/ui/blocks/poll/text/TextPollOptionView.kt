@@ -226,12 +226,15 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
                 addRule(ALIGN_PARENT_LEFT)
             }
 
-            val maxVotingText = votePercentageText.apply {
+            val maxVotingTextView = textView {
                 text = "100%"
+                textSize = votePercentageText.textSize
+                typeface = votePercentageText.typeface
+
             }
 
             val widthOfOtherViews =
-                calculateWidthWithoutOptionText(voteIndicatorView, maxVotingText, isSelectedOption)
+                calculateWidthWithoutOptionText(voteIndicatorView, maxVotingTextView, isSelectedOption)
 
             maxWidth = viewWidth - widthOfOtherViews
         }

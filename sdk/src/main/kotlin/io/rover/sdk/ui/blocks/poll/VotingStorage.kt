@@ -13,14 +13,16 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
     }
 
     fun setPollResults(pollId: String, value: String) {
+        if (keyValueStorage["$pollId-results"] == null) {
+            addItemToPrefsQueue(pollId)
+            deleteOldestIfOverLimit()
+        }
+
         keyValueStorage["$pollId-results"] = value
     }
 
     fun incrementSavedPollState(pollId: String, optionId: String) {
         keyValueStorage["$pollId-vote"] = optionId
-
-        addItemToPrefsQueue(pollId)
-        deleteOldestIfOverLimit()
 
         val optionResultsJson = keyValueStorage["$pollId-results"]
 

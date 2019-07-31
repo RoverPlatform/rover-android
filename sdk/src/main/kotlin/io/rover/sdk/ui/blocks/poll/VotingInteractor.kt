@@ -19,23 +19,32 @@ internal class VotingInteractor(
 
     fun checkIfAlreadyVotedAndHaveResults(pollId: String, optionIds: List<String>) {
         getPollState(pollId, optionIds).observeOn(mainScheduler).subscribe { optionResults ->
-            doIfCanShowResultsState(votingStorage.getSavedVoteState(pollId), optionIds, optionResults) { vote ->
-                votingState.onNext(VotingState.Results(pollId, vote, changeVotesToPercentages(optionResults), false))
+            val resultsSameKeysAsShown = optionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
+            val savedVoteState = votingStorage.getSavedVoteState(pollId)
+
+            if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
+                votingState.onNext(VotingState.Results(pollId, savedVoteState, changeVotesToPercentages(optionResults), false))
             }
         }
     }
 
     private fun getFirstTimeResults(pollId: String, optionIds: List<String>) {
         getPollState(pollId, optionIds).observeOn(mainScheduler).subscribe { optionResults ->
-            doIfCanShowResultsState(votingStorage.getSavedVoteState(pollId), optionIds, optionResults) { vote ->
-                votingState.onNext(VotingState.Results(pollId, vote, changeVotesToPercentages(optionResults), true))
+            val resultsSameKeysAsShown = optionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
+            val savedVoteState = votingStorage.getSavedVoteState(pollId)
+
+            if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
+                votingState.onNext(VotingState.Results(pollId, savedVoteState, changeVotesToPercentages(optionResults), true))
             }
         }
     }
 
     fun votingResultsUpdate(pollId: String, optionIds: List<String>) {
         getPollStateFromNetwork(pollId, optionIds).observeOn(mainScheduler).subscribe { optionResults ->
-            doIfCanShowResultsState(votingStorage.getSavedVoteState(pollId), optionIds, optionResults) {
+            val resultsSameKeysAsShown = optionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
+            val savedVoteState = votingStorage.getSavedVoteState(pollId)
+
+            if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
                 votingState.onNext(VotingState.Update(changeVotesToPercentages(optionResults)))
             }
         }
@@ -46,19 +55,6 @@ internal class VotingInteractor(
         votingService.castVote(pollId, optionId)
 
         getFirstTimeResults(pollId, optionIds)
-    }
-
-    private fun doIfCanShowResultsState(
-        savedVoteState: String?,
-        optionIds: List<String>,
-        optionResults: OptionResults,
-        onComplete: (String) -> Unit
-    ) {
-        val resultsSameKeysAsShown = optionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
-
-        if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
-            onComplete(savedVoteState)
-        }
     }
 
     private fun getPollStateFromNetwork(pollId: String, optionIds: List<String>): Publisher<OptionResults> {

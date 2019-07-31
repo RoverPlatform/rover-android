@@ -58,6 +58,11 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
         private const val IMAGE_STARTING_ALPHA = 0f
         private const val RESULT_FILL_PROGRESS_DURATION = 1000L
         private const val PROGRESS_ALPHA_DURATION = 167L
+        private const val VOTING_BAR_OVERLAY_BAR_FILL_ALPHA_END = 128
+        private const val VOTING_BAR_RESULT_FILL_ALPHA_END = 255
+        private const val TOP_SECTION_RESULT_OVERLAY_VIEW_ALPHA_END = 0.3f
+        private const val VOTING_INDICATOR_ALPHA_END = 1f
+        private const val VOTING_PERCENTAGE_ALPHA_END = 1f
     }
 
     private val shortAnimationDuration = resources.getInteger(android.R.integer.config_shortAnimTime)
@@ -247,11 +252,11 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
             voteIndicatorView.visibility = View.VISIBLE
         }
 
-        votingIndicatorBar.overlayBarFillAlpha = 128
-        votingIndicatorBar.resultFillAlpha = 255
-        topSectionResultsOverlayView.alpha = 0.3f
-        voteIndicatorView.alpha = 1f
-        votePercentageView.alpha = 1f
+        votingIndicatorBar.overlayBarFillAlpha = VOTING_BAR_OVERLAY_BAR_FILL_ALPHA_END
+        votingIndicatorBar.resultFillAlpha = VOTING_BAR_RESULT_FILL_ALPHA_END
+        topSectionResultsOverlayView.alpha = TOP_SECTION_RESULT_OVERLAY_VIEW_ALPHA_END
+        voteIndicatorView.alpha = VOTING_INDICATOR_ALPHA_END
+        votePercentageView.alpha = VOTING_PERCENTAGE_ALPHA_END
         votePercentageView.text = "$votingShare%"
         votingIndicatorBar.viewWidth = viewWidth.toFloat()
         votingIndicatorBar.barValue = votingShare.toFloat()
@@ -425,8 +430,13 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
 }
 
 class VotingIndicatorBar(context: Context?) : View(context) {
-    private val barHeight = 8f.dpAsPx(this.resources.displayMetrics)
-    private val cornerRadius = 4f.dpAsPx(this.resources.displayMetrics).toFloat()
+
+    companion object {
+        private const val BAR_HEIGHT = 8f
+        private const val CORNER_RADIUS = 4f
+    }
+
+    private val calculatedCornerRadius = CORNER_RADIUS.dpAsPx(this.resources.displayMetrics).toFloat()
 
     var overlayBarFillAlpha = 0
         set(value) {
@@ -443,25 +453,25 @@ class VotingIndicatorBar(context: Context?) : View(context) {
         set(value) {
             field = value
             val barWidth = ((viewWidth ?: this.width.toFloat()) - (inset * 2)) * (barValue / 100)
-            barRect = RectF(0f, 0f, barWidth + inset, barHeight.toFloat())
+            barRect = RectF(0f, 0f, barWidth + inset, BAR_HEIGHT.dpAsPx(this.resources.displayMetrics).toFloat())
             invalidate()
         }
     var fillPaint = Paint()
 
     private var overlayBarPaint = Paint().create(Color.WHITE, Paint.Style.FILL)
     private val inset = 4f.dpAsPx(resources.displayMetrics).toFloat()
-    private var barRect = RectF(0f, 0f, 0f, barHeight.toFloat())
-    private val overlayRect by lazy { RectF(inset, 0f, (viewWidth ?: this.width.toFloat()) - inset, barHeight.toFloat()) }
+    private var barRect = RectF(0f, 0f, 0f, BAR_HEIGHT.dpAsPx(this.resources.displayMetrics).toFloat())
+    private val overlayRect by lazy { RectF(inset, 0f, (viewWidth ?: this.width.toFloat()) - inset, BAR_HEIGHT.dpAsPx(this.resources.displayMetrics).toFloat()) }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawRoundRect(barRect, cornerRadius, cornerRadius, fillPaint)
-        canvas.drawRoundRect(overlayRect, cornerRadius, cornerRadius, overlayBarPaint)
+        canvas.drawRoundRect(barRect, calculatedCornerRadius, calculatedCornerRadius, fillPaint)
+        canvas.drawRoundRect(overlayRect, calculatedCornerRadius, calculatedCornerRadius, overlayBarPaint)
     }
 
     override fun draw(canvas: Canvas?) {
         canvas?.clipPath(Path().apply {
-            addRoundRect(overlayRect, cornerRadius, cornerRadius, Path.Direction.CW)
+            addRoundRect(overlayRect, calculatedCornerRadius, calculatedCornerRadius, Path.Direction.CW)
         })
         super.draw(canvas)
     }

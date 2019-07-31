@@ -426,6 +426,7 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
 
 class VotingIndicatorBar(context: Context?) : View(context) {
     private val barHeight = 8f.dpAsPx(this.resources.displayMetrics)
+    private val cornerRadius = 4f.dpAsPx(this.resources.displayMetrics).toFloat()
 
     var overlayBarFillAlpha = 0
         set(value) {
@@ -441,24 +442,27 @@ class VotingIndicatorBar(context: Context?) : View(context) {
     var barValue = 0f
         set(value) {
             field = value
-            val barWidth = ((viewWidth ?: this.width.toFloat()) - inset) * (barValue / 100)
-            barRect = RectF(inset, 0f, if (barWidth < inset) inset else barWidth, barHeight.toFloat())
+            val barWidth = ((viewWidth ?: this.width.toFloat()) - (inset * 2)) * (barValue / 100)
+            barRect = RectF(0f, 0f, barWidth + inset, barHeight.toFloat())
             invalidate()
         }
     var fillPaint = Paint()
 
     private var overlayBarPaint = Paint().create(Color.WHITE, Paint.Style.FILL)
     private val inset = 4f.dpAsPx(resources.displayMetrics).toFloat()
-    private var barRect = RectF(inset, 0f, 0f, barHeight.toFloat())
+    private var barRect = RectF(0f, 0f, 0f, barHeight.toFloat())
     private val overlayRect by lazy { RectF(inset, 0f, (viewWidth ?: this.width.toFloat()) - inset, barHeight.toFloat()) }
-
-    companion object {
-        private const val CORNER_RADIUS = 20f
-    }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawRoundRect(barRect, CORNER_RADIUS, CORNER_RADIUS, fillPaint)
-        canvas.drawRoundRect(overlayRect, CORNER_RADIUS, CORNER_RADIUS, overlayBarPaint)
+        canvas.drawRoundRect(barRect, cornerRadius, cornerRadius, fillPaint)
+        canvas.drawRoundRect(overlayRect, cornerRadius, cornerRadius, overlayBarPaint)
+    }
+
+    override fun draw(canvas: Canvas?) {
+        canvas?.clipPath(Path().apply {
+            addRoundRect(overlayRect, cornerRadius, cornerRadius, Path.Direction.CW)
+        })
+        super.draw(canvas)
     }
 }

@@ -1,8 +1,6 @@
 package io.rover.sdk.ui.blocks.poll.image
 
 import android.animation.AnimatorSet
-import android.animation.LayoutTransition
-import android.animation.LayoutTransition.CHANGE_APPEARING
 import android.animation.TimeInterpolator
 import android.animation.ValueAnimator
 import android.content.Context

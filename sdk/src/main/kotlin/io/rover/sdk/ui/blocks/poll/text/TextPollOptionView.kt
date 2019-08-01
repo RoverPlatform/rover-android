@@ -230,7 +230,6 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
                 text = "100%"
                 textSize = votePercentageText.textSize
                 typeface = votePercentageText.typeface
-
             }
 
             val widthOfOtherViews =

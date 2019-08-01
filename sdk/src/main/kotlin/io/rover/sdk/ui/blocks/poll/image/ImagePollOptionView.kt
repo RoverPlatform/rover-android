@@ -287,11 +287,6 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
     private fun performResultsAnimation(votingShare: Int, isSelectedOption: Boolean) {
         currentVote = votingShare
 
-        bottomSectionLinear.layoutTransition = LayoutTransition().apply {
-            setDuration(PROGRESS_ALPHA_DURATION)
-            setInterpolator(CHANGE_APPEARING, easeInEaseOutInterpolator)
-        }
-
         if (isSelectedOption) {
             voteIndicatorView.visibility = View.VISIBLE
         }

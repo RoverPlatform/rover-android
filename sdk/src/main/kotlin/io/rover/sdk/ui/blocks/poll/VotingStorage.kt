@@ -58,14 +58,12 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
     }
 
     private fun addItemToPrefsQueue(pollId: String) {
-        keyValueStorage["${getCurrentCount()}"] = pollId
+        keyValueStorage["${keyValueStorage.getInt(ITEM_NUMBER_KEY)}"] = pollId
         keyValueStorage[ITEM_NUMBER_KEY] = keyValueStorage.getInt(ITEM_NUMBER_KEY).inc()
     }
 
-    private fun getCurrentCount() = keyValueStorage.getInt(ITEM_NUMBER_KEY)
-
     private fun deleteOldestIfOverLimit() {
-        val currentCount = getCurrentCount()
+        val currentCount = keyValueStorage.getInt(ITEM_NUMBER_KEY)
 
         if (currentCount >= MAX_SIZE) {
             val itemCountToDelete = "${currentCount - MAX_SIZE}"

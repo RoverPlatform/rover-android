@@ -13,9 +13,11 @@ import io.rover.sdk.platform.dateAsIso8601
 import io.rover.sdk.platform.debugExplanation
 import io.rover.sdk.platform.setRoverUserAgent
 import io.rover.sdk.services.EventEmitter
+import io.rover.sdk.streams.filter
 import io.rover.sdk.streams.subscribe
 import org.json.JSONObject
 import java.io.DataOutputStream
+import java.lang.RuntimeException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Date
@@ -67,6 +69,7 @@ internal class AnalyticsService(
             is RoverEvent.ScreenDismissed -> "Screen Dismissed" to eventInformation.toFlat()
             is RoverEvent.ScreenViewed -> "Screen Viewed" to eventInformation.toFlat()
             is RoverEvent.BlockTapped -> "Block Tapped" to eventInformation.toFlat()
+            else -> throw RuntimeException("Event not supported")
         }
 
         return JSONObject().apply {
@@ -78,17 +81,21 @@ internal class AnalyticsService(
     }
 
     private fun sendRequest(eventInformation: RoverEvent) {
-        val urlRequest = buildRequest(URL(ANALYTICS_ENDPOINT), accountToken)
-        val bodyData = encodeBody(eventInformation)
+        try {
+            val urlRequest = buildRequest(URL(ANALYTICS_ENDPOINT), accountToken)
+            val bodyData = encodeBody(eventInformation)
 
-        request(urlRequest, bodyData)
+            request(urlRequest, bodyData)
+        } catch (e: Exception) {
+            log.w("Problem sending analytics: ${e.message}")
+        }
     }
 
     /**
      * Initiates the [AnalyticsService] sending of analytics events.
      */
     init {
-        eventEmitter.trackedEvents.subscribe { sendRequest(it) }
+        eventEmitter.trackedEvents.filter { it !is RoverEvent.PollAnswered }.subscribe { sendRequest(it) }
     }
 
     private fun request(

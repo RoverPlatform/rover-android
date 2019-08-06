@@ -177,8 +177,6 @@ open class Rover(
 
     private val pollVotingStorage: VotingStorage = VotingStorage(localStorage.getKeyValueStorageFor("voting"))
 
-    private val pollVotingInteractor = VotingInteractor(pollVotingService, pollVotingStorage)
-
     private val apiService: GraphQlApiService =
         GraphQlApiService(URL(endpoint), accountToken, httpClient)
 
@@ -205,7 +203,9 @@ open class Rover(
             sessionTracker,
             imageOptimizationService,
             assetService,
-            measurementService
+            measurementService,
+            pollVotingService,
+            pollVotingStorage
         )
     }
 
@@ -259,7 +259,9 @@ internal class ViewModels(
     private val sessionTracker: SessionTracker,
     private val imageOptimizationService: ImageOptimizationService,
     private val assetService: AndroidAssetService,
-    private val measurementService: MeasurementService
+    private val measurementService: MeasurementService,
+    private val pollVotingService: VotingService,
+    private val pollVotingStorage: VotingStorage
 ) {
     fun experienceViewModel(
         experienceRequest: RoverViewModel.ExperienceRequest,
@@ -293,7 +295,7 @@ internal class ViewModels(
             eventEmitter = eventEmitter,
             campaignId = campaignId,
             sessionTracker = sessionTracker,
-            resolveScreenViewModel = { screen -> screenViewModel(screen) },
+            resolveScreenViewModel = { screen -> screenViewModel(screen, experience, campaignId) },
             resolveToolbarViewModel = { configuration -> experienceToolbarViewModel(configuration) },
             activityLifecycle = activityLifecycle,
             icicle = icicle
@@ -301,12 +303,14 @@ internal class ViewModels(
     }
 
     fun screenViewModel(
-        screen: Screen
+        screen: Screen,
+        experience: Experience,
+        campaignId: String?
     ): ScreenViewModel {
         return ScreenViewModel(
             screen,
             backgroundViewModel(screen.background),
-            resolveRowViewModel = { row -> rowViewModel(row) }
+            resolveRowViewModel = { row -> rowViewModel(row, screen, experience, campaignId) }
         )
     }
 
@@ -322,19 +326,25 @@ internal class ViewModels(
     }
 
     fun rowViewModel(
-        row: Row
+        row: Row,
+        screen: Screen,
+        experience: Experience,
+        campaignId: String?
     ): RowViewModel {
         return RowViewModel(
             row = row,
             blockViewModelResolver = { block ->
-                blockContentsViewModel(block)
+                blockContentsViewModel(block, screen, experience, campaignId)
             },
             backgroundViewModel = this.backgroundViewModel(row.background)
         )
     }
 
     private fun blockContentsViewModel(
-        block: Block
+        block: Block,
+        screen: Screen,
+        experience: Experience,
+        campaignId: String?
     ): CompositeBlockViewModelInterface {
         when (block) {
             is RectangleBlock -> {
@@ -390,7 +400,7 @@ internal class ViewModels(
                 )
             }
             is TextPollBlock -> {
-                val textPollViewModel = textPollViewModel(block.textPoll)
+                val textPollViewModel = textPollViewModel(block.textPoll, block, screen, experience, "${experience.id}:${block.id}", campaignId)
                 return TextPollBlockViewModel(
                     textPollViewModel = textPollViewModel,
                     blockViewModel = blockViewModel(block, setOf(), textPollViewModel),
@@ -399,7 +409,7 @@ internal class ViewModels(
                 )
             }
             is ImagePollBlock -> {
-                val imagePollViewModel = imagePollViewModel(block.imagePoll)
+                val imagePollViewModel = imagePollViewModel(block.imagePoll, block, screen, experience, "${experience.id}:${block.id}", campaignId)
                 return ImagePollBlockViewModel(
                     imagePollViewModel = imagePollViewModel,
                     blockViewModel = blockViewModel(block, setOf(), imagePollViewModel),
@@ -413,23 +423,42 @@ internal class ViewModels(
         }
     }
 
-    private fun imagePollViewModel(imagePoll: ImagePoll): ImagePollViewModel {
+    private fun imagePollViewModel(imagePoll: ImagePoll, block: Block, screen: Screen, experience: Experience, id: String, campaignId: String?): ImagePollViewModel {
         return ImagePollViewModel(
+            id = id,
             imagePoll = imagePoll,
             measurementService = measurementService,
             imageOptimizationService = imageOptimizationService,
             assetService = assetService,
-            mainScheduler = mainScheduler
+            mainScheduler = mainScheduler,
+            pollVotingInteractor = VotingInteractor(pollVotingService, pollVotingStorage, mainScheduler),
+            eventEmitter = eventEmitter,
+            block = block,
+            screen = screen,
+            experience = experience,
+            campaignId = campaignId
         )
     }
 
     private fun textPollViewModel(
-        textPoll: TextPoll
+        textPoll: TextPoll,
+        block: Block,
+        screen: Screen,
+        experience: Experience,
+        id: String,
+        campaignId: String?
     ): TextPollViewModel {
         return TextPollViewModel(
+            id,
             textPoll,
             measurementService,
-            backgroundViewModel(textPoll.options.first().background)
+            backgroundViewModel(textPoll.options.first().background),
+            VotingInteractor(pollVotingService, pollVotingStorage, mainScheduler),
+            eventEmitter,
+            block,
+            screen,
+            experience,
+            campaignId
         )
     }
 

@@ -180,7 +180,8 @@ data class TextPollOption(
     val opacity: Double,
     val height: Int,
     val topMargin: Int,
-    val resultFillColor: Color) {
+    val resultFillColor: Color
+) {
     companion object
 }
 

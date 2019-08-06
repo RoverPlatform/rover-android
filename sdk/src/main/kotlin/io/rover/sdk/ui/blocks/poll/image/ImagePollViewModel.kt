@@ -3,9 +3,15 @@ package io.rover.sdk.ui.blocks.poll.image
 import android.graphics.Bitmap
 import io.rover.sdk.assets.AssetService
 import io.rover.sdk.assets.ImageOptimizationService
+import io.rover.sdk.data.domain.Block
+import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.domain.Image
 import io.rover.sdk.data.domain.ImagePoll
+import io.rover.sdk.data.domain.Screen
+import io.rover.sdk.data.events.Option
+import io.rover.sdk.data.events.RoverEvent
 import io.rover.sdk.data.getFontAppearance
+import io.rover.sdk.services.EventEmitter
 import io.rover.sdk.services.MeasurementService
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.Publishers
@@ -17,6 +23,7 @@ import io.rover.sdk.streams.observeOn
 import io.rover.sdk.streams.timestamp
 import io.rover.sdk.ui.PixelSize
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
+import io.rover.sdk.ui.blocks.poll.VotingInteractor
 import io.rover.sdk.ui.blocks.poll.text.VotingState
 import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.ui.concerns.MeasuredSize
@@ -24,11 +31,18 @@ import io.rover.sdk.ui.dpAsPx
 import org.reactivestreams.Publisher
 
 internal class ImagePollViewModel(
+    val id: String,
     override val imagePoll: ImagePoll,
     private val measurementService: MeasurementService,
     private val assetService: AssetService,
     private val imageOptimizationService: ImageOptimizationService,
-    mainScheduler: Scheduler
+    mainScheduler: Scheduler,
+    private val pollVotingInteractor: VotingInteractor,
+    private val eventEmitter: EventEmitter,
+    private val block: Block,
+    private val screen: Screen,
+    private val experience: Experience,
+    private val campaignId: String?
 ) : ImagePollViewModelInterface {
 
     companion object {
@@ -61,41 +75,47 @@ internal class ImagePollViewModel(
         measurementsSubject.onNext(measuredSize)
     }
 
+    override fun checkForUpdate(pollId: String, optionIds: List<String>) {
+        pollVotingInteractor.votingResultsUpdate(pollId, optionIds)
+    }
+
     private val measurementsSubject = PublishSubject<MeasuredSize>()
 
-    private val imagesList: List<Image> = imagePoll.options.mapNotNull { it.image }
+    private val images: Map<String, Image> = imagePoll.options.filter { it.image != null }.associate { it.id to it.image!! }
 
-    override fun castVote(selectedOption: Int) {
-        // TODO: Add voting logic
-        setResultsState(selectedOption, listOf(20, 42, 15, 18))
-    }
-
-    override val votingState = PublishSubject<VotingState>()
-
-    private fun setResultsState(selectedOption: Int, votingShare: List<Int>) {
-        votingState.onNext(VotingState.Results(selectedOption, votingShare))
-    }
-
-    override val multiImageUpdates: Publisher<List<ImagePollViewModelInterface.ImageUpdate>> =
+    override val multiImageUpdates: Publisher<Map<String, ImagePollViewModelInterface.ImageUpdate>> =
         measurementsSubject
             .timestamp()
             .imagesFetchTransform()
             .observeOn(mainScheduler)
 
-    private fun Publisher<Timestamped<MeasuredSize>>.imagesFetchTransform(): Publisher<List<ImagePollViewModelInterface.ImageUpdate>> {
+    private fun Publisher<Timestamped<MeasuredSize>>.imagesFetchTransform(): Publisher<Map<String, ImagePollViewModelInterface.ImageUpdate>> {
         return flatMap { (timestampMillis, measuredSize) ->
-            val optimizedImages = imagesList.map {
+            val optimizedImages = images.map {
                 val pixelSize = PixelSize(measuredSize.width.dpAsPx(measuredSize.density), measuredSize.height.dpAsPx(measuredSize.density))
-                val uriWithParameters = imageOptimizationService.optimizeImageForFill(it, pixelSize)
+                val uriWithParameters = imageOptimizationService.optimizeImageForFill(it.value, pixelSize)
 
                 return@map assetService.imageByUrl(uriWithParameters.toURL()).map { bitmap ->
                     val timeElapsed = System.currentTimeMillis() - timestampMillis
                     val shouldFade = timeElapsed > IMAGE_FADE_IN_MINIMUM_TIME
-                    ImagePollViewModelInterface.ImageUpdate(bitmap, shouldFade) }
+                    it.key to ImagePollViewModelInterface.ImageUpdate(bitmap, shouldFade) }
             }
-            Publishers.combineLatest(optimizedImages) { it }
+            Publishers.combineLatest(optimizedImages) { it.associate { it } }
         }
     }
+
+    override fun castVote(selectedOption: String, optionIds: List<String>) {
+        pollVotingInteractor.castVote(id, selectedOption, optionIds)
+        imagePoll.options.find { it.id == selectedOption }?.let { option ->
+            eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(id, option.text.rawValue, option.image?.url?.toString()), campaignId))
+        }
+    }
+
+    override fun checkIfAlreadyVoted(optionIds: List<String>) {
+        pollVotingInteractor.checkIfAlreadyVotedAndHaveResults(id, optionIds)
+    }
+
+    override val votingState = pollVotingInteractor.votingState
 }
 
 internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
@@ -104,7 +124,7 @@ internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
     /**
      * Subscribe to be informed of the images becoming ready.
      */
-    val multiImageUpdates: Publisher<List<ImageUpdate>>
+    val multiImageUpdates: Publisher<Map<String, ImagePollViewModelInterface.ImageUpdate>>
 
     data class ImageUpdate(val bitmap: Bitmap, val shouldFade: Boolean)
 
@@ -118,6 +138,8 @@ internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
         measuredSize: MeasuredSize
     )
 
-    fun castVote(selectedOption: Int)
+    fun castVote(selectedOption: String, optionIds: List<String>)
+    fun checkForUpdate(pollId: String, optionIds: List<String>)
+    fun checkIfAlreadyVoted(optionIds: List<String>)
     val votingState: PublishSubject<VotingState>
 }

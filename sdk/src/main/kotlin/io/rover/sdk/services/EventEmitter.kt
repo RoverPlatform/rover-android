@@ -37,6 +37,7 @@ class EventEmitter {
             is RoverEvent.ExperienceViewed -> listeners.forEach { it.onExperienceViewed(roverEvent) }
             is RoverEvent.ScreenViewed -> listeners.forEach { it.onScreenViewed(roverEvent) }
             is RoverEvent.ScreenPresented -> listeners.forEach { it.onScreenPresented(roverEvent) }
+            is RoverEvent.PollAnswered -> listeners.forEach { it.onPollAnswered(roverEvent) }
         }
     }
 
@@ -69,4 +70,6 @@ interface RoverEventListener {
     fun onScreenViewed(event: RoverEvent.ScreenViewed) {}
 
     fun onScreenPresented(event: RoverEvent.ScreenPresented) {}
+
+    fun onPollAnswered(event: RoverEvent.PollAnswered) {}
 }

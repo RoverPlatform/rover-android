@@ -525,7 +525,7 @@ internal fun ImagePoll.encodeJson(): JSONObject {
 internal fun TextPoll.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, TextPoll::question, "question") { it.encodeJson() }
-        putProp(this@encodeJson, TextPoll::options, "options") { JSONArray(it.map { it.encodeJson()}) }
+        putProp(this@encodeJson, TextPoll::options, "options") { JSONArray(it.map { it.encodeJson() }) }
     }
 }
 

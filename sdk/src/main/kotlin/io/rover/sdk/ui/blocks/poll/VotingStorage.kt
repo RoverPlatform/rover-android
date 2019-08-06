@@ -7,7 +7,17 @@ import org.json.JSONObject
 import java.lang.Exception
 
 internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
+    companion object {
+        private const val MAX_SIZE = 100
+        private const val ITEM_NUMBER_KEY = "item-number"
+    }
+
     fun setPollResults(pollId: String, value: String) {
+        if (keyValueStorage["$pollId-results"] == null) {
+            addItemToPrefsQueue(pollId)
+            deleteOldestIfOverLimit()
+        }
+
         keyValueStorage["$pollId-results"] = value
     }
 
@@ -26,26 +36,44 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
                 keyValueStorage["$pollId-results"] = resultsToInsert.encodeJson().toString()
             } catch (e: JSONException) {
                 log.w("Poll JSON decode problem details: $e")
-                null
             } catch (e: Exception) {
                 log.w("problem incrementing poll state: $e")
             }
         }
     }
 
-    fun getSavedPollState(pollId: String): OptionResultsWithUserVote? {
+    fun getSavedVoteState(pollId: String) = keyValueStorage["$pollId-vote"]
+
+    fun getSavedPollState(pollId: String): OptionResults? {
         val optionResultsJson = keyValueStorage["$pollId-results"]
-        val optionResultsVoteJson = keyValueStorage["$pollId-vote"]
 
         return optionResultsJson?.let {
             try {
-                OptionResultsWithUserVote(OptionResults.decodeJson(JSONObject(optionResultsJson)), optionResultsVoteJson)
+                OptionResults.decodeJson(JSONObject(optionResultsJson))
             } catch (e: JSONException) {
                 log.w("Poll JSON decode problem details: $e")
                 null
             }
         }
     }
-}
 
-private typealias OptionResultsWithUserVote = Pair<OptionResults, String?>
+    private fun addItemToPrefsQueue(pollId: String) {
+        keyValueStorage["${keyValueStorage.getInt(ITEM_NUMBER_KEY)}"] = pollId
+        keyValueStorage[ITEM_NUMBER_KEY] = keyValueStorage.getInt(ITEM_NUMBER_KEY).inc()
+    }
+
+    private fun deleteOldestIfOverLimit() {
+        val currentCount = keyValueStorage.getInt(ITEM_NUMBER_KEY)
+
+        if (currentCount >= MAX_SIZE) {
+            val itemCountToDelete = "${currentCount - MAX_SIZE}"
+            val itemToDelete = keyValueStorage[itemCountToDelete]
+
+            itemToDelete?.let {
+                keyValueStorage.unset(itemCountToDelete)
+                keyValueStorage.unset("$itemToDelete-results")
+                keyValueStorage.unset("$itemToDelete-vote")
+            }
+        }
+    }
+}

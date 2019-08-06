@@ -307,16 +307,16 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
     private fun calculateWidthWithoutOptionText(
         voteIndicatorView: AppCompatTextView,
-        votePercentageText: AppCompatTextView,
+        maxVotePercentageText: AppCompatTextView,
         isSelectedOption: Boolean
     ): Int {
         voteIndicatorView.measure(0, 0)
-        votePercentageText.measure(0, 0)
+        maxVotePercentageText.measure(0, 0)
         val voteIndicatorWidth =
             if (isSelectedOption) voteIndicatorView.measuredWidth + (voteIndicatorView.layoutParams as MarginLayoutParams).marginStart else 0
         val votePercentageMargins =
             (votePercentageText.layoutParams as MarginLayoutParams).marginEnd + (votePercentageText.layoutParams as MarginLayoutParams).marginStart
-        val votePercentageWidth = votePercentageText.measuredWidth + votePercentageMargins
+        val votePercentageWidth = maxVotePercentageText.measuredWidth + votePercentageMargins
         val optionEndMargin = (optionTextView.layoutParams as MarginLayoutParams).marginStart
 
         return voteIndicatorWidth + optionEndMargin + votePercentageWidth

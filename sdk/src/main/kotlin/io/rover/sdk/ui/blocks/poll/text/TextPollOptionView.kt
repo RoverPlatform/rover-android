@@ -16,6 +16,7 @@ import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.TextPollOption
@@ -23,6 +24,7 @@ import io.rover.sdk.data.mapToFont
 import io.rover.sdk.platform.create
 import io.rover.sdk.platform.setBackgroundWithoutPaddingChange
 import io.rover.sdk.platform.setupLayoutParams
+import io.rover.sdk.platform.setupLinearLayoutParams
 import io.rover.sdk.platform.setupRelativeLayoutParams
 import io.rover.sdk.platform.textView
 import io.rover.sdk.ui.asAndroidColor
@@ -125,7 +127,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         gravity = Gravity.CENTER_VERTICAL
         alpha = optionStyle.opacity.toFloat()
         setBackgroundColor(Color.TRANSPARENT)
-        setupLayoutParams(
+
+        setupLinearLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,
             height = optionStyleHeight,
             topMargin = optionMarginHeight

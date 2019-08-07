@@ -8,6 +8,7 @@ import io.rover.sdk.data.mapToFont
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.imageOptionView
 import io.rover.sdk.platform.setupLayoutParams
+import io.rover.sdk.platform.setupLinearLayoutParams
 import io.rover.sdk.platform.textView
 import io.rover.sdk.streams.ViewEvent
 import io.rover.sdk.streams.attachEvents
@@ -200,7 +201,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                 initializeOptionViewLayout(it, imageLength + OPTION_TEXT_HEIGHT.toInt())
                 bindOptionView(it)
                 bindOptionImageSize(imageLength)
-                setupLayoutParams(
+                setupLinearLayoutParams(
                     width = imageLength,
                     height = imageLength + OPTION_TEXT_HEIGHT.dpAsPx(view.resources.displayMetrics),
                     leftMargin = it.leftMargin.dpAsPx(view.resources.displayMetrics),

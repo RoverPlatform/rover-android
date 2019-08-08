@@ -1,6 +1,7 @@
 package io.rover.sdk.ui.blocks.poll.image
 
 import android.graphics.Typeface
+import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import io.rover.sdk.data.domain.ImagePoll
@@ -106,9 +107,11 @@ internal class ViewImagePoll(override val view: LinearLayout) :
 
     private fun setUpdateTimer(votingState: VotingState.Results, subscriptionCallback: (Subscription) -> Unit) {
         timer = fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
-            viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
+            if(view.windowVisibility == View.VISIBLE) {
+                viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
+            }
         }
-
+        
         view.attachEvents().subscribe({
             when (it) {
                 is ViewEvent.Attach -> {

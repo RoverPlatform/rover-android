@@ -105,22 +105,24 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         }
     }
 
-    private fun setUpdateTimer(votingState: VotingState.Results, subscriptionCallback: (Subscription) -> Unit) {
-        timer = fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
+    private fun createTimer(votingState: VotingState.Results): Timer {
+        return fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
             if(view.windowVisibility == View.VISIBLE) {
                 viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
             }
         }
-        
+    }
+
+    private fun setUpdateTimer(votingState: VotingState.Results, subscriptionCallback: (Subscription) -> Unit) {
+        timer = createTimer(votingState)
+
         view.attachEvents().subscribe({
             when (it) {
                 is ViewEvent.Attach -> {
                     // In case view has been detached for a while, don't want to wait 5 seconds to update
                     viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
                     log.d("poll view attached for poll ${votingState.pollId}")
-                    timer = fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
-                        viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
-                    }
+                    timer = createTimer(votingState)
                 }
                 is ViewEvent.Detach -> {
                     log.d("poll view detached")

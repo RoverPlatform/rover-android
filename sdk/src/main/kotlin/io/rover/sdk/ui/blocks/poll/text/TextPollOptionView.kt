@@ -16,14 +16,12 @@ import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.TextPollOption
 import io.rover.sdk.data.mapToFont
 import io.rover.sdk.platform.create
 import io.rover.sdk.platform.setBackgroundWithoutPaddingChange
-import io.rover.sdk.platform.setupLayoutParams
 import io.rover.sdk.platform.setupLinearLayoutParams
 import io.rover.sdk.platform.setupRelativeLayoutParams
 import io.rover.sdk.platform.textView
@@ -229,18 +227,11 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
                 addRule(ALIGN_PARENT_LEFT)
             }
 
-            val maxVotingTextView = textView {
-                text = "100%"
-                textSize = votePercentageText.textSize
-                typeface = votePercentageText.typeface
-            }
-
             val widthOfOtherViews =
-                calculateWidthWithoutOptionText(voteIndicatorView, maxVotingTextView, isSelectedOption)
+                calculateWidthWithoutOptionText(voteIndicatorView, votePercentageText, isSelectedOption)
 
             maxWidth = viewWidth - widthOfOtherViews
         }
-        requestLayout()
 
         if (shouldAnimate) {
             performResultsAnimation(votingShare, (optionStyle.resultFillColor.alpha * 255).toInt(), viewWidth, viewHeight)
@@ -310,16 +301,19 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
     private fun calculateWidthWithoutOptionText(
         voteIndicatorView: AppCompatTextView,
-        maxVotePercentageText: AppCompatTextView,
+        votePercentageText: AppCompatTextView,
         isSelectedOption: Boolean
     ): Int {
         voteIndicatorView.measure(0, 0)
-        maxVotePercentageText.measure(0, 0)
+        val previousText = votePercentageText.text
+        votePercentageText.text = "100%"
+        votePercentageText.measure(0, 0)
+        votePercentageText.text = previousText
         val voteIndicatorWidth =
             if (isSelectedOption) voteIndicatorView.measuredWidth + (voteIndicatorView.layoutParams as MarginLayoutParams).marginStart else 0
         val votePercentageMargins =
             (votePercentageText.layoutParams as MarginLayoutParams).marginEnd + (votePercentageText.layoutParams as MarginLayoutParams).marginStart
-        val votePercentageWidth = maxVotePercentageText.measuredWidth + votePercentageMargins
+        val votePercentageWidth = votePercentageText.measuredWidth + votePercentageMargins
         val optionEndMargin = (optionTextView.layoutParams as MarginLayoutParams).marginStart
 
         return voteIndicatorWidth + optionEndMargin + votePercentageWidth

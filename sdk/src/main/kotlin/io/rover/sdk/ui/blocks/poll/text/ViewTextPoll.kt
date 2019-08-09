@@ -1,6 +1,7 @@
 package io.rover.sdk.ui.blocks.poll.text
 
 import android.graphics.Typeface
+import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import io.rover.sdk.data.domain.TextPoll
@@ -17,6 +18,7 @@ import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.background.createBackgroundDrawable
+import io.rover.sdk.ui.blocks.poll.image.ViewImagePoll
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.concerns.ViewModelBinding
@@ -78,11 +80,16 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             viewModel.checkIfAlreadyVoted(optionViews.keys.toList())
         }
     }
+    private fun createTimer(votingState: VotingState.Results): Timer {
+        return fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
+            if(view.windowVisibility == View.VISIBLE) {
+                viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
+            }
+        }
+    }
 
     private fun setUpdateTimer(votingState: VotingState.Results, subscriptionCallback: (Subscription) -> Unit) {
-        timer = fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
-            viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
-        }
+        timer = createTimer(votingState)
 
         view.attachEvents().subscribe({
             when (it) {
@@ -90,9 +97,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                     // In case view has been detached for a while, don't want to wait 5 seconds to update
                     viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
                     log.d("poll view attached for poll ${votingState.pollId}")
-                    timer = fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
-                        viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
-                    }
+                    timer = createTimer(votingState)
                 }
                 is ViewEvent.Detach -> {
                     log.d("poll view detached")

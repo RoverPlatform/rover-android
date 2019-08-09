@@ -1,6 +1,7 @@
 package io.rover.sdk.ui.blocks.poll.image
 
 import android.graphics.Typeface
+import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import io.rover.sdk.data.domain.ImagePoll
@@ -8,6 +9,7 @@ import io.rover.sdk.data.mapToFont
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.imageOptionView
 import io.rover.sdk.platform.setupLayoutParams
+import io.rover.sdk.platform.setupLinearLayoutParams
 import io.rover.sdk.platform.textView
 import io.rover.sdk.streams.ViewEvent
 import io.rover.sdk.streams.attachEvents
@@ -103,10 +105,16 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         }
     }
 
-    private fun setUpdateTimer(votingState: VotingState.Results, subscriptionCallback: (Subscription) -> Unit) {
-        timer = fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
-            viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
+    private fun createTimer(votingState: VotingState.Results): Timer {
+        return fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
+            if(view.windowVisibility == View.VISIBLE) {
+                viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
+            }
         }
+    }
+
+    private fun setUpdateTimer(votingState: VotingState.Results, subscriptionCallback: (Subscription) -> Unit) {
+        timer = createTimer(votingState)
 
         view.attachEvents().subscribe({
             when (it) {
@@ -114,9 +122,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                     // In case view has been detached for a while, don't want to wait 5 seconds to update
                     viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
                     log.d("poll view attached for poll ${votingState.pollId}")
-                    timer = fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
-                        viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
-                    }
+                    timer = createTimer(votingState)
                 }
                 is ViewEvent.Detach -> {
                     log.d("poll view detached")
@@ -200,7 +206,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                 initializeOptionViewLayout(it, imageLength + OPTION_TEXT_HEIGHT.toInt())
                 bindOptionView(it)
                 bindOptionImageSize(imageLength)
-                setupLayoutParams(
+                setupLinearLayoutParams(
                     width = imageLength,
                     height = imageLength + OPTION_TEXT_HEIGHT.dpAsPx(view.resources.displayMetrics),
                     leftMargin = it.leftMargin.dpAsPx(view.resources.displayMetrics),

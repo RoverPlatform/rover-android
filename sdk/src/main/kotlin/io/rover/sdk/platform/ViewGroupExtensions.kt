@@ -12,6 +12,7 @@ import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
 import io.rover.sdk.ui.blocks.poll.text.TextOptionView
 import io.rover.sdk.ui.blocks.poll.image.ImagePollOptionView
 import io.rover.sdk.ui.blocks.poll.image.VotingIndicatorBar
+import io.rover.sdk.ui.blocks.poll.text.TextPollProgressBar
 
 // Extension functions to reduce the amount of boilerplate when programmatically creating
 // and modifying views
@@ -48,6 +49,12 @@ internal fun ViewGroup.imageOptionView(builder: ImagePollOptionView.() -> Unit):
 
 internal fun ViewGroup.votingIndicatorBar(builder: VotingIndicatorBar.() -> Unit): VotingIndicatorBar {
     return VotingIndicatorBar(context).apply {
+        builder()
+    }
+}
+
+internal fun ViewGroup.textPollProgressBar(builder: TextPollProgressBar.() -> Unit): TextPollProgressBar {
+    return TextPollProgressBar(context).apply {
         builder()
     }
 }

@@ -691,7 +691,7 @@ fun ImagePollBlockOption.Companion.decodeJson(json: JSONObject): ImagePollBlockO
     return ImagePollBlockOption(
         id = json.safeGetString("id"),
         text = Text.decodeJson(json.getJSONObject("text")),
-        image = Image.optDecodeJSON(json.getJSONObject("image")),
+        image = Image.optDecodeJSON(json.optJSONObject("image")),
         background = Background.decodeJson(json.getJSONObject("background")),
         border = Border.decodeJson(json.getJSONObject("border")),
         opacity = json.getDouble("opacity"),

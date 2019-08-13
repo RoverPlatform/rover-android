@@ -202,7 +202,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         super.draw(canvas)
     }
 
-    fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, optionStyle: TextPollOption, shouldAnimate: Boolean, optionWidth: Float?) {
+    fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, optionStyle: TextPollOption, shouldAnimate: Boolean, optionWidth: Float?, maxVotingShare: Int) {
 
         bindVotePercentageText(votingShare, optionStyle)
         votePercentageText.visibility = View.VISIBLE
@@ -233,7 +233,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             }
 
             val widthOfOtherViews =
-                calculateWidthWithoutOptionText(voteIndicatorView, votePercentageText, isSelectedOption)
+                calculateWidthWithoutOptionText(voteIndicatorView, votePercentageText, isSelectedOption, maxVotingShare)
 
             maxWidth = viewWidth - widthOfOtherViews
         }
@@ -311,11 +311,12 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     private fun calculateWidthWithoutOptionText(
         voteIndicatorView: AppCompatTextView,
         votePercentageText: AppCompatTextView,
-        isSelectedOption: Boolean
+        isSelectedOption: Boolean,
+        maxVotingShare: Int
     ): Int {
         voteIndicatorView.measure(0, 0)
         val previousText = votePercentageText.text
-        votePercentageText.text = "100%"
+        votePercentageText.text = if(maxVotingShare == 100) "100%" else "88%"
         votePercentageText.measure(0, 0)
         votePercentageText.text = previousText
         val voteIndicatorWidth =

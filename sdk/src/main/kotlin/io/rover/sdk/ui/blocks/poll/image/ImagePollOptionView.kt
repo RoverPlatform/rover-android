@@ -458,8 +458,8 @@ class VotingIndicatorBar(context: Context?) : View(context) {
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawRoundRect(barRect, calculatedCornerRadius, calculatedCornerRadius, fillPaint)
         canvas.drawRoundRect(overlayRect, calculatedCornerRadius, calculatedCornerRadius, overlayBarPaint)
+        canvas.drawRoundRect(barRect, calculatedCornerRadius, calculatedCornerRadius, fillPaint)
     }
 
     override fun draw(canvas: Canvas?) {

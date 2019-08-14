@@ -44,6 +44,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         id = ViewCompat.generateViewId()
         ellipsize = TextUtils.TruncateAt.END
         maxLines = 1
+        setLineSpacing(0f, 1.0f)
+        includeFontPadding = false
         gravity = Gravity.CENTER_VERTICAL
         val marginInPixels = 16.dpAsPx(resources.displayMetrics)
 
@@ -80,6 +82,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         id = ViewCompat.generateViewId()
         visibility = View.GONE
         maxLines = 1
+        setLineSpacing(0f, 1.0f)
+        includeFontPadding = false
         gravity = Gravity.CENTER_VERTICAL
         textAlignment = View.TEXT_ALIGNMENT_TEXT_END
 
@@ -154,6 +158,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
     fun bindOptionView(option: TextPollOption) {
         optionTextView.run {
+            setLineSpacing(0f, 1.0f)
+            includeFontPadding = false
             text = option.text.rawValue
             textSize = option.text.font.size.toFloat()
             setTextColor(option.text.color.asAndroidColor())
@@ -263,12 +269,12 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
     private fun performResultsAnimation(votingShare: Int, resultFillAlpha: Int, viewWidth: Float) {
         currentVote = votingShare
+        voteIndicatorView.alpha = 1f
         val adjustedViewWidth = viewWidth / 100
 
         val alphaAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = ALPHA_DURATION
             addUpdateListener {
-                voteIndicatorView.alpha = it.animatedFraction
                 votePercentageText.alpha = it.animatedFraction
             }
         }
@@ -336,6 +342,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         votePercentageText.run {
             textSize = (optionStyle.text.font.size * RESULTS_TEXT_SCALE_FACTOR)
             votePercentageText.text = "$votingShare%"
+            setLineSpacing(0f, 1.0f)
+            includeFontPadding = false
             setTextColor(optionStyle.text.color.asAndroidColor())
             val font = optionStyle.text.font.weight.getIncreasedFontWeight().mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
@@ -350,6 +358,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         voteIndicatorView.run {
             text = "\u2022"
             textSize = optionStyle.text.font.size.toFloat()
+            setLineSpacing(0f, 1.0f)
+            includeFontPadding = false
             setTextColor(optionStyle.text.color.asAndroidColor())
             val font = optionStyle.text.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)

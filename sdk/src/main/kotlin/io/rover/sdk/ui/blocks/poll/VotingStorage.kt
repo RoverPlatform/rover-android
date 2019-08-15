@@ -56,6 +56,18 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
             }
         }
     }
+    
+    fun setLastSeenPollStatePollAnswered(pollId: String) {
+        keyValueStorage["$pollId-lastState"] = "poll-answered"
+    }
+    
+    fun setLastSeenPollStateEmpty(pollId: String) {
+        keyValueStorage["$pollId-lastState"] = ""
+    }
+    
+    fun retrieveIfLastSeenPollStatePollAnswered(pollId: String): Boolean {
+        return keyValueStorage["$pollId-lastState"] == "poll-answered"
+    }
 
     private fun addItemToPrefsQueue(pollId: String) {
         keyValueStorage["${keyValueStorage.getInt(ITEM_NUMBER_KEY)}"] = pollId
@@ -73,6 +85,7 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
                 keyValueStorage.unset(itemCountToDelete)
                 keyValueStorage.unset("$itemToDelete-results")
                 keyValueStorage.unset("$itemToDelete-vote")
+                keyValueStorage.unset("$itemToDelete-lastState")
             }
         }
     }

@@ -1,7 +1,6 @@
 package io.rover.sdk.ui.blocks.poll
 
 import android.os.Handler
-import android.view.View
 import io.rover.sdk.data.graphql.ApiResult
 import io.rover.sdk.logging.log
 import io.rover.sdk.streams.PublishSubject
@@ -10,12 +9,8 @@ import io.rover.sdk.streams.Scheduler
 import io.rover.sdk.streams.map
 import io.rover.sdk.streams.observeOn
 import io.rover.sdk.streams.subscribe
-import io.rover.sdk.ui.blocks.poll.text.ViewTextPoll
 import io.rover.sdk.ui.blocks.poll.text.VotingState
 import org.reactivestreams.Publisher
-import java.util.Timer
-import java.util.TimerTask
-import kotlin.concurrent.fixedRateTimer
 
 internal class VotingInteractor(
     private val votingService: VotingService,
@@ -25,20 +20,28 @@ internal class VotingInteractor(
     val votingState = PublishSubject<VotingState>()
 
     fun checkIfAlreadyVotedAndHaveResults(pollId: String, optionIds: List<String>) {
-        getPollState(pollId, optionIds).observeOn(mainScheduler).subscribe { optionResults ->
-            val resultsSameKeysAsShown = optionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
-            val savedVoteState = votingStorage.getSavedVoteState(pollId)
+        if(votingStorage.retrieveIfLastSeenPollStatePollAnswered(pollId)
+            && votingStorage.getSavedVoteState(pollId) != null
+            && votingStorage.getSavedVoteState(pollId) ?: "" in optionIds) {
+            castVote(pollId, votingStorage.getSavedVoteState(pollId)!!, optionIds)
+        } else {
+            getPollState(pollId, optionIds).observeOn(mainScheduler).subscribe { optionResults ->
+                val resultsSameKeysAsShown = optionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
+                val savedVoteState = votingStorage.getSavedVoteState(pollId)
 
-            if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
-                votingState.onNext(VotingState.Results(pollId, savedVoteState, changeVotesToPercentages(optionResults, savedVoteState), false))
+                if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
+                    votingState.onNext(VotingState.Results(pollId, savedVoteState, changeVotesToPercentages(optionResults, savedVoteState), false))
+                }
             }
         }
     }
 
     private fun getFirstTimeResults(pollId: String, voteOptionId: String, optionIds: List<String>) {
+        handler.removeCallbacksAndMessages(null)
         val savedState = votingStorage.getSavedPollState(pollId)
 
         votingState.onNext(VotingState.PollAnswered)
+        votingStorage.setLastSeenPollStatePollAnswered(pollId)
 
         val retrievePollState = if (savedState != null && savedState.results.filterKeys { key -> key in optionIds }.size == optionIds.size) {
             Publishers.just(savedState)
@@ -46,34 +49,38 @@ internal class VotingInteractor(
             getPollStateFromNetwork(pollId, optionIds)
         }
 
-        retrievePollState.observeOn(mainScheduler).subscribe { optionResults ->
+        retrievePollState.observeOn(mainScheduler).subscribe ({ optionResults ->
             val resultsSameKeysAsShown = optionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
 
             votingStorage.incrementSavedPollState(pollId, voteOptionId)
             votingService.castVote(pollId, voteOptionId)
             val savedVoteState = votingStorage.getSavedVoteState(pollId)
+            val savedPollState = votingStorage.getSavedPollState(pollId)
 
-            if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
+            if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds && savedPollState != null) {
                 handler.removeCallbacksAndMessages(null)
-                votingState.onNext(VotingState.Results(pollId, savedVoteState, changeVotesToPercentages(optionResults, savedVoteState), true))
-            } 
-        }
+                votingStorage.setLastSeenPollStateEmpty(pollId)
+                votingState.onNext(VotingState.Results(pollId, savedVoteState, changeVotesToPercentages(savedPollState, savedVoteState), true))
+            } else {
+                createExponentialResultsBackoffHandler(pollId, voteOptionId, optionIds)
+            }
+        }, { _ -> createExponentialResultsBackoffHandler(pollId, voteOptionId, optionIds) })
     }
 
     private val handler = Handler()
     private var timesInvoked: Int = 0
 
-    private fun createExponentialBackoffHandler(pollId: String, voteOptionId: String, optionIds: List<String>) {
+    private fun createExponentialResultsBackoffHandler(pollId: String, voteOptionId: String, optionIds: List<String>) {
+        handler.removeCallbacksAndMessages(null)
         val runnableCode = object : Runnable {
             override fun run() {
                 log.v("tried to get results")
                 timesInvoked++
                 getFirstTimeResults(pollId, voteOptionId, optionIds)
-                handler.postDelayed(this, 2000L * timesInvoked)
             }
         }
 
-        handler.post(runnableCode)
+        handler.postDelayed(runnableCode, 2000L * timesInvoked)
     }
     
     fun votingResultsUpdate(pollId: String, optionIds: List<String>) {
@@ -88,7 +95,7 @@ internal class VotingInteractor(
     }
 
     fun castVote(pollId: String, optionId: String, optionIds: List<String>) {
-        createExponentialBackoffHandler(pollId, optionId, optionIds)
+        createExponentialResultsBackoffHandler(pollId, optionId, optionIds)
     }
 
     private fun getPollStateFromNetwork(pollId: String, optionIds: List<String>): Publisher<OptionResults> {

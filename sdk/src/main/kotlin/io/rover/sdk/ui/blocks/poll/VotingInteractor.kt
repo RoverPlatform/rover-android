@@ -23,18 +23,29 @@ internal class VotingInteractor(
             val savedVoteState = votingStorage.getSavedVoteState(pollId)
 
             if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
-                votingState.onNext(VotingState.Results(pollId, savedVoteState, changeVotesToPercentages(optionResults), false))
+                votingState.onNext(VotingState.Results(pollId, savedVoteState, changeVotesToPercentages(optionResults, savedVoteState), false))
             }
         }
     }
 
-    private fun getFirstTimeResults(pollId: String, optionIds: List<String>) {
-        getPollState(pollId, optionIds).observeOn(mainScheduler).subscribe { optionResults ->
+    private fun getFirstTimeResults(pollId: String, voteOptionId: String, optionIds: List<String>) {
+        val savedState = votingStorage.getSavedPollState(pollId)
+
+        val retrievePollState = if (savedState != null && savedState.results.filterKeys { key -> key in optionIds }.size == optionIds.size) {
+            Publishers.just(savedState)
+        } else {
+            getPollStateFromNetwork(pollId, optionIds)
+        }
+
+        retrievePollState.observeOn(mainScheduler).subscribe { optionResults ->
             val resultsSameKeysAsShown = optionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
+
+            votingStorage.incrementSavedPollState(pollId, voteOptionId)
+            votingService.castVote(pollId, voteOptionId)
             val savedVoteState = votingStorage.getSavedVoteState(pollId)
 
             if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
-                votingState.onNext(VotingState.Results(pollId, savedVoteState, changeVotesToPercentages(optionResults), true))
+                votingState.onNext(VotingState.Results(pollId, savedVoteState, changeVotesToPercentages(optionResults, savedVoteState), true))
             }
         }
     }
@@ -45,16 +56,13 @@ internal class VotingInteractor(
             val savedVoteState = votingStorage.getSavedVoteState(pollId)
 
             if (savedVoteState != null && resultsSameKeysAsShown && savedVoteState in optionIds) {
-                votingState.onNext(VotingState.Update(changeVotesToPercentages(optionResults)))
+                votingState.onNext(VotingState.Update(changeVotesToPercentages(optionResults, savedVoteState)))
             }
         }
     }
 
     fun castVote(pollId: String, optionId: String, optionIds: List<String>) {
-        votingStorage.incrementSavedPollState(pollId, optionId)
-        votingService.castVote(pollId, optionId)
-
-        getFirstTimeResults(pollId, optionIds)
+        getFirstTimeResults(pollId, optionId, optionIds)
     }
 
     private fun getPollStateFromNetwork(pollId: String, optionIds: List<String>): Publisher<OptionResults> {
@@ -85,10 +93,18 @@ internal class VotingInteractor(
         }
     }
 
-    private fun changeVotesToPercentages(results: OptionResults): OptionResults {
+    private fun changeVotesToPercentages(results: OptionResults, savedVoteState: String): OptionResults {
+
+        val modifiedResults = if (results.results[savedVoteState] == 0) {
+            val resultsMap = results.results.toMutableMap().apply { this[savedVoteState] = 1 }
+            results.copy(results = resultsMap)
+        } else {
+            results
+        }
+
         // https://en.wikipedia.org/wiki/Largest_remainder_method
-        val total = results.results.values.sum().toFloat()
-        val votes = results.results.mapValues { (it.value.toFloat() / total * 100) }
+        val total = modifiedResults.results.values.sum().toFloat()
+        val votes = modifiedResults.results.mapValues { (it.value.toFloat() / total * 100) }
 
         val votesWithFractional = votes.toList().map { VotesWithFractional(it.first, it.second.toInt(), it.second - it.second.toInt()) }
 
@@ -106,7 +122,7 @@ internal class VotingInteractor(
 
         val votesListWithRemainderShared = votesList.associate { it.key to it.votePercentage }
 
-        return results.copy(results = votesListWithRemainderShared)
+        return modifiedResults.copy(results = votesListWithRemainderShared)
     }
 
     data class VotesWithFractional(val key: String, var votePercentage: Int, val fractional: Float)

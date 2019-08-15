@@ -51,6 +51,14 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             field = value
         }
 
+    private fun setPollAnsweredWaiting() {
+        view.alpha = 0.5f
+    }
+
+    private fun setPollNotWaiting() {
+        view.alpha = 1f
+    }
+
     override var viewModelBinding: MeasuredBindableView.Binding<ImagePollViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
 
         binding?.viewModel?.let { viewModel ->
@@ -92,12 +100,21 @@ internal class ViewImagePoll(override val view: LinearLayout) :
 
             viewModel.votingState.subscribe({ votingState ->
                 when (votingState) {
-                    is VotingState.WaitingForVote -> {}
+                    is VotingState.WaitingForVote -> {
+                        setPollNotWaiting()
+                    }
+                    is VotingState.PollAnswered -> {
+                        setPollAnsweredWaiting()
+                    }
                     is VotingState.Results -> {
                         setVoteResultsReceived(votingState, imageLength)
                         setUpdateTimer(votingState, subscriptionCallback)
+                        setPollNotWaiting()
                     }
-                    is VotingState.Update -> setVoteResultUpdate(votingState)
+                    is VotingState.Update -> {
+                        setPollNotWaiting()
+                        setVoteResultUpdate(votingState)
+                    }
                 }
             }, { throw (it) }, { subscriptionCallback(it) })
 

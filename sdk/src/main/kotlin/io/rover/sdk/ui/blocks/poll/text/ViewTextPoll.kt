@@ -68,14 +68,21 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
             viewModel.votingState.subscribe({ votingState ->
                 when (votingState) {
-                    is VotingState.WaitingForVote -> { }
+                    is VotingState.WaitingForVote -> {
+                        setPollNotWaiting()
+                    }
                     is VotingState.Results -> {
                         setVoteResultsReceived(votingState)
                         setUpdateTimer(votingState, subscriptionCallback)
+                        setPollNotWaiting()
                     }
-                    is VotingState.Update -> setVoteResultUpdate(votingState)
+                    is VotingState.Update -> {
+                        setVoteResultUpdate(votingState)
+                        setPollNotWaiting()
+                    }
+                    is VotingState.PollAnswered -> setPollAnsweredWaiting()
                 }
-            }, { throw (it) }, { subscriptionCallback(it) })
+            }, { e -> log.e("${e.message}") }, { subscriptionCallback(it) })
 
             viewModel.checkIfAlreadyVoted(optionViews.keys.toList())
         }
@@ -86,6 +93,14 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                 viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
             }
         }
+    }
+
+    private fun setPollAnsweredWaiting() {
+        view.alpha = 0.5f
+    }
+
+    private fun setPollNotWaiting() {
+        view.alpha = 1f
     }
 
     private fun setUpdateTimer(votingState: VotingState.Results, subscriptionCallback: (Subscription) -> Unit) {

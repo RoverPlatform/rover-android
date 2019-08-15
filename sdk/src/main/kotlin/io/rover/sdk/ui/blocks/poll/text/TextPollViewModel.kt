@@ -67,6 +67,8 @@ internal sealed class VotingState {
     object WaitingForVote : VotingState()
     data class Results(val pollId: String, val selectedOption: String, val optionResults: OptionResults, val shouldAnimate: Boolean) : VotingState()
     data class Update(val optionResults: OptionResults) : VotingState()
+    object PollAnswered : VotingState()
+    data class SubmittingAnswer(val selectedOption: String) : VotingState()
 }
 
 internal interface TextPollViewModelInterface : Measurable, BindableViewModel {

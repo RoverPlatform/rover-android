@@ -120,13 +120,9 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                         // In case view has been detached for a while, don't want to wait 5 seconds to update
                         viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
                         log.d("poll view attached for poll ${votingState.pollId}")
-                        timer = createTimer(votingState)
+                        if(timer != null) timer = createTimer(votingState)
                     }
-                    is ViewEvent.Detach -> {
-                        log.d("poll view detached")
-                        timer?.cancel()
-                        timer?.purge()
-                    }
+                    is ViewEvent.Detach -> { }
                 }
             }, {}, { subscriptionCallback(it) })
         }

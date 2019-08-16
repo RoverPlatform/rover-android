@@ -110,12 +110,12 @@ internal class VotingInteractor(
             currentState = VotingState.RefreshingResults(submittingAnswer.pollId, submittingAnswer.selectedOption, submittingAnswer.optionResults)
         } else {
             votingService.castVote(submittingAnswer.pollId, submittingAnswer.selectedOption).observeOn(mainScheduler).subscribe ({ voteOutcome ->
-                if (voteOutcome is VoteOutcome.VoteSuccess) {
-                    submittingAnswerHandler.removeCallbacksAndMessages(null)
-                    currentState = VotingState.RefreshingResults(submittingAnswer.pollId, submittingAnswer.selectedOption, submittingAnswer.optionResults)
-                } else {
-                    createExponentialResultsBackoffVoteSender(submittingAnswer)
-                }
+                    if (voteOutcome is VoteOutcome.VoteSuccess) {
+                        submittingAnswerHandler.removeCallbacksAndMessages(null)
+                        currentState = VotingState.RefreshingResults(submittingAnswer.pollId, submittingAnswer.selectedOption, submittingAnswer.optionResults)
+                    } else {
+                        createExponentialResultsBackoffVoteSender(submittingAnswer)
+                    }
             }, { _ -> createExponentialResultsBackoffVoteSender(submittingAnswer)})
         }
     }
@@ -127,9 +127,13 @@ internal class VotingInteractor(
         submittingAnswerHandler.removeCallbacksAndMessages(null)
         val runnableCode = object : Runnable {
             override fun run() {
-                log.v("tried to get results")
-                submittingAnswerTimesInvoked++
-                submittingAnswer(submittingAnswer)
+                try {
+                    log.v("vote sent")
+                    submittingAnswerTimesInvoked++
+                    submittingAnswer(submittingAnswer)
+                } catch (e: Exception) {
+                    log.w("issue trying to send vote results $e")
+                }
             }
         }
 
@@ -163,9 +167,12 @@ internal class VotingInteractor(
         pollAnsweredHandler.removeCallbacksAndMessages(null)
         val runnableCode = object : Runnable {
             override fun run() {
-                log.v("tried to get results")
-                timesInvoked++
-                pollAnswered(pollId, voteOptionId, optionIds)
+                try {
+                    timesInvoked++
+                    pollAnswered(pollId, voteOptionId, optionIds)
+                } catch (e: Exception) {
+                    log.w("issue trying to retrieve results $e")
+                }
             }
         }
 

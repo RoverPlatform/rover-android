@@ -23,8 +23,9 @@ import io.rover.sdk.streams.observeOn
 import io.rover.sdk.streams.timestamp
 import io.rover.sdk.ui.PixelSize
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
+import io.rover.sdk.ui.blocks.poll.RefreshEvent
 import io.rover.sdk.ui.blocks.poll.VotingInteractor
-import io.rover.sdk.ui.blocks.poll.text.VotingState
+import io.rover.sdk.ui.blocks.poll.VotingState
 import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.dpAsPx
@@ -105,17 +106,18 @@ internal class ImagePollViewModel(
     }
 
     override fun castVote(selectedOption: String, optionIds: List<String>) {
-        pollVotingInteractor.castVote(id, selectedOption, optionIds)
+        pollVotingInteractor.castVotes(id, selectedOption, optionIds)
         imagePoll.options.find { it.id == selectedOption }?.let { option ->
             eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(id, option.text.rawValue, option.image?.url?.toString()), campaignId))
         }
     }
 
     override fun checkIfAlreadyVoted(optionIds: List<String>) {
-        pollVotingInteractor.checkIfAlreadyVotedAndHaveResults(id, optionIds)
+        pollVotingInteractor.initialize(id, optionIds)
     }
 
     override val votingState = pollVotingInteractor.votingState
+    override val refreshEvents: PublishSubject<RefreshEvent> = pollVotingInteractor.refreshEvents
 }
 
 internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
@@ -142,4 +144,5 @@ internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
     fun checkForUpdate(pollId: String, optionIds: List<String>)
     fun checkIfAlreadyVoted(optionIds: List<String>)
     val votingState: PublishSubject<VotingState>
+    val refreshEvents: PublishSubject<RefreshEvent>
 }

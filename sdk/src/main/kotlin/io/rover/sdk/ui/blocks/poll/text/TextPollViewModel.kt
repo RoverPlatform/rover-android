@@ -14,7 +14,9 @@ import io.rover.sdk.ui.RectF
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
 import io.rover.sdk.ui.blocks.poll.OptionResults
+import io.rover.sdk.ui.blocks.poll.RefreshEvent
 import io.rover.sdk.ui.blocks.poll.VotingInteractor
+import io.rover.sdk.ui.blocks.poll.VotingState
 import io.rover.sdk.ui.concerns.BindableViewModel
 
 internal class TextPollViewModel(
@@ -50,25 +52,19 @@ internal class TextPollViewModel(
     }
 
     override fun castVote(selectedOption: String, optionIds: List<String>) {
-        pollVotingInteractor.castVote(id, selectedOption, optionIds)
+        pollVotingInteractor.castVotes(id, selectedOption, optionIds)
         textPoll.options.find { it.id == selectedOption }?.let { option ->
             eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(id, option.text.rawValue), campaignId))
         }
     }
 
     override fun checkIfAlreadyVoted(optionIds: List<String>) {
-        pollVotingInteractor.checkIfAlreadyVotedAndHaveResults(id, optionIds)
+        pollVotingInteractor.initialize(id, optionIds)
     }
 
-    override val votingState = pollVotingInteractor.votingState
-}
+    override val refreshEvents: PublishSubject<RefreshEvent> = pollVotingInteractor.refreshEvents
 
-internal sealed class VotingState {
-    object WaitingForVote : VotingState()
-    data class Results(val pollId: String, val selectedOption: String, val optionResults: OptionResults, val shouldAnimate: Boolean) : VotingState()
-    data class Update(val optionResults: OptionResults) : VotingState()
-    object PollAnswered : VotingState()
-    data class SubmittingAnswer(val selectedOption: String) : VotingState()
+    override val votingState = pollVotingInteractor.votingState
 }
 
 internal interface TextPollViewModelInterface : Measurable, BindableViewModel {
@@ -78,4 +74,5 @@ internal interface TextPollViewModelInterface : Measurable, BindableViewModel {
     fun checkIfAlreadyVoted(optionIds: List<String>)
     fun checkForUpdate(pollId: String, optionIds: List<String>)
     val votingState: PublishSubject<VotingState>
+    val refreshEvents: PublishSubject<RefreshEvent>
 }

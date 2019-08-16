@@ -11,67 +11,37 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
         private const val MAX_SIZE = 100
         private const val ITEM_NUMBER_KEY = "item-number"
     }
-
-    fun setPollResults(pollId: String, value: String) {
-        if (keyValueStorage["$pollId-results"] == null) {
+    
+    fun setLastSeenPollState(pollId: String, pollState: VotingState) {
+        try {
             addItemToPrefsQueue(pollId)
             deleteOldestIfOverLimit()
+            keyValueStorage["$pollId-lastState"] = pollState.encodeJson().toString()
+        } catch (e: JSONException) {
+            log.w("Poll JSON decode problem details: $e")
+        } catch (e: Exception) {
+            log.w("problem incrementing poll state: $e")
         }
-
-        keyValueStorage["$pollId-results"] = value
     }
 
-    fun incrementSavedPollState(pollId: String, optionId: String) {
-        keyValueStorage["$pollId-vote"] = optionId
+    fun getLastSeenPollState(pollId: String): VotingState {
+        val json = keyValueStorage["$pollId-lastState"]
 
-        val optionResultsJson = keyValueStorage["$pollId-results"]
-
-        optionResultsJson?.let {
+        return json?.let {
             try {
-                val optionResults = OptionResults.decodeJson(JSONObject(it))
-                val resultsMap = optionResults.results.toMutableMap()
-                resultsMap[optionId] = resultsMap[optionId]!!.plus(1)
-                val resultsToInsert = optionResults.copy(results = resultsMap)
-
-                keyValueStorage["$pollId-results"] = resultsToInsert.encodeJson().toString()
+                VotingState.decodeJson(JSONObject(it))
             } catch (e: JSONException) {
-                log.w("Poll JSON decode problem details: $e")
-            } catch (e: Exception) {
-                log.w("problem incrementing poll state: $e")
+                log.w("Poll JSON state decode problem details: $e")
+                VotingState.InitialState
             }
-        }
-    }
-
-    fun getSavedVoteState(pollId: String) = keyValueStorage["$pollId-vote"]
-
-    fun getSavedPollState(pollId: String): OptionResults? {
-        val optionResultsJson = keyValueStorage["$pollId-results"]
-
-        return optionResultsJson?.let {
-            try {
-                OptionResults.decodeJson(JSONObject(optionResultsJson))
-            } catch (e: JSONException) {
-                log.w("Poll JSON decode problem details: $e")
-                null
-            }
-        }
-    }
-    
-    fun setLastSeenPollStatePollAnswered(pollId: String) {
-        keyValueStorage["$pollId-lastState"] = "poll-answered"
-    }
-    
-    fun setLastSeenPollStateEmpty(pollId: String) {
-        keyValueStorage["$pollId-lastState"] = ""
-    }
-    
-    fun retrieveIfLastSeenPollStatePollAnswered(pollId: String): Boolean {
-        return keyValueStorage["$pollId-lastState"] == "poll-answered"
+        } ?: VotingState.InitialState
     }
 
     private fun addItemToPrefsQueue(pollId: String) {
-        keyValueStorage["${keyValueStorage.getInt(ITEM_NUMBER_KEY)}"] = pollId
-        keyValueStorage[ITEM_NUMBER_KEY] = keyValueStorage.getInt(ITEM_NUMBER_KEY).inc()
+        if (keyValueStorage["$pollId-lastState"] == null) {
+            keyValueStorage["${keyValueStorage.getInt(ITEM_NUMBER_KEY)}"] = pollId
+            keyValueStorage[ITEM_NUMBER_KEY] = keyValueStorage.getInt(ITEM_NUMBER_KEY).inc()
+        }
     }
 
     private fun deleteOldestIfOverLimit() {
@@ -83,8 +53,6 @@ internal class VotingStorage(private val keyValueStorage: KeyValueStorage) {
 
             itemToDelete?.let {
                 keyValueStorage.unset(itemCountToDelete)
-                keyValueStorage.unset("$itemToDelete-results")
-                keyValueStorage.unset("$itemToDelete-vote")
                 keyValueStorage.unset("$itemToDelete-lastState")
             }
         }

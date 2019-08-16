@@ -115,8 +115,8 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                         setPollNotWaiting()
                     }
                     is VotingState.RefreshingResults -> {
-                        setPollNotWaiting()
                         setUpdateTimer(votingState, subscriptionCallback)
+                        setPollNotWaiting()
                     }
                 }
             }, { throw (it) }, { subscriptionCallback(it) })
@@ -138,7 +138,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
     }
 
     private fun setUpdateTimer(votingState: VotingState.RefreshingResults, subscriptionCallback: (Subscription) -> Unit) {
-        if (timer != null) {
+        if (timer == null) {
             timer = createTimer(votingState)
 
             view.attachEvents().subscribe({

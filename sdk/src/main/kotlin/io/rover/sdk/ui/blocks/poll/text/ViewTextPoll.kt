@@ -72,6 +72,9 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                     is VotingState.InitialState -> {
                         setPollNotWaiting()
                     }
+                    is VotingState.ResultsSeeded -> {
+                        setPollNotWaiting()
+                    }
                     is VotingState.SubmittingAnswer -> {
                         setVoteResultsReceived(votingState)
                         setPollNotWaiting()

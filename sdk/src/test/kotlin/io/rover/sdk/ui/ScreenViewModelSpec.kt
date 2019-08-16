@@ -2,6 +2,7 @@ package io.rover.sdk.ui
 
 import com.nhaarman.mockitokotlin2.mock
 import io.rover.sdk.ViewModels
+import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.domain.Height
 import io.rover.sdk.data.domain.HorizontalAlignment
 import io.rover.sdk.data.domain.Position
@@ -20,7 +21,9 @@ object ScreenViewModelSpec : Spek({
             sessionTracker = mock(),
             imageOptimizationService = mock(),
             assetService = mock(),
-            measurementService = mock()
+            measurementService = mock(),
+            pollVotingService = mock(),
+            pollVotingStorage = mock()
         )
         context("a basic screen with one row with a rectangle block") {
             val screen = ModelFactories.emptyScreen().copy(
@@ -39,7 +42,9 @@ object ScreenViewModelSpec : Spek({
                 )
             )
 
-            val screenViewModel = viewModels.screenViewModel(screen)
+            val exampleExperience = Experience("", "", listOf(), mapOf(), listOf(), "")
+
+            val screenViewModel = viewModels.screenViewModel(screen, exampleExperience, "")
 
             context("rendering") {
                 val rendered = screenViewModel.render(
@@ -82,7 +87,9 @@ object ScreenViewModelSpec : Spek({
                     )
                 )
             )
-            val screenViewModel = viewModels.screenViewModel(screen)
+
+            val exampleExperience = Experience("", "", listOf(), mapOf(), listOf(), "")
+            val screenViewModel = viewModels.screenViewModel(screen, exampleExperience, "")
 
             context("rendering") {
                 val rendered = screenViewModel.render(
@@ -137,7 +144,9 @@ object ScreenViewModelSpec : Spek({
                     )
                 )
             )
-            val screenViewModel = viewModels.screenViewModel(screen)
+
+            val exampleExperience = Experience("", "", listOf(), mapOf(), listOf(), "")
+            val screenViewModel = viewModels.screenViewModel(screen, exampleExperience, "")
 
             context("rendering") {
                 val rendered = screenViewModel.render(
@@ -173,7 +182,9 @@ object ScreenViewModelSpec : Spek({
                     )
                 )
             )
-            val screenViewModel = viewModels.screenViewModel(screen)
+
+            val exampleExperience = Experience("", "", listOf(), mapOf(), listOf(), "")
+            val screenViewModel = viewModels.screenViewModel(screen, exampleExperience, "")
 
             context("rendering") {
                 val rendered = screenViewModel.render(

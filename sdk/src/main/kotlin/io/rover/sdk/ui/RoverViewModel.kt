@@ -3,8 +3,10 @@ package io.rover.sdk.ui
 import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Parcelable
+import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.graphql.ApiResult
 import io.rover.sdk.data.graphql.GraphQlApiService
+import io.rover.sdk.data.operations.FetchExperienceRequest
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.Publishers
 import io.rover.sdk.streams.Scheduler
@@ -15,9 +17,6 @@ import io.rover.sdk.streams.observeOn
 import io.rover.sdk.streams.share
 import io.rover.sdk.streams.shareAndReplay
 import io.rover.sdk.streams.subscribe
-import io.rover.sdk.services.SessionTracker
-import io.rover.sdk.data.domain.Experience
-import io.rover.sdk.data.operations.FetchExperienceRequest
 import io.rover.sdk.ui.navigation.ExperienceExternalNavigationEvent
 import io.rover.sdk.ui.navigation.NavigationViewModelInterface
 import io.rover.sdk.ui.toolbar.ExperienceToolbarViewModelInterface
@@ -73,9 +72,12 @@ internal class RoverViewModel(
     private fun fetchExperience(): Publisher<out ApiResult<Experience>> =
         graphQlApiService.fetchExperience(
             when (experienceRequest) {
-                is ExperienceRequest.ByCampaignUrl -> FetchExperienceRequest.ExperienceQueryIdentifier.ByUniversalLink(experienceRequest.url)
+                is ExperienceRequest.ByUrl -> FetchExperienceRequest.ExperienceQueryIdentifier.ByUniversalLink(
+                    experienceRequest.url
+                )
                 is ExperienceRequest.ById -> FetchExperienceRequest.ExperienceQueryIdentifier.ById(experienceRequest.experienceId)
-            }).observeOn(mainThreadScheduler)
+            }
+        ).observeOn(mainThreadScheduler)
 
     /**
      * Hold on to a reference to the navigation view model so that it can contribute to the Android
@@ -94,9 +96,11 @@ internal class RoverViewModel(
         actions.subscribe { action ->
             when (action!!) {
                 Action.BackPressedBeforeExperienceReady -> {
-                    eventsSubject.onNext(RoverViewModelInterface.Event.NavigateTo(
-                        ExperienceExternalNavigationEvent.Exit()
-                    ))
+                    eventsSubject.onNext(
+                        RoverViewModelInterface.Event.NavigateTo(
+                            ExperienceExternalNavigationEvent.Exit()
+                        )
+                    )
                 }
                 Action.Fetch -> {
                     fetchExperience()
@@ -139,17 +143,19 @@ internal class RoverViewModel(
         val experiences = PublishSubject<Experience>()
 
         fetchAttempts.subscribe { networkResult ->
-           loadingSubject.onNext(false)
-           when (networkResult) {
-               is ApiResult.Error -> {
-                   eventsSubject.onNext(RoverViewModelInterface.Event.DisplayError(
-                       networkResult.throwable.message ?: "Unknown"
-                   ))
-               }
-               is ApiResult.Success -> {
-                   experiences.onNext(networkResult.response)
-               }
-           }
+            loadingSubject.onNext(false)
+            when (networkResult) {
+                is ApiResult.Error -> {
+                    eventsSubject.onNext(
+                        RoverViewModelInterface.Event.DisplayError(
+                            networkResult.throwable.message ?: "Unknown"
+                        )
+                    )
+                }
+                is ApiResult.Success -> {
+                    experiences.onNext(networkResult.response)
+                }
+            }
         }
 
         // yields an experience navigation view model. used by both our view and some of the
@@ -219,7 +225,7 @@ internal class RoverViewModel(
     ) : Parcelable
 
     sealed class ExperienceRequest {
-        data class ByCampaignUrl(val url: String) : ExperienceRequest()
+        data class ByUrl(val url: String) : ExperienceRequest()
         data class ById(val experienceId: String) : ExperienceRequest()
     }
 }

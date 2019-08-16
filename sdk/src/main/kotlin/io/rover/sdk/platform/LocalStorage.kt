@@ -14,9 +14,19 @@ internal interface KeyValueStorage {
     operator fun get(key: String): String?
 
     /**
+     * Get the current value of the given key, or null if unset.
+     */
+    fun getInt(key: String): Int
+
+    /**
      * Set the value of the given key.  If [value] is null, unsets the key.
      */
     operator fun set(key: String, value: String?)
+
+    /**
+     * Set the value of the given key.
+     */
+    operator fun set(key: String, value: Int)
 
     /**
      * Clear and remove a given key.
@@ -42,6 +52,12 @@ internal class LocalStorage(
             override fun set(key: String, value: String?) {
                 prefs.edit().putString(key, value).apply()
             }
+
+            override fun set(key: String, value: Int) {
+                prefs.edit().putInt(key, value).apply()
+            }
+
+            override fun getInt(key: String) = prefs.getInt(key, 0)
 
             override fun unset(key: String) {
                 prefs.edit().remove(key).apply()

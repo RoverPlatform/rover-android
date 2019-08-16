@@ -1,6 +1,7 @@
 package io.rover.sdk.assets
 
 import io.rover.sdk.logging.log
+import io.rover.sdk.platform.debugExplanation
 import io.rover.sdk.streams.blockForResult
 import java.io.BufferedInputStream
 import java.lang.Exception
@@ -24,13 +25,13 @@ internal class AssetRetrievalStage(
         // so now I am going to just *block* while waiting for the callback, since this is all being
         // run on a background executor.
         val streamResult = try {
-             imageDownloader
+            imageDownloader
                 .downloadStreamFromUrl(input)
                 .blockForResult(timeoutSeconds = 300)
                 .first()
         } catch (exception: Exception) {
-            log.w("Unable to download asset because: ${exception.message}")
-            return PipelineStageResult.Failed<BufferedInputStream>(exception)
+            log.w("Unable to download asset because: ${exception.debugExplanation()}")
+            return PipelineStageResult.Failed<BufferedInputStream>(exception, true)
         }
 
         // My use of blockForResult() here has an unfortunate side-effect: because downloadStreamFromUrl()
@@ -48,14 +49,14 @@ internal class AssetRetrievalStage(
         // even with large experiences, it seems to work well.  The timeout given by
         // Publisher.blockForResult is a sufficient fail-safe against the pool overflow case.
         return when (streamResult) {
-                is ImageDownloader.HttpClientResponse.ConnectionFailure -> {
-                    PipelineStageResult.Failed(
-                        RuntimeException("Network or HTTP error downloading asset", streamResult.reason)
-                    )
-                }
-                is ImageDownloader.HttpClientResponse.ApplicationError -> {
-                    PipelineStageResult.Failed(
-                        RuntimeException("Remote HTTP API error downloading asset (code ${streamResult.responseCode}): ${streamResult.reportedReason}")
+            is ImageDownloader.HttpClientResponse.ConnectionFailure -> {
+                PipelineStageResult.Failed(
+                    RuntimeException("Network or HTTP error downloading asset", streamResult.reason), true)
+            }
+            is ImageDownloader.HttpClientResponse.ApplicationError -> {
+                PipelineStageResult.Failed(
+                    RuntimeException("Remote HTTP API error downloading asset (code ${streamResult.responseCode}): ${streamResult.reportedReason}"),
+                        streamResult.responseCode >= 500
                     )
                 }
                 is ImageDownloader.HttpClientResponse.Success -> {

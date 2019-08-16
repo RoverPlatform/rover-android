@@ -19,11 +19,15 @@ import io.rover.sdk.data.domain.ButtonBlock
 import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.domain.Image
 import io.rover.sdk.data.domain.ImageBlock
+import io.rover.sdk.data.domain.ImagePoll
+import io.rover.sdk.data.domain.ImagePollBlock
 import io.rover.sdk.data.domain.RectangleBlock
 import io.rover.sdk.data.domain.Row
 import io.rover.sdk.data.domain.Screen
 import io.rover.sdk.data.domain.Text
 import io.rover.sdk.data.domain.TextBlock
+import io.rover.sdk.data.domain.TextPoll
+import io.rover.sdk.data.domain.TextPollBlock
 import io.rover.sdk.data.domain.WebView
 import io.rover.sdk.data.domain.WebViewBlock
 import io.rover.sdk.data.events.AnalyticsService
@@ -60,6 +64,15 @@ import io.rover.sdk.ui.blocks.concerns.text.TextViewModel
 import io.rover.sdk.ui.blocks.image.ImageBlockView
 import io.rover.sdk.ui.blocks.image.ImageBlockViewModel
 import io.rover.sdk.ui.blocks.image.ImageViewModel
+import io.rover.sdk.ui.blocks.poll.VotingInteractor
+import io.rover.sdk.ui.blocks.poll.VotingService
+import io.rover.sdk.ui.blocks.poll.VotingStorage
+import io.rover.sdk.ui.blocks.poll.image.ImagePollBlockView
+import io.rover.sdk.ui.blocks.poll.image.ImagePollBlockViewModel
+import io.rover.sdk.ui.blocks.poll.image.ImagePollViewModel
+import io.rover.sdk.ui.blocks.poll.text.TextPollBlockView
+import io.rover.sdk.ui.blocks.poll.text.TextPollBlockViewModel
+import io.rover.sdk.ui.blocks.poll.text.TextPollViewModel
 import io.rover.sdk.ui.blocks.rectangle.RectangleBlockView
 import io.rover.sdk.ui.blocks.rectangle.RectangleBlockViewModel
 import io.rover.sdk.ui.blocks.text.TextBlockView
@@ -135,7 +148,8 @@ open class Rover(
 
     private val imageDownloader: ImageDownloader = ImageDownloader(ioExecutor)
 
-    private val assetService: AndroidAssetService = AndroidAssetService(imageDownloader, ioScheduler, mainScheduler)
+    private val assetService: AndroidAssetService =
+        AndroidAssetService(imageDownloader, ioScheduler, mainScheduler)
 
     private val imageOptimizationService: ImageOptimizationService = ImageOptimizationService()
 
@@ -143,7 +157,8 @@ open class Rover(
 
     private val httpClient: HttpClient = HttpClient(ioScheduler, packageInfo)
 
-    internal val webBrowserDisplay: EmbeddedWebBrowserDisplay = EmbeddedWebBrowserDisplay(chromeTabBackgroundColor)
+    internal val webBrowserDisplay: EmbeddedWebBrowserDisplay =
+        EmbeddedWebBrowserDisplay(chromeTabBackgroundColor)
 
     private val localStorage: LocalStorage = LocalStorage(application)
 
@@ -156,11 +171,19 @@ open class Rover(
         eventEmitter
     )
 
-    private val apiService: GraphQlApiService = GraphQlApiService(URL(endpoint), accountToken, httpClient)
+    private val pollsEndpoint = "https://polls.rover.io/v1/polls"
+
+    private val pollVotingService: VotingService = VotingService(pollsEndpoint, httpClient)
+
+    private val pollVotingStorage: VotingStorage = VotingStorage(localStorage.getKeyValueStorageFor("voting"))
+
+    private val apiService: GraphQlApiService =
+        GraphQlApiService(URL(endpoint), accountToken, httpClient)
 
     private val sessionTracker: SessionTracker = SessionTracker(eventEmitter, sessionStore, 10)
 
-    private val textFormatter: AndroidRichTextToSpannedTransformer = AndroidRichTextToSpannedTransformer()
+    private val textFormatter: AndroidRichTextToSpannedTransformer =
+        AndroidRichTextToSpannedTransformer()
 
     internal val barcodeRenderingService: BarcodeRenderingService = BarcodeRenderingService()
 
@@ -180,7 +203,9 @@ open class Rover(
             sessionTracker,
             imageOptimizationService,
             assetService,
-            measurementService
+            measurementService,
+            pollVotingService,
+            pollVotingStorage
         )
     }
 
@@ -201,8 +226,16 @@ open class Rover(
 
         @JvmStatic
         @JvmOverloads
-        fun initialize(application: Application, accountToken: String, @ColorInt chromeTabColor: Int = Color.BLACK) {
-            shared = Rover(application = application, accountToken = accountToken, chromeTabBackgroundColor = chromeTabColor)
+        fun initialize(
+            application: Application,
+            accountToken: String,
+            @ColorInt chromeTabColor: Int = Color.BLACK
+        ) {
+            shared = Rover(
+                application = application,
+                accountToken = accountToken,
+                chromeTabBackgroundColor = chromeTabColor
+            )
         }
 
         /**
@@ -226,7 +259,9 @@ internal class ViewModels(
     private val sessionTracker: SessionTracker,
     private val imageOptimizationService: ImageOptimizationService,
     private val assetService: AndroidAssetService,
-    private val measurementService: MeasurementService
+    private val measurementService: MeasurementService,
+    private val pollVotingService: VotingService,
+    private val pollVotingStorage: VotingStorage
 ) {
     fun experienceViewModel(
         experienceRequest: RoverViewModel.ExperienceRequest,
@@ -260,7 +295,7 @@ internal class ViewModels(
             eventEmitter = eventEmitter,
             campaignId = campaignId,
             sessionTracker = sessionTracker,
-            resolveScreenViewModel = { screen -> screenViewModel(screen) },
+            resolveScreenViewModel = { screen -> screenViewModel(screen, experience, campaignId) },
             resolveToolbarViewModel = { configuration -> experienceToolbarViewModel(configuration) },
             activityLifecycle = activityLifecycle,
             icicle = icicle
@@ -268,12 +303,14 @@ internal class ViewModels(
     }
 
     fun screenViewModel(
-        screen: Screen
+        screen: Screen,
+        experience: Experience,
+        campaignId: String?
     ): ScreenViewModel {
         return ScreenViewModel(
             screen,
             backgroundViewModel(screen.background),
-            resolveRowViewModel = { row -> rowViewModel(row) }
+            resolveRowViewModel = { row -> rowViewModel(row, screen, experience, campaignId) }
         )
     }
 
@@ -289,19 +326,25 @@ internal class ViewModels(
     }
 
     fun rowViewModel(
-        row: Row
+        row: Row,
+        screen: Screen,
+        experience: Experience,
+        campaignId: String?
     ): RowViewModel {
         return RowViewModel(
             row = row,
             blockViewModelResolver = { block ->
-                blockContentsViewModel(block)
+                blockContentsViewModel(block, screen, experience, campaignId)
             },
             backgroundViewModel = this.backgroundViewModel(row.background)
         )
     }
 
     private fun blockContentsViewModel(
-        block: Block
+        block: Block,
+        screen: Screen,
+        experience: Experience,
+        campaignId: String?
     ): CompositeBlockViewModelInterface {
         when (block) {
             is RectangleBlock -> {
@@ -334,7 +377,11 @@ internal class ViewModels(
                     blockViewModel = blockViewModel(block, emptySet(), null),
                     borderViewModel = borderViewModel(block.border),
                     backgroundViewModel = backgroundViewModel(block.background),
-                    textViewModel = textViewModel(block.text, singleLine = true, centerVertically = true)
+                    textViewModel = textViewModel(
+                        block.text,
+                        singleLine = true,
+                        centerVertically = true
+                    )
                 )
             }
             is WebViewBlock -> {
@@ -352,10 +399,67 @@ internal class ViewModels(
                     barcodeViewModel = barcodeViewModel
                 )
             }
+            is TextPollBlock -> {
+                val textPollViewModel = textPollViewModel(block.textPoll, block, screen, experience, "${experience.id}:${block.id}", campaignId)
+                return TextPollBlockViewModel(
+                    textPollViewModel = textPollViewModel,
+                    blockViewModel = blockViewModel(block, setOf(), textPollViewModel),
+                    backgroundViewModel = backgroundViewModel(block.background),
+                    borderViewModel = borderViewModel(block.border)
+                )
+            }
+            is ImagePollBlock -> {
+                val imagePollViewModel = imagePollViewModel(block.imagePoll, block, screen, experience, "${experience.id}:${block.id}", campaignId)
+                return ImagePollBlockViewModel(
+                    imagePollViewModel = imagePollViewModel,
+                    blockViewModel = blockViewModel(block, setOf(), imagePollViewModel),
+                    backgroundViewModel = backgroundViewModel(block.background),
+                    borderViewModel = borderViewModel(block.border)
+                )
+            }
             else -> throw Exception(
                 "This Rover UI block type is not supported by this version of the SDK: ${block.javaClass.simpleName}."
             )
         }
+    }
+
+    private fun imagePollViewModel(imagePoll: ImagePoll, block: Block, screen: Screen, experience: Experience, id: String, campaignId: String?): ImagePollViewModel {
+        return ImagePollViewModel(
+            id = id,
+            imagePoll = imagePoll,
+            measurementService = measurementService,
+            imageOptimizationService = imageOptimizationService,
+            assetService = assetService,
+            mainScheduler = mainScheduler,
+            pollVotingInteractor = VotingInteractor(pollVotingService, pollVotingStorage, mainScheduler),
+            eventEmitter = eventEmitter,
+            block = block,
+            screen = screen,
+            experience = experience,
+            campaignId = campaignId
+        )
+    }
+
+    private fun textPollViewModel(
+        textPoll: TextPoll,
+        block: Block,
+        screen: Screen,
+        experience: Experience,
+        id: String,
+        campaignId: String?
+    ): TextPollViewModel {
+        return TextPollViewModel(
+            id,
+            textPoll,
+            measurementService,
+            backgroundViewModel(textPoll.options.first().background),
+            VotingInteractor(pollVotingService, pollVotingStorage, mainScheduler),
+            eventEmitter,
+            block,
+            screen,
+            experience,
+            campaignId
+        )
     }
 
     private fun blockViewModel(
@@ -434,7 +538,7 @@ internal class Views {
         viewType: ViewType,
         context: Context
     ): LayoutableView<out LayoutableViewModel> {
-        return when(viewType) {
+        return when (viewType) {
             ViewType.Row -> RowView(context)
             ViewType.Rectangle -> RectangleBlockView(context)
             ViewType.Text -> TextBlockView(context)
@@ -442,6 +546,8 @@ internal class Views {
             ViewType.Image -> ImageBlockView(context)
             ViewType.WebView -> WebBlockView(context)
             ViewType.Barcode -> BarcodeBlockView(context)
+            ViewType.TextPoll -> TextPollBlockView(context)
+            ViewType.ImagePoll -> ImagePollBlockView(context)
         }
     }
 

@@ -74,7 +74,7 @@ internal class ImageViewModel(
             } else {
                 val uriWithParameters = imageOptimizationService.optimizeImageBlock(
                     image,
-                    block,
+                    block.border.width,
                     PixelSize(
                         measuredSize.width.dpAsPx(measuredSize.density),
                         measuredSize.height.dpAsPx(measuredSize.density)

@@ -10,11 +10,14 @@ import io.rover.sdk.data.http.HttpRequest
 import io.rover.sdk.data.http.HttpVerb
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.dateAsIso8601
+import io.rover.sdk.platform.debugExplanation
 import io.rover.sdk.platform.setRoverUserAgent
 import io.rover.sdk.services.EventEmitter
+import io.rover.sdk.streams.filter
 import io.rover.sdk.streams.subscribe
 import org.json.JSONObject
 import java.io.DataOutputStream
+import java.lang.RuntimeException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Date
@@ -58,7 +61,7 @@ internal class AnalyticsService(
     }
 
     private fun encodeBody(eventInformation: RoverEvent): String {
-        val (eventName, flatEvent) = when(eventInformation) {
+        val (eventName, flatEvent) = when (eventInformation) {
             is RoverEvent.ExperiencePresented -> "Experience Presented" to eventInformation.toFlat()
             is RoverEvent.ExperienceDismissed -> "Experience Dismissed" to eventInformation.toFlat()
             is RoverEvent.ExperienceViewed -> "Experience Viewed" to eventInformation.toFlat()
@@ -66,6 +69,7 @@ internal class AnalyticsService(
             is RoverEvent.ScreenDismissed -> "Screen Dismissed" to eventInformation.toFlat()
             is RoverEvent.ScreenViewed -> "Screen Viewed" to eventInformation.toFlat()
             is RoverEvent.BlockTapped -> "Block Tapped" to eventInformation.toFlat()
+            else -> throw RuntimeException("Event not supported")
         }
 
         return JSONObject().apply {
@@ -77,17 +81,21 @@ internal class AnalyticsService(
     }
 
     private fun sendRequest(eventInformation: RoverEvent) {
-        val urlRequest = buildRequest(URL(ANALYTICS_ENDPOINT), accountToken)
-        val bodyData = encodeBody(eventInformation)
+        try {
+            val urlRequest = buildRequest(URL(ANALYTICS_ENDPOINT), accountToken)
+            val bodyData = encodeBody(eventInformation)
 
-        request(urlRequest, bodyData)
+            request(urlRequest, bodyData)
+        } catch (e: Exception) {
+            log.w("Problem sending analytics: ${e.message}")
+        }
     }
 
     /**
      * Initiates the [AnalyticsService] sending of analytics events.
      */
     init {
-        eventEmitter.trackedEvents.subscribe { sendRequest(it) }
+        eventEmitter.trackedEvents.filter { it !is RoverEvent.PollAnswered }.subscribe { sendRequest(it) }
     }
 
     private fun request(
@@ -115,7 +123,7 @@ internal class AnalyticsService(
                     }
                 }
             } catch (e: Exception) {
-                this@AnalyticsService.log.w("$request : event analytics request failed ${e.message}")
+                this@AnalyticsService.log.w("$request : event analytics request failed ${e.debugExplanation()}")
             }
         }
     }

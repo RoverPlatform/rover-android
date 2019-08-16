@@ -30,10 +30,10 @@ internal class BarcodeBlockView : AppCompatImageView, LayoutableView<BarcodeBloc
         viewBlock.viewModelBinding = binding
     }
 
-    override fun onDraw(canvas: Canvas) {
-        viewComposition.beforeOnDraw(canvas)
-        super.onDraw(canvas)
-        viewComposition.afterOnDraw(canvas)
+    override fun draw(canvas: Canvas) {
+        viewComposition.beforeDraw(canvas)
+        super.draw(canvas)
+        viewComposition.afterDraw(canvas)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {

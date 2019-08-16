@@ -1,6 +1,7 @@
 package io.rover.sdk.data.domain
 
 import android.util.DisplayMetrics
+import android.view.Gravity
 import io.rover.sdk.data.domain.BackgroundScale.X3
 import java.net.URI
 import java.net.URL
@@ -114,6 +115,73 @@ interface Block {
         companion object
     }
 
+    companion object
+}
+
+data class ImagePollBlockOption(
+    val id: String,
+    val text: Text,
+    val image: Image?,
+    val background: Background,
+    val border: Border,
+    val opacity: Double,
+    val topMargin: Int,
+    val leftMargin: Int,
+    val resultFillColor: Color
+) {
+    companion object
+}
+
+data class ImagePollBlock(
+    override val id: String,
+    override val insets: Insets,
+    override val opacity: Double,
+    override val position: Position,
+    override val keys: Map<String, String>,
+    override val tapBehavior: Block.TapBehavior,
+    override val background: Background,
+    override val border: Border,
+    override val name: String,
+    override val tags: List<String>,
+    val imagePoll: ImagePoll
+) : Block {
+    companion object
+}
+
+data class ImagePoll(val question: Text, val options: List<ImagePollBlockOption>) {
+    companion object
+}
+
+data class TextPollBlock(
+    override val id: String,
+    override val insets: Insets,
+    override val opacity: Double,
+    override val position: Position,
+    override val keys: Map<String, String>,
+    override val tapBehavior: Block.TapBehavior,
+    override val background: Background,
+    override val border: Border,
+    override val name: String,
+    override val tags: List<String>,
+    val textPoll: TextPoll
+) : Block {
+    companion object
+}
+
+data class TextPoll(val question: Text, val options: List<TextPollOption>) {
+    companion object
+}
+
+data class TextPollOption(
+    val id: String,
+    val text: Text,
+    val background: Background,
+    val border: Border,
+    val opacity: Double,
+    val height: Int,
+    val topMargin: Int,
+    val resultFillColor: Color
+) {
     companion object
 }
 
@@ -420,6 +488,14 @@ enum class TextAlignment(
     Center("CENTER"),
     Left("LEFT"),
     Right("RIGHT");
+
+    fun convertToGravity(): Int {
+        return when (this) {
+            Right -> Gravity.END
+            Left -> Gravity.START
+            Center -> Gravity.CENTER_HORIZONTAL
+        }
+    }
 
     companion object
 }

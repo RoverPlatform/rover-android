@@ -1,7 +1,6 @@
 package io.rover.sdk.assets
 
 import android.graphics.Bitmap
-import io.rover.sdk.data.graphql.ApiResult
 import org.reactivestreams.Publisher
 import java.net.URL
 
@@ -19,7 +18,7 @@ internal interface SynchronousPipelineStage<in TInput, TOutput> {
 
 internal sealed class PipelineStageResult<TOutput> {
     class Successful<TOutput>(val output: TOutput) : PipelineStageResult<TOutput>()
-    class Failed<TOutput>(val reason: Throwable) : PipelineStageResult<TOutput>()
+    class Failed<TOutput>(val reason: Throwable, val retry: Boolean) : PipelineStageResult<TOutput>()
 }
 
 internal interface AssetService {
@@ -40,9 +39,7 @@ internal interface AssetService {
      */
     fun getImageByUrl(
         url: URL
-    ): Publisher<ApiResult<Bitmap>>
-
-    // TODO: the aggregation behaviour will go in the Asset Service.
+    ): Publisher<PipelineStageResult<Bitmap>>
 
     /**
      * Request a fetch.  Be sure you are subscribed to [imageByUrl] to receive the updates.

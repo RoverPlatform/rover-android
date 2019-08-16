@@ -10,9 +10,11 @@ internal fun JSONObject.toStringHash(): Map<String, String> {
     }
 }
 
+internal fun JSONObject.toStringIntHash() = keys().asSequence().associateWith { key -> getInt(key) }
+
 internal fun Attributes.encodeJson(): JSONObject {
     this.map { (_, value) ->
-        @Suppress("UNCHECKED_CAST") val newValue = when(value) {
+        @Suppress("UNCHECKED_CAST") val newValue = when (value) {
             is Map<*, *> -> (value as Attributes).encodeJson()
             is Collection<*> -> JSONArray(value)
             else -> value

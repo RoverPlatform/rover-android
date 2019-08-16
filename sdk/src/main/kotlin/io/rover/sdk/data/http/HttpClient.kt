@@ -19,7 +19,6 @@ import java.net.HttpURLConnection
 import java.util.zip.GZIPOutputStream
 import javax.net.ssl.HttpsURLConnection
 
-
 /**
  * HTTP client (used for both Rover API access and other tasks), powered by Android's stock
  * [HttpsURLConnection].
@@ -27,7 +26,7 @@ import javax.net.ssl.HttpsURLConnection
 internal class HttpClient(
     private val ioScheduler: Scheduler,
     private val appPackageInfo: PackageInfo
-)  {
+) {
     /**
      * When subscribed performs the given [HttpRequest] and then yields the result.
      *
@@ -37,7 +36,8 @@ internal class HttpClient(
      */
     fun request(
         request: HttpRequest,
-        bodyData: String?
+        bodyData: String?,
+        gzip: Boolean = true
     ): Publisher<HttpClientResponse> {
         // synchronous API.
 
@@ -68,7 +68,7 @@ internal class HttpClient(
                 emitMissingCacheWarning()
             }
 
-            val requestBody = bodyData?.toByteArray(Charsets.UTF_8)?.asGzip()
+            val requestBody = if (gzip) bodyData?.toByteArray(Charsets.UTF_8)?.asGzip() else bodyData?.toByteArray(Charsets.UTF_8)
             val requestHasBody = when (request.verb) {
                 HttpVerb.POST, HttpVerb.PUT -> requestBody != null
                 else -> false
@@ -80,7 +80,7 @@ internal class HttpClient(
                     // TODO: set a nice user agent.
                     if (requestHasBody) {
                         setFixedLengthStreamingMode(requestBody?.size ?: 0)
-                        setRequestProperty("Content-Encoding", "gzip")
+                        if (gzip) setRequestProperty("Content-Encoding", "gzip")
                     }
 
                     setRoverUserAgent(appPackageInfo)

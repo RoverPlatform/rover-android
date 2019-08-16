@@ -3,6 +3,7 @@ package io.rover.sdk.ui
 import com.nhaarman.mockitokotlin2.mock
 import io.rover.helpers.shouldEqual
 import io.rover.sdk.ViewModels
+import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.domain.Height
 import io.rover.sdk.data.domain.HorizontalAlignment
 import io.rover.sdk.data.domain.Position
@@ -21,7 +22,9 @@ object RowViewModelSpec : Spek({
             sessionTracker = mock(),
             imageOptimizationService = mock(),
             assetService = mock(),
-            measurementService = mock()
+            measurementService = mock(),
+            pollVotingStorage = mock(),
+            pollVotingService = mock()
         )
 
         context("an autoheight row with stacked blocks") {
@@ -53,7 +56,10 @@ object RowViewModelSpec : Spek({
                 )
             )
 
-            val rowViewModel = viewModels.rowViewModel(exampleRow)
+            val exampleScreen = ModelFactories.emptyScreen()
+            val exampleExperience = Experience("", "", listOf(), mapOf(), listOf(), "")
+
+            val rowViewModel = viewModels.rowViewModel(exampleRow, exampleScreen, exampleExperience, "")
 
             context("frame()") {
                 // row bounds' bottom is given as 0, because rows are always responsible
@@ -134,7 +140,10 @@ object RowViewModelSpec : Spek({
                     )
                 )
 
-            val rowViewModel = viewModels.rowViewModel(exampleRow)
+            val exampleScreen = ModelFactories.emptyScreen()
+            val exampleExperience = Experience("", "", listOf(), mapOf(), listOf(), "")
+
+            val rowViewModel = viewModels.rowViewModel(exampleRow, exampleScreen, exampleExperience, "")
 
             context("frame()") {
                 // row bounds' bottom is given as 0, because rows are always responsible
@@ -180,7 +189,10 @@ object RowViewModelSpec : Spek({
                     )
                 )
 
-            val rowViewModel = viewModels.rowViewModel(exampleRow)
+            val exampleScreen = ModelFactories.emptyScreen()
+            val exampleExperience = Experience("", "", listOf(), mapOf(), listOf(), "")
+
+            val rowViewModel = viewModels.rowViewModel(exampleRow, exampleScreen, exampleExperience, "")
 
             context("frame()") {
                 // row bounds' bottom is given as 0, because rows are always responsible
@@ -228,7 +240,13 @@ object RowViewModelSpec : Spek({
                             )
                         )
                     )
-                return viewModels.rowViewModel(exampleRow)
+
+                val exampleScreen = ModelFactories.emptyScreen()
+                val exampleExperience = Experience("", "", listOf(), mapOf(), listOf(), "")
+
+                val rowViewModel = viewModels.rowViewModel(exampleRow, exampleScreen, exampleExperience, "")
+
+                return rowViewModel
             }
 
             context("a non-autoheight row with a floating block is aligned to the bottom") {
@@ -317,4 +335,3 @@ object RowViewModelSpec : Spek({
         }
     }
 })
-

@@ -28,7 +28,7 @@ internal class ViewBlock(
         if (viewModel != null) {
             view.setPaddingRelative(
                 (viewModel.padding.left).dpAsPx(displayMetrics),
-                (viewModel.padding.top ).dpAsPx(displayMetrics),
+                (viewModel.padding.top).dpAsPx(displayMetrics),
                 (viewModel.padding.right).dpAsPx(displayMetrics),
                 (viewModel.padding.bottom).dpAsPx(displayMetrics)
             )

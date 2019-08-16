@@ -6,7 +6,6 @@ import io.rover.sdk.ui.PixelSize
 import io.rover.sdk.data.domain.Background
 import io.rover.sdk.data.domain.BackgroundContentMode
 import io.rover.sdk.data.domain.BackgroundScale
-import io.rover.sdk.data.domain.Block
 import io.rover.sdk.data.domain.Image
 import io.rover.sdk.ui.BackgroundImageConfiguration
 import io.rover.sdk.ui.Rect
@@ -14,7 +13,7 @@ import io.rover.sdk.ui.dpAsPx
 import java.net.URI
 import kotlin.math.roundToInt
 
-internal class ImageOptimizationService  {
+internal class ImageOptimizationService {
 
     private val urlOptimizationEnabled = true
 
@@ -340,7 +339,7 @@ internal class ImageOptimizationService  {
      */
     fun optimizeImageBlock(
         image: Image,
-        containingBlock: Block,
+        blockBorderWidth: Int,
         targetViewPixelSize: PixelSize,
         density: Float
     ): URI {
@@ -350,7 +349,7 @@ internal class ImageOptimizationService  {
         )
 
         // Now take border width into account.
-        val borderWidth = containingBlock.border.width.dpAsPx(density)
+        val borderWidth = blockBorderWidth.dpAsPx(density)
         val targetViewSizeWithoutBorderWidth = PixelSize(
             targetViewPixelSize.width - borderWidth,
             targetViewPixelSize.height - borderWidth
@@ -367,6 +366,21 @@ internal class ImageOptimizationService  {
                 Pair("w", smallestSize.width.toString()),
                 Pair("h", smallestSize.height.toString()),
                 Pair("fit", "scale")
+            )
+        )
+    }
+
+    // This is only used for polls until this class is refactored to not be tightly coupled with backgrounds
+    fun optimizeImageForFill(
+        image: Image,
+        targetViewPixelSize: PixelSize
+    ): URI {
+        return setQueryParameters(
+            image.url,
+            mapOf(
+                Pair("w", targetViewPixelSize.width.toString()),
+                Pair("h", targetViewPixelSize.height.toString()),
+                Pair("fit", "min")
             )
         )
     }

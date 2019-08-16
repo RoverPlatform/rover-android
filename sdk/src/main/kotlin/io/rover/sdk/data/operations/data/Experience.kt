@@ -19,6 +19,9 @@ import io.rover.sdk.data.domain.Height
 import io.rover.sdk.data.domain.HorizontalAlignment
 import io.rover.sdk.data.domain.Image
 import io.rover.sdk.data.domain.ImageBlock
+import io.rover.sdk.data.domain.ImagePoll
+import io.rover.sdk.data.domain.ImagePollBlock
+import io.rover.sdk.data.domain.ImagePollBlockOption
 import io.rover.sdk.data.domain.Insets
 import io.rover.sdk.data.domain.Position
 import io.rover.sdk.data.domain.RectangleBlock
@@ -29,6 +32,9 @@ import io.rover.sdk.data.domain.StatusBarStyle
 import io.rover.sdk.data.domain.Text
 import io.rover.sdk.data.domain.TextAlignment
 import io.rover.sdk.data.domain.TextBlock
+import io.rover.sdk.data.domain.TextPoll
+import io.rover.sdk.data.domain.TextPollBlock
+import io.rover.sdk.data.domain.TextPollOption
 import io.rover.sdk.data.domain.TitleBar
 import io.rover.sdk.data.domain.TitleBarButtons
 import io.rover.sdk.data.domain.UnitOfMeasure
@@ -95,6 +101,16 @@ internal fun BarcodeFormat.Companion.decodeJson(value: String): BarcodeFormat =
 internal fun Image.Companion.optDecodeJSON(json: JSONObject?): Image? = when (json) {
     null -> null
     else -> Image(
+        json.getInt("width"),
+        json.getInt("height"),
+        json.safeGetString("name"),
+        json.getInt("size"),
+        json.safeGetUri("url")
+    )
+}
+
+internal fun Image.Companion.decodeJson(json: JSONObject): Image {
+    return Image(
         json.getInt("width"),
         json.getInt("height"),
         json.safeGetString("name"),
@@ -443,6 +459,8 @@ internal fun Block.encodeJson(): JSONObject {
         is RectangleBlock -> this.encodeJson()
         is TextBlock -> this.encodeJson()
         is WebViewBlock -> this.encodeJson()
+        is TextPollBlock -> this.encodeJson()
+        is ImagePollBlock -> this.encodeJson()
         else -> throw RuntimeException("Unsupported Block type for serialization")
     }
 }
@@ -459,6 +477,62 @@ internal fun Block.encodeSharedJson(): JSONObject {
         putProp(this@encodeSharedJson, Block::keys, "keys") { JSONObject(it) }
         putProp(this@encodeSharedJson, Block::name, "name") { it }
         putProp(this@encodeSharedJson, Block::tags) { JSONArray(it) }
+    }
+}
+
+internal fun ImagePollBlockOption.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, ImagePollBlockOption::id, "id")
+        putProp(this@encodeJson, ImagePollBlockOption::text, "text") { it.encodeJson() }
+        putProp(this@encodeJson, ImagePollBlockOption::image, "image") { it.optEncodeJson() ?: JSONObject.NULL }
+        putProp(this@encodeJson, ImagePollBlockOption::background, "background") { it.encodeJson() }
+        putProp(this@encodeJson, ImagePollBlockOption::border, "border") { it.encodeJson() }
+        putProp(this@encodeJson, ImagePollBlockOption::opacity, "opacity")
+        putProp(this@encodeJson, ImagePollBlockOption::topMargin, "topMargin")
+        putProp(this@encodeJson, ImagePollBlockOption::leftMargin, "leftMargin")
+        putProp(this@encodeJson, ImagePollBlockOption::resultFillColor, "resultFillColor") { it.encodeJson() }
+    }
+}
+
+internal fun TextPollOption.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, TextPollOption::id, "id")
+        putProp(this@encodeJson, TextPollOption::text, "text") { it.encodeJson() }
+        putProp(this@encodeJson, TextPollOption::background, "background") { it.encodeJson() }
+        putProp(this@encodeJson, TextPollOption::border, "border") { it.encodeJson() }
+        putProp(this@encodeJson, TextPollOption::opacity, "opacity")
+        putProp(this@encodeJson, TextPollOption::height, "height")
+        putProp(this@encodeJson, TextPollOption::topMargin, "topMargin")
+        putProp(this@encodeJson, TextPollOption::resultFillColor, "resultFillColor") { it.encodeJson() }
+        putProp(this@encodeJson, TextPollOption::background, "background") { it.encodeJson() }
+    }
+}
+
+internal fun ImagePollBlock.encodeJson(): JSONObject {
+    return encodeSharedJson().apply {
+        put("__typename", "ImagePollBlock")
+        putProp(this@encodeJson, ImagePollBlock::imagePoll, "imagePoll") { it.encodeJson() }
+    }
+}
+
+internal fun ImagePoll.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, ImagePoll::question, "question") { it.encodeJson() }
+        putProp(this@encodeJson, ImagePoll::options, "options") { JSONArray(it.map { it.encodeJson() }) }
+    }
+}
+
+internal fun TextPoll.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, TextPoll::question, "question") { it.encodeJson() }
+        putProp(this@encodeJson, TextPoll::options, "options") { JSONArray(it.map { it.encodeJson() }) }
+    }
+}
+
+internal fun TextPollBlock.encodeJson(): JSONObject {
+    return encodeSharedJson().apply {
+        put("__typename", "TextPollBlock")
+        putProp(this@encodeJson, TextPollBlock::textPoll, "textPoll") { it.encodeJson() }
     }
 }
 
@@ -613,6 +687,77 @@ internal fun Block.TapBehavior.Companion.decodeJson(json: JSONObject): Block.Tap
     }
 }
 
+fun ImagePollBlockOption.Companion.decodeJson(json: JSONObject): ImagePollBlockOption {
+    return ImagePollBlockOption(
+        id = json.safeGetString("id"),
+        text = Text.decodeJson(json.getJSONObject("text")),
+        image = Image.optDecodeJSON(json.optJSONObject("image")),
+        background = Background.decodeJson(json.getJSONObject("background")),
+        border = Border.decodeJson(json.getJSONObject("border")),
+        opacity = json.getDouble("opacity"),
+        topMargin = json.getInt("topMargin"),
+        leftMargin = json.getInt("leftMargin"),
+        resultFillColor = Color.decodeJson(json.getJSONObject("resultFillColor"))
+    )
+}
+
+fun ImagePollBlock.Companion.decodeJson(json: JSONObject): ImagePollBlock {
+    return ImagePollBlock(
+        id = json.safeGetString("id"),
+        insets = Insets.decodeJson(json.getJSONObject("insets")),
+        opacity = json.getDouble("opacity"),
+        position = Position.decodeJson(json.getJSONObject("position")),
+        keys = json.getJSONObject("keys").toStringHash(),
+        background = Background.decodeJson(json.getJSONObject("background")),
+        tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
+        border = Border.decodeJson(json.getJSONObject("border")),
+        name = json.safeGetString("name"),
+        tags = json.getJSONArray("tags").getStringIterable().toList(),
+        imagePoll = ImagePoll.decodeJson(json.getJSONObject("imagePoll"))
+    )
+}
+
+fun ImagePoll.Companion.decodeJson(json: JSONObject): ImagePoll {
+    return ImagePoll(question = Text.decodeJson(json.getJSONObject("question")),
+        options = json.getJSONArray("options").getObjectIterable().map { ImagePollBlockOption.decodeJson(it) })
+}
+
+fun TextPollOption.Companion.decodeJson(json: JSONObject): TextPollOption {
+    return TextPollOption(
+        id = json.safeGetString("id"),
+        text = Text.decodeJson(json.getJSONObject("text")),
+        background = Background.decodeJson(json.getJSONObject("background")),
+        border = Border.decodeJson(json.getJSONObject("border")),
+        opacity = json.getDouble("opacity"),
+        height = json.getInt("height"),
+        resultFillColor = Color.decodeJson(json.getJSONObject("resultFillColor")),
+        topMargin = json.getInt("topMargin")
+    )
+}
+
+fun TextPoll.Companion.decodeJson(json: JSONObject): TextPoll {
+    return TextPoll(
+        question = Text.decodeJson(json.getJSONObject("question")),
+        options = json.getJSONArray("options").getObjectIterable().map { TextPollOption.decodeJson(it) }
+    )
+}
+
+fun TextPollBlock.Companion.decodeJson(json: JSONObject): TextPollBlock {
+    return TextPollBlock(
+        id = json.safeGetString("id"),
+        insets = Insets.decodeJson(json.getJSONObject("insets")),
+        opacity = json.getDouble("opacity"),
+        position = Position.decodeJson(json.getJSONObject("position")),
+        keys = json.getJSONObject("keys").toStringHash(),
+        background = Background.decodeJson(json.getJSONObject("background")),
+        tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
+        border = Border.decodeJson(json.getJSONObject("border")),
+        name = json.safeGetString("name"),
+        tags = json.getJSONArray("tags").getStringIterable().toList(),
+        textPoll = TextPoll.decodeJson(json.getJSONObject("textPoll"))
+    )
+}
+
 internal fun Block.TapBehavior.encodeJson(): JSONObject {
     return JSONObject().apply {
         put("__typename", when (this@encodeJson) {
@@ -644,6 +789,8 @@ internal val RectangleBlock.Companion.resourceName get() = "RectangleBlock"
 internal val WebViewBlock.Companion.resourceName get() = "WebViewBlock"
 internal val TextBlock.Companion.resourceName get() = "TextBlock"
 internal val ImageBlock.Companion.resourceName get() = "ImageBlock"
+internal val TextPollBlock.Companion.resourceName get() = "TextPollBlock"
+internal val ImagePollBlock.Companion.resourceName get() = "ImagePollBlock"
 
 internal fun Block.Companion.decodeJson(json: JSONObject): Block {
     // Block has subclasses, so we need to delegate to the appropriate deserializer for each
@@ -657,6 +804,8 @@ internal fun Block.Companion.decodeJson(json: JSONObject): Block {
         WebViewBlock.resourceName -> WebViewBlock.decodeJson(json)
         TextBlock.resourceName -> TextBlock.decodeJson(json)
         ImageBlock.resourceName -> ImageBlock.decodeJson(json)
+        TextPollBlock.resourceName -> TextPollBlock.decodeJson(json)
+        ImagePollBlock.resourceName -> ImagePollBlock.decodeJson(json)
         else -> throw RuntimeException("Unsupported Block type '$typeName'.")
     }
 }

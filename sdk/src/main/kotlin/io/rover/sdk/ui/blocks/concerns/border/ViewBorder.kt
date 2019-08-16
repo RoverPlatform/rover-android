@@ -43,10 +43,17 @@ internal class ViewBorder(
             if (viewModel != null && configuration != null) {
                 // draw the solid border, if needed:
                 if (configuration.borderPaint != null) {
+                    val halfBorderWidth = viewModel.borderWidth.dpAsPx(displayMetrics).toFloat() / 2
+                    val borderRadius = viewModel.borderRadius.dpAsPx(displayMetrics).toFloat()
+
+                    // This is in order to maintain the same distance between the middle of the view border and outer edge of the clipped
+                    // parent view so that the border extends all the way to the edge of the clipped view.
+                    val compensatedBorderRadius = if (borderRadius - halfBorderWidth >= 0) borderRadius - halfBorderWidth else 0f
+
                     canvas.drawRoundRect(
                         configuration.borderRect,
-                        viewModel.borderRadius.dpAsPx(displayMetrics).toFloat(),
-                        viewModel.borderRadius.dpAsPx(displayMetrics).toFloat(),
+                        compensatedBorderRadius,
+                        compensatedBorderRadius,
                         configuration.borderPaint
                     )
                 }

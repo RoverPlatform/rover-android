@@ -40,12 +40,16 @@ class RenderingIntegrationSpec : Spek({
                 sessionTracker = mock(),
                 imageOptimizationService = mock(),
                 assetService = mock(),
-                measurementService = mock()
+                measurementService = mock(),
+                pollVotingService = mock(),
+                pollVotingStorage = mock()
             )
 
             val screenViewModels = experience.screens.map { screen ->
                 // realObjectStack.resolve(ScreenViewModelInterface::class.java, null, it)!!
-                viewModels.screenViewModel(screen)
+
+                val exampleExperience = Experience("", "", listOf(), mapOf(), listOf(), "")
+                viewModels.screenViewModel(screen, exampleExperience, "")
             }
 
             val rendered: MutableList<Layout> = mutableListOf()

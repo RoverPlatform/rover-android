@@ -126,7 +126,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                 if (refresh.pollId == viewModel.id) setVoteResultUpdate(refresh)
             }, { e -> log.e("${e.message}") }, { subscriptionCallback(it) })
 
-            viewModel.checkIfAlreadyVoted(viewModel.id, optionViews.keys.toList())
+            viewModel.bindInteractor(viewModel.id, optionViews.keys.toList())
         }
     }
 

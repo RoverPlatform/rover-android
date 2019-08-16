@@ -92,7 +92,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                 if (refresh.pollId == viewModel.id) setVoteResultUpdate(refresh)
             }, { e -> log.e("${e.message}") }, { subscriptionCallback(it) })
 
-            viewModel.checkIfAlreadyVoted(viewModel.id, optionViews.keys.toList())
+            viewModel.bindInteractor(viewModel.id, optionViews.keys.toList())
         }
     }
     private fun createTimer(votingState: VotingState.RefreshingResults): Timer {

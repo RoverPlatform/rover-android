@@ -58,7 +58,7 @@ internal class TextPollViewModel(
         }
     }
 
-    override fun checkIfAlreadyVoted(id: String, optionIds: List<String>) {
+    override fun bindInteractor(id: String, optionIds: List<String>) {
         pollVotingInteractor.initialize(id, optionIds)
     }
 
@@ -72,7 +72,7 @@ internal interface TextPollViewModelInterface : Measurable, BindableViewModel {
     val id: String
     val optionBackgroundViewModel: BackgroundViewModelInterface
     fun castVote(selectedOption: String, optionIds: List<String>)
-    fun checkIfAlreadyVoted(id: String, optionIds: List<String>)
+    fun bindInteractor(id: String, optionIds: List<String>)
     fun checkForUpdate(pollId: String, optionIds: List<String>)
     val votingState: PublishSubject<VotingState>
     val refreshEvents: PublishSubject<RefreshEvent>

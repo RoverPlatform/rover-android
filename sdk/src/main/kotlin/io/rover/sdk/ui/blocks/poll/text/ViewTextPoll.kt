@@ -18,7 +18,8 @@ import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.background.createBackgroundDrawable
-import io.rover.sdk.ui.blocks.poll.image.ViewImagePoll
+import io.rover.sdk.ui.blocks.poll.RefreshEvent
+import io.rover.sdk.ui.blocks.poll.VotingState
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.concerns.ViewModelBinding
@@ -65,22 +66,36 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             setupOptionViews(viewModel)
 
             log.d("poll view bound")
+            timer = null
 
-            viewModel.votingState.subscribe({ votingState ->
+            viewModel.votingState.subscribe({ votingState : VotingState ->
                 when (votingState) {
-                    is VotingState.WaitingForVote -> { }
-                    is VotingState.Results -> {
-                        setVoteResultsReceived(votingState)
-                        setUpdateTimer(votingState, subscriptionCallback)
+                    is VotingState.InitialState -> {
+                        setPollNotWaiting()
                     }
-                    is VotingState.Update -> setVoteResultUpdate(votingState)
+                    is VotingState.ResultsSeeded -> {
+                        setPollNotWaiting()
+                    }
+                    is VotingState.SubmittingAnswer -> {
+                        setVoteResultsReceived(votingState)
+                        setPollNotWaiting()
+                    }
+                    is VotingState.RefreshingResults -> {
+                        if (votingState.pollId == viewModel.id) setUpdateTimer(votingState, subscriptionCallback)
+                        setPollNotWaiting()
+                    }
+                    is VotingState.PollAnswered -> setPollAnsweredWaiting()
                 }
-            }, { throw (it) }, { subscriptionCallback(it) })
+            }, { e -> log.e("${e.message}") }, { subscriptionCallback(it) })
 
-            viewModel.checkIfAlreadyVoted(optionViews.keys.toList())
+            viewModel.refreshEvents.subscribe({ refresh ->
+                if (refresh.pollId == viewModel.id) setVoteResultUpdate(refresh)
+            }, { e -> log.e("${e.message}") }, { subscriptionCallback(it) })
+
+            viewModel.bindInteractor(viewModel.id, optionViews.keys.toList())
         }
     }
-    private fun createTimer(votingState: VotingState.Results): Timer {
+    private fun createTimer(votingState: VotingState.RefreshingResults): Timer {
         return fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
             if(view.windowVisibility == View.VISIBLE) {
                 viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
@@ -88,24 +103,30 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         }
     }
 
-    private fun setUpdateTimer(votingState: VotingState.Results, subscriptionCallback: (Subscription) -> Unit) {
-        timer = createTimer(votingState)
+    private fun setPollAnsweredWaiting() {
+        view.alpha = 0.5f
+    }
 
-        view.attachEvents().subscribe({
-            when (it) {
-                is ViewEvent.Attach -> {
-                    // In case view has been detached for a while, don't want to wait 5 seconds to update
-                    viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
-                    log.d("poll view attached for poll ${votingState.pollId}")
-                    timer = createTimer(votingState)
+    private fun setPollNotWaiting() {
+        view.alpha = 1f
+    }
+
+    private fun setUpdateTimer(votingState: VotingState.RefreshingResults, subscriptionCallback: (Subscription) -> Unit) {
+        if (timer == null) {
+            timer = createTimer(votingState)
+
+            view.attachEvents().subscribe({
+                when (it) {
+                    is ViewEvent.Attach -> {
+                        // In case view has been detached for a while, don't want to wait 5 seconds to update
+                        viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
+                        log.d("poll view attached for poll ${votingState.pollId}")
+                        if(timer != null) timer = createTimer(votingState)
+                    }
+                    is ViewEvent.Detach -> { }
                 }
-                is ViewEvent.Detach -> {
-                    log.d("poll view detached")
-                    timer?.cancel()
-                    timer?.purge()
-                }
-            }
-        }, {}, { subscriptionCallback(it) })
+            }, {}, { subscriptionCallback(it) })
+        }
     }
 
     private fun setupOptionViews(viewModel: TextPollViewModelInterface) {
@@ -152,7 +173,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         }
     }
 
-    private fun setVoteResultUpdate(votingUpdate: VotingState.Update) {
+    private fun setVoteResultUpdate(votingUpdate: RefreshEvent) {
         votingUpdate.optionResults.results.forEach { (id, votingShare) ->
             val option = optionViews[id]
 
@@ -162,15 +183,18 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         }
     }
 
-    private fun setVoteResultsReceived(votingResults: VotingState.Results) {
-        votingResults.optionResults.results.forEach { (id, votingShare) ->
+    private fun setVoteResultsReceived(votingResults: VotingState.SubmittingAnswer) {
+        val maxVotingValue = votingResults.optionResults.results.map { it.value }.max() ?: 0
+
+            votingResults.optionResults.results.forEach { (id, votingShare) ->
             val option = optionViews[id]
             option?.setOnClickListener(null)
             val isSelectedOption = id == votingResults.selectedOption
 
+
             viewModelBinding?.viewModel?.let {
                 option?.goToResultsState(votingShare, isSelectedOption, it.textPoll.options.find { it.id == id }!!, votingResults.shouldAnimate,
-                    viewModelBinding?.measuredSize?.width)
+                    viewModelBinding?.measuredSize?.width, maxVotingValue)
             }
         }
     }

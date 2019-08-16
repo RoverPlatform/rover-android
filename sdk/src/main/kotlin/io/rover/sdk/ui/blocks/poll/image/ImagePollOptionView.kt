@@ -14,6 +14,7 @@ import android.graphics.Typeface
 import android.support.v4.view.ViewCompat
 import android.support.v7.widget.AppCompatTextView
 import android.text.TextUtils
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -47,7 +48,6 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
     private val bottomSectionHeight = 40f.dpAsPx(this.resources.displayMetrics)
     private val bottomSectionHorizontalMargin = 8.dpAsPx(resources.displayMetrics)
     private val voteIndicatorViewLeftMargin = 8.dpAsPx(resources.displayMetrics)
-    private val votePercentageTextBottomMargin = 8.dpAsPx(resources.displayMetrics)
     private val votePercentageViewTextSize = 16f
     private val votingIndicatorBarHeight = 8f.dpAsPx(this.resources.displayMetrics)
     private val votingIndicatorBarBottomMargin = 8f.dpAsPx(this.resources.displayMetrics)
@@ -66,6 +66,8 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
     private val shortAnimationDuration = resources.getInteger(android.R.integer.config_shortAnimTime)
 
     private val optionTextView = textView {
+        setLineSpacing(0f, 1.0f)
+        includeFontPadding = false
         ellipsize = TextUtils.TruncateAt.END
         maxLines = 1
         gravity = Gravity.CENTER_VERTICAL
@@ -97,6 +99,7 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
 
     private val votePercentageView = textView {
         visibility = View.GONE
+        includeFontPadding = false
         maxLines = 1
         gravity = Gravity.CENTER_VERTICAL
         textAlignment = View.TEXT_ALIGNMENT_TEXT_END
@@ -131,6 +134,8 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
 
     private val voteIndicatorView: AppCompatTextView = textView {
         visibility = View.GONE
+        setLineSpacing(0f, 1.0f)
+        includeFontPadding = false
         maxLines = 1
         gravity = Gravity.CENTER
 
@@ -340,13 +345,14 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
         votePercentageView.run {
             textSize = votePercentageViewTextSize
             setTextColor(Color.WHITE)
+            setLineSpacing(0f, 1.0f)
+            includeFontPadding = false
             text = "$votingShare%"
             val font = FontWeight.Medium.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
             visibility = View.VISIBLE
             setupRelativeLayoutParams(
-                width = RelativeLayout.LayoutParams.WRAP_CONTENT, height = RelativeLayout.LayoutParams.WRAP_CONTENT,
-                bottomMargin = votePercentageTextBottomMargin
+                width = RelativeLayout.LayoutParams.WRAP_CONTENT, height = 24.dpAsPx(resources.displayMetrics)
             ) {
                 addRule(RelativeLayout.ABOVE, votingIndicatorBar.id)
                 addRule(CENTER_HORIZONTAL)

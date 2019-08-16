@@ -14,11 +14,13 @@ import io.rover.sdk.ui.RectF
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
 import io.rover.sdk.ui.blocks.poll.OptionResults
+import io.rover.sdk.ui.blocks.poll.RefreshEvent
 import io.rover.sdk.ui.blocks.poll.VotingInteractor
+import io.rover.sdk.ui.blocks.poll.VotingState
 import io.rover.sdk.ui.concerns.BindableViewModel
 
 internal class TextPollViewModel(
-    val id: String,
+    override val id: String,
     override val textPoll: TextPoll,
     private val measurementService: MeasurementService,
     override val optionBackgroundViewModel: BackgroundViewModelInterface,
@@ -50,30 +52,28 @@ internal class TextPollViewModel(
     }
 
     override fun castVote(selectedOption: String, optionIds: List<String>) {
-        pollVotingInteractor.castVote(id, selectedOption, optionIds)
+        pollVotingInteractor.castVotes(id, selectedOption, optionIds)
         textPoll.options.find { it.id == selectedOption }?.let { option ->
             eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(id, option.text.rawValue), campaignId))
         }
     }
 
-    override fun checkIfAlreadyVoted(optionIds: List<String>) {
-        pollVotingInteractor.checkIfAlreadyVotedAndHaveResults(id, optionIds)
+    override fun bindInteractor(id: String, optionIds: List<String>) {
+        pollVotingInteractor.initialize(id, optionIds)
     }
+
+    override val refreshEvents: PublishSubject<RefreshEvent> = pollVotingInteractor.refreshEvents
 
     override val votingState = pollVotingInteractor.votingState
 }
 
-internal sealed class VotingState {
-    object WaitingForVote : VotingState()
-    data class Results(val pollId: String, val selectedOption: String, val optionResults: OptionResults, val shouldAnimate: Boolean) : VotingState()
-    data class Update(val optionResults: OptionResults) : VotingState()
-}
-
 internal interface TextPollViewModelInterface : Measurable, BindableViewModel {
     val textPoll: TextPoll
+    val id: String
     val optionBackgroundViewModel: BackgroundViewModelInterface
     fun castVote(selectedOption: String, optionIds: List<String>)
-    fun checkIfAlreadyVoted(optionIds: List<String>)
+    fun bindInteractor(id: String, optionIds: List<String>)
     fun checkForUpdate(pollId: String, optionIds: List<String>)
     val votingState: PublishSubject<VotingState>
+    val refreshEvents: PublishSubject<RefreshEvent>
 }

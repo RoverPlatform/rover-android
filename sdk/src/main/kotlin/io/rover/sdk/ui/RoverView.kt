@@ -84,46 +84,14 @@ internal class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewMode
                 connectToolbar(newToolbar)
             }, { throw(it) }, { subscriptionCallback(it) })
 
-            val startingBrightness = Settings.System.getInt(
-                context.contentResolver,
-                Settings.System.SCREEN_BRIGHTNESS
-            )
-            log.v("Starting brightness is: $startingBrightness")
-            val startingBrightnessFraction = startingBrightness / 255f
             val window = toolbarHost.provideWindow()
-            // set a starting value that matches what the current device brightness is so the
-            // animator below has a sane starting position.
-            window.attributes = (window.attributes ?: WindowManager.LayoutParams()).apply {
-                screenBrightness = startingBrightnessFraction
-            }
-            var runningAnimator: Animator? = null
+
             viewModel.extraBrightBacklight.androidLifecycleDispose(this).subscribe({ extraBright ->
-                runningAnimator?.cancel()
-                val animator = ObjectAnimator.ofObject(
-                    window,
-                    "attributes",
-                    TypeEvaluator<WindowManager.LayoutParams> { fraction, startValue, endValue ->
-                        // and and take the starting value and copy it, setting the new interpolated screen brightness.
-                        val newParams = WindowManager.LayoutParams().apply { copyFrom(startValue) }
-                        val newBrightness = startValue.screenBrightness + (fraction * (endValue.screenBrightness - startValue.screenBrightness))
-                        newParams.screenBrightness = newBrightness
-                        newParams
-                    },
-                    WindowManager.LayoutParams().apply {
-                        screenBrightness = when (extraBright) {
-                            true -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
-                            false -> startingBrightnessFraction
-                        }
+                if (extraBright) {
+                    window.attributes = (window.attributes ?: WindowManager.LayoutParams()).apply {
+                        screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
                     }
-                )
-                // it's unclear why, the animator has a habit of running up against the endvalue and
-                // running there a large portion of the animation duration.  For now, the workaround
-                // is to set the runtime to something pretty long.
-                animator.duration = 3000
-                animator.interpolator = LinearInterpolator()
-                animator.start()
-                runningAnimator = animator
-            }, { throw(it) }, { subscriptionCallback(it) })
+            }}, { throw(it) }, { subscriptionCallback(it) })
 
             viewModel.navigationViewModel.androidLifecycleDispose(this).subscribe({ experienceNavigationViewModel ->
                 navigationView.viewModelBinding = MeasuredBindableView.Binding(

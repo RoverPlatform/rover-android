@@ -3,6 +3,7 @@ package io.rover.sdk.ui.blocks.poll.text
 import android.animation.AnimatorSet
 import android.animation.TimeInterpolator
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -20,10 +21,12 @@ import android.widget.RelativeLayout
 import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.TextPollOption
 import io.rover.sdk.data.mapToFont
+import io.rover.sdk.logging.log
 import io.rover.sdk.platform.create
 import io.rover.sdk.platform.setBackgroundWithoutPaddingChange
 import io.rover.sdk.platform.setupLinearLayoutParams
 import io.rover.sdk.platform.setupRelativeLayoutParams
+import io.rover.sdk.platform.textPollProgressBar
 import io.rover.sdk.platform.textView
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
@@ -41,6 +44,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         id = ViewCompat.generateViewId()
         ellipsize = TextUtils.TruncateAt.END
         maxLines = 1
+        setLineSpacing(0f, 1.0f)
+        includeFontPadding = false
         gravity = Gravity.CENTER_VERTICAL
         val marginInPixels = 16.dpAsPx(resources.displayMetrics)
 
@@ -69,10 +74,16 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         }
     }
 
+    private val textPollProgressBar = textPollProgressBar {
+        visibility = View.GONE
+    }
+
     private val votePercentageText = textView {
         id = ViewCompat.generateViewId()
         visibility = View.GONE
         maxLines = 1
+        setLineSpacing(0f, 1.0f)
+        includeFontPadding = false
         gravity = Gravity.CENTER_VERTICAL
         textAlignment = View.TEXT_ALIGNMENT_TEXT_END
 
@@ -91,6 +102,15 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 
     private var roundRect: RoundRect? = null
+    set(value) {
+        field = value
+        value?.borderRadius?.let {
+            clipPath = Path().apply {
+                addRoundRect(value.rectF, value.borderRadius, value.borderRadius, Path.Direction.CW)
+            }
+        }
+
+    }
     private var optionPaints: OptionPaints = OptionPaints()
 
     // used to set starting point for update animations
@@ -112,6 +132,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     }
 
     init {
+        addView(textPollProgressBar)
         addView(optionTextView)
         addView(votePercentageText)
         addView(borderView)
@@ -137,6 +158,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
     fun bindOptionView(option: TextPollOption) {
         optionTextView.run {
+            setLineSpacing(0f, 1.0f)
+            includeFontPadding = false
             text = option.text.rawValue
             textSize = option.text.font.size.toFloat()
             setTextColor(option.text.color.asAndroidColor())
@@ -171,37 +194,21 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         roundRect = roundRect?.copy(rectF = RectF(0f, 0f, width.toFloat(), height.toFloat()))
     }
 
-    private var resultRect: RectF? = null
-
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        roundRect?.let { roundRect ->
-            roundRect.rectF?.let {
-                if (backgroundImage == null) canvas.drawRoundRect(
-                    it,
-                    roundRect.borderRadius,
-                    roundRect.borderRadius,
-                    optionPaints.fillPaint
-                )
-                resultRect?.let { resultRect ->
-                    canvas.drawRect(resultRect, optionPaints.resultPaint)
-                }
-            }
+        roundRect?.rectF?.let {
+                 if (backgroundImage == null) canvas.drawRoundRect(it, roundRect!!.borderRadius, roundRect!!.borderRadius, optionPaints.fillPaint)
         }
     }
 
+    private var clipPath: Path? = null
+
     override fun draw(canvas: Canvas?) {
-        roundRect?.let { roundRect ->
-            roundRect.rectF.let {
-                canvas?.clipPath(Path().apply {
-                    addRoundRect(it, roundRect.borderRadius, roundRect.borderRadius, Path.Direction.CW)
-                })
-            }
-        }
+        clipPath?.let { canvas?.clipPath(it) }
         super.draw(canvas)
     }
 
-    fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, optionStyle: TextPollOption, shouldAnimate: Boolean, optionWidth: Float?) {
+    fun goToResultsState(votingShare: Int, isSelectedOption: Boolean, optionStyle: TextPollOption, shouldAnimate: Boolean, optionWidth: Float?, maxVotingShare: Int) {
 
         bindVotePercentageText(votingShare, optionStyle)
         votePercentageText.visibility = View.VISIBLE
@@ -212,6 +219,10 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
         val viewWidth = optionWidth?.dpAsPx(resources.displayMetrics) ?: this@TextOptionView.width
         val viewHeight = optionStyle.height.dpAsPx(resources.displayMetrics)
+
+        textPollProgressBar.viewHeight = viewHeight.toFloat()
+        textPollProgressBar.visibility = View.VISIBLE
+        textPollProgressBar.fillPaint = optionPaints.resultPaint
 
         optionTextView.run {
             gravity = Gravity.CENTER_VERTICAL
@@ -228,25 +239,27 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             }
 
             val widthOfOtherViews =
-                calculateWidthWithoutOptionText(voteIndicatorView, votePercentageText, isSelectedOption)
+                calculateWidthWithoutOptionText(voteIndicatorView, votePercentageText, isSelectedOption, maxVotingShare)
 
             maxWidth = viewWidth - widthOfOtherViews
         }
 
         if (shouldAnimate) {
-            performResultsAnimation(votingShare, (optionStyle.resultFillColor.alpha * 255).toInt(), viewWidth, viewHeight)
+            performResultsAnimation(votingShare, (optionStyle.resultFillColor.alpha * 255).toInt(), viewWidth.toFloat())
         } else {
-            immediatelyGoToResultsState(votingShare, (optionStyle.resultFillColor.alpha * 255).toInt(), viewWidth, viewHeight)
+            immediatelyGoToResultsState(votingShare, (optionStyle.resultFillColor.alpha * 255).toInt(), viewWidth.toFloat(), viewHeight.toFloat())
         }
     }
 
-    private fun immediatelyGoToResultsState(votingShare: Int, resultFillAlpha: Int, viewWidth: Int, viewHeight: Int) {
+    private fun immediatelyGoToResultsState(votingShare: Int, resultFillAlpha: Int, viewWidth: Float, viewHeight: Float) {
         currentVote = votingShare
+        textPollProgressBar.viewHeight = viewHeight
+        textPollProgressBar.barValue = viewWidth / 100 * votingShare
+        textPollProgressBar.visibility = View.VISIBLE
         votePercentageText.alpha = 1f
         optionPaints.resultPaint.alpha = resultFillAlpha
         voteIndicatorView.alpha = 1f
         votePercentageText.text = "$votingShare%"
-        resultRect = RectF(0f, 0f, viewWidth.toFloat() / 100 * votingShare, viewHeight.toFloat())
     }
 
     private val easeInEaseOutInterpolator = TimeInterpolator { input ->
@@ -254,13 +267,14 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         inputSquared / (2.0f * (inputSquared - input) + 1.0f)
     }
 
-    private fun performResultsAnimation(votingShare: Int, resultFillAlpha: Int, viewWidth: Int, viewHeight: Int) {
+    private fun performResultsAnimation(votingShare: Int, resultFillAlpha: Int, viewWidth: Float) {
         currentVote = votingShare
+        voteIndicatorView.alpha = 1f
+        val adjustedViewWidth = viewWidth / 100
 
         val alphaAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = ALPHA_DURATION
             addUpdateListener {
-                voteIndicatorView.alpha = it.animatedFraction
                 votePercentageText.alpha = it.animatedFraction
             }
         }
@@ -277,12 +291,13 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             addUpdateListener {
                 val animatedValue = it.animatedValue as Float
                 votePercentageText.text = "${animatedValue.toInt()}%"
-                resultRect = RectF(0f, 0f, viewWidth.toFloat() / 100 * animatedValue, viewHeight.toFloat())
+                textPollProgressBar.barValue = adjustedViewWidth * animatedValue
             }
         }
 
         AnimatorSet().apply { playTogether(alphaAnimator, resultFillAlphaAnimator, resultsAnimation)
-        interpolator = easeInEaseOutInterpolator }.start()
+            interpolator = easeInEaseOutInterpolator
+        }.start()
     }
 
     fun updateResults(votingShare: Int) {
@@ -291,7 +306,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             addUpdateListener {
                 val animatedValue = it.animatedValue as Float
                 votePercentageText.text = "${animatedValue.toInt()}%"
-                resultRect = RectF(0f, 0f, width.toFloat() / 100 * animatedValue, height.toFloat())
+                textPollProgressBar.barValue = width.toFloat() / 100 * animatedValue
             }
             interpolator = easeInEaseOutInterpolator
         }
@@ -302,11 +317,12 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     private fun calculateWidthWithoutOptionText(
         voteIndicatorView: AppCompatTextView,
         votePercentageText: AppCompatTextView,
-        isSelectedOption: Boolean
+        isSelectedOption: Boolean,
+        maxVotingShare: Int
     ): Int {
         voteIndicatorView.measure(0, 0)
         val previousText = votePercentageText.text
-        votePercentageText.text = "100%"
+        votePercentageText.text = if(maxVotingShare == 100) "100%" else "88%"
         votePercentageText.measure(0, 0)
         votePercentageText.text = previousText
         val voteIndicatorWidth =
@@ -326,6 +342,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         votePercentageText.run {
             textSize = (optionStyle.text.font.size * RESULTS_TEXT_SCALE_FACTOR)
             votePercentageText.text = "$votingShare%"
+            setLineSpacing(0f, 1.0f)
+            includeFontPadding = false
             setTextColor(optionStyle.text.color.asAndroidColor())
             val font = optionStyle.text.font.weight.getIncreasedFontWeight().mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
@@ -340,6 +358,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         voteIndicatorView.run {
             text = "\u2022"
             textSize = optionStyle.text.font.size.toFloat()
+            setLineSpacing(0f, 1.0f)
+            includeFontPadding = false
             setTextColor(optionStyle.text.color.asAndroidColor())
             val font = optionStyle.text.font.weight.mapToFont()
             typeface = Typeface.create(font.fontFamily, font.fontStyle)
@@ -351,3 +371,25 @@ private data class OptionPaints(
     val fillPaint: Paint = Paint(),
     val resultPaint: Paint = Paint()
 )
+
+private data class ResultRect(var left: Float, var top: Float, var right: Float, var bottom: Float)
+
+internal class TextPollProgressBar(context: Context?) : View(context) {
+    var viewHeight: Float? = null
+    var barValue = 0f
+    set(value) {
+        field = value
+        resultRect.right = value
+        invalidate()
+    }
+    var fillPaint = Paint()
+
+    private var resultRect: ResultRect = ResultRect(0f, 0f, 0f, 0f)
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        canvas.drawRect(0f, 0f, resultRect.right, viewHeight ?: 0f, fillPaint)
+    }
+}
+
+

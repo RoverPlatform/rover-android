@@ -31,7 +31,7 @@ internal class VotingService(
         }
     }
 
-    fun castVote(pollId: String, optionId: String, jsonObject: JSONObject = JSONObject()) {
+    fun castVote(pollId: String, optionId: String, jsonObject: JSONObject = JSONObject()): Publisher<VoteOutcome> {
         val url = urlBuilder.build(endpoint, listOf(pollId, "vote"))
         val urlRequest = HttpRequest(url, hashMapOf("Content-Type" to "application/json"), HttpVerb.POST)
 
@@ -39,14 +39,25 @@ internal class VotingService(
             put("option", optionId)
         }.toString()
 
-        httpClient.request(urlRequest, body, false).subscribe {
+        return httpClient.request(urlRequest, body, false).map {
             when (it) {
-                is HttpClientResponse.Success -> log.v("vote in poll $pollId with option $optionId succeeded")
-                is HttpClientResponse.ApplicationError, is HttpClientResponse.ConnectionFailure -> log.w("voting failed $it")
+                is HttpClientResponse.Success -> {
+                    log.v("vote in poll $pollId with option $optionId succeeded")
+                    VoteOutcome.VoteSuccess
+                }
+                is HttpClientResponse.ApplicationError, is HttpClientResponse.ConnectionFailure -> {
+                    log.w("voting failed $it")
+                    VoteOutcome.VoteFailure
+                }
             }
         }
     }
 }
+
+internal sealed class VoteOutcome {
+    object VoteSuccess: VoteOutcome()
+    object VoteFailure: VoteOutcome()
+} 
 
 internal class URLBuilder {
     fun build(url: String, pathParams: List<String>? = null, queryParams: List<Pair<String, String>>? = null): URL {

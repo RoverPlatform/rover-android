@@ -45,10 +45,8 @@ internal class VotingInteractor(
             }
             is VotingState.SubmittingAnswer -> {
                 if (optionIds.intersect(votingState.optionResults.results.keys).size != optionIds.size) {
-                    log.v("reset")
                     currentState = VotingState.InitialState
                 } else {
-                    log.v("submitting")
                     submittingAnswer(votingState)
                 }
             }
@@ -58,6 +56,7 @@ internal class VotingInteractor(
     fun initialize(pollId: String, optionIds: List<String>) {
         this.pollId = pollId
         this.optionIds = optionIds
+
         when (val state = votingStorage.getLastSeenPollState(pollId)) {
             is VotingState.SubmittingAnswer -> {
                 if (optionIds.intersect(state.optionResults.results.keys).size != optionIds.size) {
@@ -184,7 +183,7 @@ internal class VotingInteractor(
             val resultsSameKeysAsShown = optionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
 
             when (val state = currentState) {
-                is VotingState.RefreshingResults -> if (optionResults.results.isNotEmpty() && resultsSameKeysAsShown){
+                is VotingState.RefreshingResults -> if (optionResults.results.isNotEmpty() && resultsSameKeysAsShown && pollId == this.pollId){
                     currentState = state.copy(optionResults = changeVotesToPercentages(optionResults))
                     refreshEvents.onNext(RefreshEvent(pollId, changeVotesToPercentages(optionResults)))
                 }}

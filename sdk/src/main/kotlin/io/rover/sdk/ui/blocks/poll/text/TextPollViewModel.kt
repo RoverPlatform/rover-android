@@ -20,7 +20,7 @@ import io.rover.sdk.ui.blocks.poll.VotingState
 import io.rover.sdk.ui.concerns.BindableViewModel
 
 internal class TextPollViewModel(
-    val id: String,
+    override val id: String,
     override val textPoll: TextPoll,
     private val measurementService: MeasurementService,
     override val optionBackgroundViewModel: BackgroundViewModelInterface,
@@ -58,7 +58,7 @@ internal class TextPollViewModel(
         }
     }
 
-    override fun checkIfAlreadyVoted(optionIds: List<String>) {
+    override fun checkIfAlreadyVoted(id: String, optionIds: List<String>) {
         pollVotingInteractor.initialize(id, optionIds)
     }
 
@@ -69,9 +69,10 @@ internal class TextPollViewModel(
 
 internal interface TextPollViewModelInterface : Measurable, BindableViewModel {
     val textPoll: TextPoll
+    val id: String
     val optionBackgroundViewModel: BackgroundViewModelInterface
     fun castVote(selectedOption: String, optionIds: List<String>)
-    fun checkIfAlreadyVoted(optionIds: List<String>)
+    fun checkIfAlreadyVoted(id: String, optionIds: List<String>)
     fun checkForUpdate(pollId: String, optionIds: List<String>)
     val votingState: PublishSubject<VotingState>
     val refreshEvents: PublishSubject<RefreshEvent>

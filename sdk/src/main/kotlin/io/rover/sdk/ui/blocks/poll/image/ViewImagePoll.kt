@@ -98,7 +98,8 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                     view.resources.displayMetrics.density
                 )
             )
-
+            timer = null
+            
             viewModel.votingState.subscribe({ votingState: VotingState ->
                 when (votingState) {
                     is VotingState.InitialState -> {
@@ -115,17 +116,17 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                         setPollNotWaiting()
                     }
                     is VotingState.RefreshingResults -> {
-                        setUpdateTimer(votingState, subscriptionCallback)
+                        if (votingState.pollId == viewModel.id) setUpdateTimer(votingState, subscriptionCallback)
                         setPollNotWaiting()
                     }
                 }
             }, { throw (it) }, { subscriptionCallback(it) })
 
             viewModel.refreshEvents.subscribe({ refresh ->
-                setVoteResultUpdate(refresh)
+                if (refresh.pollId == viewModel.id) setVoteResultUpdate(refresh)
             }, { e -> log.e("${e.message}") }, { subscriptionCallback(it) })
 
-            viewModel.checkIfAlreadyVoted(optionViews.keys.toList())
+            viewModel.checkIfAlreadyVoted(viewModel.id, optionViews.keys.toList())
         }
     }
 

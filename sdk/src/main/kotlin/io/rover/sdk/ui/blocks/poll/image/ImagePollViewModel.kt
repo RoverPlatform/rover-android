@@ -11,6 +11,7 @@ import io.rover.sdk.data.domain.Screen
 import io.rover.sdk.data.events.Option
 import io.rover.sdk.data.events.RoverEvent
 import io.rover.sdk.data.getFontAppearance
+import io.rover.sdk.logging.log
 import io.rover.sdk.services.EventEmitter
 import io.rover.sdk.services.MeasurementService
 import io.rover.sdk.streams.PublishSubject
@@ -30,9 +31,10 @@ import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.dpAsPx
 import org.reactivestreams.Publisher
+import kotlin.math.log
 
 internal class ImagePollViewModel(
-    val id: String,
+    override val id: String,
     override val imagePoll: ImagePoll,
     private val measurementService: MeasurementService,
     private val assetService: AssetService,
@@ -112,7 +114,7 @@ internal class ImagePollViewModel(
         }
     }
 
-    override fun checkIfAlreadyVoted(optionIds: List<String>) {
+    override fun checkIfAlreadyVoted(id: String, optionIds: List<String>) {
         pollVotingInteractor.initialize(id, optionIds)
     }
 
@@ -122,6 +124,7 @@ internal class ImagePollViewModel(
 
 internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
     val imagePoll: ImagePoll
+    val id: String
 
     /**
      * Subscribe to be informed of the images becoming ready.
@@ -139,10 +142,10 @@ internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
     fun informImagePollOptionDimensions(
         measuredSize: MeasuredSize
     )
-
+    
     fun castVote(selectedOption: String, optionIds: List<String>)
     fun checkForUpdate(pollId: String, optionIds: List<String>)
-    fun checkIfAlreadyVoted(optionIds: List<String>)
+    fun checkIfAlreadyVoted(id: String, optionIds: List<String>)
     val votingState: PublishSubject<VotingState>
     val refreshEvents: PublishSubject<RefreshEvent>
 }

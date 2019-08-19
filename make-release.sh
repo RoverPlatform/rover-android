@@ -62,7 +62,7 @@ echo "Edit your version numbers (README.md and build.gradle) and press return!"
 read -n 1
 
 echo "Building SDK."
-DEPLOY_MAVEN_PATH=`pwd`/maven time ./gradlew clean test :core:assembleRelease :core:publishProductionPublicationToMavenRepository notifications:assembleRelease notifications:publishProductionPublicationToMavenRepository location:assembleRelease location:publishProductionPublicationToMavenRepository debug:assembleRelease debug:publishProductionPublicationToMavenRepository ticketmaster:assembleRelease ticketmaster:publishProductionPublicationToMavenRepository advertising:assembleRelease advertising:publishProductionPublicationToMavenRepository experiences:assembleRelease experiences:publishProductionPublicationToMavenRepository --info --stacktrace
+DEPLOY_MAVEN_PATH=`pwd`/maven ./gradlew clean test sdk:assembleRelease sdk:publishProductionPublicationToMavenRepository
 
 # add the untracked files that have appeared under maven with the new bits.
 git add maven

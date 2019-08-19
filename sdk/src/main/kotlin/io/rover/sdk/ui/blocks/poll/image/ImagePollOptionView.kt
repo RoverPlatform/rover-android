@@ -237,6 +237,8 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
             }
         }
 
+        votingIndicatorBar.viewWidth = viewWidth.toFloat()
+
         if (shouldAnimate) {
             performResultsAnimation(votingShare, isSelectedOption)
         } else {

@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Sets you up to make a hotfix.  Pass in release name, no prefixed `v`.
+# Pass in release name, no prefixed `v`.
+# Make sure that git flow is configured with a version tag prefix of `v`.
 
 export RELEASE_OR_HOTFIX=$1
 VERSION=$2

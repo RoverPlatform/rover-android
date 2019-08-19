@@ -55,7 +55,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         field = value
     }
 
-    override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding(view, cancellationBlock = {timer = null}) { binding, subscriptionCallback ->
         binding?.viewModel?.let { viewModel ->
             bindQuestion(viewModel.textPoll)
 
@@ -66,7 +66,6 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             setupOptionViews(viewModel)
 
             log.d("poll view bound")
-            timer = null
 
             viewModel.votingState.subscribe({ votingState : VotingState ->
                 when (votingState) {
@@ -112,20 +111,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     }
 
     private fun setUpdateTimer(votingState: VotingState.RefreshingResults, subscriptionCallback: (Subscription) -> Unit) {
-        if (timer == null) {
-            timer = createTimer(votingState)
-
-            view.attachEvents().subscribe({
-                when (it) {
-                    is ViewEvent.Attach -> {
-                        // In case view has been detached for a while, don't want to wait 5 seconds to update
-                        viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
-                        log.d("poll view attached for poll ${votingState.pollId}")
-                        if(timer != null) timer = createTimer(votingState)
-                    }
-                    is ViewEvent.Detach -> { }
-                }
-            }, {}, { subscriptionCallback(it) })
+        if (timer == null) { timer = createTimer(votingState)
         }
     }
 

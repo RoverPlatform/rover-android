@@ -21,7 +21,7 @@ internal class ViewImage(
         imageView.scaleType = ImageView.ScaleType.FIT_XY
     }
 
-    override var viewModelBinding: MeasuredBindableView.Binding<ImageBlockViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<ImageBlockViewModelInterface>? by ViewModelBinding(imageView) { binding, subscriptionCallback ->
         if (binding != null) {
             val measuredSize = binding.measuredSize ?: throw RuntimeException("ViewImage may only be used with a view model binding including a measured size (ie. used within a Rover screen layout).")
 

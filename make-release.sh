@@ -16,7 +16,7 @@ fi
 
 if [ -z $VERSION ]
 then
-    echo "usage: Pass in hotfix name, no prefixed 'v'."
+    echo "usage: Pass in release or hotfix name, no prefixed 'v'."
     exit -1
 fi
 

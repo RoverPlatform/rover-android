@@ -80,7 +80,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                         setPollNotWaiting()
                     }
                     is VotingState.RefreshingResults -> {
-                        if (votingState.pollId == viewModel.id) setUpdateTimer(votingState, subscriptionCallback)
+                        if (votingState.pollId == viewModel.id) setUpdateTimer(votingState)
                         setPollNotWaiting()
                     }
                     is VotingState.PollAnswered -> setPollAnsweredWaiting()
@@ -110,9 +110,8 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         view.alpha = 1f
     }
 
-    private fun setUpdateTimer(votingState: VotingState.RefreshingResults, subscriptionCallback: (Subscription) -> Unit) {
-        if (timer == null) { timer = createTimer(votingState)
-        }
+    private fun setUpdateTimer(votingState: VotingState.RefreshingResults) {
+        if (timer == null) { timer = createTimer(votingState) }
     }
 
     private fun setupOptionViews(viewModel: TextPollViewModelInterface) {

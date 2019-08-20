@@ -11,6 +11,8 @@ import io.rover.sdk.platform.imageOptionView
 import io.rover.sdk.platform.setupLayoutParams
 import io.rover.sdk.platform.setupLinearLayoutParams
 import io.rover.sdk.platform.textView
+import io.rover.sdk.streams.androidLifecycleDispose
+import io.rover.sdk.streams.first
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.poll.RefreshEvent
@@ -77,7 +79,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             bindQuestion(viewModel.imagePoll)
             setupOptionViews(viewModel, imageLength)
 
-            viewModel.multiImageUpdates.subscribe(
+            viewModel.multiImageUpdates.first().subscribe(
                 { imageList ->
                     optionViews.forEach { (index, imageOptionView) ->
                         imageList[index]?.let {
@@ -87,7 +89,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                 },
                 { error -> log.w("Problem fetching poll images: $error, ignoring.") },
                 { subscription -> subscriptionCallback(subscription) })
-
+            
             viewModel.informImagePollOptionDimensions(
                 MeasuredSize(
                     imageLength.pxAsDp(view.resources.displayMetrics),

@@ -19,7 +19,7 @@ import io.rover.sdk.ui.concerns.ViewModelBinding
 internal class ViewBackground(
     override val view: View
 ) : ViewBackgroundInterface {
-    override var viewModelBinding: MeasuredBindableView.Binding<BackgroundViewModelInterface>? by ViewModelBinding(view) { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<BackgroundViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
         view.background = null
         view.setBackgroundColor(Color.TRANSPARENT)
 

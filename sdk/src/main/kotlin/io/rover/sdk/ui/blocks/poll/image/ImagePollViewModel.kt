@@ -11,12 +11,14 @@ import io.rover.sdk.data.domain.Screen
 import io.rover.sdk.data.events.Option
 import io.rover.sdk.data.events.RoverEvent
 import io.rover.sdk.data.getFontAppearance
+import io.rover.sdk.logging.log
 import io.rover.sdk.services.EventEmitter
 import io.rover.sdk.services.MeasurementService
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.Publishers
 import io.rover.sdk.streams.Scheduler
 import io.rover.sdk.streams.Timestamped
+import io.rover.sdk.streams.first
 import io.rover.sdk.streams.flatMap
 import io.rover.sdk.streams.map
 import io.rover.sdk.streams.observeOn
@@ -31,6 +33,7 @@ import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.dpAsPx
 import org.reactivestreams.Publisher
+import org.reactivestreams.Subscription
 
 internal class ImagePollViewModel(
     override val id: String,
@@ -89,7 +92,7 @@ internal class ImagePollViewModel(
     override val multiImageUpdates = PublishSubject<Map<String, ImagePollViewModelInterface.ImageUpdate>>()
 
     private fun multiImageUpdate() {
-        measurementsSubject
+        measurementsSubject.first()
             .timestamp()
             .imagesFetchTransform()
             .observeOn(mainScheduler)
@@ -143,9 +146,7 @@ internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
      *
      * Be sure to subscribe to [multiImageUpdates] first.
      */
-    fun informImagePollOptionDimensions(
-        measuredSize: MeasuredSize
-    )
+    fun informImagePollOptionDimensions(measuredSize: MeasuredSize)
     
     fun castVote(selectedOption: String, optionIds: List<String>)
     fun checkForUpdate(pollId: String, optionIds: List<String>)

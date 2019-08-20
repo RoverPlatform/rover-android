@@ -18,6 +18,7 @@ import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.Publishers
 import io.rover.sdk.streams.Scheduler
 import io.rover.sdk.streams.Timestamped
+import io.rover.sdk.streams.distinctUntilChanged
 import io.rover.sdk.streams.first
 import io.rover.sdk.streams.flatMap
 import io.rover.sdk.streams.map
@@ -92,7 +93,7 @@ internal class ImagePollViewModel(
     override val multiImageUpdates = PublishSubject<Map<String, ImagePollViewModelInterface.ImageUpdate>>()
 
     private fun multiImageUpdate() {
-        measurementsSubject.first()
+        measurementsSubject.distinctUntilChanged()
             .timestamp()
             .imagesFetchTransform()
             .observeOn(mainScheduler)

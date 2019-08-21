@@ -23,6 +23,7 @@ import io.rover.sdk.data.domain.TextPollOption
 import io.rover.sdk.data.mapToFont
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.create
+import io.rover.sdk.platform.relativeLayout
 import io.rover.sdk.platform.setBackgroundWithoutPaddingChange
 import io.rover.sdk.platform.setupLinearLayoutParams
 import io.rover.sdk.platform.setupRelativeLayoutParams
@@ -120,7 +121,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         set(value) {
             field = value
             value?.let {
-                setBackgroundWithoutPaddingChange(it)
+                nonBorderGroup.setBackgroundWithoutPaddingChange(it)
             }
         }
 
@@ -131,17 +132,23 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         private const val RESULT_FILL_ALPHA_DURATION = 50L
     }
 
+    private val nonBorderGroup = RelativeLayout(context)
+
     init {
-        addView(textPollProgressBar)
-        addView(optionTextView)
-        addView(votePercentageText)
+        nonBorderGroup.addView(textPollProgressBar)
+        nonBorderGroup.addView(optionTextView)
+        nonBorderGroup.addView(votePercentageText)
+        nonBorderGroup.addView(voteIndicatorView)
+
+        addView(nonBorderGroup)
         addView(borderView)
-        addView(voteIndicatorView)
     }
 
     fun initializeOptionViewLayout(optionStyle: TextPollOption) {
         val optionStyleHeight = optionStyle.height.dpAsPx(resources.displayMetrics)
         val optionMarginHeight = optionStyle.topMargin.dpAsPx(resources.displayMetrics)
+        val borderWidth = optionStyle.border.width.dpAsPx(resources.displayMetrics)
+        val totalBorderWidth = borderWidth * 2
 
         gravity = Gravity.CENTER_VERTICAL
         alpha = optionStyle.opacity.toFloat()
@@ -149,9 +156,18 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
         setupLinearLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,
-            height = optionStyleHeight,
+            height = optionStyleHeight + totalBorderWidth,
             topMargin = optionMarginHeight
         )
+
+        nonBorderGroup.setupRelativeLayoutParams {
+            width = LayoutParams.MATCH_PARENT
+            height = optionStyleHeight
+            marginStart = borderWidth
+            marginEnd = borderWidth
+            topMargin = borderWidth
+            bottomMargin = borderWidth
+        }
 
         initializeViewStyle(optionStyle)
     }
@@ -217,8 +233,11 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
         if (isSelectedOption) voteIndicatorView.visibility = View.VISIBLE
 
-        val viewWidth = optionWidth?.dpAsPx(resources.displayMetrics) ?: this@TextOptionView.width
-        val viewHeight = optionStyle.height.dpAsPx(resources.displayMetrics)
+
+        val borderWidth = optionStyle.border.width.dpAsPx(resources.displayMetrics)
+        val totalBorderWidth = borderWidth * 2
+        val viewHeight = optionStyle.height.dpAsPx(resources.displayMetrics) + totalBorderWidth
+        val viewWidth = (optionWidth?.dpAsPx(resources.displayMetrics))?.minus(- totalBorderWidth)  ?: this@TextOptionView.width
 
         textPollProgressBar.viewHeight = viewHeight.toFloat()
         textPollProgressBar.visibility = View.VISIBLE
@@ -254,7 +273,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     private fun immediatelyGoToResultsState(votingShare: Int, resultFillAlpha: Int, viewWidth: Float, viewHeight: Float) {
         currentVote = votingShare
         textPollProgressBar.viewHeight = viewHeight
-        textPollProgressBar.barValue = viewWidth / 100 * votingShare
+        textPollProgressBar.barValue = viewWidth      / 100 * votingShare
         textPollProgressBar.visibility = View.VISIBLE
         votePercentageText.alpha = 1f
         optionPaints.resultPaint.alpha = resultFillAlpha

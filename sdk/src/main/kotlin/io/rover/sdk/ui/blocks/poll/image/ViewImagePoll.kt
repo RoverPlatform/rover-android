@@ -37,6 +37,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
     private var optionViews = mapOf<String, ImagePollOptionView>()
 
     init {
+        view.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         view.addView(questionView)
     }
 
@@ -165,6 +166,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
     private fun bindQuestion(imagePoll: ImagePoll) {
         questionView.run {
             text = imagePoll.question.rawValue
+            contentDescription = "This is a poll. ${imagePoll.question.rawValue}. Swipe to hear options"
             gravity = imagePoll.question.alignment.convertToGravity()
             textSize = imagePoll.question.font.size.toFloat()
             setTextColor(imagePoll.question.color.asAndroidColor())
@@ -184,11 +186,15 @@ internal class ViewImagePoll(override val view: LinearLayout) :
 
     private fun createTwoOptionLayout() {
         view.addView(row1)
+
+        var indexForAccessibility = 1
         optionViews.forEach { (id, imagePollOptionView) ->
             row1.addView(imagePollOptionView)
+            imagePollOptionView.setContentDescription(indexForAccessibility)
             imagePollOptionView.setOnClickListener {
                 viewModelBinding?.viewModel?.castVote(id, optionViews.keys.toList())
             }
+            indexForAccessibility++
         }
     }
 
@@ -204,6 +210,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             val isOnFirstRow = viewsAdded < 2
             if (isOnFirstRow) row1.addView(imagePollOptionView) else row2.addView(imagePollOptionView)
             viewsAdded ++
+            imagePollOptionView.setContentDescription(viewsAdded)
             imagePollOptionView.setOnClickListener { viewModelBinding?.viewModel?.castVote(id, optionViews.keys.toList()) }
         }
     }

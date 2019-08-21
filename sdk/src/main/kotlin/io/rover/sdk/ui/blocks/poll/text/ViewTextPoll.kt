@@ -46,6 +46,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         view.addView {
             questionView
         }
+        view.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
     }
 
     private var timer: Timer? = null
@@ -115,12 +116,16 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     }
 
     private fun setupOptionViews(viewModel: TextPollViewModelInterface) {
+
+        var indexForAccessibility = 1
         optionViews = createOptionViews(viewModel.textPoll)
         startListeningForOptionImageUpdates(viewModel.optionBackgroundViewModel, optionViews)
         optionViews.forEach { (optionId, optionView) ->
             view.addView(optionView)
+            optionView.setContentDescription(indexForAccessibility)
             optionView.setOnClickListener {
                 viewModelBinding?.viewModel?.castVote(optionId, viewModel.textPoll.options.map { it.id }) }
+            indexForAccessibility++
         }
 
         informOptionBackgroundAboutSize(viewModel)
@@ -129,6 +134,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     private fun bindQuestion(textPoll: TextPoll) {
         questionView.run {
             text = textPoll.question.rawValue
+            contentDescription = "This is a poll. ${textPoll.question.rawValue}. Swipe to hear options"
             gravity = textPoll.question.alignment.convertToGravity()
             textSize = textPoll.question.font.size.toFloat()
             setTextColor(textPoll.question.color.asAndroidColor())

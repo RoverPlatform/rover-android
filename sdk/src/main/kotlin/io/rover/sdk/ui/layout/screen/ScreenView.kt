@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
+import android.view.View
 import io.rover.sdk.Rover
 import io.rover.sdk.logging.log
 import io.rover.sdk.streams.PublishSubject
@@ -39,6 +40,8 @@ internal class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelIn
     private val vtoMeasuredSizeSubject = PublishSubject<MeasuredSize>()
 
     init {
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+
         viewTreeObserver.addOnGlobalLayoutListener {
             vtoMeasuredSizeSubject.onNext(
                 MeasuredSize(

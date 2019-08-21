@@ -139,6 +139,10 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         addView(voteIndicatorView)
     }
 
+    fun setContentDescription(optionIndex: Int) {
+        contentDescription = "${optionTextView.text}. Option $optionIndex"
+    }
+
     fun initializeOptionViewLayout(optionStyle: TextPollOption) {
         val optionStyleHeight = optionStyle.height.dpAsPx(resources.displayMetrics)
         val optionMarginHeight = optionStyle.topMargin.dpAsPx(resources.displayMetrics)
@@ -242,6 +246,12 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
                 calculateWidthWithoutOptionText(voteIndicatorView, votePercentageText, isSelectedOption, maxVotingShare)
 
             maxWidth = viewWidth - widthOfOtherViews
+        }
+
+        contentDescription = if (isSelectedOption) {
+            "Your vote, ${optionStyle.text.rawValue}, has $votingShare percent of the votes"
+        } else {
+            "${optionStyle.text.rawValue}, has $votingShare percent of the votes"
         }
 
         if (shouldAnimate) {

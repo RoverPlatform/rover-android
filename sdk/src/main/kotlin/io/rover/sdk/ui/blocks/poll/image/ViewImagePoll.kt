@@ -68,8 +68,10 @@ internal class ViewImagePoll(override val view: LinearLayout) :
 
             val horizontalSpacing = viewModel.imagePoll.options[1].leftMargin
 
+            val borderWidth = viewModel.imagePoll.options.first().border.width.dpAsPx(view.resources.displayMetrics)
+
             val imageLength =
-                (width.dpAsPx(view.resources.displayMetrics) - horizontalSpacing.dpAsPx(view.resources.displayMetrics)) / 2
+                ((width.dpAsPx(view.resources.displayMetrics) - horizontalSpacing.dpAsPx(view.resources.displayMetrics)) / 2) - (borderWidth * 2)
 
             if (optionViews.isNotEmpty()) {
                 row1.removeAllViews()
@@ -216,14 +218,17 @@ internal class ViewImagePoll(override val view: LinearLayout) :
     }
 
     private fun createOptionViews(imagePoll: ImagePoll, imageLength: Int): Map<String, ImagePollOptionView> {
+        val borderWidth = imagePoll.options.first().border.width.dpAsPx(view.resources.displayMetrics)
+        val totalBorderWidth = borderWidth * 2
+
         return imagePoll.options.associate {
             it.id to view.imageOptionView {
-                initializeOptionViewLayout(it, imageLength + OPTION_TEXT_HEIGHT.toInt())
+                initializeOptionViewLayout(it, imageLength + OPTION_TEXT_HEIGHT.toInt() + totalBorderWidth)
                 bindOptionView(it)
                 bindOptionImageSize(imageLength)
                 setupLinearLayoutParams(
-                    width = imageLength,
-                    height = imageLength + OPTION_TEXT_HEIGHT.dpAsPx(view.resources.displayMetrics),
+                    width = imageLength + totalBorderWidth,
+                    height = imageLength + OPTION_TEXT_HEIGHT.dpAsPx(view.resources.displayMetrics) + totalBorderWidth,
                     leftMargin = it.leftMargin.dpAsPx(view.resources.displayMetrics),
                     topMargin = it.topMargin.dpAsPx(view.resources.displayMetrics)
                 )

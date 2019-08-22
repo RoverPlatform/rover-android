@@ -44,7 +44,11 @@ internal class TextPollViewModel(
         val optionsHeight = optionStyleHeight * textPoll.options.size
         val optionSpacing = verticalSpacing * (textPoll.options.size)
 
-        return optionsHeight + optionSpacing + questionHeight
+        val borderWidth = measurementService.snapToPixValue(textPoll.options.first().border.width)
+
+        val totalBorderWidth = borderWidth * textPoll.options.size * 2
+
+        return optionsHeight + optionSpacing + questionHeight + totalBorderWidth
     }
 
     override fun checkForUpdate(pollId: String, optionIds: List<String>) {

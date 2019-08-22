@@ -158,5 +158,6 @@ internal fun Paint.create(paintColor: Int, paintStyle: Paint.Style, paintStrokeW
         color = paintColor
         style = paintStyle
         strokeWidth = paintStrokeWidth
+        isAntiAlias = true
     }
 }

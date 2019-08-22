@@ -3,7 +3,6 @@ package io.rover.sdk.ui.blocks.poll.text
 import android.animation.AnimatorSet
 import android.animation.TimeInterpolator
 import android.animation.ValueAnimator
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -21,7 +20,6 @@ import android.widget.RelativeLayout
 import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.TextPollOption
 import io.rover.sdk.data.mapToFont
-import io.rover.sdk.logging.log
 import io.rover.sdk.platform.create
 import io.rover.sdk.platform.setBackgroundWithoutPaddingChange
 import io.rover.sdk.platform.setupLinearLayoutParams
@@ -123,7 +121,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         set(value) {
             field = value
             value?.let {
-                setBackgroundWithoutPaddingChange(it)
+                mainLayout.setBackgroundWithoutPaddingChange(it)
             }
         }
 
@@ -134,12 +132,16 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         private const val RESULT_FILL_ALPHA_DURATION = 50L
     }
 
+    private val mainLayout = RelativeLayout(context)
+
     init {
-        addView(textPollProgressBar)
-        addView(optionTextView)
-        addView(votePercentageText)
+        mainLayout.addView(textPollProgressBar)
+        mainLayout.addView(optionTextView)
+        mainLayout.addView(votePercentageText)
+        mainLayout.addView(voteIndicatorView)
+
+        addView(mainLayout)
         addView(borderView)
-        addView(voteIndicatorView)
     }
 
     fun setContentDescription(optionIndex: Int) {
@@ -149,6 +151,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     fun initializeOptionViewLayout(optionStyle: TextPollOption) {
         val optionStyleHeight = optionStyle.height.dpAsPx(resources.displayMetrics)
         val optionMarginHeight = optionStyle.topMargin.dpAsPx(resources.displayMetrics)
+        val borderWidth = optionStyle.border.width.dpAsPx(resources.displayMetrics)
+        val totalBorderWidth = borderWidth * 2
 
         gravity = Gravity.CENTER_VERTICAL
         alpha = optionStyle.opacity.toFloat()
@@ -156,9 +160,18 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
         setupLinearLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,
-            height = optionStyleHeight,
+            height = optionStyleHeight + totalBorderWidth,
             topMargin = optionMarginHeight
         )
+
+        mainLayout.setupRelativeLayoutParams {
+            width = LayoutParams.MATCH_PARENT
+            height = optionStyleHeight
+            marginStart = borderWidth
+            marginEnd = borderWidth
+            topMargin = borderWidth
+            bottomMargin = borderWidth
+        }
 
         initializeViewStyle(optionStyle)
     }
@@ -224,8 +237,11 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
         if (isSelectedOption) voteIndicatorView.visibility = View.VISIBLE
 
-        val viewWidth = optionWidth?.dpAsPx(resources.displayMetrics) ?: this@TextOptionView.width
-        val viewHeight = optionStyle.height.dpAsPx(resources.displayMetrics)
+
+        val borderWidth = optionStyle.border.width.dpAsPx(resources.displayMetrics)
+        val totalBorderWidth = borderWidth * 2
+        val viewHeight = optionStyle.height.dpAsPx(resources.displayMetrics) + totalBorderWidth
+        val viewWidth = (optionWidth?.dpAsPx(resources.displayMetrics))?.minus(totalBorderWidth)  ?: mainLayout.width
 
         textPollProgressBar.viewHeight = viewHeight.toFloat()
         textPollProgressBar.visibility = View.VISIBLE
@@ -321,7 +337,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             addUpdateListener {
                 val animatedValue = it.animatedValue as Float
                 votePercentageText.text = "${animatedValue.toInt()}%"
-                textPollProgressBar.barValue = width.toFloat() / 100 * animatedValue
+                textPollProgressBar.barValue = mainLayout.width.toFloat() / 100 * animatedValue
             }
             interpolator = easeInEaseOutInterpolator
         }

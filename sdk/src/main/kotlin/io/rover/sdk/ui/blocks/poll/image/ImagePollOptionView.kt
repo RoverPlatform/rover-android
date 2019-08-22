@@ -164,6 +164,17 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
     }
 
     fun bindOptionView(option: ImagePollBlockOption) {
+        val borderWidth = option.border.width.dpAsPx(resources.displayMetrics)
+
+        overallLinearLayout.setupRelativeLayoutParams(
+            width = ViewGroup.LayoutParams.MATCH_PARENT,
+            height = ViewGroup.LayoutParams.MATCH_PARENT,
+            leftMargin = borderWidth,
+            rightMargin = borderWidth,
+            topMargin = borderWidth,
+            bottomMargin = borderWidth
+        )
+
         bottomSection.layoutParams = (bottomSection.layoutParams as MarginLayoutParams).apply {
             setMargins(bottomSectionHorizontalMargin, 0, bottomSectionHorizontalMargin, 0)
         }

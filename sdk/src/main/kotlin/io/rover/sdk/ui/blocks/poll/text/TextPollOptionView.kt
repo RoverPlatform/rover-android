@@ -248,6 +248,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             maxWidth = viewWidth - widthOfOtherViews
         }
 
+        isClickable = false
+
         contentDescription = if (isSelectedOption) {
             "Your vote, ${optionStyle.text.rawValue}, has $votingShare percent of the votes"
         } else {

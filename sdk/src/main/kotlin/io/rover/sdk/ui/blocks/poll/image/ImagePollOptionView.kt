@@ -242,6 +242,8 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
             }
         }
 
+        isClickable = false
+
         contentDescription = if (isSelectedOption) {
             "Your vote, ${option.text.rawValue}, has $votingShare percent of the votes"
         } else {

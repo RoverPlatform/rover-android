@@ -65,6 +65,10 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
 
     private val shortAnimationDuration = resources.getInteger(android.R.integer.config_shortAnimTime)
 
+    fun setContentDescription(optionIndex: Int) {
+        contentDescription = "${optionTextView.text}. Option $optionIndex"
+    }
+
     private val optionTextView = textView {
         setLineSpacing(0f, 1.0f)
         includeFontPadding = false
@@ -105,9 +109,12 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
         textAlignment = View.TEXT_ALIGNMENT_TEXT_END
     }
 
-    private val topSection = RelativeLayout(context)
+    private val topSection = RelativeLayout(context).apply {
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+    }
 
     private val bottomSection = relativeLayout {
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
         gravity = Gravity.CENTER
         setupLinearLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,
@@ -231,11 +238,21 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
             )
 
             if (isSelectedOption) {
+
                 voteIndicatorView.measure(0, 0)
                 maxWidth =
                     viewWidth - voteIndicatorView.measuredWidth - (bottomSectionHorizontalMargin * 2) - (voteIndicatorView.layoutParams as MarginLayoutParams).marginStart
             }
         }
+
+        isClickable = false
+
+        contentDescription = if (isSelectedOption) {
+            "Your vote ${option.text.rawValue}, $votingShare percent"
+        } else {
+            "${option.text.rawValue}, $votingShare percent"
+        }
+
 
         votingIndicatorBar.viewWidth = viewWidth.toFloat()
 

@@ -46,6 +46,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         view.addView {
             questionView
         }
+        view.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
     }
 
     private var timer: Timer? = null
@@ -57,7 +58,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
     override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding(view, cancellationBlock = {timer = null}) { binding, subscriptionCallback ->
         binding?.viewModel?.let { viewModel ->
-            bindQuestion(viewModel.textPoll)
+            bindQuestion(viewModel.textPoll, viewModel.textPoll.options.size)
 
             if (optionViews.isNotEmpty()) {
                 optionViews.forEach { view.removeView(it.value) }
@@ -115,20 +116,25 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     }
 
     private fun setupOptionViews(viewModel: TextPollViewModelInterface) {
+
+        var indexForAccessibility = 1
         optionViews = createOptionViews(viewModel.textPoll)
         startListeningForOptionImageUpdates(viewModel.optionBackgroundViewModel, optionViews)
         optionViews.forEach { (optionId, optionView) ->
             view.addView(optionView)
+            optionView.setContentDescription(indexForAccessibility)
             optionView.setOnClickListener {
                 viewModelBinding?.viewModel?.castVote(optionId, viewModel.textPoll.options.map { it.id }) }
+            indexForAccessibility++
         }
 
         informOptionBackgroundAboutSize(viewModel)
     }
 
-    private fun bindQuestion(textPoll: TextPoll) {
+    private fun bindQuestion(textPoll: TextPoll, numberOfOptions: Int) {
         questionView.run {
             text = textPoll.question.rawValue
+            contentDescription = "Poll with $numberOfOptions options: ${textPoll.question.rawValue}"
             gravity = textPoll.question.alignment.convertToGravity()
             textSize = textPoll.question.font.size.toFloat()
             setTextColor(textPoll.question.color.asAndroidColor())

@@ -106,7 +106,7 @@ internal class ImagePollViewModel(
                 val pixelSize = PixelSize(measuredSize.width.dpAsPx(measuredSize.density), measuredSize.height.dpAsPx(measuredSize.density))
                 val uriWithParameters = imageOptimizationService.optimizeImageForFill(it.value, pixelSize)
 
-                return@map assetService.imageByUrl(uriWithParameters.toURL()).map { bitmap ->
+                return@map assetService.imageByUrl(uriWithParameters.toURL()).distinctUntilChanged().map { bitmap ->
                     val timeElapsed = System.currentTimeMillis() - timestampMillis
                     val shouldFade = timeElapsed > IMAGE_FADE_IN_MINIMUM_TIME
                     it.key to ImagePollViewModelInterface.ImageUpdate(bitmap, shouldFade) }

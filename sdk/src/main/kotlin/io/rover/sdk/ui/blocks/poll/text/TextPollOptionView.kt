@@ -3,7 +3,6 @@ package io.rover.sdk.ui.blocks.poll.text
 import android.animation.AnimatorSet
 import android.animation.TimeInterpolator
 import android.animation.ValueAnimator
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -21,9 +20,7 @@ import android.widget.RelativeLayout
 import io.rover.sdk.data.domain.FontWeight
 import io.rover.sdk.data.domain.TextPollOption
 import io.rover.sdk.data.mapToFont
-import io.rover.sdk.logging.log
 import io.rover.sdk.platform.create
-import io.rover.sdk.platform.relativeLayout
 import io.rover.sdk.platform.setBackgroundWithoutPaddingChange
 import io.rover.sdk.platform.setupLinearLayoutParams
 import io.rover.sdk.platform.setupRelativeLayoutParams
@@ -121,7 +118,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         set(value) {
             field = value
             value?.let {
-                nonBorderGroup.setBackgroundWithoutPaddingChange(it)
+                mainLayout.setBackgroundWithoutPaddingChange(it)
             }
         }
 
@@ -132,15 +129,15 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         private const val RESULT_FILL_ALPHA_DURATION = 50L
     }
 
-    private val nonBorderGroup = RelativeLayout(context)
+    private val mainLayout = RelativeLayout(context)
 
     init {
-        nonBorderGroup.addView(textPollProgressBar)
-        nonBorderGroup.addView(optionTextView)
-        nonBorderGroup.addView(votePercentageText)
-        nonBorderGroup.addView(voteIndicatorView)
+        mainLayout.addView(textPollProgressBar)
+        mainLayout.addView(optionTextView)
+        mainLayout.addView(votePercentageText)
+        mainLayout.addView(voteIndicatorView)
 
-        addView(nonBorderGroup)
+        addView(mainLayout)
         addView(borderView)
     }
 
@@ -160,7 +157,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             topMargin = optionMarginHeight
         )
 
-        nonBorderGroup.setupRelativeLayoutParams {
+        mainLayout.setupRelativeLayoutParams {
             width = LayoutParams.MATCH_PARENT
             height = optionStyleHeight
             marginStart = borderWidth
@@ -237,7 +234,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         val borderWidth = optionStyle.border.width.dpAsPx(resources.displayMetrics)
         val totalBorderWidth = borderWidth * 2
         val viewHeight = optionStyle.height.dpAsPx(resources.displayMetrics) + totalBorderWidth
-        val viewWidth = (optionWidth?.dpAsPx(resources.displayMetrics))?.minus(totalBorderWidth)  ?: nonBorderGroup.width
+        val viewWidth = (optionWidth?.dpAsPx(resources.displayMetrics))?.minus(totalBorderWidth)  ?: mainLayout.width
 
         textPollProgressBar.viewHeight = viewHeight.toFloat()
         textPollProgressBar.visibility = View.VISIBLE
@@ -325,7 +322,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             addUpdateListener {
                 val animatedValue = it.animatedValue as Float
                 votePercentageText.text = "${animatedValue.toInt()}%"
-                textPollProgressBar.barValue = nonBorderGroup.width.toFloat() / 100 * animatedValue
+                textPollProgressBar.barValue = mainLayout.width.toFloat() / 100 * animatedValue
             }
             interpolator = easeInEaseOutInterpolator
         }

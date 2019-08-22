@@ -166,7 +166,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
     private fun bindQuestion(imagePoll: ImagePoll, numberOfOptions: Int) {
         questionView.run {
             text = imagePoll.question.rawValue
-            contentDescription = "Poll with $numberOfOptions: ${imagePoll.question.rawValue}"
+            contentDescription = "Poll with $numberOfOptions options: ${imagePoll.question.rawValue}"
             gravity = imagePoll.question.alignment.convertToGravity()
             textSize = imagePoll.question.font.size.toFloat()
             setTextColor(imagePoll.question.color.asAndroidColor())

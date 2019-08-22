@@ -134,7 +134,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     private fun bindQuestion(textPoll: TextPoll, numberOfOptions: Int) {
         questionView.run {
             text = textPoll.question.rawValue
-            contentDescription = "Poll with $numberOfOptions: ${textPoll.question.rawValue}"
+            contentDescription = "Poll with $numberOfOptions options: ${textPoll.question.rawValue}"
             gravity = textPoll.question.alignment.convertToGravity()
             textSize = textPoll.question.font.size.toFloat()
             setTextColor(textPoll.question.color.asAndroidColor())

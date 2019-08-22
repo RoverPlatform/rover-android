@@ -75,7 +75,7 @@ internal class RoverViewModel(
                 is ExperienceRequest.ByUrl -> FetchExperienceRequest.ExperienceQueryIdentifier.ByUniversalLink(
                     experienceRequest.url
                 )
-                is ExperienceRequest.ById -> FetchExperienceRequest.ExperienceQueryIdentifier.ById(experienceRequest.experienceId)
+                is ExperienceRequest.ById -> FetchExperienceRequest.ExperienceQueryIdentifier.ById(experienceRequest.experienceId, experienceRequest.useDraft)
             }
         ).observeOn(mainThreadScheduler)
 
@@ -226,6 +226,6 @@ internal class RoverViewModel(
 
     sealed class ExperienceRequest {
         data class ByUrl(val url: String) : ExperienceRequest()
-        data class ById(val experienceId: String) : ExperienceRequest()
+        data class ById(val experienceId: String, val useDraft: Boolean = false) : ExperienceRequest()
     }
 }

@@ -34,6 +34,8 @@ open class RoverActivity : AppCompatActivity() {
 
     private val experienceUrl: String? by lazy { this.intent.getStringExtra("EXPERIENCE_URL") }
 
+    private val useDraft: Boolean by lazy { this.intent.getBooleanExtra("USE_DRAFT", false) }
+
     private val campaignId: String?
         get() = this.intent.getStringExtra("CAMPAIGN_ID")
 
@@ -178,7 +180,7 @@ open class RoverActivity : AppCompatActivity() {
         when {
             experienceId != null -> roverViewModel = experienceViewModel(
                 rover,
-                RoverViewModel.ExperienceRequest.ById(experienceId!!),
+                RoverViewModel.ExperienceRequest.ById(experienceId!!, useDraft = useDraft),
                 campaignId,
                 // obtain any possibly saved state for the experience view model.  See
                 // onSaveInstanceState.
@@ -228,10 +230,11 @@ open class RoverActivity : AppCompatActivity() {
     companion object {
         @JvmStatic
         @JvmOverloads
-        fun makeIntent(packageContext: Context, experienceId: String, campaignId: String? = null, activityClass: Class<out Activity> = RoverActivity::class.java): Intent {
+        fun makeIntent(packageContext: Context, experienceId: String, campaignId: String? = null, useDraft: Boolean = false, activityClass: Class<out Activity> = RoverActivity::class.java): Intent {
             return Intent(packageContext, activityClass).apply {
                 putExtra("EXPERIENCE_ID", experienceId)
                 putExtra("CAMPAIGN_ID", campaignId)
+                putExtra("USE_DRAFT", useDraft)
             }
         }
 

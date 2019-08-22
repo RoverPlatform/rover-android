@@ -237,7 +237,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         val borderWidth = optionStyle.border.width.dpAsPx(resources.displayMetrics)
         val totalBorderWidth = borderWidth * 2
         val viewHeight = optionStyle.height.dpAsPx(resources.displayMetrics) + totalBorderWidth
-        val viewWidth = (optionWidth?.dpAsPx(resources.displayMetrics))?.minus(- totalBorderWidth)  ?: this@TextOptionView.width
+        val viewWidth = (optionWidth?.dpAsPx(resources.displayMetrics))?.minus(totalBorderWidth)  ?: nonBorderGroup.width
 
         textPollProgressBar.viewHeight = viewHeight.toFloat()
         textPollProgressBar.visibility = View.VISIBLE
@@ -273,7 +273,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
     private fun immediatelyGoToResultsState(votingShare: Int, resultFillAlpha: Int, viewWidth: Float, viewHeight: Float) {
         currentVote = votingShare
         textPollProgressBar.viewHeight = viewHeight
-        textPollProgressBar.barValue = viewWidth      / 100 * votingShare
+        textPollProgressBar.barValue = viewWidth / 100 * votingShare
         textPollProgressBar.visibility = View.VISIBLE
         votePercentageText.alpha = 1f
         optionPaints.resultPaint.alpha = resultFillAlpha
@@ -325,7 +325,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
             addUpdateListener {
                 val animatedValue = it.animatedValue as Float
                 votePercentageText.text = "${animatedValue.toInt()}%"
-                textPollProgressBar.barValue = width.toFloat() / 100 * animatedValue
+                textPollProgressBar.barValue = nonBorderGroup.width.toFloat() / 100 * animatedValue
             }
             interpolator = easeInEaseOutInterpolator
         }

@@ -254,9 +254,9 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         isClickable = false
 
         contentDescription = if (isSelectedOption) {
-            "Your vote, ${optionStyle.text.rawValue}, has $votingShare percent of the votes"
+            "Your vote ${optionStyle.text.rawValue}, $votingShare percent"
         } else {
-            "${optionStyle.text.rawValue}, has $votingShare percent of the votes"
+            "${optionStyle.text.rawValue}, $votingShare percent"
         }
 
         if (shouldAnimate) {

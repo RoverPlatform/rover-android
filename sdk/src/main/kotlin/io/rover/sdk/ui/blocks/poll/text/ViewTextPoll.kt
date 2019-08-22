@@ -58,7 +58,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
     override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding(view, cancellationBlock = {timer = null}) { binding, subscriptionCallback ->
         binding?.viewModel?.let { viewModel ->
-            bindQuestion(viewModel.textPoll)
+            bindQuestion(viewModel.textPoll, viewModel.textPoll.options.size)
 
             if (optionViews.isNotEmpty()) {
                 optionViews.forEach { view.removeView(it.value) }
@@ -131,10 +131,10 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         informOptionBackgroundAboutSize(viewModel)
     }
 
-    private fun bindQuestion(textPoll: TextPoll) {
+    private fun bindQuestion(textPoll: TextPoll, numberOfOptions: Int) {
         questionView.run {
             text = textPoll.question.rawValue
-            contentDescription = "This is a poll. ${textPoll.question.rawValue}. Swipe to hear options"
+            contentDescription = "Poll with $numberOfOptions: ${textPoll.question.rawValue}"
             gravity = textPoll.question.alignment.convertToGravity()
             textSize = textPoll.question.font.size.toFloat()
             setTextColor(textPoll.question.color.asAndroidColor())

@@ -78,7 +78,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                 view.removeView(row2)
             }
 
-            bindQuestion(viewModel.imagePoll)
+            bindQuestion(viewModel.imagePoll, viewModel.imagePoll.options.size)
             setupOptionViews(viewModel, imageLength)
 
             viewModel.multiImageUpdates.distinctUntilChanged().subscribe(
@@ -163,10 +163,10 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         }
     }
 
-    private fun bindQuestion(imagePoll: ImagePoll) {
+    private fun bindQuestion(imagePoll: ImagePoll, numberOfOptions: Int) {
         questionView.run {
             text = imagePoll.question.rawValue
-            contentDescription = "This is a poll. ${imagePoll.question.rawValue}. Swipe to hear options"
+            contentDescription = "Poll with $numberOfOptions: ${imagePoll.question.rawValue}"
             gravity = imagePoll.question.alignment.convertToGravity()
             textSize = imagePoll.question.font.size.toFloat()
             setTextColor(imagePoll.question.color.asAndroidColor())

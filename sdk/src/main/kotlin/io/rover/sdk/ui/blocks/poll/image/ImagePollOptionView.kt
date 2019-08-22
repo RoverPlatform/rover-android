@@ -109,9 +109,12 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
         textAlignment = View.TEXT_ALIGNMENT_TEXT_END
     }
 
-    private val topSection = RelativeLayout(context)
+    private val topSection = RelativeLayout(context).apply {
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+    }
 
     private val bottomSection = relativeLayout {
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
         gravity = Gravity.CENTER
         setupLinearLayoutParams(
             width = ViewGroup.LayoutParams.MATCH_PARENT,

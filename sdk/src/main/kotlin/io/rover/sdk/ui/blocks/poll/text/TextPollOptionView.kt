@@ -47,6 +47,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         setLineSpacing(0f, 1.0f)
         includeFontPadding = false
         gravity = Gravity.CENTER_VERTICAL
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         val marginInPixels = 16.dpAsPx(resources.displayMetrics)
 
         setupRelativeLayoutParams(
@@ -62,6 +63,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         maxLines = 1
         gravity = Gravity.CENTER_VERTICAL
         textAlignment = View.TEXT_ALIGNMENT_TEXT_START
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
 
         val marginInPixels = 8.dpAsPx(resources.displayMetrics)
 
@@ -82,6 +84,7 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
         id = ViewCompat.generateViewId()
         visibility = View.GONE
         maxLines = 1
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         setLineSpacing(0f, 1.0f)
         includeFontPadding = false
         gravity = Gravity.CENTER_VERTICAL

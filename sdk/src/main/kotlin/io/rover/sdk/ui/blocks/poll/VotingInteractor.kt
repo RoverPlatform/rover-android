@@ -86,7 +86,7 @@ internal class VotingInteractor(
         getPollStateFromNetwork(pollId, optionIds).observeOn(mainScheduler).subscribe { optionResults ->
             val resultsSameKeysAsShown = optionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
 
-            if (resultsSameKeysAsShown && optionResults.results.isNotEmpty()) currentState = VotingState.ResultsSeeded(optionResults)
+            if (resultsSameKeysAsShown && optionResults.results.isNotEmpty() && currentState is VotingState.InitialState) currentState = VotingState.ResultsSeeded(optionResults)
         }
     }
 

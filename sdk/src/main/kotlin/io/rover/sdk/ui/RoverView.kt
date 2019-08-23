@@ -54,7 +54,7 @@ internal class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewMode
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
-    override var viewModelBinding: MeasuredBindableView.Binding<RoverViewModelInterface>? by ViewModelBinding(false) { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<RoverViewModelInterface>? by ViewModelBinding(rebindingAllowed = false) { binding, subscriptionCallback ->
         // sadly have to set rebindingAllowed to be false because of complexity dealing with the
         // toolbar; the toolbar may not be configured twice.
         val viewModel = binding?.viewModel

@@ -11,8 +11,9 @@ import io.rover.sdk.platform.imageOptionView
 import io.rover.sdk.platform.setupLayoutParams
 import io.rover.sdk.platform.setupLinearLayoutParams
 import io.rover.sdk.platform.textView
-import io.rover.sdk.streams.ViewEvent
-import io.rover.sdk.streams.attachEvents
+import io.rover.sdk.streams.androidLifecycleDispose
+import io.rover.sdk.streams.distinctUntilChanged
+import io.rover.sdk.streams.first
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.poll.RefreshEvent
@@ -22,7 +23,6 @@ import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.concerns.ViewModelBinding
 import io.rover.sdk.ui.dpAsPx
 import io.rover.sdk.ui.pxAsDp
-import org.reactivestreams.Subscription
 import java.util.Timer
 import kotlin.concurrent.fixedRateTimer
 
@@ -37,6 +37,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
     private var optionViews = mapOf<String, ImagePollOptionView>()
 
     init {
+        view.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         view.addView(questionView)
     }
 
@@ -60,15 +61,17 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         view.alpha = 1f
     }
 
-    override var viewModelBinding: MeasuredBindableView.Binding<ImagePollViewModelInterface>? by ViewModelBinding { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<ImagePollViewModelInterface>? by ViewModelBinding(view = view, cancellationBlock = {timer = null}) { binding, subscriptionCallback ->
 
         binding?.viewModel?.let { viewModel ->
             val width = binding.measuredSize?.width ?: 0f
 
             val horizontalSpacing = viewModel.imagePoll.options[1].leftMargin
 
+            val borderWidth = viewModel.imagePoll.options.first().border.width.dpAsPx(view.resources.displayMetrics)
+
             val imageLength =
-                (width.dpAsPx(view.resources.displayMetrics) - horizontalSpacing.dpAsPx(view.resources.displayMetrics)) / 2
+                ((width.dpAsPx(view.resources.displayMetrics) - horizontalSpacing.dpAsPx(view.resources.displayMetrics)) / 2) - (borderWidth * 2)
 
             if (optionViews.isNotEmpty()) {
                 row1.removeAllViews()
@@ -77,10 +80,10 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                 view.removeView(row2)
             }
 
-            bindQuestion(viewModel.imagePoll)
+            bindQuestion(viewModel.imagePoll, viewModel.imagePoll.options.size)
             setupOptionViews(viewModel, imageLength)
 
-            viewModel.multiImageUpdates.subscribe(
+            viewModel.multiImageUpdates.distinctUntilChanged().subscribe(
                 { imageList ->
                     optionViews.forEach { (index, imageOptionView) ->
                         imageList[index]?.let {
@@ -90,7 +93,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                 },
                 { error -> log.w("Problem fetching poll images: $error, ignoring.") },
                 { subscription -> subscriptionCallback(subscription) })
-
+            
             viewModel.informImagePollOptionDimensions(
                 MeasuredSize(
                     imageLength.pxAsDp(view.resources.displayMetrics),
@@ -98,7 +101,6 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                     view.resources.displayMetrics.density
                 )
             )
-            timer = null
             
             viewModel.votingState.subscribe({ votingState: VotingState ->
                 when (votingState) {
@@ -116,7 +118,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                         setPollNotWaiting()
                     }
                     is VotingState.RefreshingResults -> {
-                        if (votingState.pollId == viewModel.id) setUpdateTimer(votingState, subscriptionCallback)
+                        if (votingState.pollId == viewModel.id) setUpdateTimer(votingState)
                         setPollNotWaiting()
                     }
                 }
@@ -138,22 +140,8 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         }
     }
 
-    private fun setUpdateTimer(votingState: VotingState.RefreshingResults, subscriptionCallback: (Subscription) -> Unit) {
-        if (timer == null) {
-            timer = createTimer(votingState)
-
-            view.attachEvents().subscribe({
-                when (it) {
-                    is ViewEvent.Attach -> {
-                        // In case view has been detached for a while, don't want to wait 5 seconds to update
-                        viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
-                        log.d("poll view attached for poll ${votingState.pollId}")
-                        if(timer != null) timer = createTimer(votingState)
-                    }
-                    is ViewEvent.Detach -> { }
-                }
-            }, {}, { subscriptionCallback(it) })
-        }
+    private fun setUpdateTimer(votingState: VotingState.RefreshingResults) {
+        if (timer == null) timer = createTimer(votingState)
     }
 
     private fun setVoteResultUpdate(votingUpdate: RefreshEvent) {
@@ -177,9 +165,10 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         }
     }
 
-    private fun bindQuestion(imagePoll: ImagePoll) {
+    private fun bindQuestion(imagePoll: ImagePoll, numberOfOptions: Int) {
         questionView.run {
             text = imagePoll.question.rawValue
+            contentDescription = "Poll with $numberOfOptions options: ${imagePoll.question.rawValue}"
             gravity = imagePoll.question.alignment.convertToGravity()
             textSize = imagePoll.question.font.size.toFloat()
             setTextColor(imagePoll.question.color.asAndroidColor())
@@ -199,11 +188,15 @@ internal class ViewImagePoll(override val view: LinearLayout) :
 
     private fun createTwoOptionLayout() {
         view.addView(row1)
+
+        var indexForAccessibility = 1
         optionViews.forEach { (id, imagePollOptionView) ->
             row1.addView(imagePollOptionView)
+            imagePollOptionView.setContentDescription(indexForAccessibility)
             imagePollOptionView.setOnClickListener {
                 viewModelBinding?.viewModel?.castVote(id, optionViews.keys.toList())
             }
+            indexForAccessibility++
         }
     }
 
@@ -219,19 +212,23 @@ internal class ViewImagePoll(override val view: LinearLayout) :
             val isOnFirstRow = viewsAdded < 2
             if (isOnFirstRow) row1.addView(imagePollOptionView) else row2.addView(imagePollOptionView)
             viewsAdded ++
+            imagePollOptionView.setContentDescription(viewsAdded)
             imagePollOptionView.setOnClickListener { viewModelBinding?.viewModel?.castVote(id, optionViews.keys.toList()) }
         }
     }
 
     private fun createOptionViews(imagePoll: ImagePoll, imageLength: Int): Map<String, ImagePollOptionView> {
+        val borderWidth = imagePoll.options.first().border.width.dpAsPx(view.resources.displayMetrics)
+        val totalBorderWidth = borderWidth * 2
+
         return imagePoll.options.associate {
             it.id to view.imageOptionView {
-                initializeOptionViewLayout(it, imageLength + OPTION_TEXT_HEIGHT.toInt())
+                initializeOptionViewLayout(it, imageLength + OPTION_TEXT_HEIGHT.toInt() + totalBorderWidth)
                 bindOptionView(it)
                 bindOptionImageSize(imageLength)
                 setupLinearLayoutParams(
-                    width = imageLength,
-                    height = imageLength + OPTION_TEXT_HEIGHT.dpAsPx(view.resources.displayMetrics),
+                    width = imageLength + totalBorderWidth,
+                    height = imageLength + OPTION_TEXT_HEIGHT.dpAsPx(view.resources.displayMetrics) + totalBorderWidth,
                     leftMargin = it.leftMargin.dpAsPx(view.resources.displayMetrics),
                     topMargin = it.topMargin.dpAsPx(view.resources.displayMetrics)
                 )

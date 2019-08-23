@@ -16,21 +16,48 @@ internal class FetchExperienceRequest(
     override val fragments: List<String>
         get() = listOf("experienceFields")
 
-    override val query: String = """
-        query FetchExperience(${"\$"}id: ID, ${"\$"}campaignURL: String) {
-            experience(id: ${"\$"}id, campaignURL: ${"\$"}campaignURL) {
-                ...experienceFields
+    override val query: String
+    get() {
+        return when(queryIdentifier) {
+            is ExperienceQueryIdentifier.ById -> {
+                if (queryIdentifier.useDraft) {
+                    """
+                    query FetchExperienceById(${"\$"}id: ID, ${"\$"}versionID: String) {
+                        experience(id: ${"\$"}id, versionID: ${"\$"}versionID) {
+                            ...experienceFields
+                        }
+                    }
+                    """.trimIndent()
+                } else {
+                    """
+                    query FetchExperienceById(${"\$"}id: ID) {
+                        experience(id: ${"\$"}id) {
+                            ...experienceFields
+                        }
+                    }
+                    """.trimIndent()
+                }
+            }
+            is ExperienceQueryIdentifier.ByUniversalLink -> {
+                """
+                query FetchExperienceByCampaignURL(${"\$"}campaignURL: String) {
+                    experience(campaignURL: ${"\$"}campaignURL) {
+                        ...experienceFields
+                    }
+                }
+                """.trimIndent()
             }
         }
-    """
+    }
     override val variables: JSONObject = JSONObject().apply {
         when (queryIdentifier) {
             is ExperienceQueryIdentifier.ById -> {
                 put("id", queryIdentifier.id)
-                put("campaignURL", JSONObject.NULL)
+                if(queryIdentifier.useDraft) {
+                    put("versionID", "current")
+                }
             }
             is ExperienceQueryIdentifier.ByUniversalLink -> {
-                put("id", JSONObject.NULL)
                 put("campaignURL", queryIdentifier.uri)
             }
         }
@@ -49,7 +76,7 @@ internal class FetchExperienceRequest(
          * (This method is typically used when experiences are started from a deep link or
          * progammatically.)
          */
-        data class ById(val id: String) : ExperienceQueryIdentifier()
+        data class ById(val id: String, val useDraft: Boolean) : ExperienceQueryIdentifier()
 
         /**
          * Experiences may be started from a universal link.  The link itself may ultimately, but

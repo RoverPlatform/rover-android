@@ -18,9 +18,12 @@ import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.Publishers
 import io.rover.sdk.streams.Scheduler
 import io.rover.sdk.streams.Timestamped
+import io.rover.sdk.streams.distinctUntilChanged
+import io.rover.sdk.streams.first
 import io.rover.sdk.streams.flatMap
 import io.rover.sdk.streams.map
 import io.rover.sdk.streams.observeOn
+import io.rover.sdk.streams.subscribe
 import io.rover.sdk.streams.timestamp
 import io.rover.sdk.ui.PixelSize
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
@@ -31,7 +34,7 @@ import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.dpAsPx
 import org.reactivestreams.Publisher
-import kotlin.math.log
+import org.reactivestreams.Subscription
 
 internal class ImagePollViewModel(
     override val id: String,
@@ -39,7 +42,7 @@ internal class ImagePollViewModel(
     private val measurementService: MeasurementService,
     private val assetService: AssetService,
     private val imageOptimizationService: ImageOptimizationService,
-    mainScheduler: Scheduler,
+    private val mainScheduler: Scheduler,
     private val pollVotingInteractor: VotingInteractor,
     private val eventEmitter: EventEmitter,
     private val block: Block,
@@ -75,6 +78,7 @@ internal class ImagePollViewModel(
     }
 
     override fun informImagePollOptionDimensions(measuredSize: MeasuredSize) {
+        multiImageUpdate()
         measurementsSubject.onNext(measuredSize)
     }
 
@@ -86,11 +90,15 @@ internal class ImagePollViewModel(
 
     private val images: Map<String, Image> = imagePoll.options.filter { it.image != null }.associate { it.id to it.image!! }
 
-    override val multiImageUpdates: Publisher<Map<String, ImagePollViewModelInterface.ImageUpdate>> =
-        measurementsSubject
+    override val multiImageUpdates = PublishSubject<Map<String, ImagePollViewModelInterface.ImageUpdate>>()
+
+    private fun multiImageUpdate() {
+        measurementsSubject.distinctUntilChanged()
             .timestamp()
             .imagesFetchTransform()
             .observeOn(mainScheduler)
+            .subscribe { multiImageUpdates.onNext(it) }
+    }
 
     private fun Publisher<Timestamped<MeasuredSize>>.imagesFetchTransform(): Publisher<Map<String, ImagePollViewModelInterface.ImageUpdate>> {
         return flatMap { (timestampMillis, measuredSize) ->
@@ -98,7 +106,7 @@ internal class ImagePollViewModel(
                 val pixelSize = PixelSize(measuredSize.width.dpAsPx(measuredSize.density), measuredSize.height.dpAsPx(measuredSize.density))
                 val uriWithParameters = imageOptimizationService.optimizeImageForFill(it.value, pixelSize)
 
-                return@map assetService.imageByUrl(uriWithParameters.toURL()).map { bitmap ->
+                return@map assetService.imageByUrl(uriWithParameters.toURL()).distinctUntilChanged().map { bitmap ->
                     val timeElapsed = System.currentTimeMillis() - timestampMillis
                     val shouldFade = timeElapsed > IMAGE_FADE_IN_MINIMUM_TIME
                     it.key to ImagePollViewModelInterface.ImageUpdate(bitmap, shouldFade) }
@@ -139,9 +147,7 @@ internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
      *
      * Be sure to subscribe to [multiImageUpdates] first.
      */
-    fun informImagePollOptionDimensions(
-        measuredSize: MeasuredSize
-    )
+    fun informImagePollOptionDimensions(measuredSize: MeasuredSize)
     
     fun castVote(selectedOption: String, optionIds: List<String>)
     fun checkForUpdate(pollId: String, optionIds: List<String>)

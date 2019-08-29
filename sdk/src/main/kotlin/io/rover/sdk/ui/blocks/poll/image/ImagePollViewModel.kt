@@ -108,7 +108,7 @@ internal class ImagePollViewModel(
     }
 
     override fun castVote(selectedOption: String, optionIds: List<String>) {
-        pollVotingInteractor.castVotes(id, selectedOption)
+        pollVotingInteractor.castVotes(selectedOption)
         imagePoll.options.find { it.id == selectedOption }?.let { option ->
             eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(id, option.text.rawValue, option.image?.url?.toString()), campaignId))
         }

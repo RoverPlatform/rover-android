@@ -66,7 +66,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                         setPollNotWaiting()
                     }
                     is VotingState.RefreshingResults -> {
-                        if (votingState.pollId == viewModel.id && votingState.shouldTransition) setVoteResultUpdate(votingState)
+                        if (votingState.shouldTransition) setVoteResultUpdate(votingState)
                         setPollNotWaiting()
                     }
                     is VotingState.PollAnswered -> setPollAnsweredWaiting()

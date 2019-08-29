@@ -105,7 +105,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                         setPollNotWaiting()
                     }
                     is VotingState.RefreshingResults -> {
-                        if (votingState.pollId == viewModel.id && votingState.shouldTransition) setVoteResultUpdate(votingState, imageLength)
+                        if (votingState.shouldTransition) setVoteResultUpdate(votingState, imageLength)
                         setPollNotWaiting()
                     }
                 }

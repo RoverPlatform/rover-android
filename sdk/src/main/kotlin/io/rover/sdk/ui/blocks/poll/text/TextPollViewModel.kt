@@ -50,7 +50,7 @@ internal class TextPollViewModel(
     }
 
     override fun castVote(selectedOption: String, optionIds: List<String>) {
-        pollVotingInteractor.castVotes(id, selectedOption)
+        pollVotingInteractor.castVotes(selectedOption)
         textPoll.options.find { it.id == selectedOption }?.let { option ->
             eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(id, option.text.rawValue), campaignId))
         }

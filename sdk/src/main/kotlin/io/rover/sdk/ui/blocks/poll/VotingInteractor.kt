@@ -74,13 +74,10 @@ internal class VotingInteractor(
         }, {
             createRetrieveResultsBackoff(pollId, optionIds)
         }, { subscription ->
-            resultRetrievalSubscription?.cancel()
             resultRetrievalSubscription = subscription
             subscriptions.add(subscription)
         })
     }
-
-    private var resultRetrievalSubscription: Subscription? = null
 
     fun castVotes(optionId: String) {
         when (val state = currentState) {
@@ -111,7 +108,6 @@ internal class VotingInteractor(
                 currentState = state.transitionToRefreshingResults(changeVotesToPercentages(fetchedOptionResults), shouldTransition = true, shouldAnimate = true)
             }
         }, { if(currentState is VotingState.RefreshingResults) refreshResults() }, { subscription ->
-            currentUpdateSubscription?.cancel()
             currentUpdateSubscription = subscription
             subscriptions.add(subscription)
         })
@@ -124,13 +120,22 @@ internal class VotingInteractor(
     }
 
     private val resultsRetrievalHandler = Handler()
-
     private var resultsRetrievalTimesInvoked: Int = 0
+    private var resultRetrievalSubscription: Subscription? = null
+        set(value) {
+            value?.cancel()
+            field = value
+        }
 
     private val submitAnswerHandler = Handler()
     private var submitAnswerTimesInvoked = 0
 
     private var currentUpdateSubscription: Subscription? = null
+        set(value) {
+            value?.cancel()
+            field = value
+    }
+
     private val refreshResultsHandler = Handler()
 
     private fun createVoteSenderBackoff(submittingAnswer: VotingState.SubmittingAnswer) {

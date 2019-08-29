@@ -105,7 +105,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                         setPollNotWaiting()
                     }
                     is VotingState.RefreshingResults -> {
-                        if (votingState.pollId == viewModel.id && votingState.shouldTransition) setVoteResultUpdate(votingState)
+                        if (votingState.pollId == viewModel.id && votingState.shouldTransition) setVoteResultUpdate(votingState, imageLength)
                         setPollNotWaiting()
                     }
                 }
@@ -115,12 +115,21 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         }
     }
 
-    private fun setVoteResultUpdate(votingUpdate: VotingState.RefreshingResults) {
+    private fun setVoteResultUpdate(votingUpdate: VotingState.RefreshingResults, viewWidth: Int) {
         votingUpdate.optionResults.results.forEach { (id, votingShare) ->
             val option = optionViews[id]
+            option?.setOnClickListener(null)
+            val isSelectedOption = id == votingUpdate.selectedOption
 
             viewModelBinding?.viewModel?.let {
-                option?.updateResults(votingShare)
+                if (votingUpdate.shouldTransition) {
+                    if (votingUpdate.shouldAnimate) {
+                        option?.updateResults(votingShare)
+                    } else {
+                        option?.goToResultsState(votingShare, isSelectedOption, it.imagePoll.options.find { it.id == id }!!,
+                            false, viewWidth)
+                    }
+                }
             }
         }
     }

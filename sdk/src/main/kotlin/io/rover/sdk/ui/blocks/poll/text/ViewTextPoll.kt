@@ -16,6 +16,7 @@ import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.background.createBackgroundDrawable
+import io.rover.sdk.ui.blocks.poll.OptionResults
 import io.rover.sdk.ui.blocks.poll.VotingState
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.MeasuredSize
@@ -135,11 +136,22 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     }
 
     private fun setVoteResultUpdate(votingUpdate: VotingState.RefreshingResults) {
+        val maxVotingValue = votingUpdate.optionResults.results.map { it.value }.max() ?: 0
+
         votingUpdate.optionResults.results.forEach { (id, votingShare) ->
             val option = optionViews[id]
+            option?.setOnClickListener(null)
+            val isSelectedOption = id == votingUpdate.selectedOption
 
             viewModelBinding?.viewModel?.let {
-                option?.updateResults(votingShare)
+                if (votingUpdate.shouldTransition) {
+                    if (votingUpdate.shouldAnimate) {
+                        option?.updateResults(votingShare)
+                    } else {
+                        option?.goToResultsState(votingShare, isSelectedOption, it.textPoll.options.find { it.id == id }!!,
+                            false, viewModelBinding?.measuredSize?.width, maxVotingValue)
+                    }
+                }
             }
         }
     }
@@ -154,8 +166,8 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
 
             viewModelBinding?.viewModel?.let {
-                option?.goToResultsState(votingShare, isSelectedOption, it.textPoll.options.find { it.id == id }!!, votingResults.shouldAnimate,
-                    viewModelBinding?.measuredSize?.width, maxVotingValue)
+                option?.goToResultsState(votingShare, isSelectedOption, it.textPoll.options.find { it.id == id }!!,
+                    votingResults.shouldAnimate, viewModelBinding?.measuredSize?.width, maxVotingValue)
             }
         }
     }
@@ -176,7 +188,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                     it.value.backgroundImage = backgroundDrawable
                 }
             }
-    }
+        }
 }
 
 internal interface ViewTextPollInterface : MeasuredBindableView<TextPollViewModelInterface>

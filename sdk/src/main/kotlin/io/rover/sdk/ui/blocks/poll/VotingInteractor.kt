@@ -7,11 +7,13 @@ import io.rover.sdk.data.graphql.safeGetString
 import io.rover.sdk.logging.log
 import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.streams.Scheduler
+import io.rover.sdk.streams.first
 import io.rover.sdk.streams.map
 import io.rover.sdk.streams.observeOn
 import io.rover.sdk.streams.subscribe
 import org.json.JSONObject
 import org.reactivestreams.Publisher
+import org.reactivestreams.Subscription
 
 internal class VotingInteractor(
     private val votingService: VotingService,
@@ -19,16 +21,14 @@ internal class VotingInteractor(
     private val mainScheduler: Scheduler
 ) {
     val votingState = PublishSubject<VotingState>()
-    val refreshEvents = PublishSubject<RefreshEvent>()
-    var pollId: String = ""
-    var optionIds = listOf<String>()
+    private var pollId: String = ""
+    private var optionIds = listOf<String>()
 
     private var currentState: VotingState = VotingState.InitialState
     set(value) {
         field = value
         votingState.onNext(value)
-        val stateToSet = if (value is VotingState.RefreshingResults) VotingState.SubmittingAnswer(value.pollId, value.selectedOption, value.optionResults, false, true) else value
-        votingStorage.setLastSeenPollState(pollId, stateToSet)
+        votingStorage.setLastSeenPollState(pollId, value)
         checkState(value, pollId, optionIds)
     }
 
@@ -40,9 +40,7 @@ internal class VotingInteractor(
         when (votingState) {
             is VotingState.InitialState -> initialState(pollId, optionIds)
             is VotingState.ResultsSeeded -> {}
-            is VotingState.PollAnswered -> {
-                pollAnswered(pollId, votingState.selectedOption, optionIds)
-            }
+            is VotingState.PollAnswered -> pollAnswered(pollId, votingState.selectedOption, optionIds)
             is VotingState.SubmittingAnswer -> {
                 if (optionIds.intersect(votingState.optionResults.results.keys).size != optionIds.size) {
                     currentState = VotingState.InitialState
@@ -50,7 +48,45 @@ internal class VotingInteractor(
                     submittingAnswer(votingState)
                 }
             }
+            is VotingState.RefreshingResults -> refreshingResults()
         }
+    }
+
+    fun cancel() {
+        refreshingResultsHandler.removeCallbacksAndMessages(null)
+        currentUpdateSubscription?.cancel()
+    }
+
+    private var currentUpdateSubscription: Subscription? = null
+
+    private val refreshingResultsHandler = Handler()
+
+    private fun refreshingResults() {
+        refreshingResultsHandler.removeCallbacksAndMessages(null)
+        refreshingResultsHandler.postDelayed({
+            try {
+                votingResultsUpdate(pollId, optionIds)
+            } catch (e: Exception) {
+                log.w("issue trying to send vote results $e")
+            }
+        }, 5000L)
+    }
+
+    private fun votingResultsUpdate(pollId: String, optionIds: List<String>) {
+        refreshingResultsHandler.removeCallbacksAndMessages(null)
+
+        getPollStateFromNetwork(pollId, optionIds).observeOn(mainScheduler).first().subscribe ({ fetchedOptionResults ->
+            val resultsSameKeysAsShown = fetchedOptionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
+
+            when (val state = currentState) {
+                is VotingState.RefreshingResults -> if (fetchedOptionResults.results.isNotEmpty() && resultsSameKeysAsShown && pollId == this.pollId){
+                    currentState = state.copy(optionResults = changeVotesToPercentages(fetchedOptionResults), shouldTransition = true, shouldAnimate = true)
+                }}
+        }, {
+            if(currentState is VotingState.RefreshingResults) refreshingResults()
+        }, { subscription ->
+            currentUpdateSubscription?.cancel()
+            currentUpdateSubscription = subscription })
     }
 
     fun initialize(pollId: String, optionIds: List<String>) {
@@ -72,9 +108,16 @@ internal class VotingInteractor(
             }
             is VotingState.PollAnswered -> {
                 if (!optionIds.contains(state.selectedOption)){
-                    currentState = votingStorage.getLastSeenPollState(pollId)
+                    currentState = VotingState.InitialState
                 } else {
-                    pollAnswered(pollId, state.selectedOption, optionIds)
+                    currentState = votingStorage.getLastSeenPollState(pollId)
+                }
+            }
+            is VotingState.RefreshingResults -> {
+                currentState = if (optionIds.intersect(state.optionResults.results.keys).size != optionIds.size) {
+                     VotingState.InitialState
+                } else {
+                    state.copy(shouldAnimate = false, shouldTransition = true)
                 }
             }
             else -> currentState = votingStorage.getLastSeenPollState(pollId)
@@ -83,40 +126,36 @@ internal class VotingInteractor(
     }
 
     private fun initialState(pollId: String, optionIds: List<String>) {
-        getPollStateFromNetwork(pollId, optionIds).observeOn(mainScheduler).subscribe { optionResults ->
+        getPollStateFromNetwork(pollId, optionIds).observeOn(mainScheduler).first().subscribe { optionResults ->
             val resultsSameKeysAsShown = optionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
 
             if (resultsSameKeysAsShown && optionResults.results.isNotEmpty() && currentState is VotingState.InitialState) currentState = VotingState.ResultsSeeded(optionResults)
         }
     }
 
-    fun castVotes(pollId: String, optionId: String, optionIds: List<String>) {
+    fun castVotes(pollId: String, optionId: String) {
         when (val current = currentState) {
             is VotingState.ResultsSeeded -> {
                 val optionWithIncrementedVote = current.optionResults.results.toMutableMap().apply {
                     set(optionId, (get(optionId) ?: 0) + 1)
                 }
-                currentState = VotingState.SubmittingAnswer(pollId, optionId, changeVotesToPercentages(current.optionResults.copy(results = optionWithIncrementedVote)), true, false)
+                currentState = VotingState.SubmittingAnswer(pollId, optionId, changeVotesToPercentages(current.optionResults.copy(results = optionWithIncrementedVote)), true)
             }
             is VotingState.InitialState -> currentState = VotingState.PollAnswered(optionId)
         }
     }
 
-    fun submittingAnswer(submittingAnswer: VotingState.SubmittingAnswer) {
+    private fun submittingAnswer(submittingAnswer: VotingState.SubmittingAnswer) {
         submittingAnswerHandler.removeCallbacksAndMessages(null)
 
-        if (submittingAnswer.answerSubmitted) {
-            currentState = VotingState.RefreshingResults(submittingAnswer.pollId, submittingAnswer.selectedOption, submittingAnswer.optionResults)
-        } else {
-            votingService.castVote(submittingAnswer.pollId, submittingAnswer.selectedOption).observeOn(mainScheduler).subscribe ({ voteOutcome ->
+            votingService.castVote(submittingAnswer.pollId, submittingAnswer.selectedOption).observeOn(mainScheduler).first().subscribe ({ voteOutcome ->
                     if (voteOutcome is VoteOutcome.VoteSuccess) {
                         submittingAnswerHandler.removeCallbacksAndMessages(null)
-                        currentState = VotingState.RefreshingResults(submittingAnswer.pollId, submittingAnswer.selectedOption, submittingAnswer.optionResults)
+                        currentState = VotingState.RefreshingResults(submittingAnswer.pollId, submittingAnswer.selectedOption, submittingAnswer.optionResults, shouldAnimate = false, shouldTransition = false)
                     } else {
                         createVoteSenderBackoff(submittingAnswer)
                     }
             }, { _ -> createVoteSenderBackoff(submittingAnswer)})
-        }
     }
 
     private val submittingAnswerHandler = Handler()
@@ -124,25 +163,22 @@ internal class VotingInteractor(
 
     private fun createVoteSenderBackoff(submittingAnswer: VotingState.SubmittingAnswer) {
         submittingAnswerHandler.removeCallbacksAndMessages(null)
-        val runnableCode = object : Runnable {
-            override fun run() {
-                try {
-                    log.v("vote sent")
-                    submittingAnswerTimesInvoked++
-                    submittingAnswer(submittingAnswer)
-                } catch (e: Exception) {
-                    log.w("issue trying to send vote results $e")
-                }
-            }
-        }
 
-        submittingAnswerHandler.postDelayed(runnableCode, 2000L * submittingAnswerTimesInvoked)
+        submittingAnswerHandler.postDelayed({
+            try {
+                log.v("vote sent")
+                submittingAnswerTimesInvoked++
+                submittingAnswer(submittingAnswer)
+            } catch (e: Exception) {
+                log.w("issue trying to send vote results $e")
+            }
+        }, 2000L * submittingAnswerTimesInvoked)
     }
 
-    fun pollAnswered(pollId: String, voteOptionId: String, optionIds: List<String>) {
+    private fun pollAnswered(pollId: String, voteOptionId: String, optionIds: List<String>) {
         pollAnsweredHandler.removeCallbacksAndMessages(null)
 
-        getPollStateFromNetwork(pollId, optionIds).observeOn(mainScheduler).subscribe ({ optionResults ->
+        getPollStateFromNetwork(pollId, optionIds).observeOn(mainScheduler).first().subscribe ({ optionResults ->
             val resultsSameKeysAsShown = optionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
 
             if (resultsSameKeysAsShown && optionResults.results.isNotEmpty()) {
@@ -152,7 +188,7 @@ internal class VotingInteractor(
                     set(voteOptionId, (get(voteOptionId) ?: 0) + 1)
                 }
 
-                currentState = VotingState.SubmittingAnswer(pollId, voteOptionId, changeVotesToPercentages(optionResults.copy(results = optionWithIncrementedVote)), true, false)
+                currentState = VotingState.SubmittingAnswer(pollId, voteOptionId, changeVotesToPercentages(optionResults.copy(results = optionWithIncrementedVote)), true)
             } else {
                 createRetrieveResultsBackoff(pollId, voteOptionId, optionIds)
             }
@@ -164,32 +200,15 @@ internal class VotingInteractor(
 
     private fun createRetrieveResultsBackoff(pollId: String, voteOptionId: String, optionIds: List<String>) {
         pollAnsweredHandler.removeCallbacksAndMessages(null)
-        val runnableCode = object : Runnable {
-            override fun run() {
+
+        pollAnsweredHandler.postDelayed({
                 try {
                     timesInvoked++
                     pollAnswered(pollId, voteOptionId, optionIds)
                 } catch (e: Exception) {
                     log.w("issue trying to retrieve results $e")
                 }
-            }
-        }
-
-        pollAnsweredHandler.postDelayed(runnableCode, 2000L * timesInvoked)
-    }
-
-    // the strange refreshing state with the refresh events and the back and forth state is a hangover from the previous implementation
-    // due to the UI being unable to transition straight to the Refreshing state, this should be changed in the future
-    fun votingResultsUpdate(pollId: String, optionIds: List<String>) {
-        getPollStateFromNetwork(pollId, optionIds).observeOn(mainScheduler).subscribe { fetchedOptionResults ->
-            val resultsSameKeysAsShown = fetchedOptionResults.results.filterKeys { key -> key in optionIds }.size == optionIds.size
-
-            when (val state = currentState) {
-                is VotingState.RefreshingResults -> if (fetchedOptionResults.results.isNotEmpty() && resultsSameKeysAsShown && pollId == this.pollId){
-                    currentState = state.copy(optionResults = changeVotesToPercentages(fetchedOptionResults))
-                    refreshEvents.onNext(RefreshEvent(pollId, changeVotesToPercentages(fetchedOptionResults)))
-                }}
-            }
+        }, 2000L * timesInvoked)
     }
 
     private fun getPollStateFromNetwork(pollId: String, optionIds: List<String>): Publisher<OptionResults> {
@@ -259,7 +278,7 @@ internal sealed class VotingState {
             }
         }
     }
-    data class RefreshingResults(val pollId: String, val selectedOption: String, val optionResults: OptionResults) : VotingState() {
+    data class RefreshingResults(val pollId: String, val selectedOption: String, val optionResults: OptionResults, val shouldAnimate: Boolean = true, val shouldTransition: Boolean = true) : VotingState() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply { 
                 put(TYPE, REFRESHING_RESULTS)
@@ -269,7 +288,7 @@ internal sealed class VotingState {
             }
         }
     }
-    data class SubmittingAnswer(val pollId: String, val selectedOption: String, val optionResults: OptionResults, val shouldAnimate: Boolean, val answerSubmitted: Boolean) : VotingState() {
+    data class SubmittingAnswer(val pollId: String, val selectedOption: String, val optionResults: OptionResults, val shouldAnimate: Boolean) : VotingState() {
     override fun encodeJson(): JSONObject {
         return JSONObject().apply {
             put(TYPE, SUBMITTING_ANSWER)
@@ -277,7 +296,6 @@ internal sealed class VotingState {
             putProp(this@SubmittingAnswer, SubmittingAnswer::selectedOption) { it }
             putProp(this@SubmittingAnswer, SubmittingAnswer::optionResults) { it.encodeJson() }
             putProp(this@SubmittingAnswer, SubmittingAnswer::shouldAnimate) { false }
-            putProp(this@SubmittingAnswer, SubmittingAnswer::answerSubmitted) { it }
         }
     }
     }
@@ -305,12 +323,9 @@ internal sealed class VotingState {
                     jsonObject.getString(SubmittingAnswer::pollId.name),
                     jsonObject.getString(SubmittingAnswer::selectedOption.name),
                     OptionResults.decodeJson(jsonObject.getJSONObject(SubmittingAnswer::optionResults.name)),
-                    false,
-                jsonObject.getBoolean(SubmittingAnswer::answerSubmitted.name))
+                    false)
                 else -> InitialState
             }
         }
     }
 }
-
-internal data class RefreshEvent(val pollId: String, val optionResults: OptionResults)

@@ -11,20 +11,15 @@ import io.rover.sdk.platform.imageOptionView
 import io.rover.sdk.platform.setupLayoutParams
 import io.rover.sdk.platform.setupLinearLayoutParams
 import io.rover.sdk.platform.textView
-import io.rover.sdk.streams.androidLifecycleDispose
 import io.rover.sdk.streams.distinctUntilChanged
-import io.rover.sdk.streams.first
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
-import io.rover.sdk.ui.blocks.poll.RefreshEvent
 import io.rover.sdk.ui.blocks.poll.VotingState
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.concerns.ViewModelBinding
 import io.rover.sdk.ui.dpAsPx
 import io.rover.sdk.ui.pxAsDp
-import java.util.Timer
-import kotlin.concurrent.fixedRateTimer
 
 internal class ViewImagePoll(override val view: LinearLayout) :
     ViewImagePollInterface {
@@ -43,15 +38,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
 
     companion object {
         private const val OPTION_TEXT_HEIGHT = 40f
-        private const val UPDATE_INTERVAL = 5000L
     }
-
-    private var timer: Timer? = null
-        set(value) {
-            field?.cancel()
-            field?.purge()
-            field = value
-        }
 
     private fun setPollAnsweredWaiting() {
         view.alpha = 0.5f
@@ -61,7 +48,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
         view.alpha = 1f
     }
 
-    override var viewModelBinding: MeasuredBindableView.Binding<ImagePollViewModelInterface>? by ViewModelBinding(view = view, cancellationBlock = {timer = null}) { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<ImagePollViewModelInterface>? by ViewModelBinding(view = view, cancellationBlock = { viewModelBinding?.viewModel?.cancel() }) { binding, subscriptionCallback ->
 
         binding?.viewModel?.let { viewModel ->
             val width = binding.measuredSize?.width ?: 0f
@@ -118,33 +105,17 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                         setPollNotWaiting()
                     }
                     is VotingState.RefreshingResults -> {
-                        if (votingState.pollId == viewModel.id) setUpdateTimer(votingState)
+                        if (votingState.pollId == viewModel.id && votingState.shouldTransition) setVoteResultUpdate(votingState)
                         setPollNotWaiting()
                     }
                 }
             }, { throw (it) }, { subscriptionCallback(it) })
 
-            viewModel.refreshEvents.subscribe({ refresh ->
-                if (refresh.pollId == viewModel.id) setVoteResultUpdate(refresh)
-            }, { e -> log.e("${e.message}") }, { subscriptionCallback(it) })
-
             viewModel.bindInteractor(viewModel.id, optionViews.keys.toList())
         }
     }
 
-    private fun createTimer(votingState: VotingState.RefreshingResults): Timer {
-        return fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
-            if(view.windowVisibility == View.VISIBLE) {
-                viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
-            }
-        }
-    }
-
-    private fun setUpdateTimer(votingState: VotingState.RefreshingResults) {
-        if (timer == null) timer = createTimer(votingState)
-    }
-
-    private fun setVoteResultUpdate(votingUpdate: RefreshEvent) {
+    private fun setVoteResultUpdate(votingUpdate: VotingState.RefreshingResults) {
         votingUpdate.optionResults.results.forEach { (id, votingShare) ->
             val option = optionViews[id]
 

@@ -11,21 +11,16 @@ import io.rover.sdk.platform.addView
 import io.rover.sdk.platform.optionView
 import io.rover.sdk.platform.setupLayoutParams
 import io.rover.sdk.platform.textView
-import io.rover.sdk.streams.ViewEvent
 import io.rover.sdk.streams.androidLifecycleDispose
-import io.rover.sdk.streams.attachEvents
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.background.createBackgroundDrawable
-import io.rover.sdk.ui.blocks.poll.RefreshEvent
 import io.rover.sdk.ui.blocks.poll.VotingState
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.concerns.ViewModelBinding
-import org.reactivestreams.Subscription
 import java.util.Timer
-import kotlin.concurrent.fixedRateTimer
 
 internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInterface {
 
@@ -34,10 +29,6 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
             width = ViewGroup.LayoutParams.MATCH_PARENT,
             height = ViewGroup.LayoutParams.WRAP_CONTENT
         )
-    }
-
-    companion object {
-        private const val UPDATE_INTERVAL = 5000L
     }
 
     private var optionViews = mapOf<String, TextOptionView>()
@@ -49,14 +40,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         view.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
     }
 
-    private var timer: Timer? = null
-    set(value) {
-        field?.cancel()
-        field?.purge()
-        field = value
-    }
-
-    override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding(view, cancellationBlock = {timer = null}) { binding, subscriptionCallback ->
+    override var viewModelBinding: MeasuredBindableView.Binding<TextPollViewModelInterface>? by ViewModelBinding(view, cancellationBlock = { viewModelBinding?.viewModel?.cancel() }) { binding, subscriptionCallback ->
         binding?.viewModel?.let { viewModel ->
             bindQuestion(viewModel.textPoll, viewModel.textPoll.options.size)
 
@@ -81,27 +65,17 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                         setPollNotWaiting()
                     }
                     is VotingState.RefreshingResults -> {
-                        if (votingState.pollId == viewModel.id) setUpdateTimer(votingState)
+                        if (votingState.pollId == viewModel.id && votingState.shouldTransition) setVoteResultUpdate(votingState)
                         setPollNotWaiting()
                     }
                     is VotingState.PollAnswered -> setPollAnsweredWaiting()
                 }
             }, { e -> log.e("${e.message}") }, { subscriptionCallback(it) })
 
-            viewModel.refreshEvents.subscribe({ refresh ->
-                if (refresh.pollId == viewModel.id) setVoteResultUpdate(refresh)
-            }, { e -> log.e("${e.message}") }, { subscriptionCallback(it) })
-
             viewModel.bindInteractor(viewModel.id, optionViews.keys.toList())
         }
     }
-    private fun createTimer(votingState: VotingState.RefreshingResults): Timer {
-        return fixedRateTimer(period = UPDATE_INTERVAL, initialDelay = UPDATE_INTERVAL) {
-            if(view.windowVisibility == View.VISIBLE) {
-                viewModelBinding?.viewModel?.checkForUpdate(votingState.pollId, votingState.optionResults.results.keys.toList())
-            }
-        }
-    }
+
 
     private fun setPollAnsweredWaiting() {
         view.alpha = 0.5f
@@ -109,10 +83,6 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
     private fun setPollNotWaiting() {
         view.alpha = 1f
-    }
-
-    private fun setUpdateTimer(votingState: VotingState.RefreshingResults) {
-        if (timer == null) { timer = createTimer(votingState) }
     }
 
     private fun setupOptionViews(viewModel: TextPollViewModelInterface) {
@@ -164,7 +134,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
         }
     }
 
-    private fun setVoteResultUpdate(votingUpdate: RefreshEvent) {
+    private fun setVoteResultUpdate(votingUpdate: VotingState.RefreshingResults) {
         votingUpdate.optionResults.results.forEach { (id, votingShare) ->
             val option = optionViews[id]
 

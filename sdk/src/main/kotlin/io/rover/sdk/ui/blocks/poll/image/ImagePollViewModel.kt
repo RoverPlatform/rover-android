@@ -11,7 +11,6 @@ import io.rover.sdk.data.domain.Screen
 import io.rover.sdk.data.events.Option
 import io.rover.sdk.data.events.RoverEvent
 import io.rover.sdk.data.getFontAppearance
-import io.rover.sdk.logging.log
 import io.rover.sdk.services.EventEmitter
 import io.rover.sdk.services.MeasurementService
 import io.rover.sdk.streams.PublishSubject
@@ -19,7 +18,6 @@ import io.rover.sdk.streams.Publishers
 import io.rover.sdk.streams.Scheduler
 import io.rover.sdk.streams.Timestamped
 import io.rover.sdk.streams.distinctUntilChanged
-import io.rover.sdk.streams.first
 import io.rover.sdk.streams.flatMap
 import io.rover.sdk.streams.map
 import io.rover.sdk.streams.observeOn
@@ -27,14 +25,12 @@ import io.rover.sdk.streams.subscribe
 import io.rover.sdk.streams.timestamp
 import io.rover.sdk.ui.PixelSize
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
-import io.rover.sdk.ui.blocks.poll.RefreshEvent
 import io.rover.sdk.ui.blocks.poll.VotingInteractor
 import io.rover.sdk.ui.blocks.poll.VotingState
 import io.rover.sdk.ui.concerns.BindableViewModel
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.dpAsPx
 import org.reactivestreams.Publisher
-import org.reactivestreams.Subscription
 
 internal class ImagePollViewModel(
     override val id: String,
@@ -82,10 +78,6 @@ internal class ImagePollViewModel(
         measurementsSubject.onNext(measuredSize)
     }
 
-    override fun checkForUpdate(pollId: String, optionIds: List<String>) {
-        pollVotingInteractor.votingResultsUpdate(pollId, optionIds)
-    }
-
     private val measurementsSubject = PublishSubject<MeasuredSize>()
 
     private val images: Map<String, Image> = imagePoll.options.filter { it.image != null }.associate { it.id to it.image!! }
@@ -116,7 +108,7 @@ internal class ImagePollViewModel(
     }
 
     override fun castVote(selectedOption: String, optionIds: List<String>) {
-        pollVotingInteractor.castVotes(id, selectedOption, optionIds)
+        pollVotingInteractor.castVotes(id, selectedOption)
         imagePoll.options.find { it.id == selectedOption }?.let { option ->
             eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(id, option.text.rawValue, option.image?.url?.toString()), campaignId))
         }
@@ -126,8 +118,11 @@ internal class ImagePollViewModel(
         pollVotingInteractor.initialize(id, optionIds)
     }
 
+    override fun cancel() {
+        pollVotingInteractor.cancel()
+    }
+
     override val votingState = pollVotingInteractor.votingState
-    override val refreshEvents: PublishSubject<RefreshEvent> = pollVotingInteractor.refreshEvents
 }
 
 internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
@@ -138,6 +133,8 @@ internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
      * Subscribe to be informed of the images becoming ready.
      */
     val multiImageUpdates: Publisher<Map<String, ImagePollViewModelInterface.ImageUpdate>>
+
+    fun cancel()
 
     data class ImageUpdate(val bitmap: Bitmap, val shouldFade: Boolean)
 
@@ -150,8 +147,6 @@ internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
     fun informImagePollOptionDimensions(measuredSize: MeasuredSize)
     
     fun castVote(selectedOption: String, optionIds: List<String>)
-    fun checkForUpdate(pollId: String, optionIds: List<String>)
     fun bindInteractor(id: String, optionIds: List<String>)
     val votingState: PublishSubject<VotingState>
-    val refreshEvents: PublishSubject<RefreshEvent>
 }

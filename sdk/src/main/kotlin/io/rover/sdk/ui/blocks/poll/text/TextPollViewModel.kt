@@ -13,8 +13,6 @@ import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.ui.RectF
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.layout.Measurable
-import io.rover.sdk.ui.blocks.poll.OptionResults
-import io.rover.sdk.ui.blocks.poll.RefreshEvent
 import io.rover.sdk.ui.blocks.poll.VotingInteractor
 import io.rover.sdk.ui.blocks.poll.VotingState
 import io.rover.sdk.ui.concerns.BindableViewModel
@@ -51,12 +49,8 @@ internal class TextPollViewModel(
         return optionsHeight + optionSpacing + questionHeight + totalBorderWidth
     }
 
-    override fun checkForUpdate(pollId: String, optionIds: List<String>) {
-        pollVotingInteractor.votingResultsUpdate(pollId, optionIds)
-    }
-
     override fun castVote(selectedOption: String, optionIds: List<String>) {
-        pollVotingInteractor.castVotes(id, selectedOption, optionIds)
+        pollVotingInteractor.castVotes(id, selectedOption)
         textPoll.options.find { it.id == selectedOption }?.let { option ->
             eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(id, option.text.rawValue), campaignId))
         }
@@ -66,7 +60,9 @@ internal class TextPollViewModel(
         pollVotingInteractor.initialize(id, optionIds)
     }
 
-    override val refreshEvents: PublishSubject<RefreshEvent> = pollVotingInteractor.refreshEvents
+    override fun cancel() {
+        pollVotingInteractor.cancel()
+    }
 
     override val votingState = pollVotingInteractor.votingState
 }
@@ -74,10 +70,9 @@ internal class TextPollViewModel(
 internal interface TextPollViewModelInterface : Measurable, BindableViewModel {
     val textPoll: TextPoll
     val id: String
+    fun cancel()
     val optionBackgroundViewModel: BackgroundViewModelInterface
     fun castVote(selectedOption: String, optionIds: List<String>)
     fun bindInteractor(id: String, optionIds: List<String>)
-    fun checkForUpdate(pollId: String, optionIds: List<String>)
     val votingState: PublishSubject<VotingState>
-    val refreshEvents: PublishSubject<RefreshEvent>
 }

@@ -40,12 +40,15 @@ internal class VotingInteractor(
         }
     }
 
+    private var cancelled = true
+
     fun cancel() {
         refreshResultsHandler.removeCallbacksAndMessages(null)
         resultsRetrievalHandler.removeCallbacksAndMessages(null)
         submitAnswerHandler.removeCallbacksAndMessages(null)
         currentUpdateSubscription?.cancel()
         subscriptions.forEach { it.cancel() }
+        cancelled = true
     }
 
     companion object {
@@ -59,6 +62,7 @@ internal class VotingInteractor(
         this.optionIds = optionIds
 
         currentState = votingStorage.getLastSeenPollState(pollId).determineInitialState(optionIds)
+        cancelled = false
     }
 
     private fun startFetchingResults(pollId: String, optionIds: List<String>) {
@@ -74,8 +78,12 @@ internal class VotingInteractor(
         }, {
             createRetrieveResultsBackoff(pollId, optionIds)
         }, { subscription ->
-            resultRetrievalSubscription = subscription
-            subscriptions.add(subscription)
+            if (cancelled) {
+                subscription.cancel()
+            } else {
+                resultRetrievalSubscription = subscription
+                subscriptions.add(subscription)
+            }
         })
     }
 
@@ -96,7 +104,9 @@ internal class VotingInteractor(
                 } else {
                     createVoteSenderBackoff(submittingAnswer)
                 }
-            }, { createVoteSenderBackoff(submittingAnswer)}, {subscriptions.add(it)})
+            }, { createVoteSenderBackoff(submittingAnswer)}, {
+                if (cancelled) it.cancel() else subscriptions.add(it)
+                })
     }
 
     private fun votingResultsUpdate(optionIds: List<String>) {
@@ -108,8 +118,12 @@ internal class VotingInteractor(
                 currentState = state.transitionToRefreshingResults(changeVotesToPercentages(fetchedOptionResults), shouldTransition = true, shouldAnimate = true)
             }
         }, { if(currentState is VotingState.RefreshingResults) refreshResults() }, { subscription ->
-            currentUpdateSubscription = subscription
-            subscriptions.add(subscription)
+            if (cancelled) {
+                subscription.cancel()
+            } else {
+                currentUpdateSubscription = subscription
+                subscriptions.add(subscription)
+            }
         })
     }
 

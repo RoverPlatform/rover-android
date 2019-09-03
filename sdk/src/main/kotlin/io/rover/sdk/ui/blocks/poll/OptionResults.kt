@@ -27,7 +27,7 @@ internal fun changeVotesToPercentages(results: OptionResults): OptionResults {
     val total = results.results.values.sum().toFloat()
     val votes = results.results.mapValues { (it.value.toFloat() / total * 100) }
 
-    val votesWithFractional = votes.toList().map {
+    val votesWithFractional = votes.toList().sortedBy { it.first }.map {
         VotesWithFractional(
             it.first,
             it.second.toInt(),

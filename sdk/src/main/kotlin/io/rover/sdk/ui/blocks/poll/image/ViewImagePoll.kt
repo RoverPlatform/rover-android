@@ -42,6 +42,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
 
     private fun setPollAnsweredWaiting() {
         view.alpha = 0.5f
+        optionViews.forEach { it.value.setOnClickListener(null) }
     }
 
     private fun setPollNotWaiting() {
@@ -107,6 +108,7 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                     is VotingState.RefreshingResults -> {
                         if (votingState.shouldTransition) setVoteResultUpdate(votingState, imageLength)
                         setPollNotWaiting()
+                        if (view.windowVisibility == View.VISIBLE) viewModel.notifyPollVisible() else viewModel.notifyPollNotVisible()
                     }
                 }
             }, { throw (it) }, { subscriptionCallback(it) })

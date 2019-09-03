@@ -68,6 +68,8 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
                     is VotingState.RefreshingResults -> {
                         if (votingState.shouldTransition) setVoteResultUpdate(votingState)
                         setPollNotWaiting()
+
+                        if (view.windowVisibility == View.VISIBLE) viewModel.notifyPollVisible() else viewModel.notifyPollNotVisible()
                     }
                     is VotingState.PollAnswered -> setPollAnsweredWaiting()
                 }
@@ -80,6 +82,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
     private fun setPollAnsweredWaiting() {
         view.alpha = 0.5f
+        optionViews.forEach { it.value.setOnClickListener(null) }
     }
 
     private fun setPollNotWaiting() {

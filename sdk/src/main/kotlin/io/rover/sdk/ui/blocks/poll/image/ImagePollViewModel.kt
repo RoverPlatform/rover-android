@@ -122,6 +122,14 @@ internal class ImagePollViewModel(
         pollVotingInteractor.cancel()
     }
 
+    override fun notifyPollVisible() {
+        pollVotingInteractor.pollVisible = true
+    }
+
+    override fun notifyPollNotVisible() {
+        pollVotingInteractor.pollVisible = false
+    }
+
     override val votingState = pollVotingInteractor.votingState
 }
 
@@ -149,4 +157,6 @@ internal interface ImagePollViewModelInterface : BindableViewModel, Measurable {
     fun castVote(selectedOption: String, optionIds: List<String>)
     fun bindInteractor(id: String, optionIds: List<String>)
     val votingState: PublishSubject<VotingState>
+    fun notifyPollVisible()
+    fun notifyPollNotVisible()
 }

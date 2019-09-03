@@ -42,6 +42,8 @@ internal class VotingInteractor(
 
     private var cancelled = true
 
+    var pollVisible = true
+
     fun cancel() {
         refreshResultsHandler.removeCallbacksAndMessages(null)
         resultsRetrievalHandler.removeCallbacksAndMessages(null)
@@ -117,26 +119,30 @@ internal class VotingInteractor(
     private fun votingResultsUpdate(optionIds: List<String>) {
         refreshResultsHandler.removeCallbacksAndMessages(null)
 
-        fetchVotingResults(optionIds).observeOn(mainScheduler).first().subscribe(
-            { fetchedOptionResults ->
-                val state = currentState
-                if (state is VotingState.RefreshingResults && fetchedOptionResults.results.isNotEmpty()) {
-                    currentState = state.transitionToRefreshingResults(
-                        changeVotesToPercentages(fetchedOptionResults),
-                        shouldTransition = true,
-                        shouldAnimate = true
-                    )
-                }
-            },
-            { if (currentState is VotingState.RefreshingResults) refreshResults() },
-            { subscription ->
-                if (cancelled) {
-                    subscription.cancel()
-                } else {
-                    currentUpdateSubscription = subscription
-                    subscriptions.add(subscription)
-                }
-            })
+        if (pollVisible) {
+            fetchVotingResults(optionIds).observeOn(mainScheduler).first().subscribe(
+                { fetchedOptionResults ->
+                    val state = currentState
+                    if (state is VotingState.RefreshingResults && fetchedOptionResults.results.isNotEmpty()) {
+                        currentState = state.transitionToRefreshingResults(
+                            changeVotesToPercentages(fetchedOptionResults),
+                            shouldTransition = true,
+                            shouldAnimate = true
+                        )
+                    }
+                },
+                { if (currentState is VotingState.RefreshingResults) refreshResults() },
+                { subscription ->
+                    if (cancelled) {
+                        subscription.cancel()
+                    } else {
+                        currentUpdateSubscription = subscription
+                        subscriptions.add(subscription)
+                    }
+                })
+        } else {
+            currentState = currentState
+        }
     }
 
     private fun fetchVotingResults(optionIds: List<String>): Publisher<OptionResults> {

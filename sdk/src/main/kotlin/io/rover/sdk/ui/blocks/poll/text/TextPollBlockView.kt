@@ -3,15 +3,17 @@ package io.rover.sdk.ui.blocks.poll.text
 import android.content.Context
 import android.graphics.Canvas
 import android.widget.LinearLayout
+import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.ui.blocks.concerns.ViewComposition
 import io.rover.sdk.ui.blocks.concerns.background.ViewBackground
 import io.rover.sdk.ui.blocks.concerns.border.ViewBorder
 import io.rover.sdk.ui.blocks.concerns.layout.LayoutableView
 import io.rover.sdk.ui.blocks.concerns.layout.ViewBlock
+import io.rover.sdk.ui.blocks.poll.VisibilityAwareLinearLayout
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.ViewModelBinding
 
-internal class TextPollBlockView(context: Context?) : LinearLayout(context),
+internal class TextPollBlockView(context: Context?) : VisibilityAwareLinearLayout(context),
     LayoutableView<TextPollBlockViewModel> {
 
     // mixins

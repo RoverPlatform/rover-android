@@ -42,8 +42,6 @@ internal class VotingInteractor(
 
     private var cancelled = true
 
-    var pollVisible = true
-
     fun cancel() {
         refreshResultsHandler.removeCallbacksAndMessages(null)
         resultsRetrievalHandler.removeCallbacksAndMessages(null)
@@ -119,7 +117,6 @@ internal class VotingInteractor(
     private fun votingResultsUpdate(optionIds: List<String>) {
         refreshResultsHandler.removeCallbacksAndMessages(null)
 
-        if (pollVisible) {
             fetchVotingResults(optionIds).observeOn(mainScheduler).first().subscribe(
                 { fetchedOptionResults ->
                     val state = currentState
@@ -140,9 +137,6 @@ internal class VotingInteractor(
                         subscriptions.add(subscription)
                     }
                 })
-        } else {
-            currentState = currentState
-        }
     }
 
     private fun fetchVotingResults(optionIds: List<String>): Publisher<OptionResults> {

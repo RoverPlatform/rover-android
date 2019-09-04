@@ -64,22 +64,12 @@ internal class TextPollViewModel(
         pollVotingInteractor.cancel()
     }
 
-    override fun notifyPollVisible() {
-        pollVotingInteractor.pollVisible = true
-    }
-
-    override fun notifyPollNotVisible() {
-        pollVotingInteractor.pollVisible = false
-    }
-
     override val votingState = pollVotingInteractor.votingState
 }
 
 internal interface TextPollViewModelInterface : Measurable, BindableViewModel {
     val textPoll: TextPoll
     val id: String
-    fun notifyPollVisible()
-    fun notifyPollNotVisible()
     fun cancel()
     val optionBackgroundViewModel: BackgroundViewModelInterface
     fun castVote(selectedOption: String, optionIds: List<String>)

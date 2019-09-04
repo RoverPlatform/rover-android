@@ -108,7 +108,6 @@ internal class ViewImagePoll(override val view: LinearLayout) :
                     is VotingState.RefreshingResults -> {
                         if (votingState.shouldTransition) setVoteResultUpdate(votingState, imageLength)
                         setPollNotWaiting()
-                        if (view.windowVisibility == View.VISIBLE) viewModel.notifyPollVisible() else viewModel.notifyPollNotVisible()
                     }
                 }
             }, { throw (it) }, { subscriptionCallback(it) })

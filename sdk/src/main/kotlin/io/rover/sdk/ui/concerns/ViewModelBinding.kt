@@ -1,7 +1,6 @@
 package io.rover.sdk.ui.concerns
 
 import android.view.View
-import io.rover.sdk.logging.log
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.blocks.poll.VisibilityAwareView
 import org.reactivestreams.Subscription
@@ -25,15 +24,17 @@ internal class ViewModelBinding<VM : Any>(
 ) {
     private var outstandingSubscriptions: List<Subscription>? = null
 
-    @Suppress("UNCHECKED_CAST")
     private var viewState: ViewState<VM> = ViewState.Inactive(true, null, true)
     set(value) {
+        val oldValue = field
         field = value
-        when (value) {
-            is ViewState.Active<*> -> {
-                if (outstandingSubscriptions == null) invokeBinding(value.value as VM)
+        when {
+            value is ViewState.Active && oldValue !is ViewState.Active -> {
+                invokeBinding(value.value as VM)
             }
-            else -> cancelSubscriptions()
+            value is ViewState.Inactive && oldValue !is ViewState.Inactive -> {
+                cancelSubscriptions()
+            }
         }
     }
 

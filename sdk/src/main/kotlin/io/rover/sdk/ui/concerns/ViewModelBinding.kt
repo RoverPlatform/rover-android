@@ -1,6 +1,7 @@
 package io.rover.sdk.ui.concerns
 
 import android.view.View
+import io.rover.sdk.logging.log
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.blocks.poll.VisibilityAwareView
 import org.reactivestreams.Subscription
@@ -22,7 +23,6 @@ internal class ViewModelBinding<VM : Any>(
     private val cancellationBlock:(() -> Unit)? = null,
     private val binding: (viewModel: VM?, subscriptionCallback: (Subscription) -> Unit) -> Unit
 ) {
-    // private var activeViewModel: VM? = null
     private var outstandingSubscriptions: List<Subscription>? = null
 
     @Suppress("UNCHECKED_CAST")
@@ -42,22 +42,7 @@ internal class ViewModelBinding<VM : Any>(
         setupVisibilityAwareViewObserver(view)
     }
 
-    private fun setupVisibilityAwareViewObserver(view: View?) {
-        (view as? VisibilityAwareView)?.let { visibilityAwareView ->
-            visibilityAwareView.visibilitySubject.subscribe {  visibility ->
-                viewState = if (visibility == View.VISIBLE) viewState.setForeground(true) else viewState.setForeground(false)
-            }
-        }
-    }
-
-    private fun setupViewAttachListener(view: View?) {
-        val onStateChangedListener = object : View.OnAttachStateChangeListener {
-            override fun onViewDetachedFromWindow(v: View?) { viewState = viewState.setAttached(false) }
-            override fun onViewAttachedToWindow(v: View?) { viewState = viewState.setAttached(true) }
-        }
-        view?.addOnAttachStateChangeListener(onStateChangedListener)
-    }
-
+    // called when a viewmodel bound
     operator fun setValue(thisRef: Any, property: KProperty<*>, value: VM?) {
         if (viewState.value != null && !rebindingAllowed) throw RuntimeException("This view does not support being re-bound to a new view model.")
         viewState = viewState.setVM(null)
@@ -84,9 +69,31 @@ internal class ViewModelBinding<VM : Any>(
             }
         }
     }
+
+    val subscription: Subscription? = null
+
+    // used to observe the visibility changes for the window containing the view
+    private fun setupVisibilityAwareViewObserver(view: View?) {
+        (view as? VisibilityAwareView)?.visibilitySubject?.let {
+            it.subscribe {  visibility ->
+                viewState = if (visibility) viewState.setForeground(true) else viewState.setForeground(false)
+            }
+        }
+    }
+
+    // used to listen to the view being attached and detached from the window
+    private fun setupViewAttachListener(view: View?) {
+        val onStateChangedListener = object : View.OnAttachStateChangeListener {
+            override fun onViewDetachedFromWindow(v: View?) { viewState = viewState.setAttached(false) }
+            override fun onViewAttachedToWindow(v: View?) { viewState = viewState.setAttached(true) }
+        }
+        view?.addOnAttachStateChangeListener(onStateChangedListener)
+    }
 }
 
-sealed class ViewState<VM : Any> {
+// represents the view state of the view attached to the view binding, for a view to be active it has to
+// be foregrounded, attached to a window and have a bound viewmodel
+internal sealed class ViewState<VM : Any> {
     abstract val value: VM?
     abstract fun setForeground(foregrounded: Boolean): ViewState<VM>
     abstract fun setAttached(attached: Boolean): ViewState<VM>

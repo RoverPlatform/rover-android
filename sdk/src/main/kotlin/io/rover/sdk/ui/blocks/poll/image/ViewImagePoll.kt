@@ -14,7 +14,6 @@ import io.rover.sdk.platform.textView
 import io.rover.sdk.streams.distinctUntilChanged
 import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
-import io.rover.sdk.ui.blocks.poll.VisibilityAwareLinearLayout
 import io.rover.sdk.ui.blocks.poll.VotingState
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.MeasuredSize
@@ -22,7 +21,7 @@ import io.rover.sdk.ui.concerns.ViewModelBinding
 import io.rover.sdk.ui.dpAsPx
 import io.rover.sdk.ui.pxAsDp
 
-internal class ViewImagePoll(override val view: VisibilityAwareLinearLayout) :
+internal class ViewImagePoll(override val view: LinearLayout) :
     ViewImagePollInterface {
     private val questionView = view.textView {
         setupLayoutParams(

@@ -3,6 +3,7 @@ package io.rover.sdk.ui.blocks.poll.text
 import android.graphics.Typeface
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import io.rover.sdk.data.domain.TextPoll
 import io.rover.sdk.data.mapToFont
 import io.rover.sdk.logging.log
@@ -15,13 +16,12 @@ import io.rover.sdk.streams.subscribe
 import io.rover.sdk.ui.asAndroidColor
 import io.rover.sdk.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.sdk.ui.blocks.concerns.background.createBackgroundDrawable
-import io.rover.sdk.ui.blocks.poll.VisibilityAwareLinearLayout
 import io.rover.sdk.ui.blocks.poll.VotingState
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.concerns.ViewModelBinding
 
-internal class ViewTextPoll(override val view: VisibilityAwareLinearLayout) : ViewTextPollInterface {
+internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInterface {
 
     private val questionView = view.textView {
         setupLayoutParams(

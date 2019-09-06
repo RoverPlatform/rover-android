@@ -1,8 +1,11 @@
 package io.rover.sdk.ui.concerns
 
+import android.arch.lifecycle.Lifecycle
+import android.arch.lifecycle.LifecycleObserver
+import android.arch.lifecycle.OnLifecycleEvent
 import android.view.View
-import io.rover.sdk.streams.subscribe
-import io.rover.sdk.ui.blocks.poll.VisibilityAwareView
+import io.rover.sdk.logging.log
+import io.rover.sdk.ui.containers.RoverActivity
 import org.reactivestreams.Subscription
 import kotlin.reflect.KProperty
 
@@ -24,33 +27,28 @@ internal class ViewModelBinding<VM : Any>(
 ) {
     private var outstandingSubscriptions: List<Subscription>? = null
 
-    private var viewState: ViewState<VM> = ViewState.Inactive(true, null, true)
+    private var viewState: ViewState<VM> = ViewState(true, null)
     set(value) {
         val oldValue = field
         field = value
         when {
-            value is ViewState.Active && oldValue !is ViewState.Active -> {
-                invokeBinding(value.value as VM)
-            }
-            value is ViewState.Inactive && oldValue !is ViewState.Inactive -> {
-                cancelSubscriptions()
-            }
+            value.foregrounded && value.viewModel != null && oldValue != value -> invokeBinding(value.viewModel)
+            !value.foregrounded || value.viewModel == null && oldValue != value -> cancelSubscriptions()
         }
     }
 
     init {
-        setupViewAttachListener(view)
-        setupVisibilityAwareViewObserver(view)
+        setupViewLifecycleObserver(view)
     }
 
     // called when a viewmodel bound
     operator fun setValue(thisRef: Any, property: KProperty<*>, value: VM?) {
-        if (viewState.value != null && !rebindingAllowed) throw RuntimeException("This view does not support being re-bound to a new view model.")
+        if (viewState.viewModel != null && !rebindingAllowed) throw RuntimeException("This view does not support being re-bound to a new view model.")
         viewState = viewState.setVM(null)
         viewState = viewState.setVM(value)
     }
 
-    operator fun getValue(thisRef: Any, property: KProperty<*>) = viewState.value
+    operator fun getValue(thisRef: Any, property: KProperty<*>) = viewState.viewModel
 
     private fun cancelSubscriptions() {
         // cancel any existing async subscriptions.
@@ -61,7 +59,7 @@ internal class ViewModelBinding<VM : Any>(
 
     private fun invokeBinding(value: VM?) {
         binding(value) { subscription: Subscription ->
-            if (viewState.value == value) {
+            if (viewState.viewModel == value) {
                 // a subscription has come alive for currently active view model!
                 outstandingSubscriptions = listOf(subscription) + (outstandingSubscriptions ?: listOf())
             } else {
@@ -73,56 +71,24 @@ internal class ViewModelBinding<VM : Any>(
 
     val subscription: Subscription? = null
 
-    // used to observe the visibility changes for the window containing the view
-    private fun setupVisibilityAwareViewObserver(view: View?) {
-        (view as? VisibilityAwareView)?.visibilitySubject?.let {
-            it.subscribe {  visibility ->
-                viewState = if (visibility) viewState.setForeground(true) else viewState.setForeground(false)
+    private fun setupViewLifecycleObserver(view: View?) {
+        ((view?.context) as? RoverActivity)?.lifecycle?.addObserver(object: LifecycleObserver {
+            @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+            fun paused() {
+                viewState = viewState.setForeground(false)
+                log.d("view binding set foreground false ${viewState}")
             }
-        }
-    }
 
-    // used to listen to the view being attached and detached from the window
-    private fun setupViewAttachListener(view: View?) {
-        val onStateChangedListener = object : View.OnAttachStateChangeListener {
-            override fun onViewDetachedFromWindow(v: View?) { viewState = viewState.setAttached(false) }
-            override fun onViewAttachedToWindow(v: View?) { viewState = viewState.setAttached(true) }
-        }
-        view?.addOnAttachStateChangeListener(onStateChangedListener)
+            @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
+            fun resumed() {
+                viewState = viewState.setForeground(true)
+                log.d("view binding set foreground true ${viewState}")
+            }
+        })
     }
 }
 
-// represents the view state of the view attached to the view binding, for a view to be active it has to
-// be foregrounded, attached to a window and have a bound viewmodel
-internal sealed class ViewState<VM : Any> {
-    abstract val value: VM?
-    abstract fun setForeground(foregrounded: Boolean): ViewState<VM>
-    abstract fun setAttached(attached: Boolean): ViewState<VM>
-    abstract fun setVM(value: VM?): ViewState<VM>
-
-    data class Active<VM : Any>(override val value: VM?) : ViewState<VM>() {
-        override fun setForeground(foregrounded: Boolean): ViewState<VM> {
-            return if (foregrounded) this else Inactive(false, value, true)
-        }
-
-        override fun setVM(value: VM?): ViewState<VM> {
-            return if(value != null) Active(value) else Inactive(true, null, true)
-        }
-
-        override fun setAttached(attached: Boolean): ViewState<VM> {
-            return if(attached) this else Inactive(true, value, false)
-        }
-    }
-    data class Inactive<VM : Any>(val foregrounded: Boolean, override val value: VM?, val attached: Boolean) : ViewState<VM>() {
-        override fun setForeground(foregrounded: Boolean): ViewState<VM> {
-            return if (foregrounded && value != null && attached) Active(value) else copy(foregrounded = true)
-        }
-        override fun setAttached(attached: Boolean): ViewState<VM> {
-            return if (attached && value != null && foregrounded) Active(value) else copy(attached = true)
-        }
-
-        override fun setVM(value: VM?): ViewState<VM> {
-            return if (value != null && foregrounded && attached) Active(value) else copy(value = value)
-        }
-    }
+data class ViewState<VM : Any>(val foregrounded: Boolean, val viewModel: VM?) {
+    fun setForeground(foregrounded: Boolean) = copy(foregrounded = foregrounded)
+    fun setVM(viewModel: VM?) = copy(viewModel = viewModel)
 }

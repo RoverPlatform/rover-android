@@ -2,6 +2,7 @@ package io.rover.sdk.ui.concerns
 
 import android.arch.lifecycle.Lifecycle
 import android.arch.lifecycle.LifecycleObserver
+import android.arch.lifecycle.LifecycleOwner
 import android.arch.lifecycle.OnLifecycleEvent
 import android.view.View
 import io.rover.sdk.logging.log
@@ -41,7 +42,9 @@ internal class ViewModelBinding<VM : Any>(
         setupViewLifecycleObserver(view)
     }
 
-    // called when a viewmodel bound
+    /**
+     * Called when a view model bound
+     */
     operator fun setValue(thisRef: Any, property: KProperty<*>, value: VM?) {
         if (viewState.viewModel != null && !rebindingAllowed) throw RuntimeException("This view does not support being re-bound to a new view model.")
         viewState = viewState.setVM(null)
@@ -70,19 +73,17 @@ internal class ViewModelBinding<VM : Any>(
     }
 
     val subscription: Subscription? = null
-
+    
     private fun setupViewLifecycleObserver(view: View?) {
-        ((view?.context) as? RoverActivity)?.lifecycle?.addObserver(object: LifecycleObserver {
+        ((view?.context) as? LifecycleOwner)?.lifecycle?.addObserver(object: LifecycleObserver {
             @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
             fun paused() {
                 viewState = viewState.setForeground(false)
-                log.d("view binding set foreground false ${viewState}")
             }
 
             @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
             fun resumed() {
                 viewState = viewState.setForeground(true)
-                log.d("view binding set foreground true ${viewState}")
             }
         })
     }

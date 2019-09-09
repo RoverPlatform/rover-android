@@ -2,7 +2,9 @@ package io.rover.sdk.ui.blocks.poll.image
 
 import android.content.Context
 import android.graphics.Canvas
+import android.view.View
 import android.widget.LinearLayout
+import io.rover.sdk.streams.PublishSubject
 import io.rover.sdk.ui.blocks.concerns.ViewComposition
 import io.rover.sdk.ui.blocks.concerns.background.ViewBackground
 import io.rover.sdk.ui.blocks.concerns.border.ViewBorder

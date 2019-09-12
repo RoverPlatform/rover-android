@@ -28,10 +28,14 @@ class ExampleMainActivity : AppCompatActivity() {
         // Tries to retrieve experienceId query parameter:
         val queryExperienceId = uri.getQueryParameter("id")
 
+        // Tries to retrieve screenId in order to set the starting screen for the experience
+        val queryInitialScreenId = uri.getQueryParameter("screenID")
+
         // Tries to retrieve campaignId query parameter:
         val queryCampaignId = uri.getQueryParameter("campaignID")
+        
         if (uri.scheme == getString(R.string.uri_scheme) && uri.host == "experience" && queryExperienceId != null) {
-            startActivity(RoverActivity.makeIntent(packageContext = this, experienceId = queryExperienceId, campaignId = queryCampaignId))
+            startActivity(RoverActivity.makeIntent(packageContext = this, experienceId = queryExperienceId, campaignId = queryCampaignId, initialScreenId = queryInitialScreenId))
             return
         }
 

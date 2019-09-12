@@ -179,8 +179,7 @@ open class RoverActivity : AppCompatActivity() {
         // obtain any possibly saved state for the experience view model.  See
         // onSaveInstanceState.
         val state: Parcelable? = savedInstanceState?.getParcelable("experienceState")
-
-        log.d("initial screen id: ${initialScreenId}")
+        
         when {
             experienceId != null -> roverViewModel = experienceViewModel(
                 rover,

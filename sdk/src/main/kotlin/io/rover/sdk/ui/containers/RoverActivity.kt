@@ -179,7 +179,7 @@ open class RoverActivity : AppCompatActivity() {
         // obtain any possibly saved state for the experience view model.  See
         // onSaveInstanceState.
         val state: Parcelable? = savedInstanceState?.getParcelable("experienceState")
-        
+
         when {
             experienceId != null -> roverViewModel = experienceViewModel(
                 rover,
@@ -215,7 +215,7 @@ open class RoverActivity : AppCompatActivity() {
         icicle: Parcelable?,
         initialScreenId: String?
     ): RoverViewModelInterface {
-        return Rover.shared?.viewModels?.experienceViewModel(experienceRequest, campaignId, this.lifecycle, initialScreenId = initialScreenId) ?: throw RuntimeException("Rover not usable until Rover.initialize has been called.")
+        return Rover.shared?.viewModels?.experienceViewModel(experienceRequest, campaignId, initialScreenId, this.lifecycle) ?: throw RuntimeException("Rover not usable until Rover.initialize has been called.")
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

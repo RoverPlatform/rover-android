@@ -39,9 +39,9 @@ internal class NavigationViewModel(
     private val sessionTracker: SessionTracker,
     private val resolveScreenViewModel: (screen: Screen) -> ScreenViewModelInterface,
     private val resolveToolbarViewModel: (configuration: ToolbarConfiguration) -> ExperienceToolbarViewModelInterface,
+    private val initialScreenId: String?,
     activityLifecycle: Lifecycle,
-    icicle: Parcelable? = null,
-    private val initialScreenId: String?
+    icicle: Parcelable? = null
 ) : NavigationViewModelInterface {
 
     override fun start() {

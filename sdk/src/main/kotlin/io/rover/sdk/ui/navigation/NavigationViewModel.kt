@@ -40,7 +40,8 @@ internal class NavigationViewModel(
     private val resolveScreenViewModel: (screen: Screen) -> ScreenViewModelInterface,
     private val resolveToolbarViewModel: (configuration: ToolbarConfiguration) -> ExperienceToolbarViewModelInterface,
     activityLifecycle: Lifecycle,
-    icicle: Parcelable? = null
+    icicle: Parcelable? = null,
+    private val initialScreenId: String?
 ) : NavigationViewModelInterface {
 
     override fun start() {
@@ -178,8 +179,9 @@ internal class NavigationViewModel(
                         // backstack is empty, so we're just starting out.  Navigate forward to the
                         // home screen in the experience!
 
-                        val homeScreen = screensById[experience.homeScreenId] ?: throw RuntimeException("Home screen id is dangling.")
-                        val screenViewModel = screenViewModelsById[experience.homeScreenId] ?: throw RuntimeException("Home screen id is dangling.")
+                        // If no initial screen set then use the default home screen
+                        val homeScreen = screensById[initialScreenId] ?: screensById[experience.homeScreenId] ?: throw RuntimeException("Home screen id is dangling.")
+                        val screenViewModel = screenViewModelsById[initialScreenId] ?: screenViewModelsById[experience.homeScreenId] ?: throw RuntimeException("Home screen id is dangling.")
 
                         navigateToScreen(
                             homeScreen,

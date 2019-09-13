@@ -266,6 +266,7 @@ internal class ViewModels(
     fun experienceViewModel(
         experienceRequest: RoverViewModel.ExperienceRequest,
         campaignId: String?,
+        initialScreenId: String?,
         activityLifecycle: Lifecycle,
         experienceTransformer: ((Experience) -> Experience)? = Rover.shared?.experienceTransformer
     ): RoverViewModel {
@@ -274,7 +275,7 @@ internal class ViewModels(
             graphQlApiService = apiService,
             mainThreadScheduler = mainScheduler,
             resolveNavigationViewModel = { experience, icicle ->
-                experienceNavigationViewModel(experience, campaignId, activityLifecycle, icicle)
+                experienceNavigationViewModel(experience, campaignId, initialScreenId, activityLifecycle, icicle)
             },
             experienceTransformer = experienceTransformer
         )
@@ -287,6 +288,7 @@ internal class ViewModels(
     private fun experienceNavigationViewModel(
         experience: Experience,
         campaignId: String?,
+        initialScreenId: String?,
         activityLifecycle: Lifecycle,
         icicle: Parcelable? = null
     ): NavigationViewModel {
@@ -297,6 +299,7 @@ internal class ViewModels(
             sessionTracker = sessionTracker,
             resolveScreenViewModel = { screen -> screenViewModel(screen, experience, campaignId) },
             resolveToolbarViewModel = { configuration -> experienceToolbarViewModel(configuration) },
+            initialScreenId = initialScreenId,
             activityLifecycle = activityLifecycle,
             icicle = icicle
         )

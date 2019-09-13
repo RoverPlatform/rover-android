@@ -36,6 +36,8 @@ open class RoverActivity : AppCompatActivity() {
 
     private val useDraft: Boolean by lazy { this.intent.getBooleanExtra("USE_DRAFT", false) }
 
+    private val initialScreenId: String? by lazy { intent.getStringExtra("INITIAL_SCREEN_ID") }
+
     private val campaignId: String?
         get() = this.intent.getStringExtra("CAMPAIGN_ID")
 
@@ -177,6 +179,7 @@ open class RoverActivity : AppCompatActivity() {
         // obtain any possibly saved state for the experience view model.  See
         // onSaveInstanceState.
         val state: Parcelable? = savedInstanceState?.getParcelable("experienceState")
+
         when {
             experienceId != null -> roverViewModel = experienceViewModel(
                 rover,
@@ -184,13 +187,15 @@ open class RoverActivity : AppCompatActivity() {
                 campaignId,
                 // obtain any possibly saved state for the experience view model.  See
                 // onSaveInstanceState.
-                state
+                state,
+                initialScreenId
             )
             experienceUrl != null -> roverViewModel = experienceViewModel(
                 rover,
                 RoverViewModel.ExperienceRequest.ByUrl(experienceUrl!!),
                 campaignId,
-                state
+                state,
+                initialScreenId
             )
             else -> {
                 log.w("Please pass either one of EXPERIENCE_ID or EXPERIENCE_URL. Consider using RoverActivity.makeIntent()")
@@ -207,9 +212,10 @@ open class RoverActivity : AppCompatActivity() {
         rover: Rover,
         experienceRequest: RoverViewModel.ExperienceRequest,
         campaignId: String?,
-        icicle: Parcelable?
+        icicle: Parcelable?,
+        initialScreenId: String?
     ): RoverViewModelInterface {
-        return Rover.shared?.viewModels?.experienceViewModel(experienceRequest, campaignId, this.lifecycle) ?: throw RuntimeException("Rover not usable until Rover.initialize has been called.")
+        return Rover.shared?.viewModels?.experienceViewModel(experienceRequest, campaignId, initialScreenId, this.lifecycle) ?: throw RuntimeException("Rover not usable until Rover.initialize has been called.")
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -230,20 +236,23 @@ open class RoverActivity : AppCompatActivity() {
     companion object {
         @JvmStatic
         @JvmOverloads
-        fun makeIntent(packageContext: Context, experienceId: String, campaignId: String? = null, useDraft: Boolean = false, activityClass: Class<out Activity> = RoverActivity::class.java): Intent {
+        fun makeIntent(packageContext: Context, experienceId: String, campaignId: String? = null, useDraft: Boolean = false, activityClass: Class<out Activity> = RoverActivity::class.java,
+            initialScreenId: String? = null): Intent {
             return Intent(packageContext, activityClass).apply {
                 putExtra("EXPERIENCE_ID", experienceId)
                 putExtra("CAMPAIGN_ID", campaignId)
                 putExtra("USE_DRAFT", useDraft)
+                putExtra("INITIAL_SCREEN_ID", initialScreenId)
             }
         }
 
         @JvmStatic
         @JvmOverloads
-        fun makeIntent(packageContext: Context, experienceUrl: Uri, campaignId: String? = null, activityClass: Class<out Activity> = RoverActivity::class.java): Intent {
+        fun makeIntent(packageContext: Context, experienceUrl: Uri, campaignId: String? = null, activityClass: Class<out Activity> = RoverActivity::class.java, initialScreenId: String? = null): Intent {
             return Intent(packageContext, activityClass).apply {
                 putExtra("EXPERIENCE_URL", experienceUrl.toString())
                 putExtra("CAMPAIGN_ID", campaignId)
+                putExtra("INITIAL_SCREEN_ID", initialScreenId)
             }
         }
     }

@@ -6,13 +6,13 @@ import android.animation.TypeEvaluator
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
-import android.support.design.widget.AppBarLayout
-import android.support.design.widget.CoordinatorLayout
-import android.support.design.widget.Snackbar
-import android.support.v4.widget.CircularProgressDrawable
-import android.support.v7.app.ActionBar
-import android.support.v7.widget.AppCompatImageView
-import android.support.v7.widget.Toolbar
+import com.google.android.material.appbar.AppBarLayout
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import com.google.android.material.snackbar.Snackbar
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable
+import androidx.appcompat.app.ActionBar
+import androidx.appcompat.widget.AppCompatImageView
+import androidx.appcompat.widget.Toolbar
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.Menu
@@ -50,9 +50,9 @@ import org.reactivestreams.Publisher
  * See [RoverActivity] for an example of how to integrate.
  */
 internal class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewModelInterface> {
-    constructor(context: Context?) : super(context)
-    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
+    constructor(context: Context) : super(context)
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
     override var viewModelBinding: MeasuredBindableView.Binding<RoverViewModelInterface>? by ViewModelBinding(rebindingAllowed = false) { binding, subscriptionCallback ->
         // sadly have to set rebindingAllowed to be false because of complexity dealing with the
@@ -129,7 +129,7 @@ internal class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewMode
         imageView.setImageDrawable(drawable)
         addView(imageView)
 
-        (imageView.layoutParams as CoordinatorLayout.LayoutParams).apply {
+        (imageView.layoutParams as androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams).apply {
             width = 40.dpAsPx(context.resources.displayMetrics)
             height = 40.dpAsPx(context.resources.displayMetrics)
             gravity = Gravity.CENTER_HORIZONTAL or Gravity.CENTER_VERTICAL
@@ -148,14 +148,15 @@ internal class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewMode
 
     private val navigationView: NavigationView = NavigationView(context)
 
-    private val appBarLayout = AppBarLayout(context)
+    private val appBarLayout =
+        AppBarLayout(context)
 
     init {
         addView(
             navigationView
         )
 
-        (navigationView.layoutParams as CoordinatorLayout.LayoutParams).apply {
+        (navigationView.layoutParams as androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams).apply {
             behavior = AppBarLayout.ScrollingViewBehavior()
             width = LayoutParams.MATCH_PARENT
             height = LayoutParams.MATCH_PARENT
@@ -163,7 +164,7 @@ internal class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewMode
 
         val appBarLayout = appBarLayout
         addView(appBarLayout)
-        (appBarLayout.layoutParams as CoordinatorLayout.LayoutParams).apply {
+        (appBarLayout.layoutParams as androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams).apply {
             width = LayoutParams.MATCH_PARENT
             height = LayoutParams.WRAP_CONTENT
         }

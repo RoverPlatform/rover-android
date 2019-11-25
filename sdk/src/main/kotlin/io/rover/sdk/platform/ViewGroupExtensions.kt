@@ -1,9 +1,9 @@
 package io.rover.sdk.platform
 
 import android.graphics.Paint
-import android.support.v7.widget.AppCompatButton
-import android.support.v7.widget.AppCompatImageView
-import android.support.v7.widget.AppCompatTextView
+import androidx.appcompat.widget.AppCompatButton
+import androidx.appcompat.widget.AppCompatImageView
+import androidx.appcompat.widget.AppCompatTextView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout

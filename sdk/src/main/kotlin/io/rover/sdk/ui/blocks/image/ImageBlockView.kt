@@ -3,7 +3,7 @@ package io.rover.sdk.ui.blocks.image
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
-import android.support.v7.widget.AppCompatImageView
+import androidx.appcompat.widget.AppCompatImageView
 import android.util.AttributeSet
 import io.rover.sdk.logging.log
 import io.rover.sdk.ui.blocks.concerns.layout.LayoutableView

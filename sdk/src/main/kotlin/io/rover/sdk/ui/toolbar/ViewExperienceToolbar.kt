@@ -4,10 +4,10 @@ import android.content.Context
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
-import android.support.v7.app.ActionBar
-import android.support.v7.appcompat.R.attr.borderlessButtonStyle
-import android.support.v7.widget.AppCompatButton
-import android.support.v7.widget.Toolbar
+import androidx.appcompat.app.ActionBar
+import androidx.appcompat.R.attr.borderlessButtonStyle
+import androidx.appcompat.widget.AppCompatButton
+import androidx.appcompat.widget.Toolbar
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import android.view.Gravity

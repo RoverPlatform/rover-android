@@ -1,6 +1,6 @@
 package io.rover.sdk.ui.layout
 
-import android.support.v7.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView
 import android.util.DisplayMetrics
 import android.view.View
 import io.rover.sdk.data.domain.Block
@@ -23,7 +23,7 @@ import io.rover.sdk.ui.layout.screen.ScreenViewModelInterface
 internal class BlockAndRowLayoutManager(
     private val layout: Layout,
     private val displayMetrics: DisplayMetrics
-) : RecyclerView.LayoutManager() {
+) : androidx.recyclerview.widget.RecyclerView.LayoutManager() {
     // State:
 
     /**
@@ -47,12 +47,12 @@ internal class BlockAndRowLayoutManager(
         isItemPrefetchEnabled = true
     }
 
-    override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams = RecyclerView.LayoutParams(
-        RecyclerView.LayoutParams.WRAP_CONTENT,
-        RecyclerView.LayoutParams.WRAP_CONTENT
+    override fun generateDefaultLayoutParams(): androidx.recyclerview.widget.RecyclerView.LayoutParams = androidx.recyclerview.widget.RecyclerView.LayoutParams(
+        androidx.recyclerview.widget.RecyclerView.LayoutParams.WRAP_CONTENT,
+        androidx.recyclerview.widget.RecyclerView.LayoutParams.WRAP_CONTENT
     )
 
-    override fun onLayoutChildren(recycler: RecyclerView.Recycler, state: RecyclerView.State) {
+    override fun onLayoutChildren(recycler: androidx.recyclerview.widget.RecyclerView.Recycler, state: androidx.recyclerview.widget.RecyclerView.State) {
         // in typical RecyclerView LayoutMangers, this method would do the heavy lifting of building
         // the layout.  However, in our arrangement, that is done externally because we need the
         // full layout early.  So, we'll just invoke fill.
@@ -65,7 +65,7 @@ internal class BlockAndRowLayoutManager(
         fill(recycler, layout)
     }
 
-    override fun scrollVerticallyBy(dy: Int, recycler: RecyclerView.Recycler, state: RecyclerView.State): Int {
+    override fun scrollVerticallyBy(dy: Int, recycler: androidx.recyclerview.widget.RecyclerView.Recycler, state: androidx.recyclerview.widget.RecyclerView.State): Int {
         // now we need to figure out how much we can scroll by, and if indeed dy would bring
         // us out-of-bounds and cap it.
 
@@ -124,7 +124,7 @@ internal class BlockAndRowLayoutManager(
     override fun collectAdjacentPrefetchPositions(
         dx: Int,
         dy: Int,
-        state: RecyclerView.State,
+        state: androidx.recyclerview.widget.RecyclerView.State,
         layoutPrefetchRegistry: LayoutPrefetchRegistry
     ) {
         val wouldBeScrollPosition = scrollPosition + dy
@@ -147,7 +147,7 @@ internal class BlockAndRowLayoutManager(
      * Ensure all views needed for the current [scrollPosition] are populated.
      */
     private fun fill(
-        recycler: RecyclerView.Recycler,
+        recycler: androidx.recyclerview.widget.RecyclerView.Recycler,
         layout: Layout
     ) {
         // put all the views in scrap (for now; performance optimizations may be possible here, too?)

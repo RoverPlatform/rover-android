@@ -1,8 +1,8 @@
 package io.rover.sdk.ui.navigation
 
-import android.arch.lifecycle.Lifecycle
-import android.arch.lifecycle.LifecycleObserver
-import android.arch.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.OnLifecycleEvent
 import android.os.Parcelable
 import io.rover.sdk.services.EventEmitter
 import io.rover.sdk.logging.log

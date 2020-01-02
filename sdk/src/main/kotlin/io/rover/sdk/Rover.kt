@@ -1,11 +1,11 @@
 package io.rover.sdk
 
 import android.app.Application
-import android.arch.lifecycle.Lifecycle
+import androidx.lifecycle.Lifecycle
 import android.content.Context
 import android.graphics.Color
 import android.os.Parcelable
-import android.support.annotation.ColorInt
+import androidx.annotation.ColorInt
 import android.util.DisplayMetrics
 import io.rover.sdk.assets.AndroidAssetService
 import io.rover.sdk.assets.ImageDownloader

@@ -1,7 +1,7 @@
 package io.rover.sdk.ui.layout
 
 import android.content.Context
-import android.support.v7.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView
 import android.util.DisplayMetrics
 import android.view.ViewGroup
 import io.rover.sdk.ui.concerns.MeasuredBindableView
@@ -17,7 +17,7 @@ internal class BlockAndRowRecyclerAdapter(
     private val layout: Layout,
     private val displayMetrics: DisplayMetrics,
     private val blockViewFactory: (viewType: ViewType, context: Context) -> LayoutableView<out LayoutableViewModel>
-) : RecyclerView.Adapter<BlockAndRowRecyclerAdapter.LayoutableBlockHolder>() {
+) : androidx.recyclerview.widget.RecyclerView.Adapter<BlockAndRowRecyclerAdapter.LayoutableBlockHolder>() {
 
     private val viewModels = layout.coordinatesAndViewModels.map { it.viewModel }
 
@@ -66,7 +66,7 @@ internal class BlockAndRowRecyclerAdapter(
      */
     class LayoutableBlockHolder(
         private val layoutableItemView: LayoutableView<LayoutableViewModel>
-    ) : RecyclerView.ViewHolder(
+    ) : androidx.recyclerview.widget.RecyclerView.ViewHolder(
         layoutableItemView.view
     ) {
         var viewModel: MeasuredBindableView.Binding<LayoutableViewModel>? by ViewModelBinding { binding, _ ->

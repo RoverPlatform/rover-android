@@ -1,6 +1,6 @@
 package io.rover.sdk.ui.toolbar
 
-import android.support.v7.widget.Toolbar
+import androidx.appcompat.widget.Toolbar
 import org.reactivestreams.Publisher
 
 internal interface ViewExperienceToolbarInterface {

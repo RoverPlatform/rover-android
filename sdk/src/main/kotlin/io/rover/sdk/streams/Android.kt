@@ -2,9 +2,9 @@
 
 package io.rover.sdk.streams
 
-import android.arch.lifecycle.GenericLifecycleObserver
-import android.arch.lifecycle.Lifecycle
-import android.arch.lifecycle.LifecycleOwner
+import androidx.lifecycle.GenericLifecycleObserver
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import android.view.View
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscription

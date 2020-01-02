@@ -17,7 +17,7 @@ internal class BlockAndRowRecyclerAdapter(
     private val layout: Layout,
     private val displayMetrics: DisplayMetrics,
     private val blockViewFactory: (viewType: ViewType, context: Context) -> LayoutableView<out LayoutableViewModel>
-) : androidx.recyclerview.widget.RecyclerView.Adapter<BlockAndRowRecyclerAdapter.LayoutableBlockHolder>() {
+) : RecyclerView.Adapter<BlockAndRowRecyclerAdapter.LayoutableBlockHolder>() {
 
     private val viewModels = layout.coordinatesAndViewModels.map { it.viewModel }
 
@@ -66,7 +66,7 @@ internal class BlockAndRowRecyclerAdapter(
      */
     class LayoutableBlockHolder(
         private val layoutableItemView: LayoutableView<LayoutableViewModel>
-    ) : androidx.recyclerview.widget.RecyclerView.ViewHolder(
+    ) : RecyclerView.ViewHolder(
         layoutableItemView.view
     ) {
         var viewModel: MeasuredBindableView.Binding<LayoutableViewModel>? by ViewModelBinding { binding, _ ->

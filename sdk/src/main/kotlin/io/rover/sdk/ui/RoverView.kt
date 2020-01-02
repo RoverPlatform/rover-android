@@ -129,7 +129,7 @@ internal class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewMode
         imageView.setImageDrawable(drawable)
         addView(imageView)
 
-        (imageView.layoutParams as androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams).apply {
+        (imageView.layoutParams as LayoutParams).apply {
             width = 40.dpAsPx(context.resources.displayMetrics)
             height = 40.dpAsPx(context.resources.displayMetrics)
             gravity = Gravity.CENTER_HORIZONTAL or Gravity.CENTER_VERTICAL
@@ -156,7 +156,7 @@ internal class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewMode
             navigationView
         )
 
-        (navigationView.layoutParams as androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams).apply {
+        (navigationView.layoutParams as LayoutParams).apply {
             behavior = AppBarLayout.ScrollingViewBehavior()
             width = LayoutParams.MATCH_PARENT
             height = LayoutParams.MATCH_PARENT
@@ -164,7 +164,7 @@ internal class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewMode
 
         val appBarLayout = appBarLayout
         addView(appBarLayout)
-        (appBarLayout.layoutParams as androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams).apply {
+        (appBarLayout.layoutParams as LayoutParams).apply {
             width = LayoutParams.MATCH_PARENT
             height = LayoutParams.WRAP_CONTENT
         }

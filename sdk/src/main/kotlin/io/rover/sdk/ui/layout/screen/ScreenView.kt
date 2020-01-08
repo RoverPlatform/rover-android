@@ -2,7 +2,7 @@ package io.rover.sdk.ui.layout.screen
 
 import android.content.Context
 import android.graphics.Canvas
-import android.support.v7.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.View
 import io.rover.sdk.Rover
@@ -24,9 +24,9 @@ import org.reactivestreams.Publisher
 import java.lang.RuntimeException
 
 internal class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelInterface> {
-    constructor(context: Context?) : super(context)
-    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
-    constructor(context: Context?, attrs: AttributeSet?, defStyle: Int) : super(
+    constructor(context: Context) : super(context)
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
+    constructor(context: Context, attrs: AttributeSet?, defStyle: Int) : super(
         context,
         attrs,
         defStyle

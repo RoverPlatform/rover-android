@@ -1,6 +1,6 @@
 package io.rover.sdk.ui.blocks.image
 
-import android.support.v7.widget.AppCompatImageView
+import androidx.appcompat.widget.AppCompatImageView
 import android.widget.ImageView
 import io.rover.sdk.streams.androidLifecycleDispose
 import io.rover.sdk.streams.subscribe

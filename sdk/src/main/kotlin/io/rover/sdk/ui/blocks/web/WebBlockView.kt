@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.os.Build
-import android.support.annotation.RequiresApi
+import androidx.annotation.RequiresApi
 import android.util.AttributeSet
 import android.webkit.WebView
 import io.rover.sdk.logging.log

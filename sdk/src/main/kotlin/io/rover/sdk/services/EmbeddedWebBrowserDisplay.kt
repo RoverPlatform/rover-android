@@ -3,7 +3,7 @@ package io.rover.sdk.services
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
-import android.support.customtabs.CustomTabsIntent
+import androidx.browser.customtabs.CustomTabsIntent
 
 interface EmbeddedWebBrowserDisplayInterface {
     /**

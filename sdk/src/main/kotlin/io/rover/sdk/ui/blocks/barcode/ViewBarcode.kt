@@ -1,7 +1,7 @@
 package io.rover.sdk.ui.blocks.barcode
 
 import android.graphics.drawable.BitmapDrawable
-import android.support.v7.widget.AppCompatImageView
+import androidx.appcompat.widget.AppCompatImageView
 import android.widget.ImageView
 import io.rover.sdk.services.BarcodeRenderingService
 import io.rover.sdk.Rover

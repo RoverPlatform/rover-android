@@ -5,7 +5,7 @@ import android.annotation.TargetApi
 import android.content.Context
 import android.graphics.Canvas
 import android.os.Build
-import android.support.v7.widget.AppCompatTextView
+import androidx.appcompat.widget.AppCompatTextView
 import android.util.AttributeSet
 import io.rover.sdk.logging.log
 import io.rover.sdk.ui.concerns.MeasuredBindableView

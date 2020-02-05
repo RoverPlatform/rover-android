@@ -10,8 +10,8 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Typeface
-import android.support.v4.view.ViewCompat
-import android.support.v7.widget.AppCompatTextView
+import androidx.core.view.ViewCompat
+import androidx.appcompat.widget.AppCompatTextView
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.View

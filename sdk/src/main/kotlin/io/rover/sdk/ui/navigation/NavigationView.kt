@@ -2,10 +2,10 @@ package io.rover.sdk.ui.navigation
 
 import android.content.Context
 import android.os.Build
-import android.support.annotation.RequiresApi
-import android.support.transition.Slide
-import android.support.transition.TransitionManager
-import android.support.transition.TransitionSet
+import androidx.annotation.RequiresApi
+import androidx.transition.Slide
+import androidx.transition.TransitionManager
+import androidx.transition.TransitionSet
 import android.util.AttributeSet
 import android.util.LruCache
 import android.view.Gravity

@@ -27,7 +27,7 @@ block.
 ```groovy
 dependencies {
     // ...
-    implementation "io.rover:sdk:3.5.0"
+    implementation "io.rover:sdk:3.6.0"
 }
 ```
 

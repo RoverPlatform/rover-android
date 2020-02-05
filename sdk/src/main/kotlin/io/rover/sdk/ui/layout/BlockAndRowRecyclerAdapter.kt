@@ -1,7 +1,7 @@
 package io.rover.sdk.ui.layout
 
 import android.content.Context
-import android.support.v7.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView
 import android.util.DisplayMetrics
 import android.view.ViewGroup
 import io.rover.sdk.ui.concerns.MeasuredBindableView

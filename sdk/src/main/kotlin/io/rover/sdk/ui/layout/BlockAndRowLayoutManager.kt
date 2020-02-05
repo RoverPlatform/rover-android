@@ -1,6 +1,6 @@
 package io.rover.sdk.ui.layout
 
-import android.support.v7.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView
 import android.util.DisplayMetrics
 import android.view.View
 import io.rover.sdk.data.domain.Block
@@ -65,7 +65,7 @@ internal class BlockAndRowLayoutManager(
         fill(recycler, layout)
     }
 
-    override fun scrollVerticallyBy(dy: Int, recycler: RecyclerView.Recycler, state: RecyclerView.State): Int {
+    override fun scrollVerticallyBy(dy: Int, recycler: RecyclerView.Recycler, state: androidx.recyclerview.widget.RecyclerView.State): Int {
         // now we need to figure out how much we can scroll by, and if indeed dy would bring
         // us out-of-bounds and cap it.
 

@@ -3,7 +3,7 @@
   <groupId>io.rover</groupId>
   <artifactId>sdk</artifactId>
   <versioning>
-    <release>3.5.0</release>
+    <release>3.6.0</release>
     <versions>
       <version>3.0.0-beta.1</version>
       <version>3.0.0-beta.2</version>
@@ -13,7 +13,8 @@
       <version>3.4.1</version>
       <version>3.4.2</version>
       <version>3.5.0</version>
+      <version>3.6.0</version>
     </versions>
-    <lastUpdated>20190913151421</lastUpdated>
+    <lastUpdated>20200205225948</lastUpdated>
   </versioning>
 </metadata>

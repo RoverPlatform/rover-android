@@ -51,6 +51,7 @@ sealed class RoverEvent {
         val screen: Screen,
         val block: Block,
         val option: Option,
+        val poll: Poll,
         val campaignId: String?
     ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
@@ -60,6 +61,7 @@ sealed class RoverEvent {
                 putProp(this@PollAnswered, PollAnswered::screen) { screen.encodeJson() }
                 putProp(this@PollAnswered, PollAnswered::block) { block.encodeJson() }
                 putProp(this@PollAnswered, PollAnswered::option) { option.encodeJson() }
+                putProp(this@PollAnswered, PollAnswered::poll) { poll.encodeJson() }
                 putProp(this@PollAnswered, PollAnswered::campaignId) { campaignId }
             }
         }
@@ -272,6 +274,15 @@ data class Option(val id: String, val text: String, val image: String? = null) {
             putProp(this@Option, Option::id)
             putProp(this@Option, Option::text)
             putProp(this@Option, Option::image)
+        }
+    }
+}
+
+data class Poll(val id: String, val text: String) {
+    fun encodeJson(): JSONObject {
+        return JSONObject().apply {
+            putProp(this@Poll, Poll::id)
+            putProp(this@Poll, Poll::text)
         }
     }
 }

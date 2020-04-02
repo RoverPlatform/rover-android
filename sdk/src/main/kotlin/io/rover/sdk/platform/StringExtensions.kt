@@ -36,6 +36,6 @@ internal fun String.roverTextHtmlAsSpanned(): SpannableStringBuilder {
 
         spannedBuilder
     } else {
-        Html.fromHtml(this, Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH) as SpannableStringBuilder
+        Html.fromHtml(this.replace("<p></p>", "<p>&nbsp;</p>"), Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH) as SpannableStringBuilder
     }
 }

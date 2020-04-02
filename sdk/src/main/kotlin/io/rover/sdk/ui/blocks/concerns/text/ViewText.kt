@@ -24,6 +24,11 @@ internal class ViewText(
         // worry, the ascenders do not appear to be clipped either).
         textView.includeFontPadding = false
 
+        // This is set to prevent the wrong line spacing being used on android 10+ when StyleSpans are applied
+        if (Build.VERSION.SDK_INT >= 29) {
+            textView.isFallbackLineSpacing = false
+        }
+
         // Experiences app does not wrap text on text blocks.  This seems particularly
         // important for short, tight blocks.
         // Unfortunately, we cannot disable it on Android older than 23.

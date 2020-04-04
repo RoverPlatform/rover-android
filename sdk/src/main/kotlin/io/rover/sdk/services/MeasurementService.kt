@@ -80,6 +80,7 @@ internal class MeasurementService(
                 fontAppearance.font.fontFamily, fontAppearance.font.fontStyle
             )
             textAlign = fontAppearance.align
+            isAntiAlias = true
         }
 
         val textLayoutAlign = when (fontAppearance.align) {

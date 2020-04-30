@@ -9,6 +9,7 @@ import io.rover.sdk.data.domain.Image
 import io.rover.sdk.data.domain.ImagePoll
 import io.rover.sdk.data.domain.Screen
 import io.rover.sdk.data.events.Option
+import io.rover.sdk.data.events.Poll
 import io.rover.sdk.data.events.RoverEvent
 import io.rover.sdk.data.getFontAppearance
 import io.rover.sdk.services.EventEmitter
@@ -109,8 +110,18 @@ internal class ImagePollViewModel(
 
     override fun castVote(selectedOption: String, optionIds: List<String>) {
         pollVotingInteractor.castVotes(selectedOption)
-        imagePoll.options.find { it.id == selectedOption }?.let { option ->
-            eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(option.id, option.text.rawValue, option.image?.url?.toString()), campaignId))
+        trackPollAnswered(selectedOption)
+    }
+
+    private fun trackPollAnswered(selectedOption: String) {
+        val selectedPollOption = imagePoll.options.find { it.id == selectedOption }
+
+        selectedPollOption?.let { selectedPollOption ->
+            val option = Option(selectedPollOption.id, selectedPollOption.text.rawValue, selectedPollOption.image?.url?.toString())
+            val poll = Poll(id, imagePoll.question.rawValue)
+            val pollAnsweredEvent = RoverEvent.PollAnswered(experience, screen, block, option, poll, campaignId)
+
+            eventEmitter.trackEvent(pollAnsweredEvent)
         }
     }
 

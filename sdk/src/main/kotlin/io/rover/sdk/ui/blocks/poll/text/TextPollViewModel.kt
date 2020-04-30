@@ -5,6 +5,7 @@ import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.domain.Screen
 import io.rover.sdk.data.domain.TextPoll
 import io.rover.sdk.data.events.Option
+import io.rover.sdk.data.events.Poll
 import io.rover.sdk.data.events.RoverEvent
 import io.rover.sdk.data.getFontAppearance
 import io.rover.sdk.services.EventEmitter
@@ -51,8 +52,18 @@ internal class TextPollViewModel(
 
     override fun castVote(selectedOption: String, optionIds: List<String>) {
         pollVotingInteractor.castVotes(selectedOption)
-        textPoll.options.find { it.id == selectedOption }?.let { option ->
-            eventEmitter.trackEvent(RoverEvent.PollAnswered(experience, screen, block, Option(option.id, option.text.rawValue), campaignId))
+        trackPollAnswered(selectedOption)
+    }
+
+    private fun trackPollAnswered(selectedOption: String) {
+        val selectedPollOption = textPoll.options.find { it.id == selectedOption }
+
+        selectedPollOption?.let { selectedPollOption ->
+            val option = Option(selectedPollOption.id, selectedPollOption.text.rawValue)
+            val poll = Poll(id, textPoll.question.rawValue)
+            val pollAnsweredEvent = RoverEvent.PollAnswered(experience, screen, block, option, poll, campaignId)
+
+            eventEmitter.trackEvent(pollAnsweredEvent)
         }
     }
 

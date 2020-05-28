@@ -92,6 +92,8 @@ interface Block {
     val keys: Map<String, String>
     val tags: List<String>
     val name: String
+    val trackingInfo: TrackingInfo?
+
 
     sealed class TapBehavior {
         /**
@@ -142,6 +144,7 @@ data class ImagePollBlock(
     override val background: Background,
     override val border: Border,
     override val name: String,
+    override val trackingInfo: TrackingInfo?,
     override val tags: List<String>,
     val imagePoll: ImagePoll
 ) : Block {
@@ -162,6 +165,7 @@ data class TextPollBlock(
     override val background: Background,
     override val border: Border,
     override val name: String,
+    override val trackingInfo: TrackingInfo?,
     override val tags: List<String>,
     val textPoll: TextPoll
 ) : Block {
@@ -197,6 +201,7 @@ data class BarcodeBlock(
     @Deprecated("BarcodeBlock does not have a border.")
     override val border: Border,
     override val name: String,
+    override val trackingInfo: TrackingInfo?,
     override val tags: List<String>,
     val barcode: Barcode
 ) : Block {
@@ -213,6 +218,7 @@ data class ButtonBlock(
     override val background: Background,
     override val border: Border,
     override val name: String,
+    override val trackingInfo: TrackingInfo?,
     override val tags: List<String>,
     val text: Text
 ) : Block {
@@ -229,6 +235,7 @@ data class ImageBlock(
     override val background: Background,
     override val border: Border,
     override val name: String,
+    override val trackingInfo: TrackingInfo?,
     override val tags: List<String>,
     val image: Image?
 ) : Block {
@@ -245,6 +252,7 @@ data class RectangleBlock(
     override val background: Background,
     override val border: Border,
     override val name: String,
+    override val trackingInfo: TrackingInfo?,
     override val tags: List<String>
 ) : Block {
     companion object
@@ -260,6 +268,7 @@ data class TextBlock(
     override val background: Background,
     override val border: Border,
     override val name: String,
+    override val trackingInfo: TrackingInfo?,
     override val tags: List<String>,
     val text: Text
 ) : Block {
@@ -276,6 +285,7 @@ data class WebViewBlock(
     override val background: Background,
     override val border: Border,
     override val name: String,
+    override val trackingInfo: TrackingInfo?,
     override val tags: List<String>,
     val webView: WebView
 ) : Block {
@@ -459,6 +469,7 @@ data class Screen(
     val statusBar: StatusBar,
     val keys: Map<String, String>,
     val tags: List<String>,
+    val trackingInfo: TrackingInfo?,
     val name: String
 ) {
     companion object
@@ -548,5 +559,23 @@ enum class UnitOfMeasure(
      */
     Percentage("PERCENTAGE");
 
+    companion object
+}
+
+data class TrackingInfo(
+    val key: String,
+    val expires: Duration
+) {
+    companion object
+}
+
+enum class DurationUnit {
+    SECONDS, MINUTES, HOURS, DAYS
+}
+
+data class Duration(
+    val value: String,
+    val unit: DurationUnit
+){
     companion object
 }

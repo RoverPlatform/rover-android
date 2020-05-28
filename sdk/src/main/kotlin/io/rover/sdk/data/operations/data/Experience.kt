@@ -12,6 +12,8 @@ import io.rover.sdk.data.domain.Block
 import io.rover.sdk.data.domain.Border
 import io.rover.sdk.data.domain.ButtonBlock
 import io.rover.sdk.data.domain.Color
+import io.rover.sdk.data.domain.Duration
+import io.rover.sdk.data.domain.DurationUnit
 import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.domain.Font
 import io.rover.sdk.data.domain.FontWeight
@@ -37,6 +39,7 @@ import io.rover.sdk.data.domain.TextPollBlock
 import io.rover.sdk.data.domain.TextPollOption
 import io.rover.sdk.data.domain.TitleBar
 import io.rover.sdk.data.domain.TitleBarButtons
+import io.rover.sdk.data.domain.TrackingInfo
 import io.rover.sdk.data.domain.UnitOfMeasure
 import io.rover.sdk.data.domain.VerticalAlignment
 import io.rover.sdk.data.domain.WebView
@@ -50,6 +53,8 @@ import io.rover.sdk.data.graphql.toStringHash
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+
+private val DURATION_REGEX = Regex("^\\d+[smhd]$")
 
 internal fun Experience.Companion.decodeJson(json: JSONObject): Experience {
     return Experience(
@@ -384,6 +389,7 @@ internal fun BarcodeBlock.Companion.decodeJson(json: JSONObject): BarcodeBlock {
         keys = json.getJSONObject("keys").toStringHash(),
         barcode = Barcode.decodeJson(json.getJSONObject("barcode")),
         name = json.safeGetString("name"),
+        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -422,6 +428,29 @@ internal fun Image.encodeJson(): JSONObject {
         putProp(this@encodeJson, Image::url, "url") { it.toString() }
         putProp(this@encodeJson, Image::width, "width")
     }
+}
+
+internal fun DurationUnit.encodeJson(): String = when (this) {
+        DurationUnit.DAYS -> "d"
+        DurationUnit.HOURS -> "h"
+        DurationUnit.MINUTES -> "m"
+        DurationUnit.SECONDS -> "s"
+    }
+
+
+internal fun Duration.encodeJson(): String  {
+   return "${this.value}${this.unit.encodeJson()}"
+}
+
+internal fun TrackingInfo.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, TrackingInfo::key, "key")
+        putProp(this@encodeJson, TrackingInfo::expires, "expires") { it.encodeJson() }
+    }
+}
+
+internal fun TrackingInfo?.optEncodeJson(): JSONObject? {
+    return this?.encodeJson()
 }
 
 internal fun Background.Companion.decodeJson(json: JSONObject): Background {
@@ -476,6 +505,7 @@ internal fun Block.encodeSharedJson(): JSONObject {
         putProp(this@encodeSharedJson, Block::border, "border") { it.encodeJson() }
         putProp(this@encodeSharedJson, Block::keys, "keys") { JSONObject(it) }
         putProp(this@encodeSharedJson, Block::name, "name") { it }
+        putProp(this@encodeSharedJson, Block::trackingInfo,  "trackingInfo") { it.optEncodeJson() ?: JSONObject.NULL }
         putProp(this@encodeSharedJson, Block::tags) { JSONArray(it) }
     }
 }
@@ -596,7 +626,34 @@ internal fun ButtonBlock.Companion.decodeJson(json: JSONObject): ButtonBlock {
         keys = json.getJSONObject("keys").toStringHash(),
         text = Text.decodeJson(json.getJSONObject("text")),
         name = json.safeGetString("name"),
+        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
+    )
+}
+
+
+internal fun Duration.Companion.decodeString(duration: String): Duration? =
+    when (val match = DURATION_REGEX.find(duration)) {
+        null -> null
+        else -> {
+            val (value, unitAsString) = match.destructured
+            val unit = when(unitAsString) {
+                "s" -> DurationUnit.SECONDS
+                "m" -> DurationUnit.MINUTES
+                "h"  -> DurationUnit.HOURS
+                "d" -> DurationUnit.DAYS
+                else -> DurationUnit.DAYS
+            }
+            Duration(value, unit)
+        }
+    }
+
+
+internal fun TrackingInfo.Companion.optDecodeJson(json: JSONObject?): TrackingInfo? = when(json) {
+    null -> null
+    else -> TrackingInfo(
+        json.getString("key"),
+        Duration.decodeString(json.getString("expires"))!!
     )
 }
 
@@ -611,6 +668,7 @@ internal fun RectangleBlock.Companion.decodeJson(json: JSONObject): RectangleBlo
         position = Position.decodeJson(json.getJSONObject("position")),
         keys = json.getJSONObject("keys").toStringHash(),
         name = json.safeGetString("name"),
+        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -627,6 +685,7 @@ internal fun WebViewBlock.Companion.decodeJson(json: JSONObject): WebViewBlock {
         keys = json.getJSONObject("keys").toStringHash(),
         webView = WebView.decodeJson(json.getJSONObject("webView")),
         name = json.safeGetString("name"),
+        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -650,6 +709,7 @@ internal fun TextBlock.Companion.decodeJson(json: JSONObject): TextBlock {
         keys = json.getJSONObject("keys").toStringHash(),
         text = Text.decodeJson(json.getJSONObject("text")),
         name = json.safeGetString("name"),
+        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -666,6 +726,7 @@ internal fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
         keys = json.getJSONObject("keys").toStringHash(),
         image = Image.optDecodeJSON(json.optJSONObject("image")),
         name = json.safeGetString("name"),
+        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -712,6 +773,7 @@ fun ImagePollBlock.Companion.decodeJson(json: JSONObject): ImagePollBlock {
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         border = Border.decodeJson(json.getJSONObject("border")),
         name = json.safeGetString("name"),
+        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
         tags = json.getJSONArray("tags").getStringIterable().toList(),
         imagePoll = ImagePoll.decodeJson(json.getJSONObject("imagePoll"))
     )
@@ -753,6 +815,7 @@ fun TextPollBlock.Companion.decodeJson(json: JSONObject): TextPollBlock {
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         border = Border.decodeJson(json.getJSONObject("border")),
         name = json.safeGetString("name"),
+        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
         tags = json.getJSONArray("tags").getStringIterable().toList(),
         textPoll = TextPoll.decodeJson(json.getJSONObject("textPoll"))
     )
@@ -783,6 +846,7 @@ internal fun Block.TapBehavior.encodeJson(): JSONObject {
     }
 }
 
+
 internal val BarcodeBlock.Companion.resourceName get() = "BarcodeBlock"
 internal val ButtonBlock.Companion.resourceName get() = "ButtonBlock"
 internal val RectangleBlock.Companion.resourceName get() = "RectangleBlock"
@@ -795,9 +859,8 @@ internal val ImagePollBlock.Companion.resourceName get() = "ImagePollBlock"
 internal fun Block.Companion.decodeJson(json: JSONObject): Block {
     // Block has subclasses, so we need to delegate to the appropriate deserializer for each
     // block type.
-    val typeName = json.safeGetString("__typename")
 
-    return when (typeName) {
+    return when (val typeName = json.safeGetString("__typename")) {
         BarcodeBlock.resourceName -> BarcodeBlock.decodeJson(json)
         ButtonBlock.resourceName -> ButtonBlock.decodeJson(json)
         RectangleBlock.resourceName -> RectangleBlock.decodeJson(json)
@@ -864,6 +927,7 @@ internal fun Screen.Companion.decodeJson(json: JSONObject): Screen {
         titleBar = TitleBar.decodeJson(json.getJSONObject("titleBar")),
         keys = json.getJSONObject("keys").toStringHash(),
         name = json.safeGetString("name"),
+        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -878,6 +942,7 @@ internal fun Screen.encodeJson(): JSONObject {
         putProp(this@encodeJson, Screen::titleBar, "titleBar") { it.encodeJson() }
         putProp(this@encodeJson, Screen::keys) { JSONObject(it) }
         putProp(this@encodeJson, Screen::tags) { JSONArray(it) }
+        putProp(this@encodeJson, Screen::trackingInfo, "trackingInfo" ) { it.optEncodeJson() ?: JSONObject.NULL }
         putProp(this@encodeJson, Screen::name) { it }
     }
 }

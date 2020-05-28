@@ -39,7 +39,7 @@ import io.rover.sdk.data.domain.TextPollBlock
 import io.rover.sdk.data.domain.TextPollOption
 import io.rover.sdk.data.domain.TitleBar
 import io.rover.sdk.data.domain.TitleBarButtons
-import io.rover.sdk.data.domain.TrackingInfo
+import io.rover.sdk.data.domain.Conversion
 import io.rover.sdk.data.domain.UnitOfMeasure
 import io.rover.sdk.data.domain.VerticalAlignment
 import io.rover.sdk.data.domain.WebView
@@ -389,7 +389,7 @@ internal fun BarcodeBlock.Companion.decodeJson(json: JSONObject): BarcodeBlock {
         keys = json.getJSONObject("keys").toStringHash(),
         barcode = Barcode.decodeJson(json.getJSONObject("barcode")),
         name = json.safeGetString("name"),
-        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -442,14 +442,14 @@ internal fun Duration.encodeJson(): String  {
    return "${this.value}${this.unit.encodeJson()}"
 }
 
-internal fun TrackingInfo.encodeJson(): JSONObject {
+internal fun Conversion.encodeJson(): JSONObject {
     return JSONObject().apply {
-        putProp(this@encodeJson, TrackingInfo::key, "key")
-        putProp(this@encodeJson, TrackingInfo::expires, "expires") { it.encodeJson() }
+        putProp(this@encodeJson, Conversion::tag, "key")
+        putProp(this@encodeJson, Conversion::expires, "expires") { it.encodeJson() }
     }
 }
 
-internal fun TrackingInfo?.optEncodeJson(): JSONObject? {
+internal fun Conversion?.optEncodeJson(): JSONObject? {
     return this?.encodeJson()
 }
 
@@ -505,7 +505,7 @@ internal fun Block.encodeSharedJson(): JSONObject {
         putProp(this@encodeSharedJson, Block::border, "border") { it.encodeJson() }
         putProp(this@encodeSharedJson, Block::keys, "keys") { JSONObject(it) }
         putProp(this@encodeSharedJson, Block::name, "name") { it }
-        putProp(this@encodeSharedJson, Block::trackingInfo,  "trackingInfo") { it.optEncodeJson() ?: JSONObject.NULL }
+        putProp(this@encodeSharedJson, Block::conversion,  "conversion") { it.optEncodeJson() ?: JSONObject.NULL }
         putProp(this@encodeSharedJson, Block::tags) { JSONArray(it) }
     }
 }
@@ -626,7 +626,7 @@ internal fun ButtonBlock.Companion.decodeJson(json: JSONObject): ButtonBlock {
         keys = json.getJSONObject("keys").toStringHash(),
         text = Text.decodeJson(json.getJSONObject("text")),
         name = json.safeGetString("name"),
-        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -649,10 +649,10 @@ internal fun Duration.Companion.decodeString(duration: String): Duration? =
     }
 
 
-internal fun TrackingInfo.Companion.optDecodeJson(json: JSONObject?): TrackingInfo? = when(json) {
+internal fun Conversion.Companion.optDecodeJson(json: JSONObject?): Conversion? = when(json) {
     null -> null
-    else -> TrackingInfo(
-        json.getString("key"),
+    else -> Conversion(
+        json.getString("tag"),
         Duration.decodeString(json.getString("expires"))!!
     )
 }
@@ -668,7 +668,7 @@ internal fun RectangleBlock.Companion.decodeJson(json: JSONObject): RectangleBlo
         position = Position.decodeJson(json.getJSONObject("position")),
         keys = json.getJSONObject("keys").toStringHash(),
         name = json.safeGetString("name"),
-        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -685,7 +685,7 @@ internal fun WebViewBlock.Companion.decodeJson(json: JSONObject): WebViewBlock {
         keys = json.getJSONObject("keys").toStringHash(),
         webView = WebView.decodeJson(json.getJSONObject("webView")),
         name = json.safeGetString("name"),
-        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -709,7 +709,7 @@ internal fun TextBlock.Companion.decodeJson(json: JSONObject): TextBlock {
         keys = json.getJSONObject("keys").toStringHash(),
         text = Text.decodeJson(json.getJSONObject("text")),
         name = json.safeGetString("name"),
-        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -726,7 +726,7 @@ internal fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
         keys = json.getJSONObject("keys").toStringHash(),
         image = Image.optDecodeJSON(json.optJSONObject("image")),
         name = json.safeGetString("name"),
-        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -773,7 +773,7 @@ fun ImagePollBlock.Companion.decodeJson(json: JSONObject): ImagePollBlock {
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         border = Border.decodeJson(json.getJSONObject("border")),
         name = json.safeGetString("name"),
-        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList(),
         imagePoll = ImagePoll.decodeJson(json.getJSONObject("imagePoll"))
     )
@@ -815,7 +815,7 @@ fun TextPollBlock.Companion.decodeJson(json: JSONObject): TextPollBlock {
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         border = Border.decodeJson(json.getJSONObject("border")),
         name = json.safeGetString("name"),
-        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList(),
         textPoll = TextPoll.decodeJson(json.getJSONObject("textPoll"))
     )
@@ -927,7 +927,7 @@ internal fun Screen.Companion.decodeJson(json: JSONObject): Screen {
         titleBar = TitleBar.decodeJson(json.getJSONObject("titleBar")),
         keys = json.getJSONObject("keys").toStringHash(),
         name = json.safeGetString("name"),
-        trackingInfo = TrackingInfo.optDecodeJson(json.optJSONObject("tracking")),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -942,7 +942,7 @@ internal fun Screen.encodeJson(): JSONObject {
         putProp(this@encodeJson, Screen::titleBar, "titleBar") { it.encodeJson() }
         putProp(this@encodeJson, Screen::keys) { JSONObject(it) }
         putProp(this@encodeJson, Screen::tags) { JSONArray(it) }
-        putProp(this@encodeJson, Screen::trackingInfo, "trackingInfo" ) { it.optEncodeJson() ?: JSONObject.NULL }
+        putProp(this@encodeJson, Screen::conversion, "conversion" ) { it.optEncodeJson() ?: JSONObject.NULL }
         putProp(this@encodeJson, Screen::name) { it }
     }
 }

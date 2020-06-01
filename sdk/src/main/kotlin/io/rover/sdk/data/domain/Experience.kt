@@ -574,8 +574,14 @@ enum class DurationUnit {
 }
 
 data class Duration(
-    val value: String,
+    val value: Int,
     val unit: DurationUnit
 ){
+    val seconds: Long = value.toLong().times( when(unit) {
+        DurationUnit.SECONDS -> 1
+        DurationUnit.MINUTES -> 60
+        DurationUnit.HOURS -> 60 * 60
+        DurationUnit.DAYS -> 60 * 60 * 24
+    })
     companion object
 }

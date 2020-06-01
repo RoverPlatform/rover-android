@@ -54,7 +54,6 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 
-private val DURATION_REGEX = Regex("^\\d+[smhd]$")
 
 internal fun Experience.Companion.decodeJson(json: JSONObject): Experience {
     return Experience(

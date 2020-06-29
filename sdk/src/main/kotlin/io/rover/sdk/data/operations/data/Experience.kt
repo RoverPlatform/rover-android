@@ -12,6 +12,8 @@ import io.rover.sdk.data.domain.Block
 import io.rover.sdk.data.domain.Border
 import io.rover.sdk.data.domain.ButtonBlock
 import io.rover.sdk.data.domain.Color
+import io.rover.sdk.data.domain.Duration
+import io.rover.sdk.data.domain.DurationUnit
 import io.rover.sdk.data.domain.Experience
 import io.rover.sdk.data.domain.Font
 import io.rover.sdk.data.domain.FontWeight
@@ -37,6 +39,7 @@ import io.rover.sdk.data.domain.TextPollBlock
 import io.rover.sdk.data.domain.TextPollOption
 import io.rover.sdk.data.domain.TitleBar
 import io.rover.sdk.data.domain.TitleBarButtons
+import io.rover.sdk.data.domain.Conversion
 import io.rover.sdk.data.domain.UnitOfMeasure
 import io.rover.sdk.data.domain.VerticalAlignment
 import io.rover.sdk.data.domain.WebView
@@ -50,6 +53,7 @@ import io.rover.sdk.data.graphql.toStringHash
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+
 
 internal fun Experience.Companion.decodeJson(json: JSONObject): Experience {
     return Experience(
@@ -384,6 +388,7 @@ internal fun BarcodeBlock.Companion.decodeJson(json: JSONObject): BarcodeBlock {
         keys = json.getJSONObject("keys").toStringHash(),
         barcode = Barcode.decodeJson(json.getJSONObject("barcode")),
         name = json.safeGetString("name"),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -422,6 +427,31 @@ internal fun Image.encodeJson(): JSONObject {
         putProp(this@encodeJson, Image::url, "url") { it.toString() }
         putProp(this@encodeJson, Image::width, "width")
     }
+}
+
+internal fun DurationUnit.encodeJson(): String = when (this) {
+    DurationUnit.DAYS -> "d"
+    DurationUnit.HOURS -> "h"
+    DurationUnit.MINUTES -> "m"
+    DurationUnit.SECONDS -> "s"
+}
+
+internal fun Duration.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, Duration::unit, "unit") { it.encodeJson() }
+        putProp(this@encodeJson, Duration::value, "value")
+    }
+}
+
+internal fun Conversion.encodeJson(): JSONObject {
+    return JSONObject().apply {
+        putProp(this@encodeJson, Conversion::tag, "key")
+        putProp(this@encodeJson, Conversion::expires, "expires") { it.encodeJson().toString() }
+    }
+}
+
+internal fun Conversion?.optEncodeJson(): JSONObject? {
+    return this?.encodeJson()
 }
 
 internal fun Background.Companion.decodeJson(json: JSONObject): Background {
@@ -476,6 +506,9 @@ internal fun Block.encodeSharedJson(): JSONObject {
         putProp(this@encodeSharedJson, Block::border, "border") { it.encodeJson() }
         putProp(this@encodeSharedJson, Block::keys, "keys") { JSONObject(it) }
         putProp(this@encodeSharedJson, Block::name, "name") { it }
+        putProp(this@encodeSharedJson, Block::conversion, "conversion") {
+            it.optEncodeJson() ?: JSONObject.NULL
+        }
         putProp(this@encodeSharedJson, Block::tags) { JSONArray(it) }
     }
 }
@@ -484,13 +517,19 @@ internal fun ImagePollBlockOption.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, ImagePollBlockOption::id, "id")
         putProp(this@encodeJson, ImagePollBlockOption::text, "text") { it.encodeJson() }
-        putProp(this@encodeJson, ImagePollBlockOption::image, "image") { it.optEncodeJson() ?: JSONObject.NULL }
+        putProp(this@encodeJson, ImagePollBlockOption::image, "image") {
+            it.optEncodeJson() ?: JSONObject.NULL
+        }
         putProp(this@encodeJson, ImagePollBlockOption::background, "background") { it.encodeJson() }
         putProp(this@encodeJson, ImagePollBlockOption::border, "border") { it.encodeJson() }
         putProp(this@encodeJson, ImagePollBlockOption::opacity, "opacity")
         putProp(this@encodeJson, ImagePollBlockOption::topMargin, "topMargin")
         putProp(this@encodeJson, ImagePollBlockOption::leftMargin, "leftMargin")
-        putProp(this@encodeJson, ImagePollBlockOption::resultFillColor, "resultFillColor") { it.encodeJson() }
+        putProp(
+            this@encodeJson,
+            ImagePollBlockOption::resultFillColor,
+            "resultFillColor"
+        ) { it.encodeJson() }
     }
 }
 
@@ -503,7 +542,11 @@ internal fun TextPollOption.encodeJson(): JSONObject {
         putProp(this@encodeJson, TextPollOption::opacity, "opacity")
         putProp(this@encodeJson, TextPollOption::height, "height")
         putProp(this@encodeJson, TextPollOption::topMargin, "topMargin")
-        putProp(this@encodeJson, TextPollOption::resultFillColor, "resultFillColor") { it.encodeJson() }
+        putProp(
+            this@encodeJson,
+            TextPollOption::resultFillColor,
+            "resultFillColor"
+        ) { it.encodeJson() }
         putProp(this@encodeJson, TextPollOption::background, "background") { it.encodeJson() }
     }
 }
@@ -518,14 +561,22 @@ internal fun ImagePollBlock.encodeJson(): JSONObject {
 internal fun ImagePoll.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, ImagePoll::question, "question") { it.encodeJson() }
-        putProp(this@encodeJson, ImagePoll::options, "options") { JSONArray(it.map { it.encodeJson() }) }
+        putProp(
+            this@encodeJson,
+            ImagePoll::options,
+            "options"
+        ) { JSONArray(it.map { it.encodeJson() }) }
     }
 }
 
 internal fun TextPoll.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, TextPoll::question, "question") { it.encodeJson() }
-        putProp(this@encodeJson, TextPoll::options, "options") { JSONArray(it.map { it.encodeJson() }) }
+        putProp(
+            this@encodeJson,
+            TextPoll::options,
+            "options"
+        ) { JSONArray(it.map { it.encodeJson() }) }
     }
 }
 
@@ -596,7 +647,27 @@ internal fun ButtonBlock.Companion.decodeJson(json: JSONObject): ButtonBlock {
         keys = json.getJSONObject("keys").toStringHash(),
         text = Text.decodeJson(json.getJSONObject("text")),
         name = json.safeGetString("name"),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
+    )
+}
+
+internal fun Duration.Companion.decodeJson(json: JSONObject): Duration {
+    val unit = when (json.getString("unit")) {
+        "s" -> DurationUnit.SECONDS
+        "m" -> DurationUnit.MINUTES
+        "h" -> DurationUnit.HOURS
+        "d" -> DurationUnit.DAYS
+        else -> DurationUnit.DAYS
+    }
+    return Duration(value = json.getInt("value"), unit = unit)
+}
+
+internal fun Conversion.Companion.optDecodeJson(json: JSONObject?): Conversion? = when (json) {
+    null -> null
+    else -> Conversion(
+        json.getString("tag"),
+        Duration.decodeJson(json.getJSONObject("expires"))
     )
 }
 
@@ -611,6 +682,7 @@ internal fun RectangleBlock.Companion.decodeJson(json: JSONObject): RectangleBlo
         position = Position.decodeJson(json.getJSONObject("position")),
         keys = json.getJSONObject("keys").toStringHash(),
         name = json.safeGetString("name"),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -627,6 +699,7 @@ internal fun WebViewBlock.Companion.decodeJson(json: JSONObject): WebViewBlock {
         keys = json.getJSONObject("keys").toStringHash(),
         webView = WebView.decodeJson(json.getJSONObject("webView")),
         name = json.safeGetString("name"),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -650,6 +723,7 @@ internal fun TextBlock.Companion.decodeJson(json: JSONObject): TextBlock {
         keys = json.getJSONObject("keys").toStringHash(),
         text = Text.decodeJson(json.getJSONObject("text")),
         name = json.safeGetString("name"),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -666,6 +740,7 @@ internal fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
         keys = json.getJSONObject("keys").toStringHash(),
         image = Image.optDecodeJSON(json.optJSONObject("image")),
         name = json.safeGetString("name"),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -712,6 +787,7 @@ fun ImagePollBlock.Companion.decodeJson(json: JSONObject): ImagePollBlock {
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         border = Border.decodeJson(json.getJSONObject("border")),
         name = json.safeGetString("name"),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList(),
         imagePoll = ImagePoll.decodeJson(json.getJSONObject("imagePoll"))
     )
@@ -719,7 +795,8 @@ fun ImagePollBlock.Companion.decodeJson(json: JSONObject): ImagePollBlock {
 
 fun ImagePoll.Companion.decodeJson(json: JSONObject): ImagePoll {
     return ImagePoll(question = Text.decodeJson(json.getJSONObject("question")),
-        options = json.getJSONArray("options").getObjectIterable().map { ImagePollBlockOption.decodeJson(it) })
+        options = json.getJSONArray("options").getObjectIterable()
+            .map { ImagePollBlockOption.decodeJson(it) })
 }
 
 fun TextPollOption.Companion.decodeJson(json: JSONObject): TextPollOption {
@@ -738,7 +815,8 @@ fun TextPollOption.Companion.decodeJson(json: JSONObject): TextPollOption {
 fun TextPoll.Companion.decodeJson(json: JSONObject): TextPoll {
     return TextPoll(
         question = Text.decodeJson(json.getJSONObject("question")),
-        options = json.getJSONArray("options").getObjectIterable().map { TextPollOption.decodeJson(it) }
+        options = json.getJSONArray("options").getObjectIterable()
+            .map { TextPollOption.decodeJson(it) }
     )
 }
 
@@ -753,6 +831,7 @@ fun TextPollBlock.Companion.decodeJson(json: JSONObject): TextPollBlock {
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         border = Border.decodeJson(json.getJSONObject("border")),
         name = json.safeGetString("name"),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList(),
         textPoll = TextPoll.decodeJson(json.getJSONObject("textPoll"))
     )
@@ -762,15 +841,26 @@ internal fun Block.TapBehavior.encodeJson(): JSONObject {
     return JSONObject().apply {
         put("__typename", when (this@encodeJson) {
             is Block.TapBehavior.GoToScreen -> {
-                putProp(this@encodeJson, Block.TapBehavior.GoToScreen::screenId, "screenID") { it }
+                putProp(
+                    this@encodeJson,
+                    Block.TapBehavior.GoToScreen::screenId,
+                    "screenID"
+                ) { it }
                 "GoToScreenBlockTapBehavior"
             }
             is Block.TapBehavior.OpenUri -> {
-                putProp(this@encodeJson, Block.TapBehavior.OpenUri::uri, "url") { it.toString() }
+                putProp(
+                    this@encodeJson,
+                    Block.TapBehavior.OpenUri::uri,
+                    "url"
+                ) { it.toString() }
                 "OpenURLBlockTapBehavior"
             }
             is Block.TapBehavior.PresentWebsite -> {
-                putProp(this@encodeJson, Block.TapBehavior.PresentWebsite::url) { it.toString() }
+                putProp(
+                    this@encodeJson,
+                    Block.TapBehavior.PresentWebsite::url
+                ) { it.toString() }
                 "PresentWebsiteBlockTapBehavior"
             }
             is Block.TapBehavior.None -> {
@@ -795,9 +885,8 @@ internal val ImagePollBlock.Companion.resourceName get() = "ImagePollBlock"
 internal fun Block.Companion.decodeJson(json: JSONObject): Block {
     // Block has subclasses, so we need to delegate to the appropriate deserializer for each
     // block type.
-    val typeName = json.safeGetString("__typename")
 
-    return when (typeName) {
+    return when (val typeName = json.safeGetString("__typename")) {
         BarcodeBlock.resourceName -> BarcodeBlock.decodeJson(json)
         ButtonBlock.resourceName -> ButtonBlock.decodeJson(json)
         RectangleBlock.resourceName -> RectangleBlock.decodeJson(json)
@@ -864,6 +953,7 @@ internal fun Screen.Companion.decodeJson(json: JSONObject): Screen {
         titleBar = TitleBar.decodeJson(json.getJSONObject("titleBar")),
         keys = json.getJSONObject("keys").toStringHash(),
         name = json.safeGetString("name"),
+        conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList()
     )
 }
@@ -878,6 +968,9 @@ internal fun Screen.encodeJson(): JSONObject {
         putProp(this@encodeJson, Screen::titleBar, "titleBar") { it.encodeJson() }
         putProp(this@encodeJson, Screen::keys) { JSONObject(it) }
         putProp(this@encodeJson, Screen::tags) { JSONArray(it) }
+        putProp(this@encodeJson, Screen::conversion, "conversion") {
+            it.optEncodeJson() ?: JSONObject.NULL
+        }
         putProp(this@encodeJson, Screen::name) { it }
     }
 }

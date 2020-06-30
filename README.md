@@ -2,7 +2,7 @@
 
 ## Rover Android SDK 3.0
 
-The first step is to add the library dependencies.  We’ll start with a default
+The first step is to add the library dependencies. We’ll start with a default
 installation, featuring all of the Rover libraries.
 
 Ensure that you have Rover's maven repository added to the `dependencies` →
@@ -23,11 +23,11 @@ dependencies {
 Then add the following to your application-level `build.gradle` file (not the
 top level `build.gradle`, but rather your app-level one) in the `dependencies`
 block.
- 
+
 ```groovy
 dependencies {
     // ...
-    implementation "io.rover:sdk:3.6.1"
+    implementation "io.rover:sdk:3.7.0"
 }
 ```
 

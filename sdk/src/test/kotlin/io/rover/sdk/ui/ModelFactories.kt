@@ -53,7 +53,8 @@ internal class ModelFactories {
                 ),
                 keys = emptyMap(),
                 name = "An empty screen",
-                tags = emptyList()
+                tags = emptyList(),
+                conversion = null
             ).copy()
         }
 
@@ -103,7 +104,8 @@ internal class ModelFactories {
                 opacity = 1.0,
                 keys = emptyMap(),
                 name = "Example Rectangle Block",
-                tags = emptyList()
+                tags = emptyList(),
+                conversion = null
             )
         }
 

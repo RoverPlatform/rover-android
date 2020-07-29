@@ -69,7 +69,7 @@ internal class AnalyticsService(
             is RoverEvent.ScreenDismissed -> "Screen Dismissed" to eventInformation.toFlat()
             is RoverEvent.ScreenViewed -> "Screen Viewed" to eventInformation.toFlat()
             is RoverEvent.BlockTapped -> "Block Tapped" to eventInformation.toFlat()
-            else -> throw RuntimeException("Event not supported")
+            is RoverEvent.PollAnswered -> "Poll Answered" to eventInformation.toFlat()
         }
 
         return JSONObject().apply {
@@ -95,7 +95,7 @@ internal class AnalyticsService(
      * Initiates the [AnalyticsService] sending of analytics events.
      */
     init {
-        eventEmitter.trackedEvents.filter { it !is RoverEvent.PollAnswered }.subscribe { sendRequest(it) }
+        eventEmitter.trackedEvents.subscribe { sendRequest(it) }
     }
 
     private fun request(
@@ -140,6 +140,9 @@ private const val SCREEN_TAGS = "screenTags"
 private const val BLOCK_ID = "blockID"
 private const val BLOCK_NAME = "blockName"
 private const val BLOCK_TAGS = "blockTags"
+private const val OPTION_ID = "optionID"
+private const val OPTION_TEXT = "optionText"
+private const val OPTION_IMAGE = "optionImage"
 
 private fun RoverEvent.ExperiencePresented.toFlat(): Attributes {
     return hashMapOf(
@@ -212,4 +215,24 @@ private fun RoverEvent.BlockTapped.toFlat(): Attributes {
         BLOCK_NAME to block.name,
         BLOCK_TAGS to block.tags
     ) + if (campaignId != null) hashMapOf(CAMPAIGN_ID to campaignId) else hashMapOf()
+}
+
+private fun RoverEvent.PollAnswered.toFlat(): Attributes {
+    val attributes = mutableMapOf(
+        EXPERIENCE_ID to experience.id,
+        EXPERIENCE_NAME to experience.name,
+        EXPERIENCE_TAGS to experience.tags,
+        SCREEN_NAME to screen.name,
+        SCREEN_ID to screen.id,
+        SCREEN_TAGS to screen.tags,
+        BLOCK_ID to block.id,
+        BLOCK_NAME to block.name,
+        BLOCK_TAGS to block.tags,
+        OPTION_ID to option.id,
+        OPTION_TEXT to option.text
+    )
+    option.image?.let { attributes[OPTION_IMAGE] = it }
+    campaignId?.let { attributes[CAMPAIGN_ID] = it }
+
+    return attributes
 }

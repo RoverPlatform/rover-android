@@ -13,11 +13,9 @@ import io.rover.sdk.platform.dateAsIso8601
 import io.rover.sdk.platform.debugExplanation
 import io.rover.sdk.platform.setRoverUserAgent
 import io.rover.sdk.services.EventEmitter
-import io.rover.sdk.streams.filter
 import io.rover.sdk.streams.subscribe
 import org.json.JSONObject
 import java.io.DataOutputStream
-import java.lang.RuntimeException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Date
@@ -70,13 +68,14 @@ internal class AnalyticsService(
             is RoverEvent.ScreenViewed -> "Screen Viewed" to eventInformation.toFlat()
             is RoverEvent.BlockTapped -> "Block Tapped" to eventInformation.toFlat()
             is RoverEvent.PollAnswered -> "Poll Answered" to eventInformation.toFlat()
+            is RoverEvent.AppOpened -> "App Opened" to mapOf()
         }
 
         return JSONObject().apply {
             put("anonymousID", installationIdentifier)
             put("event", eventName)
             put("timestamp", Date().dateAsIso8601())
-            put("properties", flatEvent.encodeJson())
+            if (flatEvent.isNotEmpty()) put("properties", flatEvent.encodeJson())
         }.toString()
     }
 

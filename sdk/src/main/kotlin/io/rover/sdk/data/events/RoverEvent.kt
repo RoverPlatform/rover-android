@@ -46,6 +46,18 @@ sealed class RoverEvent {
         }
     }
 
+    class AppOpened() : RoverEvent() {
+        override fun encodeJson(): JSONObject {
+            return JSONObject().apply {
+                putOpt(ANALYTICS_EVENT_TYPE, POLL_ANSWERED_CODE)
+            }
+        }
+
+        internal companion object {
+            fun decodeJson(): AppOpened = AppOpened()
+        }
+    }
+
     data class PollAnswered(
         val experience: Experience,
         val screen: Screen,
@@ -238,6 +250,7 @@ sealed class RoverEvent {
         private const val EXPERIENCE_VIEWED_CODE = "EXPERIENCE VIEWED"
         private const val SCREEN_VIEWED_CODE = "SCREEN VIEWED"
         private const val SCREEN_PRESENTED_CODE = "SCREEN PRESENTED"
+        private const val APP_OPENED_CODE = "APP OPENED"
         private const val ANALYTICS_EVENT_TYPE = "ANALYTICS_EVENT_TYPE"
 
         fun decodeJson(jsonObject: JSONObject): RoverEvent {
@@ -260,6 +273,7 @@ sealed class RoverEvent {
                 SCREEN_VIEWED_CODE -> {
                     ScreenViewed.decodeJson(jsonObject)
                 }
+                APP_OPENED_CODE -> AppOpened.decodeJson()
                 else -> {
                     ScreenPresented.decodeJson(jsonObject)
                 }

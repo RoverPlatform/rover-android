@@ -1,35 +1,20 @@
 package io.rover.sdk.data.events
 
-import android.app.Activity
-import android.app.Application
-import android.os.Bundle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.ProcessLifecycleOwner
 import io.rover.sdk.services.EventEmitter
 
-internal class AppOpenedTracker(application: Application, private val eventEmitter: EventEmitter) {
-    var runningActivities = 0
-
+internal class AppOpenedTracker(private val eventEmitter: EventEmitter) {
     init {
-        application.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
-            override fun onActivityCreated(activity: Activity?, savedInstanceState: Bundle?) { activityCreated() }
-            override fun onActivityStarted(activity: Activity?) {}
-            override fun onActivityResumed(activity: Activity?) {}
-            override fun onActivityPaused(activity: Activity?) {}
-            override fun onActivityStopped(activity: Activity?) {}
-            override fun onActivitySaveInstanceState(activity: Activity?, outState: Bundle?) {}
-            override fun onActivityDestroyed(activity: Activity?) { activityDestroyed() }
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : LifecycleObserver {
+            @OnLifecycleEvent(Lifecycle.Event.ON_START)
+            fun onStart() { trackAppOpenedEvent() }
         })
-    }
-
-    fun activityCreated() {
-        runningActivities =+ 1
-        if (runningActivities == 1) trackAppOpenedEvent()
     }
 
     private fun trackAppOpenedEvent() {
         eventEmitter.trackEvent(RoverEvent.AppOpened())
-    }
-
-    fun activityDestroyed() {
-        runningActivities =- 1
     }
 }

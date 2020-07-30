@@ -172,7 +172,7 @@ open class Rover(
         eventEmitter
     )
 
-    private val appOpenedTracker: AppOpenedTracker = AppOpenedTracker(application, eventEmitter)
+    private val appOpenedTracker: AppOpenedTracker = AppOpenedTracker(eventEmitter)
 
     private val pollsEndpoint = "https://polls.rover.io/v1/polls"
 

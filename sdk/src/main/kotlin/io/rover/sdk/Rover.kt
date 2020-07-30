@@ -31,6 +31,7 @@ import io.rover.sdk.data.domain.TextPollBlock
 import io.rover.sdk.data.domain.WebView
 import io.rover.sdk.data.domain.WebViewBlock
 import io.rover.sdk.data.events.AnalyticsService
+import io.rover.sdk.data.events.AppOpenedTracker
 import io.rover.sdk.data.graphql.GraphQlApiService
 import io.rover.sdk.data.http.HttpClient
 import io.rover.sdk.logging.log
@@ -170,6 +171,8 @@ open class Rover(
         accountToken,
         eventEmitter
     )
+
+    private val appOpenedTracker: AppOpenedTracker = AppOpenedTracker(application, eventEmitter)
 
     private val pollsEndpoint = "https://polls.rover.io/v1/polls"
 

@@ -49,6 +49,7 @@ import io.rover.sdk.data.graphql.getStringIterable
 import io.rover.sdk.data.graphql.putProp
 import io.rover.sdk.data.graphql.safeGetString
 import io.rover.sdk.data.graphql.safeGetUri
+import io.rover.sdk.data.graphql.safeOptString
 import io.rover.sdk.data.graphql.toStringHash
 import org.json.JSONArray
 import org.json.JSONException
@@ -105,21 +106,25 @@ internal fun BarcodeFormat.Companion.decodeJson(value: String): BarcodeFormat =
 internal fun Image.Companion.optDecodeJSON(json: JSONObject?): Image? = when (json) {
     null -> null
     else -> Image(
-        json.getInt("width"),
-        json.getInt("height"),
-        json.safeGetString("name"),
-        json.getInt("size"),
-        json.safeGetUri("url")
+        width = json.getInt("width"),
+        height = json.getInt("height"),
+        name = json.safeGetString("name"),
+        size = json.getInt("size"),
+        url = json.safeGetUri("url"),
+        accessibilityLabel = json.safeOptString("accessibilityLabel"),
+        isDecorative = json.getBoolean("isDecorative")
     )
 }
 
 internal fun Image.Companion.decodeJson(json: JSONObject): Image {
     return Image(
-        json.getInt("width"),
-        json.getInt("height"),
-        json.safeGetString("name"),
-        json.getInt("size"),
-        json.safeGetUri("url")
+        width = json.getInt("width"),
+        height = json.getInt("height"),
+        name = json.safeGetString("name"),
+        size = json.getInt("size"),
+        url = json.safeGetUri("url"),
+        accessibilityLabel = json.safeOptString("accessibilityLabel"),
+        isDecorative = json.getBoolean("isDecorative")
     )
 }
 
@@ -738,7 +743,7 @@ internal fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
         opacity = json.getDouble("opacity"),
         position = Position.decodeJson(json.getJSONObject("position")),
         keys = json.getJSONObject("keys").toStringHash(),
-        image = Image.optDecodeJSON(json.optJSONObject("image")),
+        image = Image.decodeJson(json.optJSONObject("image")),
         name = json.safeGetString("name"),
         conversion = Conversion.optDecodeJson(json.optJSONObject("conversion")),
         tags = json.getJSONArray("tags").getStringIterable().toList()

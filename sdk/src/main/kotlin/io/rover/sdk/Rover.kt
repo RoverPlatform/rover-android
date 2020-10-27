@@ -500,7 +500,7 @@ internal class ViewModels(
     }
 
     private fun imageViewModel(
-        image: Image?,
+        image: Image,
         containingBlock: Block
     ): ImageViewModel {
         return ImageViewModel(

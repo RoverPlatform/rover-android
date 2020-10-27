@@ -24,6 +24,10 @@ internal interface ImageViewModelInterface : Measurable, BindableViewModel, Pref
      */
     val imageUpdates: Publisher<ImageUpdate>
 
+    val isDecorative: Boolean
+
+    val accessibilityLabel: String?
+
     data class ImageUpdate(
         val bitmap: Bitmap,
         val fadeIn: Boolean

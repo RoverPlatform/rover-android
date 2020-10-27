@@ -237,7 +237,7 @@ data class ImageBlock(
     override val name: String,
     override val conversion: Conversion?,
     override val tags: List<String>,
-    val image: Image?
+    val image: Image
 ) : Block {
     companion object
 }
@@ -416,7 +416,9 @@ data class Image(
     val height: Int,
     val name: String,
     val size: Int,
-    val url: URI
+    val url: URI,
+    val accessibilityLabel: String?,
+    val isDecorative: Boolean
 ) {
     companion object
 }

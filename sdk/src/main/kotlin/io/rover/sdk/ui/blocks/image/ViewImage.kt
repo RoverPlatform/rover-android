@@ -32,7 +32,8 @@ internal class ViewImage(
                 val isAccessible = binding.viewModel.isClickable || !binding.viewModel.isDecorative
                 isFocusableInTouchMode = isAccessible
                 importantForAccessibility = if (isAccessible) {
-                    imageView.contentDescription = binding.viewModel.accessibilityLabel
+                    val contentDescription = binding.viewModel.accessibilityLabel
+                    imageView.contentDescription = contentDescription
                     View.IMPORTANT_FOR_ACCESSIBILITY_YES
                 } else {
                     View.IMPORTANT_FOR_ACCESSIBILITY_NO

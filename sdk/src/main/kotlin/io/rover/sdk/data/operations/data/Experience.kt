@@ -135,7 +135,9 @@ internal fun Image?.optEncodeJson(): JSONObject? {
                 Image::height,
                 Image::name,
                 Image::size,
-                Image::width
+                Image::width,
+                Image::accessibilityLabel,
+                Image::isDecorative
             ).forEach { putProp(this@optEncodeJson, it) }
 
             putProp(this@optEncodeJson, Image::url) { it.toString() }
@@ -431,6 +433,8 @@ internal fun Image.encodeJson(): JSONObject {
         putProp(this@encodeJson, Image::size, "size")
         putProp(this@encodeJson, Image::url, "url") { it.toString() }
         putProp(this@encodeJson, Image::width, "width")
+        putProp(this@encodeJson, Image::accessibilityLabel, "accessibilityLabel")
+        putProp(this@encodeJson, Image::isDecorative, "isDecorative")
     }
 }
 

@@ -26,7 +26,9 @@ object ImageOptimizationServiceSpec : Spek({
             100,
             "interesting.jpg",
             6000,
-            URI("https://rover.io/image.jpg")
+            URI("https://rover.io/image.jpg"),
+            null,
+            true
         )
 
         val background = Background(
@@ -107,7 +109,9 @@ object ImageOptimizationServiceSpec : Spek({
             100,
             "interesting.jpg",
             6000,
-            URI("https://rover.io/image.jpg")
+            URI("https://rover.io/image.jpg"),
+            null,
+            true
         )
 
         val background = Background(

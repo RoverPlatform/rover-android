@@ -112,7 +112,7 @@ internal fun Image.Companion.optDecodeJSON(json: JSONObject?): Image? = when (js
         size = json.getInt("size"),
         url = json.safeGetUri("url"),
         accessibilityLabel = json.safeOptString("accessibilityLabel"),
-        isDecorative = json.getBoolean("isDecorative")
+        isDecorative = json.optBoolean("isDecorative")
     )
 }
 
@@ -124,7 +124,7 @@ internal fun Image.Companion.decodeJson(json: JSONObject): Image {
         size = json.getInt("size"),
         url = json.safeGetUri("url"),
         accessibilityLabel = json.safeOptString("accessibilityLabel"),
-        isDecorative = json.getBoolean("isDecorative")
+        isDecorative = json.optBoolean("isDecorative")
     )
 }
 

@@ -25,7 +25,7 @@ import org.reactivestreams.Publisher
 import java.util.concurrent.TimeUnit
 
 internal class ImageViewModel(
-    private val image: Image?,
+    private val image: Image,
     private val block: Block,
     private val assetService: AssetService,
     private val imageOptimizationService: ImageOptimizationService,
@@ -53,58 +53,52 @@ internal class ImageViewModel(
                     .imageFetchTransform()
                     .share()
                     .apply {
-                        if (image != null) {
-                            timeout(50, TimeUnit.MILLISECONDS)
-                                .subscribe(
-                                    { },
-                                    { error ->
-                                        log.v("Fade in needed, because $error")
-                                        fadeInNeeded = true
-                                    }
-                                )
-                        }
+                        timeout(50, TimeUnit.MILLISECONDS)
+                            .subscribe(
+                                { },
+                                { error ->
+                                    log.v("Fade in needed, because $error")
+                                    fadeInNeeded = true
+                                }
+                            )
                     }
             }
     ).shareHotAndReplay(0).observeOn(mainScheduler) // shareHot because this chain is responsible for side-effect of pre-warming cache, even before subscribed.
 
+    override val isDecorative: Boolean = image.isDecorative
+
+    override val accessibilityLabel: String? = image.accessibilityLabel
+
     private fun Publisher<MeasuredSize>.imageFetchTransform(): Publisher<ImageViewModelInterface.ImageUpdate> {
         return flatMap { measuredSize ->
-            if (image == null) {
-                Publishers.empty()
-            } else {
-                val uriWithParameters = imageOptimizationService.optimizeImageBlock(
-                    image,
-                    block.border.width,
-                    PixelSize(
-                        measuredSize.width.dpAsPx(measuredSize.density),
-                        measuredSize.height.dpAsPx(measuredSize.density)
-                    ),
-                    measuredSize.density
-                )
+            val uriWithParameters = imageOptimizationService.optimizeImageBlock(
+                image,
+                block.border.width,
+                PixelSize(
+                    measuredSize.width.dpAsPx(measuredSize.density),
+                    measuredSize.height.dpAsPx(measuredSize.density)
+                ),
+                measuredSize.density
+            )
 
-                // so if item does not appear within a threshold of time then turn on a fade-in bit?
-                assetService.imageByUrl(uriWithParameters.toURL())
-                    .map { bitmap ->
-                        ImageViewModelInterface.ImageUpdate(
-                            bitmap,
-                            fadeInNeeded
-                        )
-                    }.onErrorReturn { error ->
-                        log.w("Problem fetching image: $error, ignoring.")
-                        null
-                    }.filterNulls()
-            }
+            // so if item does not appear within a threshold of time then turn on a fade-in bit?
+            assetService.imageByUrl(uriWithParameters.toURL())
+                .map { bitmap ->
+                    ImageViewModelInterface.ImageUpdate(
+                        bitmap,
+                        fadeInNeeded
+                    )
+                }.onErrorReturn { error ->
+                    log.w("Problem fetching image: $error, ignoring.")
+                    null
+                }.filterNulls()
         }
     }
 
     override fun intrinsicHeight(bounds: RectF): Float {
         // get aspect ratio of image and use it to calculate the height needed to accommodate
         // the image at its correct aspect ratio given the width
-        return if (image == null) {
-            0f
-        } else {
-            val heightToWidthRatio = image.height.toFloat() / image.width.toFloat()
-            return bounds.width() * heightToWidthRatio
-        }
+        val heightToWidthRatio = image.height.toFloat() / image.width.toFloat()
+        return bounds.width() * heightToWidthRatio
     }
 }

@@ -17,3 +17,11 @@ gradle.properties
 shade
 *.bak
 *.iml
+
+.idea/codeStyles/Project.xml
+
+.idea/compiler.xml
+
+.idea/jarRepositories.xml
+
+.idea/misc.xml

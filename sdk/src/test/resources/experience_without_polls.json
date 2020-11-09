@@ -17,7 +17,8 @@
           "name": "westie.jpg",
           "size": 20334,
           "width": 480,
-          "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/b0f7883c-b405-4036-b17e-ced171f874b8-westie.jpg"
+          "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/b0f7883c-b405-4036-b17e-ced171f874b8-westie.jpg",
+          "isDecorative":  true,
         },
         "scale": "X1"
       },
@@ -95,7 +96,8 @@
                 "name": "icon.png",
                 "size": 24278,
                 "width": 268,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/c0b93ae7-1813-43a6-b08a-7a733ec575d2-icon.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/c0b93ae7-1813-43a6-b08a-7a733ec575d2-icon.png",
+                "isDecorative":  true
               }
             },
             {
@@ -377,7 +379,8 @@
                 "name": "chris.png",
                 "size": 24385,
                 "width": 114,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/77a0fd21-485d-491e-96ce-c781618ddb5c-chris.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/77a0fd21-485d-491e-96ce-c781618ddb5c-chris.png",
+                "isDecorative":  true
               }
             },
             {
@@ -503,7 +506,8 @@
                 "name": "john.png",
                 "size": 25206,
                 "width": 114,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/6a2ce795-6e0f-4142-8b54-a8a1c3d5bf8f-john.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/6a2ce795-6e0f-4142-8b54-a8a1c3d5bf8f-john.png",
+                "isDecorative":  true
               }
             },
             {
@@ -563,7 +567,8 @@
                 "name": "00772468036074-1-base-conversionFormat-1200-conversionFormat.png",
                 "size": 943228,
                 "width": 1000,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/603a9934-aa2f-4489-bc7a-313ffebbe876-00772468036074-1-base-conversionFormat-1200-conversionFormat.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/603a9934-aa2f-4489-bc7a-313ffebbe876-00772468036074-1-base-conversionFormat-1200-conversionFormat.png",
+                "isDecorative":  true
               }
             },
             {
@@ -689,7 +694,8 @@
                 "name": "hero_sausage-mcmuffin-egg.png",
                 "size": 188817,
                 "width": 448,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/188b1a7c-10b0-48d6-a12f-9ef7b4ab5560-hero_sausage-mcmuffin-egg.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/188b1a7c-10b0-48d6-a12f-9ef7b4ab5560-hero_sausage-mcmuffin-egg.png",
+                "isDecorative":  true
               }
             },
             {
@@ -1036,7 +1042,8 @@
                 "name": "sean.png",
                 "size": 26945,
                 "width": 114,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/bd17edda-5361-4652-bfca-7bdffb5ddb75-sean.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/bd17edda-5361-4652-bfca-7bdffb5ddb75-sean.png",
+                "isDecorative":  true
               }
             },
             {
@@ -1161,7 +1168,8 @@
                 "name": "ata.png",
                 "size": 26384,
                 "width": 114,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/918e98ee-bb6e-4238-9e15-d16ae20f5da5-ata.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/918e98ee-bb6e-4238-9e15-d16ae20f5da5-ata.png",
+                "isDecorative":  true
               }
             },
             {
@@ -1220,7 +1228,8 @@
                 "name": "tex-mex-lasagna-main.png",
                 "size": 593477,
                 "width": 936,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/5156d40b-11ed-40c2-8f41-9ed681842c61-tex-mex-lasagna-main.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/5156d40b-11ed-40c2-8f41-9ed681842c61-tex-mex-lasagna-main.png",
+                "isDecorative":  true
               }
             },
             {
@@ -1346,7 +1355,8 @@
                 "name": "wings_traditional6 (1).png",
                 "size": 428213,
                 "width": 600,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/b27955d3-b793-4413-9f09-fbfa8a821872-wings_traditional6%20%281%29.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/b27955d3-b793-4413-9f09-fbfa8a821872-wings_traditional6%20%281%29.png",
+                "isDecorative":  true
               }
             },
             {
@@ -1744,7 +1754,8 @@
                 "name": "chris.png",
                 "size": 24385,
                 "width": 114,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/8a8917be-7f24-4e3e-a13c-a5e7213d6766-chris.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/8a8917be-7f24-4e3e-a13c-a5e7213d6766-chris.png",
+                "isDecorative":  true
               }
             },
             {
@@ -1870,7 +1881,8 @@
                 "name": "Breakfast-Sandwich-with-Canadian-Bacon.jpg",
                 "size": 83669,
                 "width": 620,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/81009442-ac32-4af1-a642-db8b91b366c4-Breakfast-Sandwich-with-Canadian-Bacon.jpg"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/81009442-ac32-4af1-a642-db8b91b366c4-Breakfast-Sandwich-with-Canadian-Bacon.jpg",
+                "isDecorative":  true
               }
             }
           ],
@@ -2161,7 +2173,8 @@
                 "name": "fo-100-whole-wheat-english-muffins.png",
                 "size": 240838,
                 "width": 525,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/5223b304-035b-4b4d-a20a-45d01c541c64-fo-100-whole-wheat-english-muffins.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/5223b304-035b-4b4d-a20a-45d01c541c64-fo-100-whole-wheat-english-muffins.png",
+                "isDecorative":  true
               }
             },
             {
@@ -2220,7 +2233,8 @@
                 "name": "imgres.jpg",
                 "size": 4210,
                 "width": 275,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/2e8a2699-d771-427a-8de7-217460d7963c-imgres.jpg"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/2e8a2699-d771-427a-8de7-217460d7963c-imgres.jpg",
+                "isDecorative":  true
               }
             },
             {
@@ -2368,7 +2382,8 @@
                 "name": "english-muffin.png",
                 "size": 46705,
                 "width": 403,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/60c9f658-f0c9-4908-a0d9-34c739f53533-english-muffin.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/60c9f658-f0c9-4908-a0d9-34c739f53533-english-muffin.png",
+                "isDecorative":  true
               }
             },
             {
@@ -2682,7 +2697,8 @@
                 "name": "shredded-cheddar-cheese.png",
                 "size": 28951,
                 "width": 368,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/e1d4fa3b-757b-43a9-a1ce-70b0e48cf5d2-shredded-cheddar-cheese.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/e1d4fa3b-757b-43a9-a1ce-70b0e48cf5d2-shredded-cheddar-cheese.png",
+                "isDecorative":  true
               }
             },
             {
@@ -2948,7 +2964,8 @@
                 "name": "sean.png",
                 "size": 26945,
                 "width": 114,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/65efb681-efd5-4c44-84cb-c2cf116720e4-sean.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/65efb681-efd5-4c44-84cb-c2cf116720e4-sean.png",
+                "isDecorative":  true
               }
             },
             {
@@ -3032,7 +3049,8 @@
                   "name": "e92ed27d-beb6-4bde-8e74-27671e2b49c7-wings.jpg",
                   "size": 265447,
                   "width": 1194,
-                  "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/f3cc1833-4986-49ee-9ca5-b80be67607e7-e92ed27d-beb6-4bde-8e74-27671e2b49c7-wings.jpg"
+                  "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/f3cc1833-4986-49ee-9ca5-b80be67607e7-e92ed27d-beb6-4bde-8e74-27671e2b49c7-wings.jpg",
+                  "isDecorative":  true
                 },
                 "scale": "X1"
               },
@@ -3351,7 +3369,8 @@
                 "name": "20150811-duffs-th.jpg",
                 "size": 34141,
                 "width": 178,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/f90c6441-f9c6-4a47-a330-7c36b7aac1f5-20150811-duffs-th.jpg"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/f90c6441-f9c6-4a47-a330-7c36b7aac1f5-20150811-duffs-th.jpg",
+                "isDecorative":  true
               }
             },
             {
@@ -3755,7 +3774,8 @@
                 "name": "20150811-crown-and-dragon-th.jpg",
                 "size": 27007,
                 "width": 178,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/0ef1d97a-0e3c-4ccd-8286-61b2e615d7a7-20150811-crown-and-dragon-th.jpg"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/0ef1d97a-0e3c-4ccd-8286-61b2e615d7a7-20150811-crown-and-dragon-th.jpg",
+                "isDecorative":  true
               }
             },
             {
@@ -4007,7 +4027,8 @@
           "name": "kitchentexture.png",
           "size": 192883,
           "width": 800,
-          "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/25be2aa3-e645-41b2-a8c6-c50a2603b201-kitchentexture.png"
+          "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/25be2aa3-e645-41b2-a8c6-c50a2603b201-kitchentexture.png",
+          "isDecorative":  true
         },
         "scale": "X2"
       },
@@ -4177,7 +4198,8 @@
                   "name": "footer-fruit-vegetable.png",
                   "size": 127551,
                   "width": 318,
-                  "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/330b349b-1029-493e-86ff-6f07656837f2-footer-fruit-vegetable.png"
+                  "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/330b349b-1029-493e-86ff-6f07656837f2-footer-fruit-vegetable.png",
+                  "isDecorative":  true
                 },
                 "scale": "X1"
               },
@@ -4225,7 +4247,8 @@
                 "name": "00772468036074-1-base-conversionFormat-1200-conversionFormat.png",
                 "size": 943228,
                 "width": 1000,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/278111ff-7552-41db-8b3a-91fe337af752-00772468036074-1-base-conversionFormat-1200-conversionFormat.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/278111ff-7552-41db-8b3a-91fe337af752-00772468036074-1-base-conversionFormat-1200-conversionFormat.png",
+                "isDecorative":  true
               }
             },
             {
@@ -4585,7 +4608,8 @@
               "name": "orange gradient.png",
               "size": 26152,
               "width": 444,
-              "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/09521e4d-9aad-41d2-809e-3a3fe0062300-orange%20gradient.png"
+              "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/09521e4d-9aad-41d2-809e-3a3fe0062300-orange%20gradient.png",
+              "isDecorative":  true
             },
             "scale": "X2"
           },
@@ -4605,7 +4629,8 @@
                   "name": "targetlogo.jpg",
                   "size": 16540,
                   "width": 302,
-                  "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/0cf75be0-78d2-4895-9554-0b62803facc8-targetlogo.jpg"
+                  "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/0cf75be0-78d2-4895-9554-0b62803facc8-targetlogo.jpg",
+                  "isDecorative":  true
                 },
                 "scale": "X1"
               },
@@ -4652,7 +4677,8 @@
                 "name": "backpack.png",
                 "size": 193001,
                 "width": 370,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/a43ef863-2a7c-46c3-93e3-ea390a78a8c2-backpack.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/a43ef863-2a7c-46c3-93e3-ea390a78a8c2-backpack.png",
+                "isDecorative":  true
               }
             }
           ],
@@ -4849,7 +4875,8 @@
                   "name": "c4e1e77a-0439-4b89-8084-28d7bb0b67c1-accblur.jpg",
                   "size": 94150,
                   "width": 800,
-                  "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/03bb523e-0f64-4700-a442-b0241fec0312-c4e1e77a-0439-4b89-8084-28d7bb0b67c1-accblur.jpg"
+                  "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/03bb523e-0f64-4700-a442-b0241fec0312-c4e1e77a-0439-4b89-8084-28d7bb0b67c1-accblur.jpg",
+                  "isDecorative":  true
                 },
                 "scale": "X1"
               },
@@ -4964,7 +4991,8 @@
                 "name": "costumeheader.jpg",
                 "size": 79449,
                 "width": 828,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/e87c77c4-3600-4102-ac31-9086aba46362-costumeheader.jpg"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/e87c77c4-3600-4102-ac31-9086aba46362-costumeheader.jpg",
+                "isDecorative":  true
               }
             },
             {
@@ -5952,7 +5980,8 @@
                   "name": "orange gradient.png",
                   "size": 26152,
                   "width": 444,
-                  "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/a753a923-de60-4ff8-aa0f-3eeb8e58c096-orange%20gradient.png"
+                  "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/a753a923-de60-4ff8-aa0f-3eeb8e58c096-orange%20gradient.png",
+                  "isDecorative":  true
                 },
                 "scale": "X1"
               },
@@ -6208,7 +6237,8 @@
                 "name": "sean.png",
                 "size": 26945,
                 "width": 114,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/65efb681-efd5-4c44-84cb-c2cf116720e4-sean.png"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/65efb681-efd5-4c44-84cb-c2cf116720e4-sean.png",
+                "isDecorative":  true
               }
             },
             {
@@ -6334,7 +6364,8 @@
                 "name": "wings.jpg",
                 "size": 265447,
                 "width": 1194,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/e92ed27d-beb6-4bde-8e74-27671e2b49c7-wings.jpg"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/e92ed27d-beb6-4bde-8e74-27671e2b49c7-wings.jpg",
+                "isDecorative":  true
               }
             }
           ],
@@ -6614,7 +6645,8 @@
                 "name": "20150811-duffs-th.jpg",
                 "size": 34141,
                 "width": 178,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/f90c6441-f9c6-4a47-a330-7c36b7aac1f5-20150811-duffs-th.jpg"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/f90c6441-f9c6-4a47-a330-7c36b7aac1f5-20150811-duffs-th.jpg",
+                "isDecorative":  true
               }
             },
             {
@@ -7018,7 +7050,8 @@
                 "name": "20150811-crown-and-dragon-th.jpg",
                 "size": 27007,
                 "width": 178,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/0ef1d97a-0e3c-4ccd-8286-61b2e615d7a7-20150811-crown-and-dragon-th.jpg"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/0ef1d97a-0e3c-4ccd-8286-61b2e615d7a7-20150811-crown-and-dragon-th.jpg",
+                "isDecorative":  true
               }
             },
             {
@@ -7408,7 +7441,8 @@
                 "name": "jacket4 copy.jpg",
                 "size": 51269,
                 "width": 640,
-                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/b18e82cd-0fa2-40c0-b463-9042e9bc914a-jacket4%20copy.jpg"
+                "url": "https://images-rover-io.imgix.net/uploads/c4ca4238a0b923820dcc509a6f75849b/b18e82cd-0fa2-40c0-b463-9042e9bc914a-jacket4%20copy.jpg",
+                "isDecorative":  true
               }
             },
             {

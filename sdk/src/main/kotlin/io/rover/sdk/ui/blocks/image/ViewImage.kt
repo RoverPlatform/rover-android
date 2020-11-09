@@ -1,5 +1,6 @@
 package io.rover.sdk.ui.blocks.image
 
+import android.view.View
 import androidx.appcompat.widget.AppCompatImageView
 import android.widget.ImageView
 import io.rover.sdk.streams.androidLifecycleDispose
@@ -25,7 +26,19 @@ internal class ViewImage(
         if (binding != null) {
             val measuredSize = binding.measuredSize ?: throw RuntimeException("ViewImage may only be used with a view model binding including a measured size (ie. used within a Rover screen layout).")
 
-            imageView.alpha = 0f
+            with(imageView) {
+
+                alpha = 0f
+                val isAccessible = binding.viewModel.isClickable || !binding.viewModel.isDecorative
+                isFocusableInTouchMode = isAccessible
+                importantForAccessibility = if (isAccessible) {
+                    contentDescription = binding.viewModel.accessibilityLabel
+                    View.IMPORTANT_FOR_ACCESSIBILITY_YES
+                } else {
+                    View.IMPORTANT_FOR_ACCESSIBILITY_NO
+                }
+
+            }
 
             // we need to know the laid out dimensions of the view in order to ask the view
             // model for an optimized version of the image suited to the view's size.

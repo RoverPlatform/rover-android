@@ -23,6 +23,9 @@ internal class ViewWeb(
         // introduced.
         webView.settings.javaScriptEnabled = true
 
+        // Allow for media to auto play
+        webView.settings.mediaPlaybackRequiresUserGesture = false
+
         // TODO disable the scroll bars if scrolling is disabled, because otherwise they'll appear
         // when you scroll by
     }

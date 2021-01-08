@@ -47,7 +47,9 @@ open class RoverActivity : AppCompatActivity() {
      */
     protected open fun openUri(uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW, uri)
-        this.startActivity(intent)
+        if (intent.resolveActivity(packageManager) != null) {
+            startActivity(intent)
+        }
     }
 
     /**

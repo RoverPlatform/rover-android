@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    # get the version number
+    - name: Get version number from gradle task that sets VERSION output variable
+      id: get_version
+      run: ./gradlew printVersionNumber
+
+    # print the version number
+    - name: Print version number
+      run: echo ${{ steps.get_version.outputs.VERSION }}
+
+    - name: Build with Gradle
+      env:
+          DEPLOY_MAVEN_PATH: /tmp/m2
+      run: ./gradlew sdk:assembleRelease sdk:publishProductionPublicationToMavenRepository
+      

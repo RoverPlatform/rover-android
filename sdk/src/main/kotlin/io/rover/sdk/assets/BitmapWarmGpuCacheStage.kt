@@ -1,6 +1,7 @@
 package io.rover.sdk.assets
 
 import android.graphics.Bitmap
+import io.rover.sdk.logging.log
 import java.net.URL
 
 /**
@@ -20,6 +21,7 @@ internal class BitmapWarmGpuCacheStage(
             // case Android's framework maintains the LRU itself.
             when (this) {
                 is PipelineStageResult.Successful -> this.output.prepareToDraw()
+                else -> Unit
             }
         }
     }

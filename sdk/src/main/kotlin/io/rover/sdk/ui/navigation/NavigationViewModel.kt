@@ -137,6 +137,7 @@ internal class NavigationViewModel(
                         )
                     )
                 }
+                else -> { /* no-op */ }
             }
         }
 
@@ -169,6 +170,7 @@ internal class NavigationViewModel(
                                 else -> navigateToScreen(screen, screenViewModel, state.backStack, true)
                             }
                         }
+                        else -> { /* no-op */ }
                     }
                 }
                 is Action.PressedClose -> {

@@ -9,11 +9,11 @@ import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.RectF
 import android.view.View
+import io.rover.sdk.ui.blocks.concerns.ViewCompositionInterface
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.MeasuredSize
 import io.rover.sdk.ui.concerns.ViewModelBinding
 import io.rover.sdk.ui.dpAsPx
-import io.rover.sdk.ui.blocks.concerns.ViewCompositionInterface
 
 internal class ViewBorder(
     override val view: View,
@@ -37,12 +37,12 @@ internal class ViewBorder(
             // canvas is potentially deflected because of a content scroll, particularly with web
             // views.  I don't want the border to scroll (or otherwise be transformed) with the
             // content, so I'll just reset the canvas matrix to an identity (no-op) matrix.
-            canvas.matrix = Matrix()
+            canvas.setMatrix(Matrix())
 
             // have we discovered the view size and also been bound to a viewmodel?
             if (viewModel != null && configuration != null) {
                 // draw the solid border, if needed:
-                if (configuration.borderPaint != null) {
+                configuration.borderPaint?.let { borderPaint ->
                     val halfBorderWidth = viewModel.borderWidth.dpAsPx(displayMetrics).toFloat() / 2
                     val borderRadius = viewModel.borderRadius.dpAsPx(displayMetrics).toFloat()
 
@@ -54,18 +54,18 @@ internal class ViewBorder(
                         configuration.borderRect,
                         compensatedBorderRadius,
                         compensatedBorderRadius,
-                        configuration.borderPaint
+                        borderPaint
                     )
                 }
 
                 // if there's a border radius set, then we draw our rendered alpha mask texture
                 // that was rendered to an appropriate size (at configuration time) on top of the
                 // rendered view.
-                if (configuration.roundedCornersMask != null) {
+                configuration.roundedCornersMask?.let { roundedCornersMask ->
                     // The first frame we run this, the mask texture (roundedCornersMask) will
                     // be uploaded to the GPU.
                     canvas.drawBitmap(
-                        configuration.roundedCornersMask,
+                        roundedCornersMask,
                         0f,
                         0f,
                         Paint().apply {
@@ -109,7 +109,10 @@ internal class ViewBorder(
             val borderWidthPx = viewModel.borderWidth.dpAsPx(displayMetrics).toFloat()
             val borderInset = borderWidthPx / 2
             val borderRect = RectF(
-                borderInset, borderInset, width.toFloat() - borderInset, height.toFloat() - borderInset
+                borderInset,
+                borderInset,
+                width.toFloat() - borderInset,
+                height.toFloat() - borderInset
             )
 
             val borderPaint = if (viewModel.borderWidth != 0) {
@@ -124,7 +127,10 @@ internal class ViewBorder(
 
             val maskBitmap = if (viewModel.borderRadius != 0) {
                 val clipRect = RectF(
-                    0f, 0f, width.toFloat(), height.toFloat()
+                    0f,
+                    0f,
+                    width.toFloat(),
+                    height.toFloat()
                 )
 
                 val maskBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ALPHA_8)

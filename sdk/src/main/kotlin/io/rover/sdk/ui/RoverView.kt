@@ -71,6 +71,7 @@ internal class RoverView : CoordinatorLayout, MeasuredBindableView<RoverViewMode
                         Snackbar.make(this, R.string.rover_experiences_fetch_failure, Snackbar.LENGTH_LONG).show()
                         log.w("Unable to retrieve experience: ${event.engineeringReason}")
                     }
+                    else -> Unit
                 }
             }, { error ->
                 throw error

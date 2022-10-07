@@ -5,45 +5,27 @@ buildscript {
     ext.rover_sdk_version = '3.8.1'
     ext.rover_sdk_version_code = 3
 
-    ext.kotlin_version = '1.3.31'
-    ext.spek_version = '2.0.5'
-    ext.dokka_version = '0.9.17'
-
-    repositories {
-        google()
-        jcenter()
-        maven {
-            url "https://maven.appspector.com/artifactory/android-sdk"
-        }
-    }
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.0'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "de.mannodermaus.gradle.plugins:android-junit5:1.4.0.0"
-
-        classpath "org.jetbrains.dokka:dokka-android-gradle-plugin:${dokka_version}"
-        // Modification to the standard Maven plugin to be compatible with android-library projects (aar).
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.4.1'
-
-        classpath "com.appspector:android-sdk-plugin:1.0.11"
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-    }
+    ext.kotlin_version = '1.6.21'
+    ext.spek_version = '2.0.19'
 }
 
-allprojects {
-    repositories {
-        google()
-        jcenter()
-        maven { url "http://dl.bintray.com/jetbrains/spek" }
-        maven {
-            url "https://maven.appspector.com/artifactory/android-sdk"
-        }
-    }
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+plugins {
+    id("com.android.application") version "7.3.0" apply false
+    id("com.android.library") version "7.3.0" apply false
+    id("org.jetbrains.kotlin.android") version "1.7.10" apply false
 }
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+// This target can be used to interrogate the SDK for its version number at build time.
+task printVersionNumber {
+    doLast {
+        println "Rover Android version ${rover_sdk_version}"
+        // GitHub Actions detects this syntax on stdout and sets an output variable (`VERSION` in this case)
+        // that we can use later on within the workflow.
+        println "::set-output name=VERSION::${rover_sdk_version}"
+    }
 }

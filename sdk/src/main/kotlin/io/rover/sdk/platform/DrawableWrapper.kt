@@ -182,8 +182,10 @@ internal open class DrawableWrapper(drawable: Drawable) : Drawable(), Drawable.C
         DrawableCompat.setTintList(wrappedDrawable!!, tint)
     }
 
-    override fun setTintMode(tintMode: PorterDuff.Mode) {
-        DrawableCompat.setTintMode(wrappedDrawable!!, tintMode)
+    override fun setTintMode(tintMode: PorterDuff.Mode?) {
+        if (tintMode != null) {
+            DrawableCompat.setTintMode(wrappedDrawable!!, tintMode)
+        }
     }
 
     override fun setHotspot(x: Float, y: Float) {

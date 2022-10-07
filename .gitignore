@@ -13,7 +13,6 @@ build
 /captures
 local.properties
 gradle.xml
-gradle.properties
 shade
 *.bak
 *.iml

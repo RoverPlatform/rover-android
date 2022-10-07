@@ -1,6 +1,7 @@
 package io.rover.sdk.ui.containers
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -47,7 +48,11 @@ open class RoverActivity : AppCompatActivity() {
      */
     protected open fun openUri(uri: Uri) {
         val intent = Intent(Intent.ACTION_VIEW, uri)
-        this.startActivity(intent)
+        try {
+            this.startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            log.w("Could not open URI $uri because no Activity was found to handle it.")
+        }
     }
 
     /**

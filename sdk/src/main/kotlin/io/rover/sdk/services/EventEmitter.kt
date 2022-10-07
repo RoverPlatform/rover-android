@@ -38,6 +38,7 @@ class EventEmitter {
             is RoverEvent.ScreenViewed -> listeners.forEach { it.onScreenViewed(roverEvent) }
             is RoverEvent.ScreenPresented -> listeners.forEach { it.onScreenPresented(roverEvent) }
             is RoverEvent.PollAnswered -> listeners.forEach { it.onPollAnswered(roverEvent) }
+            is RoverEvent.AppOpened -> { /* no-op */ }
         }
     }
 

@@ -114,6 +114,9 @@ internal open class AndroidAssetService(
                             ImageReadyEvent(url, result.output)
                         )
                     }
+                    is PipelineStageResult.Failed -> {
+                        log.w("Failed to fetch image from URL $url: ${result.reason.debugExplanation()}")
+                    }
                 }
             }, {
                 log.w("image request failed ${it.debugExplanation()}")

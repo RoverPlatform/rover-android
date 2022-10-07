@@ -4,25 +4,26 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.os.Build
-import androidx.annotation.RequiresApi
 import android.util.AttributeSet
-import android.webkit.WebView
-import io.rover.sdk.logging.log
 import android.view.MotionEvent
+import android.webkit.WebView
+import androidx.annotation.RequiresApi
+import io.rover.sdk.logging.log
+import io.rover.sdk.ui.blocks.concerns.ViewComposition
+import io.rover.sdk.ui.blocks.concerns.background.ViewBackground
 import io.rover.sdk.ui.blocks.concerns.border.ViewBorder
 import io.rover.sdk.ui.blocks.concerns.layout.LayoutableView
-import io.rover.sdk.ui.blocks.concerns.background.ViewBackground
 import io.rover.sdk.ui.blocks.concerns.layout.ViewBlock
-import io.rover.sdk.ui.blocks.concerns.ViewComposition
 import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.concerns.ViewModelBinding
 
 internal class WebBlockView : WebView, LayoutableView<WebViewBlockViewModelInterface> {
-    constructor(context: Context?) : super(context)
-    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
+    constructor(context: Context) : super(context)
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
+
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
     // mixins (TODO: injections)
     private val viewComposition = ViewComposition()

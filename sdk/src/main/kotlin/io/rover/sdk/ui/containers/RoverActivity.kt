@@ -6,21 +6,21 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
-import androidx.core.content.ContextCompat
-import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
-import io.rover.sdk.services.EmbeddedWebBrowserDisplay
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import io.rover.sdk.R
 import io.rover.sdk.Rover
 import io.rover.sdk.logging.log
 import io.rover.sdk.platform.asAndroidUri
 import io.rover.sdk.platform.whenNotNull
+import io.rover.sdk.services.EmbeddedWebBrowserDisplay
 import io.rover.sdk.streams.androidLifecycleDispose
 import io.rover.sdk.streams.subscribe
-import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.RoverView
 import io.rover.sdk.ui.RoverViewModel
 import io.rover.sdk.ui.RoverViewModelInterface
+import io.rover.sdk.ui.concerns.MeasuredBindableView
 import io.rover.sdk.ui.navigation.ExperienceExternalNavigationEvent
 
 /**
@@ -110,8 +110,10 @@ open class RoverActivity : AppCompatActivity() {
                                 log.v("Received an external navigation event: ${event.externalNavigationEvent}")
                                 dispatchExternalNavigationEvent(event.externalNavigationEvent)
                             }
+                            else -> { /* no-op */ }
                         }
-                    }, { error ->
+                    },
+                    { error ->
                         throw(error)
                     }
                 )
@@ -164,8 +166,10 @@ open class RoverActivity : AppCompatActivity() {
         ).getBoolean(0, false)
 
         if (displayNoCustomThemeWarningMessage) {
-            log.w("You have set no theme for RoverActivity (or your optional subclass thereof) in your AndroidManifest.xml.\n" +
-                "In particular, this means the toolbar will not pick up your brand colours.")
+            log.w(
+                "You have set no theme for RoverActivity (or your optional subclass thereof) in your AndroidManifest.xml.\n" +
+                    "In particular, this means the toolbar will not pick up your brand colours."
+            )
         }
 
         setContentView(
@@ -236,8 +240,14 @@ open class RoverActivity : AppCompatActivity() {
     companion object {
         @JvmStatic
         @JvmOverloads
-        fun makeIntent(packageContext: Context, experienceId: String, campaignId: String? = null, useDraft: Boolean = false, activityClass: Class<out Activity> = RoverActivity::class.java,
-            initialScreenId: String? = null): Intent {
+        fun makeIntent(
+            packageContext: Context,
+            experienceId: String,
+            campaignId: String? = null,
+            useDraft: Boolean = false,
+            activityClass: Class<out Activity> = RoverActivity::class.java,
+            initialScreenId: String? = null
+        ): Intent {
             return Intent(packageContext, activityClass).apply {
                 putExtra("EXPERIENCE_ID", experienceId)
                 putExtra("CAMPAIGN_ID", campaignId)

@@ -1,0 +1,73 @@
+name: Deploy
+
+on:
+  # manually triggered. Note this workflow needs to be in the master (default) branch to work.
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'master'
+
+  # (other approaches to triggering this workflow were considered, including release PR approvals, comments, etc. However they each had serious drawbacks.)
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: Public Release
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        path: rover-android
+
+    - name: set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        cache: gradle
+
+    # handle maven:
+    - uses: actions/checkout@v3
+      with:
+        repository: judoapp/judo-maven
+        path: judo-maven
+        token: ${{ secrets.BOT_GITHUB_TOKEN }}
+
+      name: Checkout judo-maven repo
+
+    - run: |
+        git config --global user.name "Judo Release Bot 🤖"
+        git config --global user.email bot@judo.app
+      name: "Configure git identity for maven repo and public repo push"
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x rover-android/gradlew
+
+    - name: Build with Gradle
+      env:
+        DEPLOY_MAVEN_PATH: ${{ github.workspace }}/judo-maven/maven
+      run: |
+        cd ${{ github.workspace }}/rover-android
+        ./gradlew test :core:assembleRelease :core:publishProductionPublicationToMavenRepository notifications:assembleRelease notifications:publishProductionPublicationToMavenRepository location:assembleRelease location:publishProductionPublicationToMavenRepository debug:assembleRelease debug:publishProductionPublicationToMavenRepository ticketmaster:assembleRelease ticketmaster:publishProductionPublicationToMavenRepository advertising:assembleRelease advertising:publishProductionPublicationToMavenRepository experiences:assembleRelease experiences:publishProductionPublicationToMavenRepository
+
+    # get the version number
+    - name: Get version number from gradle task that sets VERSION output variable
+      id: get_version
+      run: |
+        cd ${{ github.workspace }}/rover-android
+        ./gradlew printVersionNumber
+
+    - name: Get version number
+      id: get_version
+      run: |
+        cd ${{ github.workspace }}/rover-android
+        echo ::set-output name=VERSION::$(./get-version.sh)
+
+    - name: Push to Maven
+      run: |
+        cd ${{ github.workspace }}/judo-maven
+        git add maven
+        git commit -a -m "Releasing Rover Android ${{ steps.get_version.outputs.VERSION }}"
+        git push

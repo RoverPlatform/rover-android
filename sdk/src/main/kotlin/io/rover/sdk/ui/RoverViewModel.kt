@@ -21,7 +21,7 @@ import io.rover.sdk.ui.navigation.ExperienceExternalNavigationEvent
 import io.rover.sdk.ui.navigation.NavigationViewModelInterface
 import io.rover.sdk.ui.toolbar.ExperienceToolbarViewModelInterface
 import io.rover.sdk.ui.toolbar.ToolbarConfiguration
-import kotlinx.android.parcel.Parcelize
+import kotlinx.parcelize.Parcelize
 import org.reactivestreams.Publisher
 
 internal class RoverViewModel(

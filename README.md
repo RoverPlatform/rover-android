@@ -14,7 +14,7 @@ dependencies {
     repositories {
         // ...
         maven {
-            url "http://roverplatform.github.io/rover-android/maven"
+            url "https://judoapp.github.io/judo-maven/maven"
         }
     }
 }

@@ -125,7 +125,7 @@ internal class ViewBorder(
                 null
             }
 
-            val maskBitmap = if (viewModel.borderRadius != 0) {
+            val maskBitmap = if (viewModel.borderRadius != 0 && width > 0 && height > 0) {
                 val clipRect = RectF(
                     0f,
                     0f,

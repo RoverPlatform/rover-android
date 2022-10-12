@@ -50,7 +50,7 @@ jobs:
         DEPLOY_MAVEN_PATH: ${{ github.workspace }}/judo-maven/maven
       run: |
         cd ${{ github.workspace }}/rover-android
-        ./gradlew sdk:assembleRelease sdk:publishProductionPublicationToMavenRepository
+        ./gradlew test sdk:assembleRelease sdk:publishProductionPublicationToMavenRepository
 
     # get the version number
     - name: Get version number from gradle task that sets VERSION output variable

@@ -59,12 +59,6 @@ jobs:
         cd ${{ github.workspace }}/rover-android
         ./gradlew printVersionNumber
 
-    - name: Get version number
-      id: get_version
-      run: |
-        cd ${{ github.workspace }}/rover-android
-        echo ::set-output name=VERSION::$(./get-version.sh)
-
     - name: Push to Maven
       run: |
         cd ${{ github.workspace }}/judo-maven

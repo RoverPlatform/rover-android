@@ -34,7 +34,7 @@ android {
         jvmTarget = "1.8"
     }
 
-    namespace = "io.rover.campaigns.advertising"
+    namespace = "io.rover.advertising"
 }
 
 dependencies {

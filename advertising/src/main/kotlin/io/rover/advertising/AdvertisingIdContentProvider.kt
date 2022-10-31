@@ -1,4 +1,4 @@
-package io.rover.campaigns.advertising
+package io.rover.advertising
 
 import android.content.Context
 import com.google.android.gms.ads.identifier.AdvertisingIdClient

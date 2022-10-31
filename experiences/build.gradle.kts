@@ -37,7 +37,7 @@ android {
         jvmTarget = "1.8"
     }
 
-    namespace = "io.rover.campaigns.experiences"
+    namespace = "io.rover.experiences"
 }
 
 dependencies {

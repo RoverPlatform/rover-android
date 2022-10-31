@@ -28,7 +28,7 @@ import io.rover.example.ui.theme.RoverCampaignsAndroidExampleTheme
 import io.rover.campaigns.core.RoverCampaigns
 import io.rover.campaigns.core.permissions.PermissionsNotifierInterface
 import io.rover.campaigns.debug.RoverDebugActivity
-import io.rover.campaigns.experiences.ui.containers.RoverActivity
+import io.rover.experiences.ui.containers.RoverActivity
 import io.rover.campaigns.notifications.ui.containers.NotificationCenterActivity
 
 class MainActivity : ComponentActivity() {

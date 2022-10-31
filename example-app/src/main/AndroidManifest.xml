@@ -89,7 +89,7 @@
 
         <!-- Registering RoverActivity from the Rover SDK in order to display experiences -->
         <activity
-            android:name="io.rover.campaigns.experiences.ui.containers.RoverActivity"
+            android:name="io.rover.experiences.ui.containers.RoverActivity"
             android:theme="@style/Theme.Rovercampaignsandroid.NoActionBar" />
     </application>
 

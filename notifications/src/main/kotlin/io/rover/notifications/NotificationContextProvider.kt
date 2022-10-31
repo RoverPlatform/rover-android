@@ -1,8 +1,8 @@
 package io.rover.notifications
 
 import androidx.core.app.NotificationManagerCompat
-import io.rover.campaigns.core.data.domain.DeviceContext
-import io.rover.campaigns.core.events.ContextProvider
+import io.rover.core.data.domain.DeviceContext
+import io.rover.core.events.ContextProvider
 
 /**
  * Will identify if the user has disabled notifications from the app.

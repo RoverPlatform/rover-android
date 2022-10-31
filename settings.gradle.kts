@@ -19,5 +19,5 @@ dependencyResolutionManagement {
 }
 
 include(":core", ":location", ":notifications", ":debug", ":ticketmaster", ":advertising", ":experiences")
-rootProject.name = "Rover Campaigns Android"
+rootProject.name = "Rover Android"
 include(":example-app")

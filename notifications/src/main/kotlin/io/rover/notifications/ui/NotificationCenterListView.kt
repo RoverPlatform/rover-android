@@ -13,14 +13,14 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import io.rover.campaigns.core.R
-import io.rover.campaigns.core.RoverCampaigns
-import io.rover.campaigns.core.logging.log
-import io.rover.campaigns.core.platform.whenNotNull
-import io.rover.campaigns.core.streams.androidLifecycleDispose
-import io.rover.campaigns.core.streams.subscribe
-import io.rover.campaigns.core.ui.concerns.BindableView
-import io.rover.campaigns.core.ui.concerns.ViewModelBinding
+import io.rover.core.R
+import io.rover.core.RoverCampaigns
+import io.rover.core.logging.log
+import io.rover.core.platform.whenNotNull
+import io.rover.core.streams.androidLifecycleDispose
+import io.rover.core.streams.subscribe
+import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.ViewModelBinding
 import io.rover.notifications.NotificationOpenInterface
 import io.rover.notifications.domain.Notification
 import io.rover.notifications.ui.concerns.NotificationCenterListViewModelInterface
@@ -141,8 +141,8 @@ open class NotificationCenterListView :
                         is NotificationCenterListViewModelInterface.Event.ListUpdated -> {
                             // update the adapter
                             log.v("List replaced with ${event.notifications.size} notifications")
-                            itemsView.visibility = if (event.notifications.isNotEmpty()) View.VISIBLE else View.GONE
-                            emptyLayout.visibility = if (event.notifications.isEmpty()) View.VISIBLE else View.GONE
+                            itemsView.visibility = if (event.notifications.isNotEmpty()) VISIBLE else GONE
+                            emptyLayout.visibility = if (event.notifications.isEmpty()) VISIBLE else GONE
                             currentNotificationsList = event.notifications
                             currentStableIdsMap = event.stableIds
                             adapter.notifyDataSetChanged()

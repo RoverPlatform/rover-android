@@ -4,10 +4,10 @@ import android.app.Application
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
-import io.rover.campaigns.core.logging.log
-import io.rover.campaigns.core.platform.DateFormattingInterface
-import io.rover.campaigns.core.platform.LocalStorage
-import io.rover.campaigns.core.platform.whenNotNull
+import io.rover.core.logging.log
+import io.rover.core.platform.DateFormattingInterface
+import io.rover.core.platform.LocalStorage
+import io.rover.core.platform.whenNotNull
 import io.rover.notifications.domain.Notification
 import io.rover.notifications.graphql.decodeJson
 import io.rover.notifications.graphql.encodeJson

@@ -2,7 +2,7 @@ package io.rover.Example.fcm
 
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import io.rover.campaigns.core.RoverCampaigns
+import io.rover.core.RoverCampaigns
 import io.rover.notifications.PushReceiverInterface
 
 class MyFirebaseMessagingService: FirebaseMessagingService() {

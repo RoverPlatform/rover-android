@@ -1,8 +1,8 @@
 package io.rover.notifications.routing.routes
 
 import android.content.Intent
-import io.rover.campaigns.core.logging.log
-import io.rover.campaigns.core.routing.Route
+import io.rover.core.logging.log
+import io.rover.core.routing.Route
 import java.net.URI
 
 class PresentNotificationCenterRoute(

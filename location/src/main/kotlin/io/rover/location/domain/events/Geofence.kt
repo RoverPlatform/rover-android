@@ -1,6 +1,6 @@
 package io.rover.location.domain.events
 
-import io.rover.campaigns.core.data.domain.Attributes
+import io.rover.core.data.domain.Attributes
 import io.rover.location.domain.Geofence
 
 fun Geofence.asAttributeValue(): Attributes {

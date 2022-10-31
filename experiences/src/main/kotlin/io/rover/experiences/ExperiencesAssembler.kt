@@ -2,18 +2,17 @@ package io.rover.experiences
 
 import android.app.Application
 import android.content.Context
-import io.rover.campaigns.core.UrlSchemes
-import io.rover.campaigns.core.container.Assembler
-import io.rover.campaigns.core.container.Container
-import io.rover.campaigns.core.container.Resolver
-import io.rover.campaigns.core.container.Scope
-import io.rover.campaigns.core.events.ContextProvider
-import io.rover.campaigns.core.events.EventQueueServiceInterface
-import io.rover.campaigns.core.logging.log
-import io.rover.campaigns.core.platform.LocalStorage
-import io.rover.campaigns.core.routing.Router
+import io.rover.core.UrlSchemes
+import io.rover.core.container.Assembler
+import io.rover.core.container.Container
+import io.rover.core.container.Resolver
+import io.rover.core.container.Scope
+import io.rover.core.events.ContextProvider
+import io.rover.core.events.EventQueueServiceInterface
+import io.rover.core.logging.log
+import io.rover.core.platform.LocalStorage
+import io.rover.core.routing.Router
 import io.rover.experiences.events.contextproviders.ConversionsContextProvider
-import io.rover.experiences.Rover
 import io.rover.experiences.services.EventEmitter
 
 /**

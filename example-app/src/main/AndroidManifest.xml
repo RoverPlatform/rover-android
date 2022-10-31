@@ -37,7 +37,7 @@
 
 
         <!-- Rover Links -->
-        <activity android:name="io.rover.campaigns.core.routing.TransientLinkLaunchActivity" android:exported="true">
+        <activity android:name="io.rover.core.routing.TransientLinkLaunchActivity" android:exported="true">
             <!-- for deep links to open the Campaigns SDK settings -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

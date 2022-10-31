@@ -1,9 +1,9 @@
 package io.rover.experiences
 
-import io.rover.campaigns.core.data.domain.Attributes
-import io.rover.campaigns.core.events.EventQueueServiceInterface
-import io.rover.campaigns.core.events.domain.Event
-import io.rover.campaigns.core.streams.subscribe
+import io.rover.core.data.domain.Attributes
+import io.rover.core.events.EventQueueServiceInterface
+import io.rover.core.events.domain.Event
+import io.rover.core.streams.subscribe
 import io.rover.experiences.data.domain.Block
 import io.rover.experiences.data.domain.Experience
 import io.rover.experiences.data.domain.Screen

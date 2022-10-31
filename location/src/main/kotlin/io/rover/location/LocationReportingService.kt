@@ -1,11 +1,11 @@
 package io.rover.location
 
-import io.rover.campaigns.core.events.EventQueueService.Companion.ROVER_NAMESPACE
-import io.rover.campaigns.core.events.EventQueueServiceInterface
-import io.rover.campaigns.core.events.domain.Event
+import io.rover.core.events.EventQueueService.Companion.ROVER_NAMESPACE
+import io.rover.core.events.EventQueueServiceInterface
+import io.rover.core.events.domain.Event
 import io.rover.location.domain.Beacon
 import io.rover.location.domain.Geofence
-import io.rover.campaigns.core.data.domain.Location
+import io.rover.core.data.domain.Location
 import io.rover.location.domain.events.asAttributeValue
 
 class LocationReportingService(

@@ -3,7 +3,7 @@ package io.rover.ticketmaster
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
-import io.rover.campaigns.core.data.graphql.safeOptString
+import io.rover.core.data.graphql.safeOptString
 import io.rover.ticketmaster.TicketmasterManager.Member
 import junit.framework.Assert.assertEquals
 import org.json.JSONObject

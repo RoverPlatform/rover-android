@@ -3,9 +3,9 @@ package io.rover.example
 import android.app.Application
 import android.util.Log
 import com.google.firebase.messaging.FirebaseMessaging
-import io.rover.campaigns.core.CoreAssembler
-import io.rover.campaigns.core.RoverCampaigns
-import io.rover.campaigns.debug.DebugAssembler
+import io.rover.core.CoreAssembler
+import io.rover.core.RoverCampaigns
+import io.rover.debug.DebugAssembler
 import io.rover.experiences.ExperiencesAssembler
 import io.rover.location.LocationAssembler
 import io.rover.notifications.NotificationsAssembler

@@ -8,9 +8,9 @@ import android.content.Intent
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import io.rover.campaigns.core.RoverCampaigns
-import io.rover.campaigns.core.logging.log
-import io.rover.campaigns.core.platform.DateFormattingInterface
+import io.rover.core.RoverCampaigns
+import io.rover.core.logging.log
+import io.rover.core.platform.DateFormattingInterface
 import io.rover.notifications.domain.Notification
 import io.rover.notifications.graphql.decodeJson
 import io.rover.notifications.graphql.encodeJson

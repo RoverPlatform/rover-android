@@ -1,14 +1,14 @@
 package io.rover.advertising
 
 import android.content.Context
-import io.rover.campaigns.core.container.Assembler
-import io.rover.campaigns.core.container.Container
-import io.rover.campaigns.core.container.Resolver
-import io.rover.campaigns.core.container.Scope
-import io.rover.campaigns.core.events.ContextProvider
-import io.rover.campaigns.core.events.EventQueueServiceInterface
-import io.rover.campaigns.core.platform.LocalStorage
-import io.rover.campaigns.core.streams.Scheduler
+import io.rover.core.container.Assembler
+import io.rover.core.container.Container
+import io.rover.core.container.Resolver
+import io.rover.core.container.Scope
+import io.rover.core.events.ContextProvider
+import io.rover.core.events.EventQueueServiceInterface
+import io.rover.core.platform.LocalStorage
+import io.rover.core.streams.Scheduler
 
 /**
  * Add this module to your project to include the Google Advertising Identifier in your device

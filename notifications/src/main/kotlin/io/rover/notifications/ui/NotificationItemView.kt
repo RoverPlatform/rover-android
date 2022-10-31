@@ -9,11 +9,11 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
-import io.rover.campaigns.core.R
-import io.rover.campaigns.core.streams.androidLifecycleDispose
-import io.rover.campaigns.core.streams.subscribe
-import io.rover.campaigns.core.ui.concerns.BindableView
-import io.rover.campaigns.core.ui.concerns.ViewModelBinding
+import io.rover.core.R
+import io.rover.core.streams.androidLifecycleDispose
+import io.rover.core.streams.subscribe
+import io.rover.core.ui.concerns.BindableView
+import io.rover.core.ui.concerns.ViewModelBinding
 import io.rover.notifications.ui.concerns.NotificationItemViewModelInterface
 
 /**

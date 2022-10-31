@@ -3,9 +3,9 @@ package io.rover.ticketmaster
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import io.rover.campaigns.core.RoverCampaigns
-import io.rover.campaigns.core.events.EventQueueServiceInterface
-import io.rover.campaigns.core.events.domain.Event
+import io.rover.core.RoverCampaigns
+import io.rover.core.events.EventQueueServiceInterface
+import io.rover.core.events.domain.Event
 
 class TicketMasterAnalyticsBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {

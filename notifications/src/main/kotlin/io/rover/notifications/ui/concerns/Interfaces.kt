@@ -2,7 +2,7 @@ package io.rover.notifications.ui.concerns
 
 import android.graphics.Bitmap
 import org.reactivestreams.Publisher
-import io.rover.campaigns.core.ui.concerns.BindableViewModel
+import io.rover.core.ui.concerns.BindableViewModel
 import io.rover.notifications.domain.Notification
 
 /**

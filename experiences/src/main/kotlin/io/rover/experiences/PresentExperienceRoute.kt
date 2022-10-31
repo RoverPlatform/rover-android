@@ -2,10 +2,10 @@ package io.rover.experiences
 
 import android.content.Context
 import android.content.Intent
-import io.rover.campaigns.core.logging.log
-import io.rover.campaigns.core.platform.asAndroidUri
-import io.rover.campaigns.core.platform.parseAsQueryParameters
-import io.rover.campaigns.core.routing.Route
+import io.rover.core.logging.log
+import io.rover.core.platform.asAndroidUri
+import io.rover.core.platform.parseAsQueryParameters
+import io.rover.core.routing.Route
 import io.rover.experiences.ui.containers.RoverActivity
 import java.net.URI
 

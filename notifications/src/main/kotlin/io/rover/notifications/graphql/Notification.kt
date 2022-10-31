@@ -2,14 +2,14 @@ package io.rover.notifications.graphql
 
 import io.rover.notifications.domain.Notification
 import io.rover.notifications.domain.NotificationAttachment
-import io.rover.campaigns.core.data.graphql.getDate
-import io.rover.campaigns.core.data.graphql.putProp
-import io.rover.campaigns.core.data.graphql.safeGetString
-import io.rover.campaigns.core.data.graphql.safeGetUri
-import io.rover.campaigns.core.data.graphql.safeOptDate
-import io.rover.campaigns.core.data.graphql.safeOptString
-import io.rover.campaigns.core.platform.DateFormattingInterface
-import io.rover.campaigns.core.platform.whenNotNull
+import io.rover.core.data.graphql.getDate
+import io.rover.core.data.graphql.putProp
+import io.rover.core.data.graphql.safeGetString
+import io.rover.core.data.graphql.safeGetUri
+import io.rover.core.data.graphql.safeOptDate
+import io.rover.core.data.graphql.safeOptString
+import io.rover.core.platform.DateFormattingInterface
+import io.rover.core.platform.whenNotNull
 import org.json.JSONException
 import org.json.JSONObject
 import java.net.URL

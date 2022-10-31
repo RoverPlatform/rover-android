@@ -25,9 +25,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.core.content.ContextCompat
 import io.rover.example.ui.theme.RoverCampaignsAndroidExampleTheme
-import io.rover.campaigns.core.RoverCampaigns
-import io.rover.campaigns.core.permissions.PermissionsNotifierInterface
-import io.rover.campaigns.debug.RoverDebugActivity
+import io.rover.core.RoverCampaigns
+import io.rover.core.permissions.PermissionsNotifierInterface
+import io.rover.debug.RoverDebugActivity
 import io.rover.experiences.ui.containers.RoverActivity
 import io.rover.notifications.ui.containers.NotificationCenterActivity
 

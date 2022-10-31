@@ -1,10 +1,10 @@
 package io.rover.experiences.events.contextproviders
 
-import io.rover.campaigns.core.data.domain.DeviceContext
-import io.rover.campaigns.core.events.ContextProvider
-import io.rover.campaigns.core.logging.log
-import io.rover.campaigns.core.platform.LocalStorage
-import io.rover.campaigns.core.streams.subscribe
+import io.rover.core.data.domain.DeviceContext
+import io.rover.core.events.ContextProvider
+import io.rover.core.logging.log
+import io.rover.core.platform.LocalStorage
+import io.rover.core.streams.subscribe
 import io.rover.experiences.data.events.RoverEvent
 import io.rover.experiences.services.EventEmitter
 import org.json.JSONObject

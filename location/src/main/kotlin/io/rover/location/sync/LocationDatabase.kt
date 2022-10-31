@@ -3,9 +3,9 @@ package io.rover.location.sync
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import io.rover.campaigns.core.data.sync.CursorState
-import io.rover.campaigns.core.logging.log
-import io.rover.campaigns.core.platform.LocalStorage
+import io.rover.core.data.sync.CursorState
+import io.rover.core.logging.log
+import io.rover.core.platform.LocalStorage
 
 class LocationDatabase(
     context: Context,

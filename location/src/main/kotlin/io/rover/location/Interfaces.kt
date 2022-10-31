@@ -5,7 +5,7 @@ import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.LocationResult
 import io.rover.location.domain.Beacon
 import io.rover.location.domain.Geofence
-import io.rover.campaigns.core.data.domain.Location
+import io.rover.core.data.domain.Location
 import org.reactivestreams.Publisher
 
 interface GoogleBackgroundLocationServiceInterface {

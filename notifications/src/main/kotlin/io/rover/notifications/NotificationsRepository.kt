@@ -1,35 +1,35 @@
 package io.rover.notifications
 
-import io.rover.campaigns.core.data.graphql.getObjectIterable
-import io.rover.campaigns.core.data.sync.GraphQLResponse
-import io.rover.campaigns.core.data.sync.SyncCoordinatorInterface
-import io.rover.campaigns.core.data.sync.SyncDecoder
-import io.rover.campaigns.core.data.sync.SyncQuery
-import io.rover.campaigns.core.data.sync.SyncRequest
-import io.rover.campaigns.core.data.sync.SyncResource
-import io.rover.campaigns.core.data.sync.last
-import io.rover.campaigns.core.events.EventQueueService
-import io.rover.campaigns.core.events.EventQueueServiceInterface
-import io.rover.campaigns.core.events.domain.Event
-import io.rover.campaigns.core.logging.log
-import io.rover.campaigns.core.platform.DateFormattingInterface
-import io.rover.campaigns.core.platform.DeviceIdentificationInterface
-import io.rover.campaigns.core.platform.LocalStorage
-import io.rover.campaigns.core.platform.merge
-import io.rover.campaigns.core.platform.whenNotNull
-import io.rover.campaigns.core.streams.PublishSubject
-import io.rover.campaigns.core.streams.Publishers
-import io.rover.campaigns.core.streams.Scheduler
-import io.rover.campaigns.core.streams.asPublisher
-import io.rover.campaigns.core.streams.doOnComplete
-import io.rover.campaigns.core.streams.doOnNext
-import io.rover.campaigns.core.streams.filterForSubtype
-import io.rover.campaigns.core.streams.flatMap
-import io.rover.campaigns.core.streams.map
-import io.rover.campaigns.core.streams.observeOn
-import io.rover.campaigns.core.streams.shareAndReplay
-import io.rover.campaigns.core.streams.shareHotAndReplay
-import io.rover.campaigns.core.streams.subscribeOn
+import io.rover.core.data.graphql.getObjectIterable
+import io.rover.core.data.sync.GraphQLResponse
+import io.rover.core.data.sync.SyncCoordinatorInterface
+import io.rover.core.data.sync.SyncDecoder
+import io.rover.core.data.sync.SyncQuery
+import io.rover.core.data.sync.SyncRequest
+import io.rover.core.data.sync.SyncResource
+import io.rover.core.data.sync.last
+import io.rover.core.events.EventQueueService
+import io.rover.core.events.EventQueueServiceInterface
+import io.rover.core.events.domain.Event
+import io.rover.core.logging.log
+import io.rover.core.platform.DateFormattingInterface
+import io.rover.core.platform.DeviceIdentificationInterface
+import io.rover.core.platform.LocalStorage
+import io.rover.core.platform.merge
+import io.rover.core.platform.whenNotNull
+import io.rover.core.streams.PublishSubject
+import io.rover.core.streams.Publishers
+import io.rover.core.streams.Scheduler
+import io.rover.core.streams.asPublisher
+import io.rover.core.streams.doOnComplete
+import io.rover.core.streams.doOnNext
+import io.rover.core.streams.filterForSubtype
+import io.rover.core.streams.flatMap
+import io.rover.core.streams.map
+import io.rover.core.streams.observeOn
+import io.rover.core.streams.shareAndReplay
+import io.rover.core.streams.shareHotAndReplay
+import io.rover.core.streams.subscribeOn
 import io.rover.notifications.domain.Notification
 import io.rover.notifications.domain.events.asAttributeValue
 import io.rover.notifications.graphql.decodeJson
@@ -47,12 +47,12 @@ import java.util.concurrent.Executor
  * Must be a singleton, because changes dispatch updates to all subscribers as a side-effect.
  */
 class NotificationsRepository(
-    private val dateFormatting: DateFormattingInterface,
-    private val ioExecutor: Executor,
-    private val mainThreadScheduler: Scheduler,
-    private val eventQueue: EventQueueServiceInterface,
-    private val syncCoordinator: SyncCoordinatorInterface,
-    localStorage: LocalStorage
+        private val dateFormatting: DateFormattingInterface,
+        private val ioExecutor: Executor,
+        private val mainThreadScheduler: Scheduler,
+        private val eventQueue: EventQueueServiceInterface,
+        private val syncCoordinator: SyncCoordinatorInterface,
+        localStorage: LocalStorage
 ) : NotificationsRepositoryInterface {
     override fun updates(): Publisher<NotificationsRepositoryInterface.Emission.Update> = Publishers.concat(
         currentNotificationsOnDisk().map { existingNotifications ->
@@ -322,8 +322,8 @@ class NotificationsRepository(
 }
 
 class NotificationsSyncResource(
-    private val deviceIdentification: DeviceIdentificationInterface,
-    private val notificationsRepository: NotificationsRepositoryInterface
+        private val deviceIdentification: DeviceIdentificationInterface,
+        private val notificationsRepository: NotificationsRepositoryInterface
 ) : SyncResource<Notification> {
     override fun upsertObjects(nodes: List<Notification>) {
         notificationsRepository.mergeRetrievedNotifications(nodes)

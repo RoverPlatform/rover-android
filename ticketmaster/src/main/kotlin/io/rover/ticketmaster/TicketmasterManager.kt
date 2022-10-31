@@ -2,18 +2,18 @@ package io.rover.ticketmaster
 
 import android.content.Context
 import android.os.Build
-import io.rover.campaigns.core.data.domain.Attributes
-import io.rover.campaigns.core.data.graphql.operations.data.toAttributesHash
-import io.rover.campaigns.core.data.graphql.putProp
-import io.rover.campaigns.core.data.graphql.safeOptString
-import io.rover.campaigns.core.data.sync.SyncParticipant
-import io.rover.campaigns.core.data.sync.SyncQuery
-import io.rover.campaigns.core.data.sync.SyncRequest
-import io.rover.campaigns.core.data.sync.SyncResult
-import io.rover.campaigns.core.events.UserInfoInterface
-import io.rover.campaigns.core.logging.log
-import io.rover.campaigns.core.platform.LocalStorage
-import io.rover.campaigns.core.platform.whenNotNull
+import io.rover.core.data.domain.Attributes
+import io.rover.core.data.graphql.operations.data.toAttributesHash
+import io.rover.core.data.graphql.putProp
+import io.rover.core.data.graphql.safeOptString
+import io.rover.core.data.sync.SyncParticipant
+import io.rover.core.data.sync.SyncQuery
+import io.rover.core.data.sync.SyncRequest
+import io.rover.core.data.sync.SyncResult
+import io.rover.core.events.UserInfoInterface
+import io.rover.core.logging.log
+import io.rover.core.platform.LocalStorage
+import io.rover.core.platform.whenNotNull
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.FileNotFoundException
@@ -21,9 +21,9 @@ import java.io.FileNotFoundException
 private const val TICKETMASTER_ID_KEY = "id"
 
 class TicketmasterManager(
-    private val applicationContext: Context,
-    private val userInfo: UserInfoInterface,
-    localStorage: LocalStorage
+        private val applicationContext: Context,
+        private val userInfo: UserInfoInterface,
+        localStorage: LocalStorage
 ) : TicketmasterAuthorizer, SyncParticipant {
     private val storage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
 

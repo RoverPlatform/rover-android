@@ -34,7 +34,7 @@ android {
         jvmTarget = "1.8"
     }
 
-    namespace = "io.rover.campaigns.location"
+    namespace = "io.rover.location"
 }
 
 dependencies {

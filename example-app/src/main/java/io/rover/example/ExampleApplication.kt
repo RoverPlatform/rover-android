@@ -8,7 +8,7 @@ import io.rover.campaigns.core.RoverCampaigns
 import io.rover.campaigns.debug.DebugAssembler
 import io.rover.experiences.ExperiencesAssembler
 import io.rover.location.LocationAssembler
-import io.rover.campaigns.notifications.NotificationsAssembler
+import io.rover.notifications.NotificationsAssembler
 import io.rover.campaigns.ticketmaster.TicketmasterAssembler
 
 class ExampleApplication: Application() {

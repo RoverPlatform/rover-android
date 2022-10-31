@@ -22,7 +22,7 @@ interface TicketmasterAuthorizer {
      *
      * ```kotlin
      * override fun onMemberUpdated(backendName: TMLoginApi.BackendName, memberInfo: TMLoginApi.MemberInfo?) {
-     *     RoverCampaigns.shared.resolve(TicketmasterAuthorizer::class.java)?.setCredentials(
+     *     Rover.shared.resolve(TicketmasterAuthorizer::class.java)?.setCredentials(
      *         backendName.ordinal,
      *         memberInfo?.memberId
      *     )
@@ -53,7 +53,7 @@ interface TicketmasterAuthorizer {
      * ```kotlin
      * override fun onMemberUpdated(backendName: TMLoginApi.BackendName, memberInfo: TMLoginApi.MemberInfo?) {
      *     memberInfo?.let {
-     *           RoverCampaigns.shared.resolve(TicketmasterAuthorizer::class.java)?.setCredentials(
+     *           Rover.shared.resolve(TicketmasterAuthorizer::class.java)?.setCredentials(
      *               it.memberId,
      *               it.email,
      *               it..firstName

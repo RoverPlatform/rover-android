@@ -33,7 +33,7 @@ class LocationDatabase(
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        log.v("Rover Campaigns Location database schema has changed, dropping and creating the database tables and forcing resync.")
+        log.v("Rover  Location database schema has changed, dropping and creating the database tables and forcing resync.")
         clearCursors()
 
         GeofencesSqlStorage.dropSchema(db)

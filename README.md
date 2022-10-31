@@ -1,6 +1,6 @@
-# Rover Campaigns Android SDK
+# Rover  Android SDK
 
-## Rover Campaigns Android SDK 3.0
+## Rover  Android SDK 3.0
 
 The first step is to add the library dependencies. We’ll start with a default
 installation, featuring all of the Rover libraries.

@@ -3,7 +3,7 @@ package io.rover.ticketmaster
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import io.rover.core.RoverCampaigns
+import io.rover.core.Rover
 import io.rover.core.events.EventQueueServiceInterface
 import io.rover.core.events.domain.Event
 
@@ -17,7 +17,7 @@ class TicketMasterAnalyticsBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun trackTicketMasterScreenViewedEvent(intent: Intent, screenName: String) {
-        val eventQueue = RoverCampaigns.shared?.resolve(EventQueueServiceInterface::class.java)
+        val eventQueue = Rover.shared?.resolve(EventQueueServiceInterface::class.java)
 
         val attributes = mutableMapOf<String, Any>("screenName" to screenName)
 

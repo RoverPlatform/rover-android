@@ -11,7 +11,7 @@ import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.nearby.Nearby
 import com.google.android.gms.nearby.messages.MessagesClient
-import io.rover.core.RoverCampaigns
+import io.rover.core.Rover
 import io.rover.core.container.Assembler
 import io.rover.core.container.Container
 import io.rover.core.container.Resolver
@@ -346,15 +346,15 @@ class LocationAssembler(
 }
 
 @Deprecated("Use .resolve(GoogleBackgroundLocationServiceInterface::class.java)")
-val RoverCampaigns.googleBackgroundLocationService: GoogleBackgroundLocationServiceInterface
+val Rover.googleBackgroundLocationService: GoogleBackgroundLocationServiceInterface
     get() = this.resolve(GoogleBackgroundLocationServiceInterface::class.java) ?: throw missingDependencyError("GoogleBackgroundLocationServiceInterface")
 
 @Deprecated("Use .resolve(GoogleBeaconTrackerServiceInterface::class.java)")
-val RoverCampaigns.googleBeaconTrackerService: GoogleBeaconTrackerServiceInterface
+val Rover.googleBeaconTrackerService: GoogleBeaconTrackerServiceInterface
     get() = this.resolve(GoogleBeaconTrackerServiceInterface::class.java) ?: throw missingDependencyError("GoogleBeaconTrackerServiceInterface")
 
 @Deprecated("Use .resolve(GoogleGeofenceServiceInterface::class.java)")
-val RoverCampaigns.googleGeofenceService: GoogleGeofenceServiceInterface
+val Rover.googleGeofenceService: GoogleGeofenceServiceInterface
     get() = this.resolve(GoogleGeofenceServiceInterface::class.java) ?: throw missingDependencyError("GoogleGeofenceServiceInterface")
 
 private fun missingDependencyError(name: String): Throwable {

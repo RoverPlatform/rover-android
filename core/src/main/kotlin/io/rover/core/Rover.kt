@@ -1,7 +1,6 @@
 package io.rover.core
 
 import android.content.Context
-import io.rover.core.BuildConfig
 import io.rover.core.container.Assembler
 import io.rover.core.container.ContainerResolver
 import io.rover.core.container.InjectionContainer
@@ -23,7 +22,7 @@ import java.net.HttpURLConnection
  *
  * Serves as a dependency injection container for the various components (modules) of the Rover SDK.
  */
-class RoverCampaigns(
+class Rover(
     assemblers: List<Assembler>
 ) : ContainerResolver by InjectionContainer(assemblers) {
     init {
@@ -39,32 +38,32 @@ class RoverCampaigns(
     }
 
     companion object {
-        private var sharedInstanceBackingField: RoverCampaigns? = null
+        private var sharedInstanceBackingField: Rover? = null
 
         // we have a global singleton of the Rover container.
         @JvmStatic
         @Deprecated("Please use shared instead.")
-        val sharedInstance: RoverCampaigns
+        val sharedInstance: Rover
             get() = sharedInstanceBackingField ?: throw RuntimeException("Rover shared instance accessed before calling initialize.\n\n" +
-                "Did you remember to call RoverCampaigns.initialize() in your Application.onCreate()?")
+                "Did you remember to call Rover.initialize() in your Application.onCreate()?")
 
         @JvmStatic
-        val shared: RoverCampaigns?
+        val shared: Rover?
             get() = sharedInstanceBackingField ?: log.w("Rover shared instance accessed before calling initialize.\n\n" +
-                "Did you remember to call RoverCampaigns.initialize() in your Application.onCreate()?").let { null }
+                "Did you remember to call Rover.initialize() in your Application.onCreate()?").let { null }
 
         @JvmStatic
         fun initialize(vararg assemblers: Assembler) {
-            val rover = RoverCampaigns(assemblers.asList())
+            val rover = Rover(assemblers.asList())
             if (sharedInstanceBackingField != null) {
-                throw RuntimeException("Rover Campaigns already initialized.  This is most likely a bug.")
+                throw RuntimeException("Rover  already initialized.  This is most likely a bug.")
             }
             sharedInstanceBackingField = rover
-            log.i("Started Rover Campaigns Android SDK v${BuildConfig.ROVER_CAMPAIGNS_VERSION}.")
+            log.i("Started Rover  Android SDK v${BuildConfig.ROVER_CAMPAIGNS_VERSION}.")
         }
 
         /**
-         * Be sure to always call this after [RoverCampaigns.initialize] in your Application's onCreate()!
+         * Be sure to always call this after [Rover.initialize] in your Application's onCreate()!
          *
          * Rover internally uses the standard HTTP client included with Android, but to work
          * effectively it needs HTTP caching enabled.  Unfortunately, this can only be done at the

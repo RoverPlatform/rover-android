@@ -14,7 +14,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
-import io.rover.core.RoverCampaigns
+import io.rover.core.Rover
 import io.rover.core.data.domain.Location
 import io.rover.core.data.domain.Location.Companion.MINIMUM_DISPLACEMENT_DISTANCE
 import io.rover.core.data.graphql.operations.data.decodeJson
@@ -216,14 +216,14 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
                 log.w("Received a location result from Google, but result could not be extracted.")
                 return
             }
-            val rover = RoverCampaigns.shared
+            val rover = Rover.shared
             if (rover == null) {
-                log.e("Received a location result from Google, but Rover Campaigns is not initialized.  Ignoring.")
+                log.e("Received a location result from Google, but Rover  is not initialized.  Ignoring.")
                 return
             }
             val backgroundLocationService = rover.resolve(GoogleBackgroundLocationServiceInterface::class.java)
             if (backgroundLocationService == null) {
-                log.e("Received a location result from Google, but the Rover Campaigns GoogleBackgroundLocationServiceInterface is missing. Ensure that LocationAssembler is added to RoverCampaigns.initialize(). Ignoring.")
+                log.e("Received a location result from Google, but the Rover GoogleBackgroundLocationServiceInterface is missing. Ensure that LocationAssembler is added to Rover.initialize(). Ignoring.")
                 return
             } else {
                 backgroundLocationService.newGoogleLocationResult(result)

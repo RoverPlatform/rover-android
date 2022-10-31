@@ -26,7 +26,7 @@ plugins {
 
 task("printVersionNumber") {
     doLast {
-        println("Rover Campaigns Android SDK version $roverCampaignsVersion")
+        println("Rover  Android SDK version $roverCampaignsVersion")
         // GitHub Actions detects this syntax on stdout and sets an output variable (`VERSION` in this case)
         // that we can use later on within the workflow.
 

@@ -74,8 +74,8 @@ afterEvaluate {
                 version = roverCampaignsVersion
 
                 pom {
-                    name.set("Rover Campaigns SDK Experiences Module")
-                    description.set("From the Rover Campaigns Android SDK")
+                    name.set("Rover  SDK Experiences Module")
+                    description.set("From the Rover  Android SDK")
                     url.set("https://github.com/roverplatform/rover-campaigns-android")
                     licenses {
                         license {

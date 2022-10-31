@@ -54,7 +54,7 @@ class InfluenceTrackerService(
     override fun nonRoverPushReceived() {
         lastSeenNotificationAt = null
         lastSeenNotificationJson = null
-        log.v("Marked that a notification arrived not intended for Rover Campaigns, so forgetting current influenced-open candidate.")
+        log.v("Marked that a notification arrived not intended for Rover , so forgetting current influenced-open candidate.")
     }
 
     private var notificationJustOpened = false

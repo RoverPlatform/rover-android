@@ -3,7 +3,7 @@ package io.rover.core.routing
 import android.os.Bundle
 import androidx.core.content.ContextCompat
 import androidx.appcompat.app.AppCompatActivity
-import io.rover.core.RoverCampaigns
+import io.rover.core.Rover
 import io.rover.core.logging.log
 import java.net.URI
 
@@ -15,7 +15,7 @@ open class TransientLinkLaunchActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val rover = RoverCampaigns.shared
+        val rover = Rover.shared
         if (rover == null) {
             log.e("A deep or universal link mapped to Rover was opened, but Rover is not initialized.  Ignoring.")
             return

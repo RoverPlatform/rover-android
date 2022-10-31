@@ -3,7 +3,7 @@
 package io.rover.debug
 
 import android.content.Context
-import io.rover.core.RoverCampaigns
+import io.rover.core.Rover
 import io.rover.core.container.Assembler
 import io.rover.core.container.Container
 import io.rover.core.container.Resolver
@@ -54,7 +54,7 @@ class DebugAssembler : Assembler {
 }
 
 @Deprecated("Use .resolve(DebugPreferences::class.java)")
-val RoverCampaigns.debugPreferences: DebugPreferences
+val Rover.debugPreferences: DebugPreferences
     get() = this.resolve(DebugPreferences::class.java) ?: throw missingDependencyError("DebugPreferences")
 
 private fun missingDependencyError(name: String): Throwable {

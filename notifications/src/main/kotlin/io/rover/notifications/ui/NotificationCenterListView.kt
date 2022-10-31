@@ -14,7 +14,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import io.rover.core.R
-import io.rover.core.RoverCampaigns
+import io.rover.core.Rover
 import io.rover.core.logging.log
 import io.rover.core.platform.whenNotNull
 import io.rover.core.streams.androidLifecycleDispose
@@ -58,8 +58,8 @@ open class NotificationCenterListView :
             field = activity
             viewModel = if (activity == null) {
                 null
-            } else RoverCampaigns.shared?.resolve(NotificationCenterListViewModelInterface::class.java, null, activity.lifecycle) ?: throw RuntimeException(
-                "Ensure Rover Campaigns is initialized and NotificationsAssembler() added before using notification center."
+            } else Rover.shared?.resolve(NotificationCenterListViewModelInterface::class.java, null, activity.lifecycle) ?: throw RuntimeException(
+                "Ensure Rover  is initialized and NotificationsAssembler() added before using notification center."
             )
         }
 
@@ -73,8 +73,8 @@ open class NotificationCenterListView :
      */
     fun makeNotificationRowView(): BindableView<NotificationItemViewModelInterface> {
         @Suppress("IMPLICIT_CAST_TO_ANY", "UNCHECKED_CAST")
-        return (RoverCampaigns.shared?.resolve(BindableView::class.java, "notificationItemView", context) ?: throw RuntimeException(
-            "Please be sure that Rover Campaigns is initialized and NotificationsAssembler is added to RoverCampaigns.init before using NotificationCenterListView."
+        return (Rover.shared?.resolve(BindableView::class.java, "notificationItemView", context) ?: throw RuntimeException(
+            "Please be sure that Rover  is initialized and NotificationsAssembler is added to Rover.init before using NotificationCenterListView."
         )) as BindableView<NotificationItemViewModelInterface>
     }
 
@@ -91,12 +91,12 @@ open class NotificationCenterListView :
      * Documentation](https://www.rover.io/docs/android/notification-center/).
      */
     open fun makeSwipeToDeleteRevealBackgroundView(): View {
-        return RoverCampaigns.shared?.resolve(
+        return Rover.shared?.resolve(
             View::class.java,
             "notificationItemSwipeToDeleteBackgroundView",
             context
         ) ?: throw RuntimeException(
-            "Please be sure that Rover Campaigns is initialized and NotificationsAssembler is added before using NotificationCenterListView."
+            "Please be sure that Rover  is initialized and NotificationsAssembler is added before using NotificationCenterListView."
         )
     }
 
@@ -105,12 +105,12 @@ open class NotificationCenterListView :
      * [Notification].
      */
     open fun makeNotificationItemViewModel(notification: Notification): NotificationItemViewModelInterface {
-        return RoverCampaigns.shared?.resolve(
+        return Rover.shared?.resolve(
             NotificationItemViewModelInterface::class.java,
             null,
             notification
         ) ?: throw RuntimeException(
-            "Please be sure that Rover Campaigns is initialized and NotificationsAssembler is added before using NotificationCenterListView."
+            "Please be sure that Rover  is initialized and NotificationsAssembler is added before using NotificationCenterListView."
         )
     }
 
@@ -121,11 +121,11 @@ open class NotificationCenterListView :
      * An example implementation is provided here.  Copy and modify it for use in your own
      * implementation of this class.
      */
-    open val emptyLayout = RoverCampaigns.shared?.resolve(
+    open val emptyLayout = Rover.shared?.resolve(
             View::class.java,
             "notificationListEmptyArea",
             context
-        ) ?: throw RuntimeException("Please be sure that Rover Campaigns is initialized and NotificationsAssembler is added to RoverCampaigns.init before using NotificationCenterListView.")
+        ) ?: throw RuntimeException("Please be sure that Rover is initialized and NotificationsAssembler is added to Rover.init before using NotificationCenterListView.")
 
     private var viewModel: NotificationCenterListViewModelInterface? by ViewModelBinding { viewModel, subscriptionCallback ->
 
@@ -239,8 +239,8 @@ open class NotificationCenterListView :
     }
 
     private val notificationOpen: NotificationOpenInterface by lazy {
-        RoverCampaigns.shared?.resolve(NotificationOpenInterface::class.java)
-        ?: throw java.lang.RuntimeException("Please be sure that Rover Campaigns is initialized and NotificationsAssembler is added to RoverCampaigns.init before using NotificationCenterListView.")
+        Rover.shared?.resolve(NotificationOpenInterface::class.java)
+        ?: throw java.lang.RuntimeException("Please be sure that Rover is initialized and NotificationsAssembler is added to Rover.init before using NotificationCenterListView.")
     }
 
     init {

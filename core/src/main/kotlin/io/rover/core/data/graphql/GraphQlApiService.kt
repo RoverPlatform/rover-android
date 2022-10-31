@@ -138,7 +138,7 @@ class GraphQlApiService(
         } else {
             Publishers.just(
                 NetworkResult.Error(
-                    Throwable("Rover Campaigns API authentication not available."),
+                    Throwable("Rover  API authentication not available."),
                     true
                 )
             )
@@ -147,10 +147,10 @@ class GraphQlApiService(
 
     override fun submitEvents(events: List<EventSnapshot>): Publisher<NetworkResult<String>> {
         return if (!authenticationContext.isAvailable()) {
-            log.w("Events may not be submitted without a Rover Campaigns authentication context being configured.")
+            log.w("Events may not be submitted without a Rover  authentication context being configured.")
             Publishers.just(
                 NetworkResult.Error(
-                    Exception("Attempt to submit Events without Rover Campaigns authentication context being configured."),
+                    Exception("Attempt to submit Events without Rover  authentication context being configured."),
                     false
                 )
             )

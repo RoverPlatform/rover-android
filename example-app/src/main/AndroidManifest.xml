@@ -44,7 +44,7 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="@string/rover_campaigns_uri_scheme" />
+                <data android:scheme="@string/rover_uri_scheme" />
                 <data android:host="presentSettings" />
             </intent-filter>
 
@@ -54,7 +54,7 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="@string/rover_campaigns_uri_scheme" />
+                <data android:scheme="@string/rover_uri_scheme" />
                 <data android:host="presentNotificationCenter" />
             </intent-filter>
 
@@ -65,7 +65,7 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="@string/rover_campaigns_uri_scheme" />
+                <data android:scheme="@string/rover_uri_scheme" />
             </intent-filter>
 
             <!-- for http universal links/app links to open experiences  -->
@@ -74,7 +74,7 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="http" android:host="@string/rover_campaigns_associated_domain" />
+                <data android:scheme="http" android:host="@string/rover_associated_domain" />
             </intent-filter>
 
             <!-- for https universal links/app links to open experiences -->
@@ -83,7 +83,7 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="https" android:host="@string/rover_campaigns_associated_domain" />
+                <data android:scheme="https" android:host="@string/rover_associated_domain" />
             </intent-filter>
         </activity>
 

@@ -13,7 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.TextView
 import io.rover.core.R
-import io.rover.core.RoverCampaigns
+import io.rover.core.Rover
 import io.rover.core.UrlSchemes
 import io.rover.core.assets.AssetService
 import io.rover.core.container.Assembler
@@ -325,15 +325,15 @@ class NotificationsAssembler @JvmOverloads constructor(
     }
 }
 @Deprecated("Use .resolve(PushReceiverInterface::class.java)")
-val RoverCampaigns.pushReceiver: PushReceiverInterface
+val Rover.pushReceiver: PushReceiverInterface
     get() = this.resolve(PushReceiverInterface::class.java) ?: throw missingDependencyError("PushReceiverInterface")
 
 @Deprecated("Use .resolve(NotificationOpenInterface::class.java)")
-val RoverCampaigns.notificationOpen: NotificationOpenInterface
+val Rover.notificationOpen: NotificationOpenInterface
     get() = this.resolve(NotificationOpenInterface::class.java) ?: throw missingDependencyError("NotificationOpenInterface")
 
 @Deprecated("Use .resolve(InfluenceTrackerServiceInterface::class.java)")
-val RoverCampaigns.influenceTracker: InfluenceTrackerServiceInterface
+val Rover.influenceTracker: InfluenceTrackerServiceInterface
     get() = this.resolve(InfluenceTrackerServiceInterface::class.java) ?: throw missingDependencyError("InfluenceTrackerService")
 
 private fun missingDependencyError(name: String): Throwable {

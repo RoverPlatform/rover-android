@@ -25,7 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.core.content.ContextCompat
 import io.rover.example.ui.theme.RoverCampaignsAndroidExampleTheme
-import io.rover.core.RoverCampaigns
+import io.rover.core.Rover
 import io.rover.core.permissions.PermissionsNotifierInterface
 import io.rover.debug.RoverDebugActivity
 import io.rover.experiences.ui.containers.RoverActivity
@@ -45,13 +45,13 @@ class MainActivity : ComponentActivity() {
             Log.i("RoverExample", "Location permissions result: $permissions")
             when {
                 permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
-                    RoverCampaigns.shared?.resolveSingletonOrFail(PermissionsNotifierInterface::class.java)?.permissionGranted(
+                    Rover.shared?.resolveSingletonOrFail(PermissionsNotifierInterface::class.java)?.permissionGranted(
                         Manifest.permission.ACCESS_FINE_LOCATION
                     )
                 }
 
                 permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
-                    RoverCampaigns.shared?.resolveSingletonOrFail(PermissionsNotifierInterface::class.java)?.permissionGranted(
+                    Rover.shared?.resolveSingletonOrFail(PermissionsNotifierInterface::class.java)?.permissionGranted(
                         Manifest.permission.ACCESS_COARSE_LOCATION
                     )
                 }
@@ -63,7 +63,7 @@ class MainActivity : ComponentActivity() {
         ) { permissionGranted ->
             if (permissionGranted) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    RoverCampaigns.shared?.resolveSingletonOrFail(PermissionsNotifierInterface::class.java)?.permissionGranted(
+                    Rover.shared?.resolveSingletonOrFail(PermissionsNotifierInterface::class.java)?.permissionGranted(
                         Manifest.permission.ACCESS_BACKGROUND_LOCATION
                     )
                 }
@@ -79,7 +79,7 @@ class MainActivity : ComponentActivity() {
                         verticalArrangement = Arrangement.spacedBy(Dp(8.0f)),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        TopAppBar(title = { Text(text = "Rover Campaigns Example App") })
+                        TopAppBar(title = { Text(text = "Rover  Example App") })
 
                         Button(onClick = {
                             startActivity(
@@ -158,7 +158,7 @@ class MainActivity : ComponentActivity() {
         // Tries to retrieve campaignId query parameter:
         val queryCampaignId = uri.getQueryParameter("campaignID")
 
-        if (uri.scheme == getString(R.string.rover_campaigns_uri_scheme) && uri.host == "experience" && queryExperienceId != null) {
+        if (uri.scheme == getString(R.string.rover_uri_scheme) && uri.host == "experience" && queryExperienceId != null) {
             startActivity(RoverActivity.makeIntent(packageContext = this, experienceId = queryExperienceId, campaignId = queryCampaignId, initialScreenId = queryInitialScreenId))
             return
         }

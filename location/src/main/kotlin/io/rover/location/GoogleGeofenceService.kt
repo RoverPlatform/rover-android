@@ -13,7 +13,7 @@ import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.GeofencingRequest
-import io.rover.core.RoverCampaigns
+import io.rover.core.Rover
 import io.rover.core.data.domain.Location
 import io.rover.core.data.graphql.getStringIterable
 import io.rover.core.logging.log
@@ -255,14 +255,14 @@ class GoogleGeofenceService(
 
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val rover = RoverCampaigns.shared
+        val rover = Rover.shared
         if (rover == null) {
-            log.e("Received a geofence result from Google, but Rover Campaigns is not initialized.  Ignoring.")
+            log.e("Received a geofence result from Google, but Rover  is not initialized.  Ignoring.")
             return
         }
         val geofenceService = rover.resolve(GoogleGeofenceServiceInterface::class.java)
         if (geofenceService == null) {
-            log.e("Received a geofence result from Google, but GoogleGeofenceServiceInterface is not registered in the Rover Campaigns container. Ensure LocationAssembler() is in RoverCampaigns.initialize(). Ignoring.")
+            log.e("Received a geofence result from Google, but GoogleGeofenceServiceInterface is not registered in the Rover container. Ensure LocationAssembler() is in Rover.initialize(). Ignoring.")
             return
         }
         val geofencingEvent = GeofencingEvent.fromIntent(intent)

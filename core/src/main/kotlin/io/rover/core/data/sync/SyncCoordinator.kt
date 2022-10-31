@@ -8,7 +8,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import io.rover.core.RoverCampaigns
+import io.rover.core.Rover
 import io.rover.core.data.graphql.getObjectIterable
 import io.rover.core.data.http.HttpClientResponse
 import io.rover.core.logging.log
@@ -173,7 +173,7 @@ class SyncCoordinator(
     ) : Worker(context, params) {
         override fun doWork(): Result {
             val result = try {
-                RoverCampaigns.shared?.resolve(SyncCoordinatorInterface::class.java)
+                Rover.shared?.resolve(SyncCoordinatorInterface::class.java)
                     ?.sync()
                     ?.first()
                     ?.blockForResult(300)?.first()
@@ -185,7 +185,7 @@ class SyncCoordinator(
                 SyncCoordinatorInterface.Result.Succeeded -> Result.success()
                 SyncCoordinatorInterface.Result.RetryNeeded -> Result.retry()
                 null -> {
-                    log.w("Rover Campaigns isn't initialized or CoreAssembler hasn't been added, but the background sync job with work manager is still scheduled. Marking as failed.")
+                    log.w("Rover  isn't initialized or CoreAssembler hasn't been added, but the background sync job with work manager is still scheduled. Marking as failed.")
                     Result.failure()
                 }
             }

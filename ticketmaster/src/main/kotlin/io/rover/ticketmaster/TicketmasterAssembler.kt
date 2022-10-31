@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.IntentFilter
 // ANDREW START HERE
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import io.rover.core.RoverCampaigns
+import io.rover.core.Rover
 import io.rover.core.container.Assembler
 import io.rover.core.container.Container
 import io.rover.core.container.Resolver
@@ -59,5 +59,5 @@ class TicketmasterAssembler : Assembler {
 }
 
 @Deprecated("Use .resolve(TicketmasterAuthorizer::class.java)")
-val RoverCampaigns.ticketmasterAuthorizer: TicketmasterAuthorizer
-    get() = RoverCampaigns.sharedInstance.resolveSingletonOrFail(TicketmasterAuthorizer::class.java)
+val Rover.ticketmasterAuthorizer: TicketmasterAuthorizer
+    get() = Rover.sharedInstance.resolveSingletonOrFail(TicketmasterAuthorizer::class.java)

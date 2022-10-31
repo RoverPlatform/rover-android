@@ -38,7 +38,7 @@ interface LocalStorage {
  */
 class SharedPreferencesLocalStorage(
     val context: Context,
-    private val baseContextName: String = "io.rover.campaigns.local-storage"
+    private val baseContextName: String = "io.rover.local-storage"
 ) : LocalStorage {
     override fun getKeyValueStorageFor(namedContext: String): KeyValueStorage {
         val prefs = context.getSharedPreferences("$baseContextName.$namedContext", MODE_PRIVATE)

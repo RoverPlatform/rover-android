@@ -3,6 +3,7 @@ package io.rover.example
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -23,10 +24,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.core.content.ContextCompat
-import io.rover.Example.ui.theme.RoverCampaignsAndroidExampleTheme
+import io.rover.example.ui.theme.RoverCampaignsAndroidExampleTheme
 import io.rover.campaigns.core.RoverCampaigns
 import io.rover.campaigns.core.permissions.PermissionsNotifierInterface
 import io.rover.campaigns.debug.RoverDebugActivity
+import io.rover.campaigns.experiences.ui.containers.RoverActivity
 import io.rover.campaigns.notifications.ui.containers.NotificationCenterActivity
 
 class MainActivity : ComponentActivity() {
@@ -136,6 +138,29 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+
+        val uri: Uri = intent.data ?: return
+
+        // You will need to setup a specific URL structure to be used for presenting Rover
+        // experiences in your app. The simplest approach is to use a specific URL path/host and
+        // include the experience ID and (optional) campaign ID as query parameters. The manifest
+        // included with this example app and below example code demonstrates how to route URLs in
+        // the format `example://experience?id=<EXPERIENCE_ID>&campaignID=<CAMPAIGN_ID>` to a Rover
+        // experience.
+
+        // Tries to retrieve experienceId query parameter:
+        val queryExperienceId = uri.getQueryParameter("id")
+
+        // Tries to retrieve screenId in order to set the starting screen for the experience
+        val queryInitialScreenId = uri.getQueryParameter("screenID")
+
+        // Tries to retrieve campaignId query parameter:
+        val queryCampaignId = uri.getQueryParameter("campaignID")
+
+        if (uri.scheme == getString(R.string.rover_campaigns_uri_scheme) && uri.host == "experience" && queryExperienceId != null) {
+            startActivity(RoverActivity.makeIntent(packageContext = this, experienceId = queryExperienceId, campaignId = queryCampaignId, initialScreenId = queryInitialScreenId))
+            return
         }
     }
 }

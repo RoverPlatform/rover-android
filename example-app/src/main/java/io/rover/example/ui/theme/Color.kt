@@ -1,4 +1,4 @@
-package io.rover.Example.ui.theme
+package io.rover.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

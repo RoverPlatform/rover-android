@@ -1,10 +1,16 @@
-package io.rover.Example.ui.theme
+package io.rover.example.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
+import io.rover.example.ui.theme.Purple200
+import io.rover.example.ui.theme.Purple500
+import io.rover.example.ui.theme.Purple700
+import io.rover.example.ui.theme.Shapes
+import io.rover.example.ui.theme.Teal200
+import io.rover.example.ui.theme.Typography
 
 private val DarkColorPalette = darkColors(
     primary = Purple200,

@@ -9,7 +9,7 @@ import io.rover.campaigns.debug.DebugAssembler
 import io.rover.experiences.ExperiencesAssembler
 import io.rover.location.LocationAssembler
 import io.rover.notifications.NotificationsAssembler
-import io.rover.campaigns.ticketmaster.TicketmasterAssembler
+import io.rover.ticketmaster.TicketmasterAssembler
 
 class ExampleApplication: Application() {
     override fun onCreate() {

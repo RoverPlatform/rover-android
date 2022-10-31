@@ -34,7 +34,7 @@ android {
         jvmTarget = "1.8"
     }
 
-    namespace = "io.rover.campaigns.ticketmaster"
+    namespace = "io.rover.ticketmaster"
 }
 
 dependencies {

@@ -1,4 +1,4 @@
-package io.rover.campaigns.ticketmaster
+package io.rover.ticketmaster
 
 import android.content.Context
 import android.os.Build
@@ -169,8 +169,8 @@ class TicketmasterManager(
 
         fun getNonNullPropertiesMapWithoutId(): Map<String, String> {
             val propertiesMap = mutableMapOf<String, String>()
-            email.whenNotNull { propertiesMap.put(TicketmasterManager.Member::email.name, it) }
-            firstName.whenNotNull { propertiesMap.put(TicketmasterManager.Member::firstName.name, it) }
+            email.whenNotNull { propertiesMap.put(Member::email.name, it) }
+            firstName.whenNotNull { propertiesMap.put(Member::firstName.name, it) }
             return propertiesMap
         }
     }
@@ -191,11 +191,11 @@ val SyncQuery.Companion.ticketmaster
 
 fun TicketmasterManager.Member.Companion.decodeJson(json: JSONObject): TicketmasterManager.Member {
     return TicketmasterManager.Member(
-        ticketmasterID = json.safeOptString(TicketmasterManager.Member::ticketmasterID.name)
-            ?: json.safeOptString("hostID")
-            ?: json.safeOptString("teamID"),
-        email = json.safeOptString(TicketmasterManager.Member::email.name),
-        firstName = json.safeOptString(TicketmasterManager.Member::firstName.name)
+            ticketmasterID = json.safeOptString(TicketmasterManager.Member::ticketmasterID.name)
+                    ?: json.safeOptString("hostID")
+                    ?: json.safeOptString("teamID"),
+            email = json.safeOptString(TicketmasterManager.Member::email.name),
+            firstName = json.safeOptString(TicketmasterManager.Member::firstName.name)
     )
 }
 
@@ -231,6 +231,6 @@ fun TicketmasterSyncResponseData.Companion.decodeJson(json: JSONObject): Ticketm
 
 fun TicketmasterSyncResponseData.Profile.Companion.decodeJson(json: JSONObject): TicketmasterSyncResponseData.Profile {
     return TicketmasterSyncResponseData.Profile(
-        json.optJSONObject("attributes")?.toAttributesHash()
+            json.optJSONObject("attributes")?.toAttributesHash()
     )
 }

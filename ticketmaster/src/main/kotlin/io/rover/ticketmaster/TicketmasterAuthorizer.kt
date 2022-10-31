@@ -1,4 +1,4 @@
-package io.rover.campaigns.ticketmaster
+package io.rover.ticketmaster
 
 /**
  * An API to set and clear Ticketmaster credentials on Rover after a user signs in with the

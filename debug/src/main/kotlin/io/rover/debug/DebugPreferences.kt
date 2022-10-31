@@ -6,7 +6,7 @@ import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
-import io.rover.campaigns.debug.R
+import io.rover.debug.R
 import io.rover.core.platform.DeviceIdentificationInterface
 
 class DebugPreferences(

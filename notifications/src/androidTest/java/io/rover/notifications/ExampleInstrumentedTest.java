@@ -1,4 +1,4 @@
-package io.rover.campaigns.notifications;
+package io.rover.notifications;
 
 import android.content.Context;
 import androidx.test.platform.app.InstrumentationRegistry;

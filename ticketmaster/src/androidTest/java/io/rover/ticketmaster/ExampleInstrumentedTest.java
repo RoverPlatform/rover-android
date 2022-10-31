@@ -1,4 +1,4 @@
-package io.rover.campaigns.ticketmaster;
+package io.rover.ticketmaster;
 
 import android.content.Context;
 import androidx.test.platform.app.InstrumentationRegistry;

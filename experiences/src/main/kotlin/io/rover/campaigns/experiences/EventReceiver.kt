@@ -4,12 +4,12 @@ import io.rover.campaigns.core.data.domain.Attributes
 import io.rover.campaigns.core.events.EventQueueServiceInterface
 import io.rover.campaigns.core.events.domain.Event
 import io.rover.campaigns.core.streams.subscribe
-import io.rover.sdk.data.domain.Block
-import io.rover.sdk.data.domain.Experience
-import io.rover.sdk.data.domain.Screen
-import io.rover.sdk.data.events.Option
-import io.rover.sdk.data.events.RoverEvent
-import io.rover.sdk.services.EventEmitter
+import io.rover.campaigns.experiences.data.domain.Block
+import io.rover.campaigns.experiences.data.domain.Experience
+import io.rover.campaigns.experiences.data.domain.Screen
+import io.rover.campaigns.experiences.data.events.Option
+import io.rover.campaigns.experiences.data.events.RoverEvent
+import io.rover.campaigns.experiences.services.EventEmitter
 
 /**
  * Receive events emitted by the Rover SDK.

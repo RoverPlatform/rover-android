@@ -1,6 +1,6 @@
 <resources>
     <!-- Put your own Rover Campaigns API token here! -->
-    <string name="rover_api_token">72daccff7a7d497de0de3a8d3757dba99f8131e1</string>
+    <string name="rover_api_token">blank</string>
 
     <!-- This is the domain associated with your account in Rover Settings.  Rover can host
     Experiences with App Links (Universal Links) that can be opened in a web browser or your

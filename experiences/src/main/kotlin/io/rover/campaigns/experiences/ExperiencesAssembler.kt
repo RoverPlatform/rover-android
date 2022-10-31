@@ -13,8 +13,8 @@ import io.rover.campaigns.core.logging.log
 import io.rover.campaigns.core.platform.LocalStorage
 import io.rover.campaigns.core.routing.Router
 import io.rover.campaigns.experiences.events.contextproviders.ConversionsContextProvider
-import io.rover.sdk.Rover
-import io.rover.sdk.services.EventEmitter
+import io.rover.campaigns.experiences.Rover
+import io.rover.campaigns.experiences.services.EventEmitter
 
 /**
  * Location Assembler contains the Rover SDK subsystems for Geofence, Beacon, and location tracking.

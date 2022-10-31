@@ -6,7 +6,7 @@ import io.rover.campaigns.core.logging.log
 import io.rover.campaigns.core.platform.asAndroidUri
 import io.rover.campaigns.core.platform.parseAsQueryParameters
 import io.rover.campaigns.core.routing.Route
-import io.rover.sdk.ui.containers.RoverActivity
+import io.rover.campaigns.experiences.ui.containers.RoverActivity
 import java.net.URI
 
 class PresentExperienceRoute(

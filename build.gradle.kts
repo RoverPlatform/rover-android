@@ -1,6 +1,6 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
-val roverCampaignsVersion by extra("3.10.0")
+val roverCampaignsVersion by extra("4.0.0")
 val kotlinVersion by extra("1.7.10")
 
 buildscript {

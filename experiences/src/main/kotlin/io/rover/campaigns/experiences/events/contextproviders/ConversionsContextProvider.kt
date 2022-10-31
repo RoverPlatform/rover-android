@@ -5,8 +5,8 @@ import io.rover.campaigns.core.events.ContextProvider
 import io.rover.campaigns.core.logging.log
 import io.rover.campaigns.core.platform.LocalStorage
 import io.rover.campaigns.core.streams.subscribe
-import io.rover.sdk.data.events.RoverEvent
-import io.rover.sdk.services.EventEmitter
+import io.rover.campaigns.experiences.data.events.RoverEvent
+import io.rover.campaigns.experiences.services.EventEmitter
 import org.json.JSONObject
 import java.util.Date
 import java.util.Locale

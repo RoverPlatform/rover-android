@@ -57,7 +57,8 @@ class SessionTracker(
                 timerCallback()
             } else {
                 timerHandler.postDelayed(
-                    this::timerCallback, soonestExpiry * 1000L
+                    this::timerCallback,
+                    soonestExpiry * 1000L
                 )
             }
         }
@@ -131,7 +132,8 @@ class SessionStore(
         if (existingEntry != null) {
             // there is indeed a session open for the given key, mark it as expiring.
             setEntry(
-                sessionKey, existingEntry.copy(
+                sessionKey,
+                existingEntry.copy(
                     closedAt = Date()
                 )
             )

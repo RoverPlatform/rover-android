@@ -1,0 +1,97 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "io.rover.campaigns",
+    "module": "experiences",
+    "version": "3.9.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.0.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "io.rover",
+          "module": "sdk",
+          "version": {
+            "requires": "3.8.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "experiences-3.9.1.aar",
+          "url": "experiences-3.9.1.aar",
+          "size": 45299,
+          "sha512": "3ef64b0eebf99c1ca300d0fb03b98833bfa1a44e9d02538f45f4b149ccc2c6287a36fdc7d913d85fa97dbbd89d04a6e929d3931e2589c690025b3b4b1ffd6b6f",
+          "sha256": "b54d779026c74079f3a96c5ebc0392e46045ff52b6672b53489b0868dd9d3a99",
+          "sha1": "949f7669db4bc8968c63fe8a7782fae5ada83e03",
+          "md5": "4f56ddfe2e6217fb713175afec0b3269"
+        }
+      ]
+    },
+    {
+      "name": "releaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "io.rover",
+          "module": "sdk",
+          "version": {
+            "requires": "3.8.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-jdk8",
+          "version": {
+            "requires": "1.5.30"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-reflect",
+          "version": {
+            "requires": "1.5.30"
+          }
+        },
+        {
+          "group": "io.rover.campaigns",
+          "module": "core",
+          "version": {
+            "requires": "3.9.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "experiences-3.9.1.aar",
+          "url": "experiences-3.9.1.aar",
+          "size": 45299,
+          "sha512": "3ef64b0eebf99c1ca300d0fb03b98833bfa1a44e9d02538f45f4b149ccc2c6287a36fdc7d913d85fa97dbbd89d04a6e929d3931e2589c690025b3b4b1ffd6b6f",
+          "sha256": "b54d779026c74079f3a96c5ebc0392e46045ff52b6672b53489b0868dd9d3a99",
+          "sha1": "949f7669db4bc8968c63fe8a7782fae5ada83e03",
+          "md5": "4f56ddfe2e6217fb713175afec0b3269"
+        }
+      ]
+    }
+  ]
+}

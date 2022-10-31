@@ -1,5 +1,0 @@
-<resources>
-    <declare-styleable name="RoverActivity">
-        <attr name="displayNoCustomThemeWarningMessage" format="boolean"/>
-    </declare-styleable>
-</resources>

@@ -1,0 +1,81 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "io.rover.campaigns",
+    "module": "advertising",
+    "version": "3.9.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.0.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "advertising-3.9.0.aar",
+          "url": "advertising-3.9.0.aar",
+          "size": 20918,
+          "sha512": "592d5bcdceeb329f55bb928e362b0bee9305dceb5a4caecb79655063845bc4708592a9c7a5254659294fb1223f5c853f6c58153bfc39259a4c6493f6c02c2532",
+          "sha256": "784e4a86d6f98f31566aa1c8e94b9f409dc261137b3e2fe6746ce46270f4b875",
+          "sha1": "5cdc4572c344e1bdd90b74f2043cf6c271c3d2fb",
+          "md5": "fd1a7cca2881ede58e8e0e0fa0ea0a85"
+        }
+      ]
+    },
+    {
+      "name": "releaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-jdk8",
+          "version": {
+            "requires": "1.5.30"
+          }
+        },
+        {
+          "group": "io.rover.campaigns",
+          "module": "core",
+          "version": {
+            "requires": "3.9.0"
+          }
+        },
+        {
+          "group": "com.google.android.gms",
+          "module": "play-services-ads",
+          "version": {
+            "requires": "20.4.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "advertising-3.9.0.aar",
+          "url": "advertising-3.9.0.aar",
+          "size": 20918,
+          "sha512": "592d5bcdceeb329f55bb928e362b0bee9305dceb5a4caecb79655063845bc4708592a9c7a5254659294fb1223f5c853f6c58153bfc39259a4c6493f6c02c2532",
+          "sha256": "784e4a86d6f98f31566aa1c8e94b9f409dc261137b3e2fe6746ce46270f4b875",
+          "sha1": "5cdc4572c344e1bdd90b74f2043cf6c271c3d2fb",
+          "md5": "fd1a7cca2881ede58e8e0e0fa0ea0a85"
+        }
+      ]
+    }
+  ]
+}

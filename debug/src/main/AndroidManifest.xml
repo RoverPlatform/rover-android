@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity android:exported="true" android:name=".RoverDebugActivity" android:theme="@style/RoverDebugPreferencesActivityTheme"/>
+    </application>
+</manifest>

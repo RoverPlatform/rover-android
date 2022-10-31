@@ -1,0 +1,88 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "io.rover.campaigns",
+    "module": "ticketmaster",
+    "version": "3.9.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.0.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "ticketmaster-3.9.1.aar",
+          "url": "ticketmaster-3.9.1.aar",
+          "size": 50664,
+          "sha512": "10c0dfa893361b8bb920744f93051c395e7c84de5b1e90160bcc8989711a734066031ef4b22cf4cb1bb3ff7fc15d06047241ad7988b9b46fe91ed5a9d415ed8d",
+          "sha256": "90f8078540d6f3f06133ec9f5148026993588d2711f1926bdd01c49df3510dc9",
+          "sha1": "644ba76bacdb8b2eb7e968696ed979d85383eb87",
+          "md5": "0d18b899fccb118f43a670b21640c28f"
+        }
+      ]
+    },
+    {
+      "name": "releaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-jdk8",
+          "version": {
+            "requires": "1.5.30"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-reflect",
+          "version": {
+            "requires": "1.5.30"
+          }
+        },
+        {
+          "group": "io.rover.campaigns",
+          "module": "core",
+          "version": {
+            "requires": "3.9.1"
+          }
+        },
+        {
+          "group": "androidx.localbroadcastmanager",
+          "module": "localbroadcastmanager",
+          "version": {
+            "requires": "1.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "ticketmaster-3.9.1.aar",
+          "url": "ticketmaster-3.9.1.aar",
+          "size": 50664,
+          "sha512": "10c0dfa893361b8bb920744f93051c395e7c84de5b1e90160bcc8989711a734066031ef4b22cf4cb1bb3ff7fc15d06047241ad7988b9b46fe91ed5a9d415ed8d",
+          "sha256": "90f8078540d6f3f06133ec9f5148026993588d2711f1926bdd01c49df3510dc9",
+          "sha1": "644ba76bacdb8b2eb7e968696ed979d85383eb87",
+          "md5": "0d18b899fccb118f43a670b21640c28f"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "io.rover.campaigns",
+    "module": "debug",
+    "version": "3.9.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.0.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "debug-3.9.0.aar",
+          "url": "debug-3.9.0.aar",
+          "size": 28217,
+          "sha512": "da42db59a902f3f47e277997f05db9d6123dc1405f8d569623083af98af0a3fcd39e617937a3746326b18ec840c7a4c8560dbcbc6dd1deb9e6059a2bcfc93c21",
+          "sha256": "4f2770130ad91f8b533978763d1c6b3d615113c030a9bcfabee3aa8066d770c7",
+          "sha1": "f217c33d3cb4003daa481c702e347fef876e662a",
+          "md5": "0044f4fba6a1bd47add20cb5eb88888d"
+        }
+      ]
+    },
+    {
+      "name": "releaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "androidx.appcompat",
+          "module": "appcompat",
+          "version": {
+            "requires": "1.2.0"
+          }
+        },
+        {
+          "group": "androidx.legacy",
+          "module": "legacy-support-v4",
+          "version": {
+            "requires": "1.0.0"
+          }
+        },
+        {
+          "group": "androidx.preference",
+          "module": "preference",
+          "version": {
+            "requires": "1.0.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-jdk8",
+          "version": {
+            "requires": "1.5.30"
+          }
+        },
+        {
+          "group": "io.rover.campaigns",
+          "module": "core",
+          "version": {
+            "requires": "3.9.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "debug-3.9.0.aar",
+          "url": "debug-3.9.0.aar",
+          "size": 28217,
+          "sha512": "da42db59a902f3f47e277997f05db9d6123dc1405f8d569623083af98af0a3fcd39e617937a3746326b18ec840c7a4c8560dbcbc6dd1deb9e6059a2bcfc93c21",
+          "sha256": "4f2770130ad91f8b533978763d1c6b3d615113c030a9bcfabee3aa8066d770c7",
+          "sha1": "f217c33d3cb4003daa481c702e347fef876e662a",
+          "md5": "0044f4fba6a1bd47add20cb5eb88888d"
+        }
+      ]
+    }
+  ]
+}

@@ -19,8 +19,3 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
-# And various libraries that apparently aren't shipping a Proguard rules file to merge in:
--dontwarn retrofit2.**
--dontwarn okhttp3.**
--dontwarn com.uber.autodispose.**
--dontwarn okio.**

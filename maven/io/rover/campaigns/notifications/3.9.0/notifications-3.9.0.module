@@ -1,0 +1,123 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "io.rover.campaigns",
+    "module": "notifications",
+    "version": "3.9.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.0.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "notifications-3.9.0.aar",
+          "url": "notifications-3.9.0.aar",
+          "size": 236138,
+          "sha512": "3d807bad4ee8114811a8c1c7284afff67228a20be39c23d5d08ba55e04dceb0370f7e1b13c06b9b95316988c7ef248aab2a0a9095b616d5dbf6123c1cc24506f",
+          "sha256": "9179a6f800b43870cc5773d885fddc202f390de31c8781fc82a2c46fd6dc8cc6",
+          "sha1": "9b0574a27482d8da8ddb6131ca117687bf812bb6",
+          "md5": "f36f50510be4ad200a99386e45f4e04e"
+        }
+      ]
+    },
+    {
+      "name": "releaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "androidx.appcompat",
+          "module": "appcompat",
+          "version": {
+            "requires": "1.2.0"
+          }
+        },
+        {
+          "group": "androidx.legacy",
+          "module": "legacy-support-v4",
+          "version": {
+            "requires": "1.0.0"
+          }
+        },
+        {
+          "group": "androidx.recyclerview",
+          "module": "recyclerview",
+          "version": {
+            "requires": "1.1.0"
+          }
+        },
+        {
+          "group": "com.google.android.material",
+          "module": "material",
+          "version": {
+            "requires": "1.2.1"
+          }
+        },
+        {
+          "group": "androidx.vectordrawable",
+          "module": "vectordrawable",
+          "version": {
+            "requires": "1.1.0"
+          }
+        },
+        {
+          "group": "androidx.lifecycle",
+          "module": "lifecycle-extensions",
+          "version": {
+            "requires": "2.2.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-jdk8",
+          "version": {
+            "requires": "1.5.30"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-reflect",
+          "version": {
+            "requires": "1.5.30"
+          }
+        },
+        {
+          "group": "io.rover.campaigns",
+          "module": "core",
+          "version": {
+            "requires": "3.9.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "notifications-3.9.0.aar",
+          "url": "notifications-3.9.0.aar",
+          "size": 236138,
+          "sha512": "3d807bad4ee8114811a8c1c7284afff67228a20be39c23d5d08ba55e04dceb0370f7e1b13c06b9b95316988c7ef248aab2a0a9095b616d5dbf6123c1cc24506f",
+          "sha256": "9179a6f800b43870cc5773d885fddc202f390de31c8781fc82a2c46fd6dc8cc6",
+          "sha1": "9b0574a27482d8da8ddb6131ca117687bf812bb6",
+          "md5": "f36f50510be4ad200a99386e45f4e04e"
+        }
+      ]
+    }
+  ]
+}

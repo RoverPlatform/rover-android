@@ -5,7 +5,7 @@ import android.graphics.Canvas
 import androidx.recyclerview.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.View
-import io.rover.experiences.Rover
+import io.rover.experiences.RoverExperiences
 import io.rover.experiences.logging.log
 import io.rover.experiences.streams.PublishSubject
 import io.rover.experiences.streams.Publishers
@@ -77,7 +77,7 @@ internal class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelIn
 
                 val layout = viewModelBinding.viewModel.render(measuredSize.width)
 
-                val blockAndRowAdapter = Rover.shared?.views?.blockAndRowRecyclerAdapter(
+                val blockAndRowAdapter = RoverExperiences.shared?.views?.blockAndRowRecyclerAdapter(
                     layout,
                     resources.displayMetrics
                 )
@@ -87,7 +87,7 @@ internal class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelIn
                 // RecyclerView layout manager, in our system our layout is indeed data, so the
                 // layout manager needs the Screen view model.
                 layoutManager =
-                    Rover.shared?.views?.blockAndRowLayoutManager(layout, resources.displayMetrics)
+                    RoverExperiences.shared?.views?.blockAndRowLayoutManager(layout, resources.displayMetrics)
                         ?: throw RuntimeException("Rover not usable until Rover.initialize has been called.")
 
                 // and then setup the adapter itself.

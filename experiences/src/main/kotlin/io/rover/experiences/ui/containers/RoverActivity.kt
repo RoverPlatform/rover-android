@@ -11,7 +11,7 @@ import android.view.Menu
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import io.rover.experiences.R
-import io.rover.experiences.Rover
+import io.rover.experiences.RoverExperiences
 import io.rover.experiences.logging.log
 import io.rover.experiences.platform.asAndroidUri
 import io.rover.experiences.platform.whenNotNull
@@ -128,13 +128,13 @@ open class RoverActivity : AppCompatActivity() {
      * Provides a method for opening URIs with a Custom Chrome Tab.
      */
     private val webDisplay: EmbeddedWebBrowserDisplay? by lazy {
-        val rover = Rover.shared
-        if (rover == null) {
+        val roverExperiences = RoverExperiences.shared
+        if (roverExperiences == null) {
             log.w("RoverActivity cannot work unless Rover has been initialized.")
             finish()
             null
         } else {
-            rover.webBrowserDisplay
+            roverExperiences.webBrowserDisplay
         }
     }
 
@@ -155,8 +155,8 @@ open class RoverActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val rover = Rover.shared
-        if (rover == null) {
+        val roverExperiences = RoverExperiences.shared
+        if (roverExperiences == null) {
             log.w("RoverActivity cannot work unless Rover has been initialized.")
             finish()
             return
@@ -191,7 +191,7 @@ open class RoverActivity : AppCompatActivity() {
 
         when {
             experienceId != null -> roverViewModel = experienceViewModel(
-                rover,
+                roverExperiences,
                 RoverViewModel.ExperienceRequest.ById(experienceId!!, useDraft = useDraft),
                 campaignId,
                 // obtain any possibly saved state for the experience view model.  See
@@ -200,7 +200,7 @@ open class RoverActivity : AppCompatActivity() {
                 initialScreenId
             )
             experienceUrl != null -> roverViewModel = experienceViewModel(
-                rover,
+                roverExperiences,
                 RoverViewModel.ExperienceRequest.ByUrl(experienceUrl!!),
                 campaignId,
                 state,
@@ -218,13 +218,13 @@ open class RoverActivity : AppCompatActivity() {
     }
 
     private fun experienceViewModel(
-        rover: Rover,
-        experienceRequest: RoverViewModel.ExperienceRequest,
-        campaignId: String?,
-        icicle: Parcelable?,
-        initialScreenId: String?
+            roverExperiences: RoverExperiences,
+            experienceRequest: RoverViewModel.ExperienceRequest,
+            campaignId: String?,
+            icicle: Parcelable?,
+            initialScreenId: String?
     ): RoverViewModelInterface {
-        return Rover.shared?.viewModels?.experienceViewModel(experienceRequest, campaignId, initialScreenId, this.lifecycle) ?: throw RuntimeException("Rover not usable until Rover.initialize has been called.")
+        return RoverExperiences.shared?.viewModels?.experienceViewModel(experienceRequest, campaignId, initialScreenId, this.lifecycle) ?: throw RuntimeException("Rover not usable until Rover.initialize has been called.")
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

@@ -63,7 +63,7 @@ class ExperiencesAssembler : Assembler {
             )
         }
 
-        Rover.initialize(
+        RoverExperiences.initialize(
             resolver.resolveSingletonOrFail(Application::class.java),
             resolver.resolveSingletonOrFail(String::class.java, "accountToken"),
             resolver.resolveSingletonOrFail(Int::class.java, "chromeTabBackgroundColor")
@@ -73,7 +73,7 @@ class ExperiencesAssembler : Assembler {
          * Attempt to retrieve the [EventEmitter] instance from the rover sdk in order to receive
          * events for analytics and automation purposes.
          */
-        val eventEmitter = Rover.shared?.eventEmitter
+        val eventEmitter = RoverExperiences.shared?.eventEmitter
 
         eventEmitter?.let {
             EventReceiver(

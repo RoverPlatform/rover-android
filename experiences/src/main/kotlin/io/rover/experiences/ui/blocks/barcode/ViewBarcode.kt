@@ -4,7 +4,7 @@ import android.graphics.drawable.BitmapDrawable
 import androidx.appcompat.widget.AppCompatImageView
 import android.widget.ImageView
 import io.rover.experiences.services.BarcodeRenderingService
-import io.rover.experiences.Rover
+import io.rover.experiences.RoverExperiences
 import io.rover.experiences.ui.concerns.MeasuredBindableView
 import io.rover.experiences.ui.concerns.ViewModelBinding
 
@@ -57,6 +57,6 @@ internal class ViewBarcode(
         }
     }
 
-    private val barcodeRenderingService = Rover.shared?.barcodeRenderingService
+    private val barcodeRenderingService = RoverExperiences.shared?.barcodeRenderingService
         ?: throw RuntimeException("Rover not usable until Rover.initialize has been called.")
 }

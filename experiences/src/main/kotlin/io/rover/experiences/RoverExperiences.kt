@@ -7,7 +7,6 @@ import android.graphics.Color
 import android.os.Parcelable
 import androidx.annotation.ColorInt
 import android.util.DisplayMetrics
-import io.rover.experiences.BuildConfig
 import io.rover.experiences.assets.AndroidAssetService
 import io.rover.experiences.assets.ImageDownloader
 import io.rover.experiences.assets.ImageOptimizationService
@@ -100,7 +99,7 @@ import java.util.concurrent.Executor
  * Entry point for the Rover SDK.
  */
 
-open class Rover(
+open class RoverExperiences(
     /**
      * When initializing Rover you must give it a reference
      */
@@ -121,7 +120,7 @@ open class Rover(
         private set
 
     /**
-     * Sets an experience transformer on the [Rover] object enabling retrieved experiences to be altered
+     * Sets an experience transformer on the [RoverExperiences] object enabling retrieved experiences to be altered
      * in the desired way. The transformer is called on the UI thread so the transformer shouldn't block
      * the thread.
      */
@@ -215,7 +214,7 @@ open class Rover(
 
     companion object {
         /**
-         * Be sure to always call this before [Rover.initialize] in your Application's onCreate()!
+         * Be sure to always call this before [RoverExperiences.initialize] in your Application's onCreate()!
          *
          * Rover internally uses the standard HTTP client included with Android, but to work
          * effectively it needs HTTP caching enabled.  Unfortunately, this can only be done at the
@@ -235,7 +234,7 @@ open class Rover(
             accountToken: String,
             @ColorInt chromeTabColor: Int = Color.BLACK
         ) {
-            shared = Rover(
+            shared = RoverExperiences(
                 application = application,
                 accountToken = accountToken,
                 chromeTabBackgroundColor = chromeTabColor
@@ -247,7 +246,7 @@ open class Rover(
          * You can use one of the [initialize] methods to do so.
          */
         @JvmStatic
-        var shared: Rover? = null
+        var shared: RoverExperiences? = null
     }
 
     init {
@@ -272,7 +271,7 @@ internal class ViewModels(
         campaignId: String?,
         initialScreenId: String?,
         activityLifecycle: Lifecycle,
-        experienceTransformer: ((Experience) -> Experience)? = Rover.shared?.experienceTransformer
+        experienceTransformer: ((Experience) -> Experience)? = RoverExperiences.shared?.experienceTransformer
     ): RoverViewModel {
         return RoverViewModel(
             experienceRequest = experienceRequest,

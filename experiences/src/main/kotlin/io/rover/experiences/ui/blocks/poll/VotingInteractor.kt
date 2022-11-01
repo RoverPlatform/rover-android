@@ -1,9 +1,9 @@
 package io.rover.experiences.ui.blocks.poll
 
 import android.os.Handler
+import io.rover.core.data.NetworkResult
 import io.rover.core.data.graphql.putProp
 import io.rover.core.data.graphql.safeGetString
-import io.rover.experiences.data.graphql.ApiResult
 import io.rover.experiences.logging.log
 import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.Scheduler
@@ -145,7 +145,7 @@ internal class VotingInteractor(
 
     private fun fetchVotingResults(optionIds: List<String>): Publisher<OptionResults> {
         return votingService.fetchResults(pollId, optionIds).map {
-            if (it is ApiResult.Success<OptionResults>) it.response else OptionResults(mapOf())
+            if (it is NetworkResult.Success<OptionResults>) it.response else OptionResults(mapOf())
         }
     }
 

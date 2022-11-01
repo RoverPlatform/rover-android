@@ -1,22 +1,22 @@
 package io.rover.experiences.data.http
 
 import io.rover.core.data.APIException
+import io.rover.core.data.NetworkError
+import io.rover.core.data.NetworkResult
 import io.rover.core.data.http.HttpClientResponse
-import io.rover.experiences.data.graphql.ApiError
-import io.rover.experiences.data.graphql.ApiResult
 import io.rover.experiences.logging.log
 import org.json.JSONException
 import java.io.IOException
 
 internal class HttpResultMapper {
-    fun <TEntity> mapResultWithBody(httpResponse: HttpClientResponse, decode: (String) -> TEntity): ApiResult<TEntity> =
+    fun <TEntity> mapResultWithBody(httpResponse: HttpClientResponse, decode: (String) -> TEntity): NetworkResult<TEntity> =
         when (httpResponse) {
-            is HttpClientResponse.ConnectionFailure -> ApiResult.Error(httpResponse.reason, true)
+            is HttpClientResponse.ConnectionFailure -> NetworkResult.Error(httpResponse.reason, true)
             is HttpClientResponse.ApplicationError -> {
                 log.w("Given error reason: ${httpResponse.reportedReason}")
                 // actually won't see any 200 codes here; already filtered about in the
                 // HttpClient response mapping.
-                ApiResult.Error(ApiError.InvalidStatusCode(httpResponse.responseCode, httpResponse.reportedReason), httpResponse.responseCode > 500)
+                NetworkResult.Error(NetworkError.InvalidStatusCode(httpResponse.responseCode, httpResponse.reportedReason), httpResponse.responseCode > 500)
             }
             is HttpClientResponse.Success -> {
                 try {
@@ -26,16 +26,16 @@ internal class HttpResultMapper {
 
                     log.v("RESPONSE BODY: $body")
                     when (body) {
-                        "" -> ApiResult.Error(ApiError.EmptyResponseData(), false)
+                        "" -> NetworkResult.Error(NetworkError.EmptyResponseData(), false)
                         else -> {
                             try {
-                                ApiResult.Success(
+                                NetworkResult.Success(
                                     decode(body)
                                 )
                             } catch (e: APIException) {
                                 log.w("API error: $e")
-                                ApiResult.Error<TEntity>(
-                                    ApiError.InvalidResponseData(e.message ?: "API returned unknown error."),
+                                NetworkResult.Error<TEntity>(
+                                        NetworkError.InvalidResponseData(e.message ?: "API returned unknown error."),
                                     // retry is not appropriate when we're getting a domain-level error.
                                     false
                                 )
@@ -45,8 +45,8 @@ internal class HttpResultMapper {
                                 // errors, throw the traceback onto the console:
                                 log.w("JSON decode problem details: $e, ${e.stackTrace.joinToString("\n")}")
 
-                                ApiResult.Error<TEntity>(
-                                    ApiError.InvalidResponseData(e.message ?: "API returned unknown error."),
+                                NetworkResult.Error<TEntity>(
+                                        NetworkError.InvalidResponseData(e.message ?: "API returned unknown error."),
                                     // retry is not appropriate when we're getting a domain-level error.
                                     false
                                 )
@@ -54,7 +54,7 @@ internal class HttpResultMapper {
                         }
                     }
                 } catch (exception: IOException) {
-                    ApiResult.Error<TEntity>(exception, true)
+                    NetworkResult.Error<TEntity>(exception, true)
                 }
             }
         }

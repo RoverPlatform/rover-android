@@ -3,8 +3,8 @@ package io.rover.experiences.ui
 import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Parcelable
+import io.rover.core.data.NetworkResult
 import io.rover.experiences.data.domain.Experience
-import io.rover.experiences.data.graphql.ApiResult
 import io.rover.experiences.data.graphql.GraphQlApiService
 import io.rover.experiences.data.operations.FetchExperienceRequest
 import io.rover.core.streams.PublishSubject
@@ -69,7 +69,7 @@ internal class RoverViewModel(
     private val actionSource = PublishSubject<Action>()
     private val actions = actionSource.share()
 
-    private fun fetchExperience(): Publisher<out ApiResult<Experience>> =
+    private fun fetchExperience(): Publisher<out NetworkResult<Experience>> =
         graphQlApiService.fetchExperience(
             when (experienceRequest) {
                 is ExperienceRequest.ByUrl -> FetchExperienceRequest.ExperienceQueryIdentifier.ByUniversalLink(
@@ -87,7 +87,7 @@ internal class RoverViewModel(
 
     init {
         // maybe for each type fork I should split out and delegate to subjects?
-        val fetchAttempts = PublishSubject<ApiResult<Experience>>()
+        val fetchAttempts = PublishSubject<NetworkResult<Experience>>()
 
         val toolBarSubject = PublishSubject<ExperienceToolbarViewModelInterface>()
         val loadingSubject = PublishSubject<Boolean>()
@@ -145,14 +145,14 @@ internal class RoverViewModel(
         fetchAttempts.subscribe { networkResult ->
             loadingSubject.onNext(false)
             when (networkResult) {
-                is ApiResult.Error -> {
+                is NetworkResult.Error -> {
                     eventsSubject.onNext(
                         RoverViewModelInterface.Event.DisplayError(
                             networkResult.throwable.message ?: "Unknown"
                         )
                     )
                 }
-                is ApiResult.Success -> {
+                is NetworkResult.Success -> {
                     experiences.onNext(networkResult.response)
                 }
             }

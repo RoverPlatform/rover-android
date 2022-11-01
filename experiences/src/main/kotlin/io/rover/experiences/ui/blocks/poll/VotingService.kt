@@ -1,12 +1,12 @@
 package io.rover.experiences.ui.blocks.poll
 
 import android.net.Uri
+import io.rover.core.data.NetworkResult
 import io.rover.core.data.http.AndroidHttpsUrlConnectionNetworkClient
 import io.rover.core.data.http.HttpClientResponse
 import io.rover.core.data.http.HttpRequest
 import io.rover.core.data.http.HttpVerb
 import io.rover.core.streams.map
-import io.rover.experiences.data.graphql.ApiResult
 import io.rover.experiences.data.http.HttpResultMapper
 import io.rover.experiences.logging.log
 import org.json.JSONObject
@@ -19,7 +19,7 @@ internal class VotingService(
         private val httpResultMapper: HttpResultMapper = HttpResultMapper(),
         private val urlBuilder: URLBuilder = URLBuilder()
 ) {
-    fun fetchResults(pollId: String, optionIds: List<String>): Publisher<ApiResult<OptionResults>> {
+    fun fetchResults(pollId: String, optionIds: List<String>): Publisher<NetworkResult<OptionResults>> {
         val url = urlBuilder.build(endpoint, listOf(pollId), optionIds.map { "options" to it })
         val urlRequest = HttpRequest(url, hashMapOf(), HttpVerb.GET)
 

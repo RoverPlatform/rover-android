@@ -2,6 +2,7 @@ package io.rover.experiences.data.graphql
 
 import android.net.Uri
 import io.rover.core.data.GraphQlRequest
+import io.rover.core.data.NetworkResult
 import io.rover.core.data.http.AndroidHttpsUrlConnectionNetworkClient
 import io.rover.core.data.http.HttpRequest
 import io.rover.core.data.http.HttpVerb
@@ -53,7 +54,7 @@ internal class GraphQlApiService(
     /**
      * Performs the given [GraphQlRequest] when subscribed and yields the result to the subscriber.
      */
-    fun <TEntity> operation(request: GraphQlRequest<TEntity>): Publisher<ApiResult<TEntity>> {
+    fun <TEntity> operation(request: GraphQlRequest<TEntity>): Publisher<NetworkResult<TEntity>> {
         // TODO: once we change urlRequest() to use query parameters and GET for non-mutation
         // requests, replace true `below` with `request.mutation`.
         val urlRequest = urlRequest(request.mutation, request.encodeQueryParameters())
@@ -73,7 +74,7 @@ internal class GraphQlApiService(
      */
     fun fetchExperience(
         query: FetchExperienceRequest.ExperienceQueryIdentifier
-    ): Publisher<ApiResult<Experience>> {
+    ): Publisher<NetworkResult<Experience>> {
         return this.operation(
             FetchExperienceRequest(query)
         )

@@ -31,6 +31,14 @@ class AndroidHttpsUrlConnectionNetworkClient(
             request: HttpRequest,
             bodyData: String?
     ): Publisher<HttpClientResponse> {
+        return request(request, bodyData, true)
+    }
+
+    fun request(
+            request: HttpRequest,
+            bodyData: String?,
+            gzip: Boolean
+    ): Publisher<HttpClientResponse> {
         // synchronous API.
 
         // Using the Android HttpsUrlConnection HTTP client inherited from Java, which
@@ -60,7 +68,7 @@ class AndroidHttpsUrlConnectionNetworkClient(
                 emitMissingCacheWarning()
             }
 
-            val requestBody = bodyData?.toByteArray(Charsets.UTF_8)?.asGzip()
+            val requestBody = if (gzip) bodyData?.toByteArray(Charsets.UTF_8)?.asGzip() else bodyData?.toByteArray(Charsets.UTF_8)
             val requestHasBody = when (request.verb) {
                 HttpVerb.POST, HttpVerb.PUT -> requestBody != null
                 else -> false
@@ -72,7 +80,7 @@ class AndroidHttpsUrlConnectionNetworkClient(
                     // TODO: set a nice user agent.
                     if (requestHasBody) {
                         setFixedLengthStreamingMode(requestBody?.size ?: 0)
-                        setRequestProperty("Content-Encoding", "gzip")
+                        if (gzip) { setRequestProperty("Content-Encoding", "gzip") }
                     }
 
                     setRoverUserAgent(appPackageInfo)
@@ -172,7 +180,7 @@ class AndroidHttpsUrlConnectionNetworkClient(
          * including Rover.
          */
         @JvmStatic
-        internal fun installSaneGlobalHttpCache(context: Context) {
+        fun installSaneGlobalHttpCache(context: Context) {
             val httpCacheDir = File(context.cacheDir, "http")
             val httpCacheSize = (50 * 1024 * 1024).toLong() // 50 MiB
             HttpResponseCache.install(httpCacheDir, httpCacheSize)
@@ -180,7 +188,7 @@ class AndroidHttpsUrlConnectionNetworkClient(
         }
 
         @JvmStatic
-        internal fun emitMissingCacheWarning() {
+        fun emitMissingCacheWarning() {
             log.e("An HTTPUrlConnection cache is not enabled.\n" +
                 "Please see the Rover documentation for Installation and Initialization of the Rover SDK: https://developer.rover.io/v2/android/\n" +
                 "Ensure you are calling Rover.installSaneGlobalHttpCache() before Rover.initialize().\n" +

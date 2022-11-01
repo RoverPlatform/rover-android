@@ -1,7 +1,7 @@
 package io.rover.experiences.assets
 
 import android.net.http.HttpResponseCache
-import io.rover.experiences.data.http.HttpClient
+import io.rover.core.data.http.AndroidHttpsUrlConnectionNetworkClient
 import io.rover.experiences.logging.log
 import io.rover.experiences.platform.debugExplanation
 import org.reactivestreams.Publisher
@@ -57,7 +57,7 @@ internal class ImageDownloader(
                             // them in the same LRU cache pool will mean that rotating through just a few
                             // large photos will cause the small payloads to be evicted even though their
                             // contribution to consumption of the cache is tiny.
-                            HttpClient.emitMissingCacheWarning()
+                            AndroidHttpsUrlConnectionNetworkClient.emitMissingCacheWarning()
                         }
 
                         connection.apply {

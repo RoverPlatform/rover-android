@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.os.Parcelable
 import androidx.annotation.ColorInt
 import android.util.DisplayMetrics
+import io.rover.core.data.http.AndroidHttpsUrlConnectionNetworkClient
 import io.rover.core.streams.Scheduler
 import io.rover.experiences.assets.AndroidAssetService
 import io.rover.experiences.assets.ImageDownloader
@@ -34,7 +35,6 @@ import io.rover.experiences.data.domain.WebViewBlock
 import io.rover.experiences.data.events.AnalyticsService
 import io.rover.experiences.data.events.AppOpenedTracker
 import io.rover.experiences.data.graphql.GraphQlApiService
-import io.rover.experiences.data.http.HttpClient
 import io.rover.experiences.logging.log
 import io.rover.experiences.platform.IoMultiplexingExecutor
 import io.rover.experiences.platform.LocalStorage
@@ -156,7 +156,7 @@ open class RoverExperiences(
 
     private val packageInfo = application.packageManager.getPackageInfo(application.packageName, 0)
 
-    private val httpClient: HttpClient = HttpClient(ioScheduler, packageInfo)
+    private val httpClient: AndroidHttpsUrlConnectionNetworkClient = AndroidHttpsUrlConnectionNetworkClient(ioScheduler, packageInfo)
 
     internal val webBrowserDisplay: EmbeddedWebBrowserDisplay =
         EmbeddedWebBrowserDisplay(chromeTabBackgroundColor)
@@ -224,7 +224,7 @@ open class RoverExperiences(
          */
         @JvmStatic
         fun installSaneGlobalHttpCache(applicationContext: Context) {
-            HttpClient.installSaneGlobalHttpCache(applicationContext)
+            AndroidHttpsUrlConnectionNetworkClient.installSaneGlobalHttpCache(applicationContext)
         }
 
         @JvmStatic

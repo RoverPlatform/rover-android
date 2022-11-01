@@ -1,9 +1,9 @@
 package io.rover.experiences.data.graphql
 
 import android.net.Uri
+import io.rover.core.data.http.AndroidHttpsUrlConnectionNetworkClient
 import io.rover.core.data.http.HttpRequest
 import io.rover.core.data.http.HttpVerb
-import io.rover.experiences.data.http.HttpClient
 import io.rover.experiences.logging.log
 import io.rover.core.streams.map
 import io.rover.experiences.data.domain.Experience
@@ -16,10 +16,10 @@ import java.net.URL
  * Responsible for providing access the Rover cloud API, powered by GraphQL.
  */
 internal class GraphQlApiService(
-    private val endpoint: URL,
-    private val accountToken: String?,
-    private val httpClient: HttpClient,
-    private val httpResultMapper: HttpResultMapper = HttpResultMapper()
+        private val endpoint: URL,
+        private val accountToken: String?,
+        private val httpClient: AndroidHttpsUrlConnectionNetworkClient,
+        private val httpResultMapper: HttpResultMapper = HttpResultMapper()
 ) {
     private fun urlRequest(mutation: Boolean, queryParams: Map<String, String>): HttpRequest {
         val uri = Uri.parse(endpoint.toString())

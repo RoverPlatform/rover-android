@@ -4,6 +4,9 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import android.net.http.HttpResponseCache
 import android.util.Log
+import io.rover.core.data.http.HttpClientResponse
+import io.rover.core.data.http.HttpRequest
+import io.rover.core.data.http.HttpVerb
 import io.rover.experiences.logging.log
 import io.rover.experiences.platform.setRoverUserAgent
 import io.rover.experiences.streams.Publishers
@@ -35,9 +38,9 @@ internal class HttpClient(
      * streams, safely away from the Android main UI thread.
      */
     fun request(
-        request: HttpRequest,
-        bodyData: String?,
-        gzip: Boolean = true
+            request: HttpRequest,
+            bodyData: String?,
+            gzip: Boolean = true
     ): Publisher<HttpClientResponse> {
         // synchronous API.
 

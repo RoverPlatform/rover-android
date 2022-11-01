@@ -4,10 +4,10 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import android.os.AsyncTask
+import io.rover.core.data.http.HttpRequest
+import io.rover.core.data.http.HttpVerb
 import io.rover.experiences.data.domain.Attributes
 import io.rover.experiences.data.graphql.encodeJson
-import io.rover.experiences.data.http.HttpRequest
-import io.rover.experiences.data.http.HttpVerb
 import io.rover.experiences.logging.log
 import io.rover.experiences.platform.dateAsIso8601
 import io.rover.experiences.platform.debugExplanation

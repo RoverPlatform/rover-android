@@ -1,5 +1,6 @@
 package io.rover.experiences.data.http
 
+import io.rover.core.data.http.HttpClientResponse
 import io.rover.experiences.data.graphql.APIException
 import io.rover.experiences.data.graphql.ApiError
 import io.rover.experiences.data.graphql.ApiResult

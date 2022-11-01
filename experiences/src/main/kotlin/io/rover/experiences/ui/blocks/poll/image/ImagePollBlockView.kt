@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.view.View
 import android.widget.LinearLayout
-import io.rover.experiences.streams.PublishSubject
+import io.rover.core.streams.PublishSubject
 import io.rover.experiences.ui.blocks.concerns.ViewComposition
 import io.rover.experiences.ui.blocks.concerns.background.ViewBackground
 import io.rover.experiences.ui.blocks.concerns.border.ViewBorder

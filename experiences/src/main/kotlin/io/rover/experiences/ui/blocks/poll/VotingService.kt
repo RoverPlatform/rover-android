@@ -4,11 +4,11 @@ import android.net.Uri
 import io.rover.core.data.http.HttpClientResponse
 import io.rover.core.data.http.HttpRequest
 import io.rover.core.data.http.HttpVerb
+import io.rover.core.streams.map
 import io.rover.experiences.data.graphql.ApiResult
 import io.rover.experiences.data.http.HttpClient
 import io.rover.experiences.data.http.HttpResultMapper
 import io.rover.experiences.logging.log
-import io.rover.experiences.streams.map
 import org.json.JSONObject
 import org.reactivestreams.Publisher
 import java.net.URL

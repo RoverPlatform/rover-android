@@ -2,7 +2,7 @@ package io.rover.experiences.assets
 
 import io.rover.experiences.logging.log
 import io.rover.experiences.platform.debugExplanation
-import io.rover.experiences.streams.blockForResult
+import io.rover.core.streams.blockForResult
 import java.io.BufferedInputStream
 import java.lang.Exception
 import java.net.URL

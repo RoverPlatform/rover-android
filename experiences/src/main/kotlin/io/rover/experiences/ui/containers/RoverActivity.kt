@@ -16,8 +16,8 @@ import io.rover.experiences.logging.log
 import io.rover.experiences.platform.asAndroidUri
 import io.rover.experiences.platform.whenNotNull
 import io.rover.experiences.services.EmbeddedWebBrowserDisplay
-import io.rover.experiences.streams.androidLifecycleDispose
-import io.rover.experiences.streams.subscribe
+import io.rover.core.streams.androidLifecycleDispose
+import io.rover.core.streams.subscribe
 import io.rover.experiences.ui.RoverView
 import io.rover.experiences.ui.RoverViewModel
 import io.rover.experiences.ui.RoverViewModelInterface

@@ -3,8 +3,8 @@ package io.rover.experiences.ui.blocks.image
 import android.view.View
 import androidx.appcompat.widget.AppCompatImageView
 import android.widget.ImageView
-import io.rover.experiences.streams.androidLifecycleDispose
-import io.rover.experiences.streams.subscribe
+import io.rover.core.streams.androidLifecycleDispose
+import io.rover.core.streams.subscribe
 import io.rover.experiences.ui.concerns.ViewModelBinding
 import io.rover.experiences.ui.concerns.MeasuredBindableView
 

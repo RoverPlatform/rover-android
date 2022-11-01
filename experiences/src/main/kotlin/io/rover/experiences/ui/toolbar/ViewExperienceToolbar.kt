@@ -16,9 +16,9 @@ import android.view.View
 import android.view.Window
 import io.rover.experiences.R
 import io.rover.experiences.logging.log
-import io.rover.experiences.streams.androidLifecycleDispose
-import io.rover.experiences.streams.doOnUnsubscribe
-import io.rover.experiences.streams.subscribe
+import io.rover.core.streams.androidLifecycleDispose
+import io.rover.core.streams.doOnUnsubscribe
+import io.rover.core.streams.subscribe
 import io.rover.experiences.ui.RoverView
 import org.reactivestreams.Subscription
 

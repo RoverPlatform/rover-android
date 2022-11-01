@@ -11,8 +11,8 @@ import io.rover.experiences.platform.addView
 import io.rover.experiences.platform.optionView
 import io.rover.experiences.platform.setupLayoutParams
 import io.rover.experiences.platform.textView
-import io.rover.experiences.streams.androidLifecycleDispose
-import io.rover.experiences.streams.subscribe
+import io.rover.core.streams.androidLifecycleDispose
+import io.rover.core.streams.subscribe
 import io.rover.experiences.ui.asAndroidColor
 import io.rover.experiences.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.experiences.ui.blocks.concerns.background.createBackgroundDrawable

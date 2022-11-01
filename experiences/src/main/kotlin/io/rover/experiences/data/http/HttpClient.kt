@@ -9,9 +9,9 @@ import io.rover.core.data.http.HttpRequest
 import io.rover.core.data.http.HttpVerb
 import io.rover.experiences.logging.log
 import io.rover.experiences.platform.setRoverUserAgent
-import io.rover.experiences.streams.Publishers
-import io.rover.experiences.streams.Scheduler
-import io.rover.experiences.streams.subscribeOn
+import io.rover.core.streams.Publishers
+import io.rover.core.streams.Scheduler
+import io.rover.core.streams.subscribeOn
 import org.reactivestreams.Publisher
 import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream

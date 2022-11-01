@@ -11,8 +11,8 @@ import io.rover.experiences.platform.imageOptionView
 import io.rover.experiences.platform.setupLayoutParams
 import io.rover.experiences.platform.setupLinearLayoutParams
 import io.rover.experiences.platform.textView
-import io.rover.experiences.streams.distinctUntilChanged
-import io.rover.experiences.streams.subscribe
+import io.rover.core.streams.distinctUntilChanged
+import io.rover.core.streams.subscribe
 import io.rover.experiences.ui.asAndroidColor
 import io.rover.experiences.ui.blocks.poll.VotingState
 import io.rover.experiences.ui.concerns.MeasuredBindableView

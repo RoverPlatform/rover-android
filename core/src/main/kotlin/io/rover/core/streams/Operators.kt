@@ -95,6 +95,60 @@ fun <T, R> Publisher<T>.map(transform: (T) -> R): Publisher<R> {
     }
 }
 
+/**
+ * Retry operator that when given a number of retries will not emit onError calls further downstream but will instead
+ * resubscribe to the publisher that it was previously subscribed to until the attempted number of retries is equal to the
+ * given number of retries, at this point, another onError call from upstream will be emitted downstream.
+ */
+fun <T> Publisher<T>.retry(numberOfRetries: Int): Publisher<T> {
+    val prior = this
+
+    return Publisher { subscriber ->
+        var attemptedRetries = 0
+        var subscrip: Subscription? = null
+        prior.subscribe(
+                object : Subscriber<T> {
+                    override fun onComplete() {
+                        subscriber.onComplete()
+                    }
+
+                    override fun onSubscribe(subscription: Subscription) {
+                        subscrip = subscription
+
+                        if (attemptedRetries == 0) {
+                            val consumerSubscription = object : Subscription {
+                                override fun cancel() {
+                                    subscrip?.cancel()
+                                }
+
+                                override fun request(n: Long) {
+                                    if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                                    subscrip?.request(Long.MAX_VALUE)
+                                }
+                            }
+                            subscriber.onSubscribe(consumerSubscription)
+                        }
+                    }
+
+                    override fun onNext(t: T) {
+                        subscriber.onNext(t)
+                    }
+
+                    override fun onError(t: Throwable) {
+                        if (attemptedRetries < numberOfRetries) {
+                            attemptedRetries++
+                            subscrip?.cancel()
+                            prior.subscribe(this)
+                            subscrip?.request(Long.MAX_VALUE)
+                        } else {
+                            subscrip?.cancel()
+                            subscriber.onError(Exception("Retries exceeded in Publisher.retry().", t))
+                        }
+                    }
+                })
+    }
+}
+
 fun <T> Publisher<T>.filter(predicate: (T) -> Boolean): Publisher<T> {
     return Publisher { subscriber ->
         this@filter.subscribe(object : Subscriber<T> {
@@ -529,6 +583,52 @@ fun <T : Any> Publisher<T>.distinctUntilChanged(): Publisher<T> {
 }
 
 /**
+ * Will filter out sequences of identitical (by comparison) items.  An item will not be
+ * emitted if it is the same as the prior.
+ */
+fun <T : Any, K> Publisher<T>.distinctUntilChanged(selector: (T) -> K): Publisher<T> {
+    return Publisher { subscriber ->
+
+        var lastSeen: LastSeen<T> = LastSeen.NoneYet()
+        var sourceSubscriber: Subscriber<T>?
+
+        subscriber.onSubscribe(
+                object : Subscription {
+                    override fun cancel() {
+                        // TODO gotta pass subscription through
+                    }
+
+                    override fun request(n: Long) {
+                        // subscribe to prior
+                        @Suppress("UNCHECKED_CAST") // suppressed due to erasure/variance issues.
+                        sourceSubscriber = object : Subscriber<T> by subscriber as Subscriber<T> {
+                            override fun onNext(item: T) {
+                                // atomically copy lastSeen so smart cast below can work.
+                                val lastSeenCaptured = lastSeen
+                                when (lastSeenCaptured) {
+                                    is LastSeen.NoneYet -> {
+                                        subscriber.onNext(item)
+                                    }
+                                    is LastSeen.Seen<T> -> {
+                                        if (selector(lastSeenCaptured.value) != selector(item)) {
+                                            subscriber.onNext(item)
+                                        }
+                                    }
+                                }
+                                lastSeen = LastSeen.Seen(item)
+                            }
+                        }
+
+                        this@distinctUntilChanged.subscribe(
+                                sourceSubscriber!!
+                        )
+                    }
+                }
+        )
+    }
+}
+
+/**
  * A maybe type just because our maybe value itself could be null.
  */
 sealed class LastSeen<T : Any> {
@@ -710,6 +810,58 @@ class PublishSubject<T> : Subject<T> {
 
     override fun onNext(item: T) {
         subscribers.forEach { it.onNext(item) }
+    }
+}
+
+
+/**
+ * [Timestamped] class to be used in conjunction with the timestamp operator.
+ * See http://reactivex.io/RxJava/javadoc/index.html?rx/schedulers/Timestamped.html.
+ */
+data class Timestamped<T>(val timestampMillis: Long, val value: T)
+
+/**
+ * [timestamp] operator which wraps an item emitted from the upstream publisher into a [Timestamped] object, with a value
+ * and the time of emission in milliseconds. See http://reactivex.io/documentation/operators/timestamp.html.
+ */
+fun <T> Publisher<T>.timestamp(): Publisher<Timestamped<T>> {
+    val prior = this
+
+    return Publisher { subscriber ->
+        prior.subscribe(
+                object : Subscriber<T> {
+                    override fun onComplete() {
+                        subscriber.onComplete()
+                    }
+
+                    override fun onError(error: Throwable) {
+                        subscriber.onError(error)
+                    }
+
+                    override fun onNext(item: T) {
+                        subscriber.onNext(Timestamped(System.currentTimeMillis(), item))
+                    }
+
+                    override fun onSubscribe(subscription: Subscription) {
+                        // for clarity, this is called when I have subscribed
+                        // successfully to the source.  I then want to let the downstream
+                        // consumer know that I have subscribed successfully on their behalf,
+                        // and also allow them to pass cancellation through.
+                        val consumerSubscription = object : Subscription {
+                            override fun cancel() {
+                                subscription.cancel()
+                            }
+
+                            override fun request(n: Long) {
+                                if (n != Long.MAX_VALUE) throw RuntimeException("Backpressure signalling not supported.  Request Long.MAX_VALUE.")
+                                subscription.request(Long.MAX_VALUE)
+                            }
+                        }
+
+                        subscriber.onSubscribe(consumerSubscription)
+                    }
+                }
+        )
     }
 }
 

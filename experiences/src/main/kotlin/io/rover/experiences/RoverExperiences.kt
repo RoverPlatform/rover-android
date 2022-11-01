@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.os.Parcelable
 import androidx.annotation.ColorInt
 import android.util.DisplayMetrics
+import io.rover.core.streams.Scheduler
 import io.rover.experiences.assets.AndroidAssetService
 import io.rover.experiences.assets.ImageDownloader
 import io.rover.experiences.assets.ImageOptimizationService
@@ -43,9 +44,8 @@ import io.rover.experiences.services.EventEmitter
 import io.rover.experiences.services.MeasurementService
 import io.rover.experiences.services.SessionStore
 import io.rover.experiences.services.SessionTracker
-import io.rover.experiences.streams.Scheduler
-import io.rover.experiences.streams.forAndroidMainThread
-import io.rover.experiences.streams.forExecutor
+import io.rover.core.streams.forAndroidMainThread
+import io.rover.core.streams.forExecutor
 import io.rover.experiences.ui.RoverViewModel
 import io.rover.experiences.ui.blocks.barcode.BarcodeBlockView
 import io.rover.experiences.ui.blocks.barcode.BarcodeBlockViewModel

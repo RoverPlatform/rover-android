@@ -13,7 +13,7 @@ import io.rover.experiences.platform.dateAsIso8601
 import io.rover.experiences.platform.debugExplanation
 import io.rover.experiences.platform.setRoverUserAgent
 import io.rover.experiences.services.EventEmitter
-import io.rover.experiences.streams.subscribe
+import io.rover.core.streams.subscribe
 import org.json.JSONObject
 import java.io.DataOutputStream
 import java.net.HttpURLConnection

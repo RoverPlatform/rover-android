@@ -10,8 +10,8 @@ import android.graphics.drawable.InsetDrawable
 import android.view.Gravity
 import android.view.View
 import io.rover.experiences.platform.DrawableWrapper
-import io.rover.experiences.streams.androidLifecycleDispose
-import io.rover.experiences.streams.subscribe
+import io.rover.core.streams.androidLifecycleDispose
+import io.rover.core.streams.subscribe
 import io.rover.experiences.ui.BackgroundImageConfiguration
 import io.rover.experiences.ui.concerns.MeasuredBindableView
 import io.rover.experiences.ui.concerns.ViewModelBinding

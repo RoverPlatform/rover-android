@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.core.content.ContextCompat
-import io.rover.example.ui.theme.RoverCampaignsAndroidExampleTheme
+import io.rover.example.ui.theme.RoverAndroidExampleTheme
 import io.rover.core.Rover
 import io.rover.core.permissions.PermissionsNotifierInterface
 import io.rover.debug.RoverDebugActivity
@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            RoverCampaignsAndroidExampleTheme {
+            RoverAndroidExampleTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(color = MaterialTheme.colors.background) {
                     Column(
@@ -173,7 +173,7 @@ fun Greeting(name: String) {
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    RoverCampaignsAndroidExampleTheme {
+    RoverAndroidExampleTheme {
         Greeting("Android")
     }
 }

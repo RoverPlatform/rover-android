@@ -2,6 +2,7 @@
 
 package io.rover.experiences.data.operations.data
 
+import io.rover.core.data.graphql.operations.data.toStringHash
 import io.rover.experiences.data.domain.Background
 import io.rover.experiences.data.domain.BackgroundContentMode
 import io.rover.experiences.data.domain.BackgroundScale
@@ -50,7 +51,6 @@ import io.rover.experiences.data.graphql.putProp
 import io.rover.experiences.data.graphql.safeGetString
 import io.rover.experiences.data.graphql.safeGetUri
 import io.rover.experiences.data.graphql.safeOptString
-import io.rover.experiences.data.graphql.toStringHash
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject

@@ -2,9 +2,9 @@ package io.rover.experiences.services
 
 import android.os.Handler
 import android.os.Looper
+import io.rover.core.data.graphql.safeGetString
+import io.rover.core.data.graphql.safeOptInt
 import io.rover.experiences.data.events.RoverEvent
-import io.rover.experiences.data.graphql.safeGetString
-import io.rover.experiences.data.graphql.safeOptInt
 import io.rover.experiences.logging.log
 import io.rover.experiences.platform.LocalStorage
 import io.rover.experiences.platform.debugExplanation

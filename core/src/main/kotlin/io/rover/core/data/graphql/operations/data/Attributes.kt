@@ -10,6 +10,8 @@ fun JSONObject.toStringHash(): Map<String, String> {
     }
 }
 
+fun JSONObject.toStringIntHash() = keys().asSequence().associateWith { key -> getInt(key) }
+
 fun Attributes.encodeJson(): JSONObject {
     this.map { (_, value) ->
         @Suppress("UNCHECKED_CAST") val newValue = when (value) {

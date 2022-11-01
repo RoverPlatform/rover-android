@@ -1,7 +1,7 @@
 package io.rover.experiences.data.operations
 
+import io.rover.core.data.GraphQlRequest
 import io.rover.experiences.data.domain.Experience
-import io.rover.experiences.data.graphql.GraphQlRequest
 import io.rover.experiences.data.operations.data.decodeJson
 import org.json.JSONObject
 

@@ -1,7 +1,8 @@
 package io.rover.experiences.ui.blocks.poll
 
-import io.rover.experiences.data.graphql.putProp
-import io.rover.experiences.data.graphql.toStringIntHash
+
+import io.rover.core.data.graphql.operations.data.toStringIntHash
+import io.rover.core.data.graphql.putProp
 import org.json.JSONObject
 
 internal data class OptionResults(val results: Map<String, Int>) {

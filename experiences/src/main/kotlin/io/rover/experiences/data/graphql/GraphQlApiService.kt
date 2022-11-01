@@ -1,6 +1,7 @@
 package io.rover.experiences.data.graphql
 
 import android.net.Uri
+import io.rover.core.data.GraphQlRequest
 import io.rover.core.data.http.AndroidHttpsUrlConnectionNetworkClient
 import io.rover.core.data.http.HttpRequest
 import io.rover.core.data.http.HttpVerb

@@ -1,6 +1,6 @@
 package io.rover.experiences.ui.blocks.concerns.border
 
-import io.rover.experiences.data.domain.Border
+import io.rover.core.data.domain.Border
 import io.rover.experiences.ui.asAndroidColor
 
 internal class BorderViewModel(

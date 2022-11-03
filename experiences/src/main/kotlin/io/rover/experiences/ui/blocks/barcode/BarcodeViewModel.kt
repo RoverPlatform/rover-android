@@ -1,16 +1,16 @@
 package io.rover.experiences.ui.blocks.barcode
 
 import io.rover.experiences.services.MeasurementService
-import io.rover.experiences.data.domain.Barcode
-import io.rover.experiences.data.domain.BarcodeFormat
+import io.rover.core.data.domain.Barcode
+import io.rover.core.data.domain.BarcodeFormat
 import io.rover.experiences.ui.RectF
 
 /**
  * Barcode display view model.
  */
 internal class BarcodeViewModel(
-    private val barcode: Barcode,
-    private val measurementService: MeasurementService
+        private val barcode: Barcode,
+        private val measurementService: MeasurementService
 ) : BarcodeViewModelInterface {
     override val barcodeType: BarcodeViewModelInterface.BarcodeType
         get() = when (barcode.format) {

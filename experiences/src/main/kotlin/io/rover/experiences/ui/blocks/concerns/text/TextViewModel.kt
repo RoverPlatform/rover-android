@@ -1,9 +1,9 @@
 package io.rover.experiences.ui.blocks.concerns.text
 
 import android.graphics.Paint
-import io.rover.experiences.data.domain.FontWeight
-import io.rover.experiences.data.domain.Text
-import io.rover.experiences.data.domain.TextAlignment
+import io.rover.core.data.domain.FontWeight
+import io.rover.core.data.domain.Text
+import io.rover.core.data.domain.TextAlignment
 import io.rover.experiences.data.mapToFont
 import io.rover.experiences.logging.log
 import io.rover.experiences.services.MeasurementService
@@ -14,10 +14,10 @@ import io.rover.experiences.ui.asAndroidColor
  * Text styling and size concerns.
  */
 internal class TextViewModel(
-    private val styledText: Text,
-    private val measurementService: MeasurementService,
-    override val singleLine: Boolean = false,
-    override val centerVertically: Boolean = false
+        private val styledText: Text,
+        private val measurementService: MeasurementService,
+        override val singleLine: Boolean = false,
+        override val centerVertically: Boolean = false
 ) : TextViewModelInterface {
     override val text: String
         get() = styledText.rawValue

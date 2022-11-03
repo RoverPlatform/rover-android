@@ -1,10 +1,10 @@
 package io.rover.experiences.ui.blocks.concerns.layout
 
-import io.rover.experiences.data.domain.Block
-import io.rover.experiences.data.domain.ButtonBlock
-import io.rover.experiences.data.domain.Height
-import io.rover.experiences.data.domain.HorizontalAlignment
-import io.rover.experiences.data.domain.VerticalAlignment
+import io.rover.core.data.domain.Block
+import io.rover.core.data.domain.ButtonBlock
+import io.rover.core.data.domain.Height
+import io.rover.core.data.domain.HorizontalAlignment
+import io.rover.core.data.domain.VerticalAlignment
 import io.rover.experiences.logging.log
 import io.rover.experiences.platform.whenNotNull
 import io.rover.core.streams.PublishSubject
@@ -21,9 +21,9 @@ import io.rover.experiences.ui.navigation.NavigateToFromBlock
  *   method to the new mixin version of BlockViewModel but obviously it should not specify view type
  */
 internal class BlockViewModel(
-    private val block: Block,
-    private val paddingDeflections: Set<LayoutPaddingDeflection> = emptySet(),
-    private val measurable: Measurable? = null
+        private val block: Block,
+        private val paddingDeflections: Set<LayoutPaddingDeflection> = emptySet(),
+        private val measurable: Measurable? = null
 ) : BlockViewModelInterface {
 
     override val viewType: ViewType

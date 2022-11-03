@@ -3,9 +3,9 @@ package io.rover.experiences.ui.layout
 import androidx.recyclerview.widget.RecyclerView
 import android.util.DisplayMetrics
 import android.view.View
-import io.rover.experiences.data.domain.Block
-import io.rover.experiences.data.domain.Row
-import io.rover.experiences.data.domain.Screen
+import io.rover.core.data.domain.Block
+import io.rover.core.data.domain.Row
+import io.rover.core.data.domain.Screen
 import io.rover.experiences.logging.log
 import io.rover.experiences.ui.dpAsPx
 import io.rover.experiences.ui.pxAsDp

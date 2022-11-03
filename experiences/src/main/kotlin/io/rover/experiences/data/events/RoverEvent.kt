@@ -3,24 +3,24 @@ package io.rover.experiences.data.events
 import io.rover.core.data.graphql.putProp
 import io.rover.core.data.graphql.safeGetString
 import io.rover.core.data.graphql.safeOptString
-import io.rover.experiences.data.domain.Block
-import io.rover.experiences.data.domain.Experience
-import io.rover.experiences.data.domain.Row
-import io.rover.experiences.data.domain.Screen
-import io.rover.experiences.data.operations.data.decodeJSON
-import io.rover.experiences.data.operations.data.decodeJson
-import io.rover.experiences.data.operations.data.encodeJson
+import io.rover.core.data.domain.Block
+import io.rover.core.data.domain.Experience
+import io.rover.core.data.domain.Row
+import io.rover.core.data.domain.Screen
+import io.rover.core.experiences.operations.data.decodeJSON
+import io.rover.core.experiences.operations.data.decodeJson
+import io.rover.core.experiences.operations.data.encodeJson
 import org.json.JSONObject
 
 sealed class RoverEvent {
     internal abstract fun encodeJson(): JSONObject
 
     data class BlockTapped(
-        val experience: Experience,
-        val screen: Screen,
-        val block: Block,
-        val row: Row,
-        val campaignId: String?
+            val experience: Experience,
+            val screen: Screen,
+            val block: Block,
+            val row: Row,
+            val campaignId: String?
     ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {
@@ -59,12 +59,12 @@ sealed class RoverEvent {
     }
 
     data class PollAnswered(
-        val experience: Experience,
-        val screen: Screen,
-        val block: Block,
-        val option: Option,
-        val poll: Poll,
-        val campaignId: String?
+            val experience: Experience,
+            val screen: Screen,
+            val block: Block,
+            val option: Option,
+            val poll: Poll,
+            val campaignId: String?
     ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {
@@ -80,8 +80,8 @@ sealed class RoverEvent {
     }
 
     data class ExperienceDismissed(
-        val experience: Experience,
-        val campaignId: String?
+            val experience: Experience,
+            val campaignId: String?
     ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {
@@ -105,9 +105,9 @@ sealed class RoverEvent {
     }
 
     data class ScreenDismissed(
-        val experience: Experience,
-        val screen: Screen,
-        val campaignId: String?
+            val experience: Experience,
+            val screen: Screen,
+            val campaignId: String?
     ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {
@@ -133,8 +133,8 @@ sealed class RoverEvent {
     }
 
     data class ExperiencePresented(
-        val experience: Experience,
-        val campaignId: String?
+            val experience: Experience,
+            val campaignId: String?
     ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {
@@ -158,9 +158,9 @@ sealed class RoverEvent {
     }
 
     data class ExperienceViewed(
-        val experience: Experience,
-        val campaignId: String?,
-        val duration: Int = 0
+            val experience: Experience,
+            val campaignId: String?,
+            val duration: Int = 0
     ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {
@@ -186,10 +186,10 @@ sealed class RoverEvent {
     }
 
     data class ScreenViewed(
-        val experience: Experience,
-        val screen: Screen,
-        val campaignId: String?,
-        val duration: Int = 0
+            val experience: Experience,
+            val screen: Screen,
+            val campaignId: String?,
+            val duration: Int = 0
     ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {
@@ -214,9 +214,9 @@ sealed class RoverEvent {
     }
 
     data class ScreenPresented(
-        val experience: Experience,
-        val screen: Screen,
-        val campaignId: String?
+            val experience: Experience,
+            val screen: Screen,
+            val campaignId: String?
     ) : RoverEvent() {
         override fun encodeJson(): JSONObject {
             return JSONObject().apply {

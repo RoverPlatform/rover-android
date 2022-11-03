@@ -4,7 +4,7 @@ import android.graphics.Typeface
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import io.rover.experiences.data.domain.TextPoll
+import io.rover.core.data.domain.TextPoll
 import io.rover.experiences.data.mapToFont
 import io.rover.experiences.logging.log
 import io.rover.experiences.platform.addView

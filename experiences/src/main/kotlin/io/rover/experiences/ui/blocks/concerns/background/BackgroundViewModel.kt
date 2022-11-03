@@ -6,17 +6,17 @@ import io.rover.experiences.assets.ImageOptimizationService
 import io.rover.experiences.logging.log
 import io.rover.experiences.ui.PixelSize
 import io.rover.experiences.ui.concerns.MeasuredSize
-import io.rover.experiences.data.domain.Background
+import io.rover.core.data.domain.Background
 import io.rover.experiences.ui.asAndroidColor
 import io.rover.experiences.ui.dpAsPx
 import org.reactivestreams.Publisher
 import java.util.concurrent.TimeUnit
 
 internal class BackgroundViewModel(
-    private val background: Background,
-    private val assetService: AssetService,
-    private val imageOptimizationService: ImageOptimizationService,
-    mainScheduler: Scheduler
+        private val background: Background,
+        private val assetService: AssetService,
+        private val imageOptimizationService: ImageOptimizationService,
+        mainScheduler: Scheduler
 ) : BackgroundViewModelInterface {
     override val backgroundColor: Int
         get() = background.color.asAndroidColor()

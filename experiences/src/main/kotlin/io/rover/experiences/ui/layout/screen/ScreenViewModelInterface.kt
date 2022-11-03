@@ -1,9 +1,9 @@
 package io.rover.experiences.ui.layout.screen
 
 import io.rover.experiences.ui.concerns.BindableViewModel
-import io.rover.experiences.data.domain.Experience
-import io.rover.experiences.data.domain.Row
-import io.rover.experiences.data.domain.Screen
+import io.rover.core.data.domain.Experience
+import io.rover.core.data.domain.Row
+import io.rover.core.data.domain.Screen
 import io.rover.experiences.ui.blocks.concerns.background.BackgroundViewModelInterface
 import io.rover.experiences.ui.blocks.concerns.layout.BlockViewModelInterface
 import io.rover.experiences.ui.blocks.concerns.layout.LayoutableViewModel

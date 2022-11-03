@@ -17,19 +17,19 @@ import io.rover.core.streams.subscribe
 import io.rover.core.streams.timeout
 import io.rover.experiences.ui.PixelSize
 import io.rover.experiences.ui.concerns.MeasuredSize
-import io.rover.experiences.data.domain.Block
-import io.rover.experiences.data.domain.Image
+import io.rover.core.data.domain.Block
+import io.rover.core.data.domain.Image
 import io.rover.experiences.ui.RectF
 import io.rover.experiences.ui.dpAsPx
 import org.reactivestreams.Publisher
 import java.util.concurrent.TimeUnit
 
 internal class ImageViewModel(
-    private val image: Image,
-    private val block: Block,
-    private val assetService: AssetService,
-    private val imageOptimizationService: ImageOptimizationService,
-    mainScheduler: Scheduler
+        private val image: Image,
+        private val block: Block,
+        private val assetService: AssetService,
+        private val imageOptimizationService: ImageOptimizationService,
+        mainScheduler: Scheduler
 ) : ImageViewModelInterface {
 
     override fun informDimensions(measuredSize: MeasuredSize) {

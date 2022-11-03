@@ -3,11 +3,11 @@ package io.rover.experiences.ui.blocks.poll.image
 import android.graphics.Bitmap
 import io.rover.experiences.assets.AssetService
 import io.rover.experiences.assets.ImageOptimizationService
-import io.rover.experiences.data.domain.Block
-import io.rover.experiences.data.domain.Experience
-import io.rover.experiences.data.domain.Image
-import io.rover.experiences.data.domain.ImagePoll
-import io.rover.experiences.data.domain.Screen
+import io.rover.core.data.domain.Block
+import io.rover.core.data.domain.Experience
+import io.rover.core.data.domain.Image
+import io.rover.core.data.domain.ImagePoll
+import io.rover.core.data.domain.Screen
 import io.rover.experiences.data.events.Option
 import io.rover.experiences.data.events.Poll
 import io.rover.experiences.data.events.RoverEvent
@@ -34,18 +34,18 @@ import io.rover.experiences.ui.dpAsPx
 import org.reactivestreams.Publisher
 
 internal class ImagePollViewModel(
-    override val id: String,
-    override val imagePoll: ImagePoll,
-    private val measurementService: MeasurementService,
-    private val assetService: AssetService,
-    private val imageOptimizationService: ImageOptimizationService,
-    private val mainScheduler: Scheduler,
-    private val pollVotingInteractor: VotingInteractor,
-    private val eventEmitter: EventEmitter,
-    private val block: Block,
-    private val screen: Screen,
-    private val experience: Experience,
-    private val campaignId: String?
+        override val id: String,
+        override val imagePoll: ImagePoll,
+        private val measurementService: MeasurementService,
+        private val assetService: AssetService,
+        private val imageOptimizationService: ImageOptimizationService,
+        private val mainScheduler: Scheduler,
+        private val pollVotingInteractor: VotingInteractor,
+        private val eventEmitter: EventEmitter,
+        private val block: Block,
+        private val screen: Screen,
+        private val experience: Experience,
+        private val campaignId: String?
 ) : ImagePollViewModelInterface {
 
     companion object {

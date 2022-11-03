@@ -1,7 +1,7 @@
 package io.rover.experiences.ui.layout.row
 
-import io.rover.experiences.data.domain.Block
-import io.rover.experiences.data.domain.Row
+import io.rover.core.data.domain.Block
+import io.rover.core.data.domain.Row
 import io.rover.core.streams.filterNulls
 import io.rover.core.streams.map
 import io.rover.experiences.ui.blocks.concerns.layout.BlockViewModelInterface
@@ -12,16 +12,16 @@ import io.rover.experiences.ui.RectF
 import io.rover.experiences.ui.blocks.concerns.layout.CompositeBlockViewModelInterface
 import io.rover.experiences.ui.layout.ViewType
 import io.rover.experiences.ui.layout.screen.ScreenViewModel
-import io.rover.experiences.data.domain.Height
+import io.rover.core.data.domain.Height
 import io.rover.core.streams.asPublisher
 import io.rover.core.streams.flatMap
 import io.rover.core.streams.share
 import org.reactivestreams.Publisher
 
 internal class RowViewModel(
-    private val row: Row,
-    private val blockViewModelResolver: (block: Block) -> CompositeBlockViewModelInterface,
-    private val backgroundViewModel: BackgroundViewModelInterface
+        private val row: Row,
+        private val blockViewModelResolver: (block: Block) -> CompositeBlockViewModelInterface,
+        private val backgroundViewModel: BackgroundViewModelInterface
 ) : RowViewModelInterface, BackgroundViewModelInterface by backgroundViewModel {
     override val viewType: ViewType = ViewType.Row
 
@@ -67,7 +67,7 @@ internal class RowViewModel(
     private fun height(bounds: RectF): Float {
         return when (row.height) {
             is Height.Intrinsic -> blockViewModels.map { it.stackedHeight(bounds) }.sum()
-            is Height.Static -> (row.height).value.toFloat()
+            is Height.Static -> ((row.height) as Height.Static).value.toFloat()
         }
     }
 

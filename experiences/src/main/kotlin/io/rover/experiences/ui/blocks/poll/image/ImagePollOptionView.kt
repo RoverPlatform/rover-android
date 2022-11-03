@@ -14,7 +14,6 @@ import android.graphics.Typeface
 import androidx.core.view.ViewCompat
 import androidx.appcompat.widget.AppCompatTextView
 import android.text.TextUtils
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -22,8 +21,8 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.LinearLayout.VERTICAL
 import android.widget.RelativeLayout
-import io.rover.experiences.data.domain.FontWeight
-import io.rover.experiences.data.domain.ImagePollBlockOption
+import io.rover.core.data.domain.FontWeight
+import io.rover.core.data.domain.ImagePollBlockOption
 import io.rover.experiences.data.mapToFont
 import io.rover.experiences.platform.create
 import io.rover.experiences.platform.imageView
@@ -226,11 +225,11 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
     }
 
     fun goToResultsState(
-        votingShare: Int,
-        isSelectedOption: Boolean,
-        option: ImagePollBlockOption,
-        shouldAnimate: Boolean,
-        viewWidth: Int
+            votingShare: Int,
+            isSelectedOption: Boolean,
+            option: ImagePollBlockOption,
+            shouldAnimate: Boolean,
+            viewWidth: Int
     ) {
         bindVoteIndicatorBar()
         bindVotePercentageText(votingShare)

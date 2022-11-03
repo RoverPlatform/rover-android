@@ -2,7 +2,7 @@ package io.rover.experiences.ui.blocks.concerns.background
 
 import android.graphics.Bitmap
 import org.reactivestreams.Publisher
-import io.rover.experiences.data.domain.Background
+import io.rover.core.data.domain.Background
 import io.rover.experiences.ui.BackgroundImageConfiguration
 import io.rover.experiences.ui.concerns.MeasuredBindableView
 import io.rover.experiences.ui.concerns.BindableViewModel

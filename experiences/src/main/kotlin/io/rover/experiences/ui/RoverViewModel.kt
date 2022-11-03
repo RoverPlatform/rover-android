@@ -4,9 +4,9 @@ import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Parcelable
 import io.rover.core.data.NetworkResult
-import io.rover.experiences.data.domain.Experience
+import io.rover.core.data.domain.Experience
 import io.rover.experiences.data.graphql.GraphQlApiService
-import io.rover.experiences.data.operations.FetchExperienceRequest
+import io.rover.core.experiences.operations.FetchExperienceRequest
 import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.Publishers
 import io.rover.core.streams.Scheduler
@@ -25,12 +25,12 @@ import kotlinx.parcelize.Parcelize
 import org.reactivestreams.Publisher
 
 internal class RoverViewModel(
-    private val experienceRequest: ExperienceRequest,
-    private val graphQlApiService: GraphQlApiService,
-    private val mainThreadScheduler: Scheduler,
-    private val resolveNavigationViewModel: (experience: Experience, icicle: Parcelable?) -> NavigationViewModelInterface,
-    private val icicle: Parcelable? = null,
-    private val experienceTransformer: ((Experience) -> Experience)? = null
+        private val experienceRequest: ExperienceRequest,
+        private val graphQlApiService: GraphQlApiService,
+        private val mainThreadScheduler: Scheduler,
+        private val resolveNavigationViewModel: (experience: Experience, icicle: Parcelable?) -> NavigationViewModelInterface,
+        private val icicle: Parcelable? = null,
+        private val experienceTransformer: ((Experience) -> Experience)? = null
 ) : RoverViewModelInterface {
 
     override val state: Parcelable

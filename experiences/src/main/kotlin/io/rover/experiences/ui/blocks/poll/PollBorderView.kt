@@ -5,7 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.view.View
-import io.rover.experiences.data.domain.Border
+import io.rover.core.data.domain.Border
 import io.rover.experiences.platform.create
 import io.rover.experiences.ui.asAndroidColor
 import io.rover.experiences.ui.dpAsPx

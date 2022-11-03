@@ -3,6 +3,8 @@ package io.rover.core.data.graphql
 import io.rover.core.data.GraphQlRequest
 import io.rover.core.data.NetworkResult
 import io.rover.core.data.domain.EventSnapshot
+import io.rover.core.data.domain.Experience
+import io.rover.core.experiences.operations.FetchExperienceRequest
 import org.reactivestreams.Publisher
 
 interface GraphQlApiServiceInterface {
@@ -19,4 +21,8 @@ interface GraphQlApiServiceInterface {
     fun submitEvents(
         events: List<EventSnapshot>
     ): Publisher<NetworkResult<String>>
+
+    fun fetchExperience(
+            query: FetchExperienceRequest.ExperienceQueryIdentifier
+    ): Publisher<NetworkResult<Experience>>
 }

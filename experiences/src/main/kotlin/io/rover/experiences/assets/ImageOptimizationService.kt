@@ -3,10 +3,10 @@ package io.rover.experiences.assets
 import android.graphics.Shader
 import io.rover.experiences.logging.log
 import io.rover.experiences.ui.PixelSize
-import io.rover.experiences.data.domain.Background
-import io.rover.experiences.data.domain.BackgroundContentMode
-import io.rover.experiences.data.domain.BackgroundScale
-import io.rover.experiences.data.domain.Image
+import io.rover.core.data.domain.Background
+import io.rover.core.data.domain.BackgroundContentMode
+import io.rover.core.data.domain.BackgroundScale
+import io.rover.core.data.domain.Image
 import io.rover.experiences.ui.BackgroundImageConfiguration
 import io.rover.experiences.ui.Rect
 import io.rover.experiences.ui.dpAsPx
@@ -36,13 +36,13 @@ internal class ImageOptimizationService {
     }
 
     private fun localScaleOnlyImageConfiguration(
-        background: Background,
-        targetViewPixelSize: PixelSize,
-        density: Float
+            background: Background,
+            targetViewPixelSize: PixelSize,
+            density: Float
     ): OptimizedImage? {
         val imageDensity = imageDensity(background)
         val backgroundImage = background.image ?: return null
-        val uri = background.image.url
+        val uri = background.image!!.url
         val appleScalingFactor = densityAsDpi(density) / imageDensity.toFloat()
         val imageWidthPx = (appleScalingFactor * backgroundImage.width).toInt()
         val imageHeightPx = (appleScalingFactor * backgroundImage.height).toInt()
@@ -121,12 +121,12 @@ internal class ImageOptimizationService {
     }
 
     private fun imageConfigurationOptimizedByImgix(
-        background: Background,
-        targetViewPixelSize: PixelSize,
-        density: Float
+            background: Background,
+            targetViewPixelSize: PixelSize,
+            density: Float
     ): OptimizedImage? {
         val backgroundImage = background.image ?: return null
-        val uri = background.image.url
+        val uri = background.image!!.url
         val imageDensity = imageDensity(background)
         val imageDensityScalingFactor = densityAsDpi(density) / imageDensity.toFloat()
 
@@ -338,10 +338,10 @@ internal class ImageOptimizationService {
      * @return optimized URI.
      */
     fun optimizeImageBlock(
-        image: Image,
-        blockBorderWidth: Int,
-        targetViewPixelSize: PixelSize,
-        density: Float
+            image: Image,
+            blockBorderWidth: Int,
+            targetViewPixelSize: PixelSize,
+            density: Float
     ): URI {
         val imageSizePixels = PixelSize(
             image.width,
@@ -372,8 +372,8 @@ internal class ImageOptimizationService {
 
     // This is only used for polls until this class is refactored to not be tightly coupled with backgrounds
     fun optimizeImageForFill(
-        image: Image,
-        targetViewPixelSize: PixelSize
+            image: Image,
+            targetViewPixelSize: PixelSize
     ): URI {
         return setQueryParameters(
             image.url,

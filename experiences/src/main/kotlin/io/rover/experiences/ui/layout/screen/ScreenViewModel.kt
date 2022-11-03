@@ -4,9 +4,9 @@ import io.rover.experiences.logging.log
 import io.rover.core.streams.asPublisher
 import io.rover.core.streams.flatMap
 import io.rover.core.streams.map
-import io.rover.experiences.data.domain.Row
-import io.rover.experiences.data.domain.Screen
-import io.rover.experiences.data.domain.TitleBarButtons
+import io.rover.core.data.domain.Row
+import io.rover.core.data.domain.Screen
+import io.rover.core.data.domain.TitleBarButtons
 import io.rover.experiences.ui.RectF
 import io.rover.experiences.ui.asAndroidColor
 import io.rover.experiences.ui.blocks.concerns.background.BackgroundViewModelInterface
@@ -18,9 +18,9 @@ import io.rover.experiences.ui.toolbar.ToolbarConfiguration
 import org.reactivestreams.Publisher
 
 internal class ScreenViewModel(
-    override val screen: Screen,
-    private val backgroundViewModel: BackgroundViewModelInterface,
-    private val resolveRowViewModel: (row: Row) -> RowViewModelInterface
+        override val screen: Screen,
+        private val backgroundViewModel: BackgroundViewModelInterface,
+        private val resolveRowViewModel: (row: Row) -> RowViewModelInterface
 ) : ScreenViewModelInterface, BackgroundViewModelInterface by backgroundViewModel {
 
     // TODO: remember (State) scroll position

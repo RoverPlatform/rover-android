@@ -1,6 +1,6 @@
 @file:JvmName("Experience")
 
-package io.rover.experiences.data.operations.data
+package io.rover.core.experiences.operations.data
 
 import io.rover.core.data.graphql.getObjectIterable
 import io.rover.core.data.graphql.getStringIterable
@@ -9,54 +9,54 @@ import io.rover.core.data.graphql.putProp
 import io.rover.core.data.graphql.safeGetString
 import io.rover.core.data.graphql.safeGetUri
 import io.rover.core.data.graphql.safeOptString
-import io.rover.experiences.data.domain.Background
-import io.rover.experiences.data.domain.BackgroundContentMode
-import io.rover.experiences.data.domain.BackgroundScale
-import io.rover.experiences.data.domain.Barcode
-import io.rover.experiences.data.domain.BarcodeBlock
-import io.rover.experiences.data.domain.BarcodeFormat
-import io.rover.experiences.data.domain.Block
-import io.rover.experiences.data.domain.Border
-import io.rover.experiences.data.domain.ButtonBlock
-import io.rover.experiences.data.domain.Color
-import io.rover.experiences.data.domain.Duration
-import io.rover.experiences.data.domain.DurationUnit
-import io.rover.experiences.data.domain.Experience
-import io.rover.experiences.data.domain.Font
-import io.rover.experiences.data.domain.FontWeight
-import io.rover.experiences.data.domain.Height
-import io.rover.experiences.data.domain.HorizontalAlignment
-import io.rover.experiences.data.domain.Image
-import io.rover.experiences.data.domain.ImageBlock
-import io.rover.experiences.data.domain.ImagePoll
-import io.rover.experiences.data.domain.ImagePollBlock
-import io.rover.experiences.data.domain.ImagePollBlockOption
-import io.rover.experiences.data.domain.Insets
-import io.rover.experiences.data.domain.Position
-import io.rover.experiences.data.domain.RectangleBlock
-import io.rover.experiences.data.domain.Row
-import io.rover.experiences.data.domain.Screen
-import io.rover.experiences.data.domain.StatusBar
-import io.rover.experiences.data.domain.StatusBarStyle
-import io.rover.experiences.data.domain.Text
-import io.rover.experiences.data.domain.TextAlignment
-import io.rover.experiences.data.domain.TextBlock
-import io.rover.experiences.data.domain.TextPoll
-import io.rover.experiences.data.domain.TextPollBlock
-import io.rover.experiences.data.domain.TextPollOption
-import io.rover.experiences.data.domain.TitleBar
-import io.rover.experiences.data.domain.TitleBarButtons
-import io.rover.experiences.data.domain.Conversion
-import io.rover.experiences.data.domain.UnitOfMeasure
-import io.rover.experiences.data.domain.VerticalAlignment
-import io.rover.experiences.data.domain.WebView
-import io.rover.experiences.data.domain.WebViewBlock
+import io.rover.core.data.domain.Background
+import io.rover.core.data.domain.BackgroundContentMode
+import io.rover.core.data.domain.BackgroundScale
+import io.rover.core.data.domain.Barcode
+import io.rover.core.data.domain.BarcodeBlock
+import io.rover.core.data.domain.BarcodeFormat
+import io.rover.core.data.domain.Block
+import io.rover.core.data.domain.Border
+import io.rover.core.data.domain.ButtonBlock
+import io.rover.core.data.domain.Color
+import io.rover.core.data.domain.Duration
+import io.rover.core.data.domain.DurationUnit
+import io.rover.core.data.domain.Experience
+import io.rover.core.data.domain.Font
+import io.rover.core.data.domain.FontWeight
+import io.rover.core.data.domain.Height
+import io.rover.core.data.domain.HorizontalAlignment
+import io.rover.core.data.domain.Image
+import io.rover.core.data.domain.ImageBlock
+import io.rover.core.data.domain.ImagePoll
+import io.rover.core.data.domain.ImagePollBlock
+import io.rover.core.data.domain.ImagePollBlockOption
+import io.rover.core.data.domain.Insets
+import io.rover.core.data.domain.Position
+import io.rover.core.data.domain.RectangleBlock
+import io.rover.core.data.domain.Row
+import io.rover.core.data.domain.Screen
+import io.rover.core.data.domain.StatusBar
+import io.rover.core.data.domain.StatusBarStyle
+import io.rover.core.data.domain.Text
+import io.rover.core.data.domain.TextAlignment
+import io.rover.core.data.domain.TextBlock
+import io.rover.core.data.domain.TextPoll
+import io.rover.core.data.domain.TextPollBlock
+import io.rover.core.data.domain.TextPollOption
+import io.rover.core.data.domain.TitleBar
+import io.rover.core.data.domain.TitleBarButtons
+import io.rover.core.data.domain.Conversion
+import io.rover.core.data.domain.UnitOfMeasure
+import io.rover.core.data.domain.VerticalAlignment
+import io.rover.core.data.domain.WebView
+import io.rover.core.data.domain.WebViewBlock
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 
 
-internal fun Experience.Companion.decodeJson(json: JSONObject): Experience {
+fun Experience.Companion.decodeJson(json: JSONObject): Experience {
     return Experience(
         id = json.safeGetString("id"),
         homeScreenId = json.safeGetString("homeScreenID"),
@@ -69,7 +69,7 @@ internal fun Experience.Companion.decodeJson(json: JSONObject): Experience {
     )
 }
 
-internal fun Experience.encodeJson(): JSONObject {
+fun Experience.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Experience::id) { it }
         putProp(this@encodeJson, Experience::homeScreenId, "homeScreenID") { it }
@@ -80,7 +80,7 @@ internal fun Experience.encodeJson(): JSONObject {
     }
 }
 
-internal fun Color.Companion.decodeJson(json: JSONObject): Color {
+fun Color.Companion.decodeJson(json: JSONObject): Color {
     return Color(
         json.getInt("red"),
         json.getInt("green"),
@@ -89,7 +89,7 @@ internal fun Color.Companion.decodeJson(json: JSONObject): Color {
     )
 }
 
-internal fun Color.encodeJson(): JSONObject {
+fun Color.encodeJson(): JSONObject {
     return JSONObject().apply {
         listOf(
             Color::red, Color::green, Color::blue, Color::alpha
@@ -97,13 +97,13 @@ internal fun Color.encodeJson(): JSONObject {
     }
 }
 
-internal fun BackgroundContentMode.Companion.decodeJSON(value: String): BackgroundContentMode =
+fun BackgroundContentMode.Companion.decodeJSON(value: String): BackgroundContentMode =
     BackgroundContentMode.values().firstOrNull { it.wireFormat == value } ?: throw JSONException("Unknown BackgroundContentMode type '$value'")
 
-internal fun BarcodeFormat.Companion.decodeJson(value: String): BarcodeFormat =
+fun BarcodeFormat.Companion.decodeJson(value: String): BarcodeFormat =
     BarcodeFormat.values().firstOrNull { it.wireFormat == value } ?: throw JSONException("Unknown BarcodeFormat value '$value'")
 
-internal fun Image.Companion.optDecodeJSON(json: JSONObject?): Image? = when (json) {
+fun Image.Companion.optDecodeJSON(json: JSONObject?): Image? = when (json) {
     null -> null
     else -> Image(
         width = json.getInt("width"),
@@ -116,7 +116,7 @@ internal fun Image.Companion.optDecodeJSON(json: JSONObject?): Image? = when (js
     )
 }
 
-internal fun Image.Companion.decodeJson(json: JSONObject): Image {
+fun Image.Companion.decodeJson(json: JSONObject): Image {
     return Image(
         width = json.getInt("width"),
         height = json.getInt("height"),
@@ -128,7 +128,7 @@ internal fun Image.Companion.decodeJson(json: JSONObject): Image {
     )
 }
 
-internal fun Image?.optEncodeJson(): JSONObject? {
+fun Image?.optEncodeJson(): JSONObject? {
     return this?.let {
         JSONObject().apply {
             listOf(
@@ -145,10 +145,10 @@ internal fun Image?.optEncodeJson(): JSONObject? {
     }
 }
 
-internal fun UnitOfMeasure.Companion.decodeJson(value: String): UnitOfMeasure =
+fun UnitOfMeasure.Companion.decodeJson(value: String): UnitOfMeasure =
     UnitOfMeasure.values().firstOrNull { it.wireFormat == value } ?: throw JSONException("Unknown Unit type '$value'")
 
-internal fun Insets.Companion.decodeJson(json: JSONObject): Insets {
+fun Insets.Companion.decodeJson(json: JSONObject): Insets {
     return Insets(
         json.getInt("bottom"),
         json.getInt("left"),
@@ -157,7 +157,7 @@ internal fun Insets.Companion.decodeJson(json: JSONObject): Insets {
     )
 }
 
-internal fun Insets.encodeJson(): JSONObject {
+fun Insets.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Insets::bottom)
         putProp(this@encodeJson, Insets::left)
@@ -166,35 +166,35 @@ internal fun Insets.encodeJson(): JSONObject {
     }
 }
 
-internal fun Font.Companion.decodeJson(json: JSONObject): Font {
+fun Font.Companion.decodeJson(json: JSONObject): Font {
     return Font(
         size = json.getInt("size"),
         weight = FontWeight.decodeJson(json.safeGetString("weight"))
     )
 }
 
-internal fun Font.encodeJson(): JSONObject {
+fun Font.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Font::size)
         putProp(this@encodeJson, Font::weight) { it.wireFormat }
     }
 }
 
-internal fun Position.Companion.decodeJson(json: JSONObject): Position {
+fun Position.Companion.decodeJson(json: JSONObject): Position {
     return Position(
         horizontalAlignment = HorizontalAlignment.decodeJson(json.getJSONObject("horizontalAlignment")),
         verticalAlignment = VerticalAlignment.decodeJson(json.getJSONObject("verticalAlignment"))
     )
 }
 
-internal fun Position.encodeJson(): JSONObject {
+fun Position.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Position::horizontalAlignment, "horizontalAlignment") { it.encodeJson() }
         putProp(this@encodeJson, Position::verticalAlignment, "verticalAlignment") { it.encodeJson() }
     }
 }
 
-internal fun HorizontalAlignment.Companion.decodeJson(json: JSONObject): HorizontalAlignment {
+fun HorizontalAlignment.Companion.decodeJson(json: JSONObject): HorizontalAlignment {
     val typeName = json.safeGetString("__typename")
 
     return when (typeName) {
@@ -218,7 +218,7 @@ internal fun HorizontalAlignment.Companion.decodeJson(json: JSONObject): Horizon
     }
 }
 
-internal fun HorizontalAlignment.encodeJson(): JSONObject {
+fun HorizontalAlignment.encodeJson(): JSONObject {
     return JSONObject().apply {
         put("__typename", when (this@encodeJson) {
             is HorizontalAlignment.Center -> {
@@ -245,7 +245,7 @@ internal fun HorizontalAlignment.encodeJson(): JSONObject {
     }
 }
 
-internal fun VerticalAlignment.encodeJson(): JSONObject {
+fun VerticalAlignment.encodeJson(): JSONObject {
     return JSONObject().apply {
         put("__typename", when (this@encodeJson) {
             is VerticalAlignment.Bottom -> {
@@ -278,7 +278,7 @@ internal fun VerticalAlignment.encodeJson(): JSONObject {
     }
 }
 
-internal fun Height.Companion.decodeJson(json: JSONObject): Height {
+fun Height.Companion.decodeJson(json: JSONObject): Height {
     val typeName = json.safeGetString("__typename")
 
     return when (typeName) {
@@ -290,7 +290,7 @@ internal fun Height.Companion.decodeJson(json: JSONObject): Height {
     }
 }
 
-internal fun Height.encodeJson(): JSONObject {
+fun Height.encodeJson(): JSONObject {
     return JSONObject().apply {
         put("__typename", when (this@encodeJson) {
             is Height.Intrinsic -> {
@@ -304,7 +304,7 @@ internal fun Height.encodeJson(): JSONObject {
     }
 }
 
-internal fun VerticalAlignment.Companion.decodeJson(json: JSONObject): VerticalAlignment {
+fun VerticalAlignment.Companion.decodeJson(json: JSONObject): VerticalAlignment {
     val typeName = json.safeGetString("__typename")
 
     return when (typeName) {
@@ -333,32 +333,32 @@ internal fun VerticalAlignment.Companion.decodeJson(json: JSONObject): VerticalA
     }
 }
 
-internal fun TextAlignment.Companion.decodeJson(value: String): TextAlignment =
+fun TextAlignment.Companion.decodeJson(value: String): TextAlignment =
     TextAlignment.values().firstOrNull { it.wireFormat == value } ?: throw JSONException("Unknown TextAlignment type '$value'.")
 
-internal fun FontWeight.Companion.decodeJson(value: String): FontWeight =
+fun FontWeight.Companion.decodeJson(value: String): FontWeight =
     FontWeight.values().firstOrNull { it.wireFormat == value } ?: throw JSONException("Unknown FontWeight type '$value'.")
 
-internal fun BackgroundContentMode.Companion.decodeJson(value: String): BackgroundContentMode =
+fun BackgroundContentMode.Companion.decodeJson(value: String): BackgroundContentMode =
     BackgroundContentMode.values().firstOrNull { it.wireFormat == value } ?: throw JSONException("Unknown BackgroundContentMode type '$value'.")
 
-internal fun BackgroundScale.Companion.decodeJson(value: String): BackgroundScale =
+fun BackgroundScale.Companion.decodeJson(value: String): BackgroundScale =
     BackgroundScale.values().firstOrNull { it.wireFormat == value } ?: throw JSONException("Unknown BackgroundScale type '$value'.")
 
-internal fun StatusBarStyle.Companion.decodeJson(value: String): StatusBarStyle =
+fun StatusBarStyle.Companion.decodeJson(value: String): StatusBarStyle =
     StatusBarStyle.values().firstOrNull { it.wireFormat == value } ?: throw JSONException("Unknown StatusBarStyle type '$value'.")
 
-internal fun TitleBarButtons.Companion.decodeJson(value: String): TitleBarButtons =
+fun TitleBarButtons.Companion.decodeJson(value: String): TitleBarButtons =
     TitleBarButtons.values().firstOrNull { it.wireFormat == value } ?: throw JSONException("Unknown StatusBar TitleBarButtonsStyle type '$value'.")
 
-internal fun Barcode.Companion.decodeJson(json: JSONObject): Barcode {
+fun Barcode.Companion.decodeJson(json: JSONObject): Barcode {
     return Barcode(
         format = BarcodeFormat.decodeJson(json.getString("format")),
         text = json.safeGetString("text")
     )
 }
 
-internal fun Barcode.encodeJson(): JSONObject {
+fun Barcode.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Barcode::format, "format") { it.wireFormat }
         putProp(this@encodeJson, Barcode::text, "text")
@@ -383,7 +383,7 @@ fun TitleBar.encodeJson(): JSONObject {
     }
 }
 
-internal fun BarcodeBlock.Companion.decodeJson(json: JSONObject): BarcodeBlock {
+fun BarcodeBlock.Companion.decodeJson(json: JSONObject): BarcodeBlock {
     return BarcodeBlock(
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         background = Background.decodeJson(json.getJSONObject("background")),
@@ -400,7 +400,7 @@ internal fun BarcodeBlock.Companion.decodeJson(json: JSONObject): BarcodeBlock {
     )
 }
 
-internal fun Background.encodeJson(): JSONObject {
+fun Background.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Background::color, "color") { it.encodeJson() }
         putProp(this@encodeJson, Background::contentMode, "contentMode") { it.wireFormat }
@@ -409,7 +409,7 @@ internal fun Background.encodeJson(): JSONObject {
     }
 }
 
-internal fun Border.encodeJson(): JSONObject {
+fun Border.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Border::color, "color") { it.encodeJson() }
         putProp(this@encodeJson, Border::radius, "radius")
@@ -417,7 +417,7 @@ internal fun Border.encodeJson(): JSONObject {
     }
 }
 
-internal fun Text.encodeJson(): JSONObject {
+fun Text.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Text::rawValue, "rawValue")
         putProp(this@encodeJson, Text::alignment, "alignment") { it.wireFormat }
@@ -426,7 +426,7 @@ internal fun Text.encodeJson(): JSONObject {
     }
 }
 
-internal fun Image.encodeJson(): JSONObject {
+fun Image.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Image::height, "height")
         putProp(this@encodeJson, Image::name, "name")
@@ -438,32 +438,32 @@ internal fun Image.encodeJson(): JSONObject {
     }
 }
 
-internal fun DurationUnit.encodeJson(): String = when (this) {
+fun DurationUnit.encodeJson(): String = when (this) {
     DurationUnit.DAYS -> "d"
     DurationUnit.HOURS -> "h"
     DurationUnit.MINUTES -> "m"
     DurationUnit.SECONDS -> "s"
 }
 
-internal fun Duration.encodeJson(): JSONObject {
+fun Duration.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Duration::unit, "unit") { it.encodeJson() }
         putProp(this@encodeJson, Duration::value, "value")
     }
 }
 
-internal fun Conversion.encodeJson(): JSONObject {
+fun Conversion.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Conversion::tag, "key")
         putProp(this@encodeJson, Conversion::expires, "expires") { it.encodeJson().toString() }
     }
 }
 
-internal fun Conversion?.optEncodeJson(): JSONObject? {
+fun Conversion?.optEncodeJson(): JSONObject? {
     return this?.encodeJson()
 }
 
-internal fun Background.Companion.decodeJson(json: JSONObject): Background {
+fun Background.Companion.decodeJson(json: JSONObject): Background {
     return Background(
         color = Color.decodeJson(json.getJSONObject("color")),
         contentMode = BackgroundContentMode.decodeJSON(json.safeGetString("contentMode")),
@@ -472,7 +472,7 @@ internal fun Background.Companion.decodeJson(json: JSONObject): Background {
     )
 }
 
-internal fun Border.Companion.decodeJson(json: JSONObject): Border {
+fun Border.Companion.decodeJson(json: JSONObject): Border {
     return Border(
         color = Color.decodeJson(json.getJSONObject("color")),
         radius = json.getInt("radius"),
@@ -480,7 +480,7 @@ internal fun Border.Companion.decodeJson(json: JSONObject): Border {
     )
 }
 
-internal fun Text.Companion.decodeJson(json: JSONObject): Text {
+fun Text.Companion.decodeJson(json: JSONObject): Text {
     return Text(
         rawValue = json.safeGetString("rawValue"),
         alignment = TextAlignment.decodeJson(json.safeGetString("alignment")),
@@ -489,7 +489,7 @@ internal fun Text.Companion.decodeJson(json: JSONObject): Text {
     )
 }
 
-internal fun Block.encodeJson(): JSONObject {
+fun Block.encodeJson(): JSONObject {
     // dispatch to each
     return when (this) {
         is BarcodeBlock -> this.encodeJson()
@@ -504,7 +504,7 @@ internal fun Block.encodeJson(): JSONObject {
     }
 }
 
-internal fun Block.encodeSharedJson(): JSONObject {
+fun Block.encodeSharedJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeSharedJson, Block::tapBehavior, "tapBehavior") { it.encodeJson() }
         putProp(this@encodeSharedJson, Block::id, "id") { it }
@@ -522,7 +522,7 @@ internal fun Block.encodeSharedJson(): JSONObject {
     }
 }
 
-internal fun ImagePollBlockOption.encodeJson(): JSONObject {
+fun ImagePollBlockOption.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, ImagePollBlockOption::id, "id")
         putProp(this@encodeJson, ImagePollBlockOption::text, "text") { it.encodeJson() }
@@ -542,7 +542,7 @@ internal fun ImagePollBlockOption.encodeJson(): JSONObject {
     }
 }
 
-internal fun TextPollOption.encodeJson(): JSONObject {
+fun TextPollOption.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, TextPollOption::id, "id")
         putProp(this@encodeJson, TextPollOption::text, "text") { it.encodeJson() }
@@ -560,14 +560,14 @@ internal fun TextPollOption.encodeJson(): JSONObject {
     }
 }
 
-internal fun ImagePollBlock.encodeJson(): JSONObject {
+fun ImagePollBlock.encodeJson(): JSONObject {
     return encodeSharedJson().apply {
         put("__typename", "ImagePollBlock")
         putProp(this@encodeJson, ImagePollBlock::imagePoll, "imagePoll") { it.encodeJson() }
     }
 }
 
-internal fun ImagePoll.encodeJson(): JSONObject {
+fun ImagePoll.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, ImagePoll::question, "question") { it.encodeJson() }
         putProp(
@@ -578,7 +578,7 @@ internal fun ImagePoll.encodeJson(): JSONObject {
     }
 }
 
-internal fun TextPoll.encodeJson(): JSONObject {
+fun TextPoll.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, TextPoll::question, "question") { it.encodeJson() }
         putProp(
@@ -589,62 +589,62 @@ internal fun TextPoll.encodeJson(): JSONObject {
     }
 }
 
-internal fun TextPollBlock.encodeJson(): JSONObject {
+fun TextPollBlock.encodeJson(): JSONObject {
     return encodeSharedJson().apply {
         put("__typename", "TextPollBlock")
         putProp(this@encodeJson, TextPollBlock::textPoll, "textPoll") { it.encodeJson() }
     }
 }
 
-internal fun BarcodeBlock.encodeJson(): JSONObject {
+fun BarcodeBlock.encodeJson(): JSONObject {
     return encodeSharedJson().apply {
         put("__typename", "BarcodeBlock")
         putProp(this@encodeJson, BarcodeBlock::barcode, "barcode") { it.encodeJson() }
     }
 }
 
-internal fun RectangleBlock.encodeJson(): JSONObject {
+fun RectangleBlock.encodeJson(): JSONObject {
     return encodeSharedJson().apply {
         put("__typename", "RectangleBlock")
     }
 }
 
-internal fun WebView.encodeJson(): JSONObject {
+fun WebView.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, WebView::isScrollingEnabled, "isScrollingEnabled")
         putProp(this@encodeJson, WebView::url, "url") { it.toString() }
     }
 }
 
-internal fun WebViewBlock.encodeJson(): JSONObject {
+fun WebViewBlock.encodeJson(): JSONObject {
     return encodeSharedJson().apply {
         put("__typename", "WebViewBlock")
         putProp(this@encodeJson, WebViewBlock::webView, "webView") { it.encodeJson() }
     }
 }
 
-internal fun TextBlock.encodeJson(): JSONObject {
+fun TextBlock.encodeJson(): JSONObject {
     return encodeSharedJson().apply {
         put("__typename", "TextBlock")
         putProp(this@encodeJson, TextBlock::text, "text") { it.encodeJson() }
     }
 }
 
-internal fun ImageBlock.encodeJson(): JSONObject {
+fun ImageBlock.encodeJson(): JSONObject {
     return encodeSharedJson().apply {
         put("__typename", "ImageBlock")
         putProp(this@encodeJson, ImageBlock::image, "image") { it?.encodeJson() ?: JSONObject.NULL }
     }
 }
 
-internal fun ButtonBlock.encodeJson(): JSONObject {
+fun ButtonBlock.encodeJson(): JSONObject {
     return encodeSharedJson().apply {
         put("__typename", "ButtonBlock")
         putProp(this@encodeJson, ButtonBlock::text, "text") { it.encodeJson() }
     }
 }
 
-internal fun ButtonBlock.Companion.decodeJson(json: JSONObject): ButtonBlock {
+fun ButtonBlock.Companion.decodeJson(json: JSONObject): ButtonBlock {
     return ButtonBlock(
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         background = Background.decodeJson(json.getJSONObject("background")),
@@ -661,7 +661,7 @@ internal fun ButtonBlock.Companion.decodeJson(json: JSONObject): ButtonBlock {
     )
 }
 
-internal fun Duration.Companion.decodeJson(json: JSONObject): Duration {
+fun Duration.Companion.decodeJson(json: JSONObject): Duration {
     val unit = when (json.getString("unit")) {
         "s" -> DurationUnit.SECONDS
         "m" -> DurationUnit.MINUTES
@@ -672,7 +672,7 @@ internal fun Duration.Companion.decodeJson(json: JSONObject): Duration {
     return Duration(value = json.getInt("value"), unit = unit)
 }
 
-internal fun Conversion.Companion.optDecodeJson(json: JSONObject?): Conversion? = when (json) {
+fun Conversion.Companion.optDecodeJson(json: JSONObject?): Conversion? = when (json) {
     null -> null
     else -> Conversion(
         json.getString("tag"),
@@ -680,7 +680,7 @@ internal fun Conversion.Companion.optDecodeJson(json: JSONObject?): Conversion? 
     )
 }
 
-internal fun RectangleBlock.Companion.decodeJson(json: JSONObject): RectangleBlock {
+fun RectangleBlock.Companion.decodeJson(json: JSONObject): RectangleBlock {
     return RectangleBlock(
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         background = Background.decodeJson(json.getJSONObject("background")),
@@ -696,7 +696,7 @@ internal fun RectangleBlock.Companion.decodeJson(json: JSONObject): RectangleBlo
     )
 }
 
-internal fun WebViewBlock.Companion.decodeJson(json: JSONObject): WebViewBlock {
+fun WebViewBlock.Companion.decodeJson(json: JSONObject): WebViewBlock {
     return WebViewBlock(
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         background = Background.decodeJson(json.getJSONObject("background")),
@@ -713,14 +713,14 @@ internal fun WebViewBlock.Companion.decodeJson(json: JSONObject): WebViewBlock {
     )
 }
 
-internal fun WebView.Companion.decodeJson(json: JSONObject): WebView {
+fun WebView.Companion.decodeJson(json: JSONObject): WebView {
     return WebView(
         isScrollingEnabled = json.getBoolean("isScrollingEnabled"),
         url = json.safeGetUri("url").toURL()
     )
 }
 
-internal fun TextBlock.Companion.decodeJson(json: JSONObject): TextBlock {
+fun TextBlock.Companion.decodeJson(json: JSONObject): TextBlock {
     return TextBlock(
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         background = Background.decodeJson(json.getJSONObject("background")),
@@ -737,7 +737,7 @@ internal fun TextBlock.Companion.decodeJson(json: JSONObject): TextBlock {
     )
 }
 
-internal fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
+fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
     return ImageBlock(
         tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
         background = Background.decodeJson(json.getJSONObject("background")),
@@ -754,7 +754,7 @@ internal fun ImageBlock.Companion.decodeJson(json: JSONObject): ImageBlock {
     )
 }
 
-internal fun Block.TapBehavior.Companion.decodeJson(json: JSONObject): Block.TapBehavior {
+fun Block.TapBehavior.Companion.decodeJson(json: JSONObject): Block.TapBehavior {
     return when (val typeName = json.safeGetString("__typename")) {
         "NoneBlockTapBehavior" -> Block.TapBehavior.None
         "OpenURLBlockTapBehavior" -> Block.TapBehavior.OpenUri(
@@ -846,7 +846,7 @@ fun TextPollBlock.Companion.decodeJson(json: JSONObject): TextPollBlock {
     )
 }
 
-internal fun Block.TapBehavior.encodeJson(): JSONObject {
+fun Block.TapBehavior.encodeJson(): JSONObject {
     return JSONObject().apply {
         put("__typename", when (this@encodeJson) {
             is Block.TapBehavior.GoToScreen -> {
@@ -882,16 +882,16 @@ internal fun Block.TapBehavior.encodeJson(): JSONObject {
     }
 }
 
-internal val BarcodeBlock.Companion.resourceName get() = "BarcodeBlock"
-internal val ButtonBlock.Companion.resourceName get() = "ButtonBlock"
-internal val RectangleBlock.Companion.resourceName get() = "RectangleBlock"
-internal val WebViewBlock.Companion.resourceName get() = "WebViewBlock"
-internal val TextBlock.Companion.resourceName get() = "TextBlock"
-internal val ImageBlock.Companion.resourceName get() = "ImageBlock"
-internal val TextPollBlock.Companion.resourceName get() = "TextPollBlock"
-internal val ImagePollBlock.Companion.resourceName get() = "ImagePollBlock"
+val BarcodeBlock.Companion.resourceName get() = "BarcodeBlock"
+val ButtonBlock.Companion.resourceName get() = "ButtonBlock"
+val RectangleBlock.Companion.resourceName get() = "RectangleBlock"
+val WebViewBlock.Companion.resourceName get() = "WebViewBlock"
+val TextBlock.Companion.resourceName get() = "TextBlock"
+val ImageBlock.Companion.resourceName get() = "ImageBlock"
+val TextPollBlock.Companion.resourceName get() = "TextPollBlock"
+val ImagePollBlock.Companion.resourceName get() = "ImagePollBlock"
 
-internal fun Block.Companion.decodeJson(json: JSONObject): Block {
+fun Block.Companion.decodeJson(json: JSONObject): Block {
     // Block has subclasses, so we need to delegate to the appropriate deserializer for each
     // block type.
 
@@ -908,7 +908,7 @@ internal fun Block.Companion.decodeJson(json: JSONObject): Block {
     }
 }
 
-internal fun Row.Companion.decodeJSON(json: JSONObject): Row {
+fun Row.Companion.decodeJSON(json: JSONObject): Row {
     return Row(
         background = Background.decodeJson(json.getJSONObject("background")),
         blocks = json.getJSONArray("blocks").getObjectIterable().map { Block.decodeJson(it) },
@@ -920,7 +920,7 @@ internal fun Row.Companion.decodeJSON(json: JSONObject): Row {
     )
 }
 
-internal fun Row.encodeJson(): JSONObject {
+fun Row.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Row::background, "background") { it.encodeJson() }
         putProp(this@encodeJson, Row::blocks, "blocks") { JSONArray(it.map { it.encodeJson() }) }
@@ -932,14 +932,14 @@ internal fun Row.encodeJson(): JSONObject {
     }
 }
 
-internal fun StatusBar.Companion.decodeJson(json: JSONObject): StatusBar {
+fun StatusBar.Companion.decodeJson(json: JSONObject): StatusBar {
     return StatusBar(
         style = StatusBarStyle.decodeJson(json.safeGetString("style")),
         color = Color.decodeJson(json.getJSONObject("color"))
     )
 }
 
-internal fun TitleBar.Companion.decodeJson(json: JSONObject): TitleBar {
+fun TitleBar.Companion.decodeJson(json: JSONObject): TitleBar {
     return TitleBar(
         backgroundColor = Color.decodeJson(json.getJSONObject("backgroundColor")),
         buttons = TitleBarButtons.decodeJson(json.safeGetString("buttons")),
@@ -950,7 +950,7 @@ internal fun TitleBar.Companion.decodeJson(json: JSONObject): TitleBar {
     )
 }
 
-internal fun Screen.Companion.decodeJson(json: JSONObject): Screen {
+fun Screen.Companion.decodeJson(json: JSONObject): Screen {
     return Screen(
         background = Background.decodeJson(json.getJSONObject("background")),
         id = json.safeGetString("id"),
@@ -967,7 +967,7 @@ internal fun Screen.Companion.decodeJson(json: JSONObject): Screen {
     )
 }
 
-internal fun Screen.encodeJson(): JSONObject {
+fun Screen.encodeJson(): JSONObject {
     return JSONObject().apply {
         putProp(this@encodeJson, Screen::isStretchyHeaderEnabled, "isStretchyHeaderEnabled")
         putProp(this@encodeJson, Screen::background, "background") { it.encodeJson() }

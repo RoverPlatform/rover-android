@@ -1,8 +1,8 @@
-package io.rover.experiences.data.domain
+package io.rover.core.data.domain
 
 import android.util.DisplayMetrics
 import android.view.Gravity
-import io.rover.experiences.data.domain.BackgroundScale.X3
+import io.rover.core.data.domain.BackgroundScale.X3
 import java.net.URI
 import java.net.URL
 
@@ -10,21 +10,21 @@ import java.net.URL
  * A Rover experience.
  */
 data class Experience(
-    val id: String,
-    val homeScreenId: String,
-    val screens: List<Screen>,
-    val keys: Map<String, String>,
-    val tags: List<String>,
-    val name: String
+        val id: String,
+        val homeScreenId: String,
+        val screens: List<Screen>,
+        val keys: Map<String, String>,
+        val tags: List<String>,
+        val name: String
 ) {
     companion object
 }
 
 data class Background(
-    val color: Color,
-    val contentMode: BackgroundContentMode,
-    val image: Image?,
-    val scale: BackgroundScale
+        val color: Color,
+        val contentMode: BackgroundContentMode,
+        val image: Image?,
+        val scale: BackgroundScale
 ) {
     companion object
 }
@@ -75,8 +75,8 @@ enum class BackgroundScale(
 }
 
 data class Position(
-    val horizontalAlignment: HorizontalAlignment,
-    val verticalAlignment: VerticalAlignment
+        val horizontalAlignment: HorizontalAlignment,
+        val verticalAlignment: VerticalAlignment
 ) {
     companion object
 }
@@ -121,32 +121,32 @@ interface Block {
 }
 
 data class ImagePollBlockOption(
-    val id: String,
-    val text: Text,
-    val image: Image?,
-    val background: Background,
-    val border: Border,
-    val opacity: Double,
-    val topMargin: Int,
-    val leftMargin: Int,
-    val resultFillColor: Color
+        val id: String,
+        val text: Text,
+        val image: Image?,
+        val background: Background,
+        val border: Border,
+        val opacity: Double,
+        val topMargin: Int,
+        val leftMargin: Int,
+        val resultFillColor: Color
 ) {
     companion object
 }
 
 data class ImagePollBlock(
-    override val id: String,
-    override val insets: Insets,
-    override val opacity: Double,
-    override val position: Position,
-    override val keys: Map<String, String>,
-    override val tapBehavior: Block.TapBehavior,
-    override val background: Background,
-    override val border: Border,
-    override val name: String,
-    override val conversion: Conversion?,
-    override val tags: List<String>,
-    val imagePoll: ImagePoll
+        override val id: String,
+        override val insets: Insets,
+        override val opacity: Double,
+        override val position: Position,
+        override val keys: Map<String, String>,
+        override val tapBehavior: Block.TapBehavior,
+        override val background: Background,
+        override val border: Border,
+        override val name: String,
+        override val conversion: Conversion?,
+        override val tags: List<String>,
+        val imagePoll: ImagePoll
 ) : Block {
     companion object
 }
@@ -156,18 +156,18 @@ data class ImagePoll(val question: Text, val options: List<ImagePollBlockOption>
 }
 
 data class TextPollBlock(
-    override val id: String,
-    override val insets: Insets,
-    override val opacity: Double,
-    override val position: Position,
-    override val keys: Map<String, String>,
-    override val tapBehavior: Block.TapBehavior,
-    override val background: Background,
-    override val border: Border,
-    override val name: String,
-    override val conversion: Conversion?,
-    override val tags: List<String>,
-    val textPoll: TextPoll
+        override val id: String,
+        override val insets: Insets,
+        override val opacity: Double,
+        override val position: Position,
+        override val keys: Map<String, String>,
+        override val tapBehavior: Block.TapBehavior,
+        override val background: Background,
+        override val border: Border,
+        override val name: String,
+        override val conversion: Conversion?,
+        override val tags: List<String>,
+        val textPoll: TextPoll
 ) : Block {
     companion object
 }
@@ -177,125 +177,125 @@ data class TextPoll(val question: Text, val options: List<TextPollOption>) {
 }
 
 data class TextPollOption(
-    val id: String,
-    val text: Text,
-    val background: Background,
-    val border: Border,
-    val opacity: Double,
-    val height: Int,
-    val topMargin: Int,
-    val resultFillColor: Color
+        val id: String,
+        val text: Text,
+        val background: Background,
+        val border: Border,
+        val opacity: Double,
+        val height: Int,
+        val topMargin: Int,
+        val resultFillColor: Color
 ) {
     companion object
 }
 
 data class BarcodeBlock(
-    override val tapBehavior: Block.TapBehavior,
-    override val id: String,
-    override val insets: Insets,
-    override val opacity: Double,
-    override val position: Position,
-    override val keys: Map<String, String>,
-    @Deprecated("BarcodeBlock does not have a background.")
+        override val tapBehavior: Block.TapBehavior,
+        override val id: String,
+        override val insets: Insets,
+        override val opacity: Double,
+        override val position: Position,
+        override val keys: Map<String, String>,
+        @Deprecated("BarcodeBlock does not have a background.")
     override val background: Background,
-    @Deprecated("BarcodeBlock does not have a border.")
+        @Deprecated("BarcodeBlock does not have a border.")
     override val border: Border,
-    override val name: String,
-    override val conversion: Conversion?,
-    override val tags: List<String>,
-    val barcode: Barcode
+        override val name: String,
+        override val conversion: Conversion?,
+        override val tags: List<String>,
+        val barcode: Barcode
 ) : Block {
     companion object
 }
 
 data class ButtonBlock(
-    override val id: String,
-    override val insets: Insets,
-    override val opacity: Double,
-    override val position: Position,
-    override val keys: Map<String, String>,
-    override val tapBehavior: Block.TapBehavior,
-    override val background: Background,
-    override val border: Border,
-    override val name: String,
-    override val conversion: Conversion?,
-    override val tags: List<String>,
-    val text: Text
+        override val id: String,
+        override val insets: Insets,
+        override val opacity: Double,
+        override val position: Position,
+        override val keys: Map<String, String>,
+        override val tapBehavior: Block.TapBehavior,
+        override val background: Background,
+        override val border: Border,
+        override val name: String,
+        override val conversion: Conversion?,
+        override val tags: List<String>,
+        val text: Text
 ) : Block {
     companion object
 }
 
 data class ImageBlock(
-    override val tapBehavior: Block.TapBehavior,
-    override val id: String,
-    override val insets: Insets,
-    override val opacity: Double,
-    override val position: Position,
-    override val keys: Map<String, String>,
-    override val background: Background,
-    override val border: Border,
-    override val name: String,
-    override val conversion: Conversion?,
-    override val tags: List<String>,
-    val image: Image
+        override val tapBehavior: Block.TapBehavior,
+        override val id: String,
+        override val insets: Insets,
+        override val opacity: Double,
+        override val position: Position,
+        override val keys: Map<String, String>,
+        override val background: Background,
+        override val border: Border,
+        override val name: String,
+        override val conversion: Conversion?,
+        override val tags: List<String>,
+        val image: Image
 ) : Block {
     companion object
 }
 
 data class RectangleBlock(
-    override val tapBehavior: Block.TapBehavior,
-    override val id: String,
-    override val insets: Insets,
-    override val opacity: Double,
-    override val position: Position,
-    override val keys: Map<String, String>,
-    override val background: Background,
-    override val border: Border,
-    override val name: String,
-    override val conversion: Conversion?,
-    override val tags: List<String>
+        override val tapBehavior: Block.TapBehavior,
+        override val id: String,
+        override val insets: Insets,
+        override val opacity: Double,
+        override val position: Position,
+        override val keys: Map<String, String>,
+        override val background: Background,
+        override val border: Border,
+        override val name: String,
+        override val conversion: Conversion?,
+        override val tags: List<String>
 ) : Block {
     companion object
 }
 
 data class TextBlock(
-    override val tapBehavior: Block.TapBehavior,
-    override val id: String,
-    override val insets: Insets,
-    override val opacity: Double,
-    override val position: Position,
-    override val keys: Map<String, String>,
-    override val background: Background,
-    override val border: Border,
-    override val name: String,
-    override val conversion: Conversion?,
-    override val tags: List<String>,
-    val text: Text
+        override val tapBehavior: Block.TapBehavior,
+        override val id: String,
+        override val insets: Insets,
+        override val opacity: Double,
+        override val position: Position,
+        override val keys: Map<String, String>,
+        override val background: Background,
+        override val border: Border,
+        override val name: String,
+        override val conversion: Conversion?,
+        override val tags: List<String>,
+        val text: Text
 ) : Block {
     companion object
 }
 
 data class WebViewBlock(
-    override val tapBehavior: Block.TapBehavior,
-    override val id: String,
-    override val insets: Insets,
-    override val opacity: Double,
-    override val position: Position,
-    override val keys: Map<String, String>,
-    override val background: Background,
-    override val border: Border,
-    override val name: String,
-    override val conversion: Conversion?,
-    override val tags: List<String>,
-    val webView: WebView
+        override val tapBehavior: Block.TapBehavior,
+        override val id: String,
+        override val insets: Insets,
+        override val opacity: Double,
+        override val position: Position,
+        override val keys: Map<String, String>,
+        override val background: Background,
+        override val border: Border,
+        override val name: String,
+        override val conversion: Conversion?,
+        override val tags: List<String>,
+        val webView: WebView
 ) : Block {
     companion object
 }
 
 data class Border(
-    val color: Color,
-    val radius: Int,
-    val width: Int
+        val color: Color,
+        val radius: Int,
+        val width: Int
 ) {
     companion object
 }
@@ -433,46 +433,46 @@ data class Insets(
 }
 
 data class Row(
-    val background: Background,
-    val blocks: List<Block>,
-    val height: Height,
-    val keys: Map<String, String>,
-    val id: String,
-    val name: String,
-    val tags: List<String>
+        val background: Background,
+        val blocks: List<Block>,
+        val height: Height,
+        val keys: Map<String, String>,
+        val id: String,
+        val name: String,
+        val tags: List<String>
 ) {
     companion object
 }
 
 data class StatusBar(
-    val style: StatusBarStyle,
-    val color: Color
+        val style: StatusBarStyle,
+        val color: Color
 ) {
     companion object
 }
 
 data class TitleBar(
-    val backgroundColor: Color,
-    val buttons: TitleBarButtons,
-    val buttonColor: Color,
-    val text: String,
-    val textColor: Color,
-    val useDefaultStyle: Boolean
+        val backgroundColor: Color,
+        val buttons: TitleBarButtons,
+        val buttonColor: Color,
+        val text: String,
+        val textColor: Color,
+        val useDefaultStyle: Boolean
 ) {
     companion object
 }
 
 data class Screen(
-    val id: String,
-    val isStretchyHeaderEnabled: Boolean,
-    val rows: List<Row>,
-    val background: Background,
-    val titleBar: TitleBar,
-    val statusBar: StatusBar,
-    val keys: Map<String, String>,
-    val tags: List<String>,
-    val conversion: Conversion?,
-    val name: String
+        val id: String,
+        val isStretchyHeaderEnabled: Boolean,
+        val rows: List<Row>,
+        val background: Background,
+        val titleBar: TitleBar,
+        val statusBar: StatusBar,
+        val keys: Map<String, String>,
+        val tags: List<String>,
+        val conversion: Conversion?,
+        val name: String
 ) {
     companion object
 }
@@ -487,10 +487,10 @@ enum class StatusBarStyle(
 }
 
 data class Text(
-    val rawValue: String,
-    val alignment: TextAlignment,
-    val color: Color,
-    val font: Font
+        val rawValue: String,
+        val alignment: TextAlignment,
+        val color: Color,
+        val font: Font
 ) {
     companion object
 }

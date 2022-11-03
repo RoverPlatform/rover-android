@@ -7,11 +7,13 @@ import io.rover.core.data.GraphQlRequest
 import io.rover.core.data.NetworkError
 import io.rover.core.data.NetworkResult
 import io.rover.core.data.domain.EventSnapshot
+import io.rover.core.data.domain.Experience
 import io.rover.core.data.graphql.operations.SendEventsRequest
 import io.rover.core.data.http.HttpClientResponse
 import io.rover.core.data.http.HttpRequest
 import io.rover.core.data.http.HttpVerb
 import io.rover.core.data.http.NetworkClient
+import io.rover.core.experiences.operations.FetchExperienceRequest
 import io.rover.core.logging.log
 import io.rover.core.platform.DateFormattingInterface
 import io.rover.core.streams.Publishers
@@ -138,7 +140,7 @@ class GraphQlApiService(
         } else {
             Publishers.just(
                 NetworkResult.Error(
-                    Throwable("Rover  API authentication not available."),
+                    Throwable("Rover API authentication not available."),
                     true
                 )
             )
@@ -147,10 +149,10 @@ class GraphQlApiService(
 
     override fun submitEvents(events: List<EventSnapshot>): Publisher<NetworkResult<String>> {
         return if (!authenticationContext.isAvailable()) {
-            log.w("Events may not be submitted without a Rover  authentication context being configured.")
+            log.w("Events may not be submitted without a Rover authentication context being configured.")
             Publishers.just(
                 NetworkResult.Error(
-                    Exception("Attempt to submit Events without Rover  authentication context being configured."),
+                    Exception("Attempt to submit Events without Rover authentication context being configured."),
                     false
                 )
             )
@@ -162,5 +164,16 @@ class GraphQlApiService(
                 )
             )
         }
+    }
+
+    /**
+     * Retrieves the experience when subscribed and yields it to the subscriber.
+     */
+    override fun fetchExperience(
+            query: FetchExperienceRequest.ExperienceQueryIdentifier
+    ): Publisher<NetworkResult<Experience>> {
+        return this.operation(
+                FetchExperienceRequest(query)
+        )
     }
 }

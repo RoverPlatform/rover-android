@@ -1,9 +1,9 @@
 package io.rover.experiences.ui.blocks.poll.text
 
-import io.rover.experiences.data.domain.Block
-import io.rover.experiences.data.domain.Experience
-import io.rover.experiences.data.domain.Screen
-import io.rover.experiences.data.domain.TextPoll
+import io.rover.core.data.domain.Block
+import io.rover.core.data.domain.Experience
+import io.rover.core.data.domain.Screen
+import io.rover.core.data.domain.TextPoll
 import io.rover.experiences.data.events.Option
 import io.rover.experiences.data.events.Poll
 import io.rover.experiences.data.events.RoverEvent
@@ -19,16 +19,16 @@ import io.rover.experiences.ui.blocks.poll.VotingState
 import io.rover.experiences.ui.concerns.BindableViewModel
 
 internal class TextPollViewModel(
-    override val id: String,
-    override val textPoll: TextPoll,
-    private val measurementService: MeasurementService,
-    override val optionBackgroundViewModel: BackgroundViewModelInterface,
-    private val pollVotingInteractor: VotingInteractor,
-    private val eventEmitter: EventEmitter,
-    private val block: Block,
-    private val screen: Screen,
-    private val experience: Experience,
-    private val campaignId: String?
+        override val id: String,
+        override val textPoll: TextPoll,
+        private val measurementService: MeasurementService,
+        override val optionBackgroundViewModel: BackgroundViewModelInterface,
+        private val pollVotingInteractor: VotingInteractor,
+        private val eventEmitter: EventEmitter,
+        private val block: Block,
+        private val screen: Screen,
+        private val experience: Experience,
+        private val campaignId: String?
 ) : TextPollViewModelInterface {
 
     override fun intrinsicHeight(bounds: RectF): Float {

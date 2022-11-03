@@ -17,8 +17,8 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RelativeLayout
-import io.rover.experiences.data.domain.FontWeight
-import io.rover.experiences.data.domain.TextPollOption
+import io.rover.core.data.domain.FontWeight
+import io.rover.core.data.domain.TextPollOption
 import io.rover.experiences.data.mapToFont
 import io.rover.experiences.platform.create
 import io.rover.experiences.platform.setBackgroundWithoutPaddingChange

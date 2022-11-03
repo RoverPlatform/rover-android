@@ -2,10 +2,10 @@ package io.rover.experiences.data
 
 import android.graphics.Paint
 import android.graphics.Typeface
-import io.rover.experiences.data.domain.Color
-import io.rover.experiences.data.domain.Font
-import io.rover.experiences.data.domain.FontWeight
-import io.rover.experiences.data.domain.TextAlignment
+import io.rover.core.data.domain.Color
+import io.rover.core.data.domain.Font
+import io.rover.core.data.domain.FontWeight
+import io.rover.core.data.domain.TextAlignment
 import io.rover.experiences.ui.asAndroidColor
 import io.rover.experiences.ui.blocks.concerns.text.FontAppearance
 

@@ -4,7 +4,7 @@ package io.rover.experiences.ui
 
 import android.util.DisplayMetrics
 import io.rover.experiences.ui.concerns.MeasuredSize
-import io.rover.experiences.data.domain.Color
+import io.rover.core.data.domain.Color
 
 /**
  * Convert display-independent DP metrics to an appropriate value for this display.

@@ -12,26 +12,26 @@ import io.rover.core.streams.Scheduler
 import io.rover.experiences.assets.AndroidAssetService
 import io.rover.experiences.assets.ImageDownloader
 import io.rover.experiences.assets.ImageOptimizationService
-import io.rover.experiences.data.domain.Background
-import io.rover.experiences.data.domain.Barcode
-import io.rover.experiences.data.domain.BarcodeBlock
-import io.rover.experiences.data.domain.Block
-import io.rover.experiences.data.domain.Border
-import io.rover.experiences.data.domain.ButtonBlock
-import io.rover.experiences.data.domain.Experience
-import io.rover.experiences.data.domain.Image
-import io.rover.experiences.data.domain.ImageBlock
-import io.rover.experiences.data.domain.ImagePoll
-import io.rover.experiences.data.domain.ImagePollBlock
-import io.rover.experiences.data.domain.RectangleBlock
-import io.rover.experiences.data.domain.Row
-import io.rover.experiences.data.domain.Screen
-import io.rover.experiences.data.domain.Text
-import io.rover.experiences.data.domain.TextBlock
-import io.rover.experiences.data.domain.TextPoll
-import io.rover.experiences.data.domain.TextPollBlock
-import io.rover.experiences.data.domain.WebView
-import io.rover.experiences.data.domain.WebViewBlock
+import io.rover.core.data.domain.Background
+import io.rover.core.data.domain.Barcode
+import io.rover.core.data.domain.BarcodeBlock
+import io.rover.core.data.domain.Block
+import io.rover.core.data.domain.Border
+import io.rover.core.data.domain.ButtonBlock
+import io.rover.core.data.domain.Experience
+import io.rover.core.data.domain.Image
+import io.rover.core.data.domain.ImageBlock
+import io.rover.core.data.domain.ImagePoll
+import io.rover.core.data.domain.ImagePollBlock
+import io.rover.core.data.domain.RectangleBlock
+import io.rover.core.data.domain.Row
+import io.rover.core.data.domain.Screen
+import io.rover.core.data.domain.Text
+import io.rover.core.data.domain.TextBlock
+import io.rover.core.data.domain.TextPoll
+import io.rover.core.data.domain.TextPollBlock
+import io.rover.core.data.domain.WebView
+import io.rover.core.data.domain.WebViewBlock
 import io.rover.experiences.data.events.AnalyticsService
 import io.rover.experiences.data.events.AppOpenedTracker
 import io.rover.experiences.data.graphql.GraphQlApiService
@@ -289,11 +289,11 @@ internal class ViewModels(
     }
 
     private fun experienceNavigationViewModel(
-        experience: Experience,
-        campaignId: String?,
-        initialScreenId: String?,
-        activityLifecycle: Lifecycle,
-        icicle: Parcelable? = null
+            experience: Experience,
+            campaignId: String?,
+            initialScreenId: String?,
+            activityLifecycle: Lifecycle,
+            icicle: Parcelable? = null
     ): NavigationViewModel {
         return NavigationViewModel(
             experience,
@@ -309,9 +309,9 @@ internal class ViewModels(
     }
 
     fun screenViewModel(
-        screen: Screen,
-        experience: Experience,
-        campaignId: String?
+            screen: Screen,
+            experience: Experience,
+            campaignId: String?
     ): ScreenViewModel {
         return ScreenViewModel(
             screen,
@@ -332,10 +332,10 @@ internal class ViewModels(
     }
 
     fun rowViewModel(
-        row: Row,
-        screen: Screen,
-        experience: Experience,
-        campaignId: String?
+            row: Row,
+            screen: Screen,
+            experience: Experience,
+            campaignId: String?
     ): RowViewModel {
         return RowViewModel(
             row = row,
@@ -347,10 +347,10 @@ internal class ViewModels(
     }
 
     private fun blockContentsViewModel(
-        block: Block,
-        screen: Screen,
-        experience: Experience,
-        campaignId: String?
+            block: Block,
+            screen: Screen,
+            experience: Experience,
+            campaignId: String?
     ): CompositeBlockViewModelInterface {
         when (block) {
             is RectangleBlock -> {
@@ -447,12 +447,12 @@ internal class ViewModels(
     }
 
     private fun textPollViewModel(
-        textPoll: TextPoll,
-        block: Block,
-        screen: Screen,
-        experience: Experience,
-        id: String,
-        campaignId: String?
+            textPoll: TextPoll,
+            block: Block,
+            screen: Screen,
+            experience: Experience,
+            id: String,
+            campaignId: String?
     ): TextPollViewModel {
         return TextPollViewModel(
             id,
@@ -469,9 +469,9 @@ internal class ViewModels(
     }
 
     private fun blockViewModel(
-        block: Block,
-        paddingDeflections: Set<LayoutPaddingDeflection>,
-        measurable: Measurable?
+            block: Block,
+            paddingDeflections: Set<LayoutPaddingDeflection>,
+            measurable: Measurable?
     ): BlockViewModel {
         return BlockViewModel(
             block = block,
@@ -487,9 +487,9 @@ internal class ViewModels(
     }
 
     private fun textViewModel(
-        text: Text,
-        singleLine: Boolean,
-        centerVertically: Boolean = false
+            text: Text,
+            singleLine: Boolean,
+            centerVertically: Boolean = false
     ): TextViewModel {
         return TextViewModel(
             styledText = text,
@@ -500,8 +500,8 @@ internal class ViewModels(
     }
 
     private fun imageViewModel(
-        image: Image,
-        containingBlock: Block
+            image: Image,
+            containingBlock: Block
     ): ImageViewModel {
         return ImageViewModel(
             image = image,

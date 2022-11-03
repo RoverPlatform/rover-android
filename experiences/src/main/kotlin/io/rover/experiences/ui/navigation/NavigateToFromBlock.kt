@@ -1,6 +1,6 @@
 package io.rover.experiences.ui.navigation
 
-import io.rover.experiences.data.domain.Block
+import io.rover.core.data.domain.Block
 import java.net.URI
 
 /**

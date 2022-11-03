@@ -1,6 +1,6 @@
 package io.rover.experiences.ui.blocks.web
 
-import io.rover.experiences.data.domain.WebView
+import io.rover.core.data.domain.WebView
 import java.net.URL
 
 internal class WebViewModel(

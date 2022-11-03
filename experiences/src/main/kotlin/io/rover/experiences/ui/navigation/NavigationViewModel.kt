@@ -14,9 +14,9 @@ import io.rover.core.streams.map
 import io.rover.core.streams.shareHotAndReplay
 import io.rover.core.streams.subscribe
 import io.rover.experiences.services.SessionTracker
-import io.rover.experiences.data.domain.Experience
-import io.rover.experiences.data.domain.Row
-import io.rover.experiences.data.domain.Screen
+import io.rover.core.data.domain.Experience
+import io.rover.core.data.domain.Row
+import io.rover.core.data.domain.Screen
 import io.rover.experiences.data.events.RoverEvent
 import io.rover.experiences.ui.containers.RoverActivity
 import io.rover.experiences.ui.layout.screen.ScreenViewModelInterface
@@ -33,15 +33,15 @@ import org.reactivestreams.Publisher
  * flow behaviour.
  */
 internal class NavigationViewModel(
-    private val experience: Experience,
-    private val campaignId: String?,
-    private val eventEmitter: EventEmitter,
-    private val sessionTracker: SessionTracker,
-    private val resolveScreenViewModel: (screen: Screen) -> ScreenViewModelInterface,
-    private val resolveToolbarViewModel: (configuration: ToolbarConfiguration) -> ExperienceToolbarViewModelInterface,
-    private val initialScreenId: String?,
-    activityLifecycle: Lifecycle,
-    icicle: Parcelable? = null
+        private val experience: Experience,
+        private val campaignId: String?,
+        private val eventEmitter: EventEmitter,
+        private val sessionTracker: SessionTracker,
+        private val resolveScreenViewModel: (screen: Screen) -> ScreenViewModelInterface,
+        private val resolveToolbarViewModel: (configuration: ToolbarConfiguration) -> ExperienceToolbarViewModelInterface,
+        private val initialScreenId: String?,
+        activityLifecycle: Lifecycle,
+        icicle: Parcelable? = null
 ) : NavigationViewModelInterface {
 
     override fun start() {
@@ -87,9 +87,9 @@ internal class NavigationViewModel(
          */
         class PressedClose : Action()
         class Navigate(
-            val navigateTo: NavigateToFromBlock,
-            val row: Row,
-            val sourceScreenViewModel: ScreenViewModelInterface
+                val navigateTo: NavigateToFromBlock,
+                val row: Row,
+                val sourceScreenViewModel: ScreenViewModelInterface
         ) : Action()
     }
 
@@ -259,10 +259,10 @@ internal class NavigationViewModel(
      * app login screen.
      */
     private fun navigateToScreen(
-        screen: Screen,
-        screenViewModel: ScreenViewModelInterface,
-        currentBackStack: List<BackStackFrame>,
-        forwards: Boolean
+            screen: Screen,
+            screenViewModel: ScreenViewModelInterface,
+            currentBackStack: List<BackStackFrame>,
+            forwards: Boolean
     ) {
         screenSubject.onNext(
             NavigationViewModelInterface.ScreenUpdate(

@@ -5,7 +5,7 @@ import android.graphics.Color
 import android.os.Parcelable
 import io.rover.core.data.NetworkResult
 import io.rover.core.data.domain.Experience
-import io.rover.experiences.data.graphql.GraphQlApiService
+import io.rover.core.data.graphql.GraphQlApiServiceInterface
 import io.rover.core.experiences.operations.FetchExperienceRequest
 import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.Publishers
@@ -26,7 +26,7 @@ import org.reactivestreams.Publisher
 
 internal class RoverViewModel(
         private val experienceRequest: ExperienceRequest,
-        private val graphQlApiService: GraphQlApiService,
+        private val graphQlApiService: GraphQlApiServiceInterface,
         private val mainThreadScheduler: Scheduler,
         private val resolveNavigationViewModel: (experience: Experience, icicle: Parcelable?) -> NavigationViewModelInterface,
         private val icicle: Parcelable? = null,

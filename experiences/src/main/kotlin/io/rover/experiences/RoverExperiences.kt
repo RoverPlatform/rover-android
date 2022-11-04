@@ -32,9 +32,9 @@ import io.rover.core.data.domain.TextPoll
 import io.rover.core.data.domain.TextPollBlock
 import io.rover.core.data.domain.WebView
 import io.rover.core.data.domain.WebViewBlock
+import io.rover.core.data.graphql.GraphQlApiServiceInterface
 import io.rover.experiences.data.events.AnalyticsService
 import io.rover.experiences.data.events.AppOpenedTracker
-import io.rover.experiences.data.graphql.GraphQlApiService
 import io.rover.experiences.logging.log
 import io.rover.experiences.platform.IoMultiplexingExecutor
 import io.rover.experiences.platform.LocalStorage
@@ -92,7 +92,6 @@ import io.rover.experiences.ui.navigation.NavigationViewModel
 import io.rover.experiences.ui.toolbar.ExperienceToolbarViewModel
 import io.rover.experiences.ui.toolbar.ToolbarConfiguration
 import java.net.HttpURLConnection
-import java.net.URL
 import java.util.concurrent.Executor
 
 /**
@@ -114,7 +113,12 @@ open class RoverExperiences(
      * Set the background colour for the Custom Chrome tabs that are used for presenting web content
      * in a web browser.
      */
-    private val chromeTabBackgroundColor: Int
+    private val chromeTabBackgroundColor: Int,
+
+    /**
+     * Network service for making Rover API requests via GraphQL.
+     */
+    private val apiService: GraphQlApiServiceInterface
 ) {
     var experienceTransformer: ((Experience) -> Experience)? = null
         private set
@@ -180,9 +184,6 @@ open class RoverExperiences(
 
     private val pollVotingStorage: VotingStorage = VotingStorage(localStorage.getKeyValueStorageFor("voting"))
 
-    private val apiService: GraphQlApiService =
-        GraphQlApiService(URL(endpoint), accountToken, httpClient)
-
     private val sessionTracker: SessionTracker = SessionTracker(eventEmitter, sessionStore, 10)
 
     private val textFormatter: AndroidRichTextToSpannedTransformer =
@@ -230,14 +231,16 @@ open class RoverExperiences(
         @JvmStatic
         @JvmOverloads
         fun initialize(
-            application: Application,
-            accountToken: String,
-            @ColorInt chromeTabColor: Int = Color.BLACK
+                application: Application,
+                accountToken: String,
+                @ColorInt chromeTabColor: Int = Color.BLACK,
+                apiService: GraphQlApiServiceInterface
         ) {
             shared = RoverExperiences(
-                application = application,
-                accountToken = accountToken,
-                chromeTabBackgroundColor = chromeTabColor
+                    application = application,
+                    accountToken = accountToken,
+                    chromeTabBackgroundColor = chromeTabColor,
+                    apiService = apiService
             )
         }
 
@@ -256,7 +259,7 @@ open class RoverExperiences(
 
 // TODO: consider moving entire class into appropriate sub-package
 internal class ViewModels(
-    private val apiService: GraphQlApiService,
+    private val apiService: GraphQlApiServiceInterface,
     private val mainScheduler: Scheduler,
     private val eventEmitter: EventEmitter,
     private val sessionTracker: SessionTracker,

@@ -7,6 +7,7 @@ import io.rover.core.container.Assembler
 import io.rover.core.container.Container
 import io.rover.core.container.Resolver
 import io.rover.core.container.Scope
+import io.rover.core.data.graphql.GraphQlApiServiceInterface
 import io.rover.core.events.ContextProvider
 import io.rover.core.events.EventQueueServiceInterface
 import io.rover.core.logging.log
@@ -64,9 +65,10 @@ class ExperiencesAssembler : Assembler {
         }
 
         RoverExperiences.initialize(
-            resolver.resolveSingletonOrFail(Application::class.java),
-            resolver.resolveSingletonOrFail(String::class.java, "accountToken"),
-            resolver.resolveSingletonOrFail(Int::class.java, "chromeTabBackgroundColor")
+                resolver.resolveSingletonOrFail(Application::class.java),
+                resolver.resolveSingletonOrFail(String::class.java, "accountToken"),
+                resolver.resolveSingletonOrFail(Int::class.java, "chromeTabBackgroundColor"),
+                resolver.resolveSingletonOrFail(GraphQlApiServiceInterface::class.java)
         )
 
         /**

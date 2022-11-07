@@ -34,5 +34,5 @@ jobs:
     - name: Build with Gradle
       env:
           DEPLOY_MAVEN_PATH: /tmp/m2
-      run: ./gradlew test sdk:assembleRelease sdk:publishProductionPublicationToMavenRepository
+      run: ./gradlew build example-app:assembleRelease
       

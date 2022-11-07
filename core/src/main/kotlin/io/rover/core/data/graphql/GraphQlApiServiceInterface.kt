@@ -4,7 +4,7 @@ import io.rover.core.data.GraphQlRequest
 import io.rover.core.data.NetworkResult
 import io.rover.core.data.domain.EventSnapshot
 import io.rover.core.data.domain.Experience
-import io.rover.core.experiences.operations.FetchExperienceRequest
+import io.rover.core.data.graphql.operations.FetchExperienceRequest
 import org.reactivestreams.Publisher
 
 interface GraphQlApiServiceInterface {

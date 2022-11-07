@@ -1,8 +1,8 @@
-package io.rover.core.experiences.operations
+package io.rover.core.data.graphql.operations
 
 import io.rover.core.data.GraphQlRequest
 import io.rover.core.data.domain.Experience
-import io.rover.core.experiences.operations.data.decodeJson
+import io.rover.core.data.graphql.operations.data.decodeJson
 import org.json.JSONObject
 
 class FetchExperienceRequest(

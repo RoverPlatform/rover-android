@@ -41,7 +41,7 @@ internal class AnalyticsService(
 
     companion object {
         private const val STORAGE_IDENTIFIER = "device-identification"
-        private const val BASE_CONTEXT_NAME: String = "io.rover.experiences.local-storage"
+        private const val BASE_CONTEXT_NAME: String = "io.rover.local-storage"
         private const val ANALYTICS_ENDPOINT: String = "https://analytics.rover.io/"
     }
 

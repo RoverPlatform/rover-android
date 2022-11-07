@@ -7,9 +7,9 @@ import io.rover.core.data.domain.Block
 import io.rover.core.data.domain.Experience
 import io.rover.core.data.domain.Row
 import io.rover.core.data.domain.Screen
-import io.rover.core.experiences.operations.data.decodeJSON
-import io.rover.core.experiences.operations.data.decodeJson
-import io.rover.core.experiences.operations.data.encodeJson
+import io.rover.core.data.graphql.operations.data.decodeJSON
+import io.rover.core.data.graphql.operations.data.decodeJson
+import io.rover.core.data.graphql.operations.data.encodeJson
 import org.json.JSONObject
 
 sealed class RoverEvent {

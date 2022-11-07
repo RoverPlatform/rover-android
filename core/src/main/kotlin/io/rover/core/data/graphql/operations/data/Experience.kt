@@ -1,10 +1,9 @@
 @file:JvmName("Experience")
 
-package io.rover.core.experiences.operations.data
+package io.rover.core.data.graphql.operations.data
 
 import io.rover.core.data.graphql.getObjectIterable
 import io.rover.core.data.graphql.getStringIterable
-import io.rover.core.data.graphql.operations.data.toStringHash
 import io.rover.core.data.graphql.putProp
 import io.rover.core.data.graphql.safeGetString
 import io.rover.core.data.graphql.safeGetUri

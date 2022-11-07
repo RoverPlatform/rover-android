@@ -13,7 +13,7 @@ import io.rover.core.data.http.HttpClientResponse
 import io.rover.core.data.http.HttpRequest
 import io.rover.core.data.http.HttpVerb
 import io.rover.core.data.http.NetworkClient
-import io.rover.core.experiences.operations.FetchExperienceRequest
+import io.rover.core.data.graphql.operations.FetchExperienceRequest
 import io.rover.core.logging.log
 import io.rover.core.platform.DateFormattingInterface
 import io.rover.core.streams.Publishers

@@ -6,7 +6,7 @@ import android.os.Parcelable
 import io.rover.core.data.NetworkResult
 import io.rover.core.data.domain.Experience
 import io.rover.core.data.graphql.GraphQlApiServiceInterface
-import io.rover.core.experiences.operations.FetchExperienceRequest
+import io.rover.core.data.graphql.operations.FetchExperienceRequest
 import io.rover.core.streams.PublishSubject
 import io.rover.core.streams.Publishers
 import io.rover.core.streams.Scheduler

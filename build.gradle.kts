@@ -1,6 +1,6 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
-val roverCampaignsVersion by extra("4.0.0")
+val roverSdkVersion by extra("4.0.0")
 val kotlinVersion by extra("1.7.10")
 
 buildscript {
@@ -26,11 +26,11 @@ plugins {
 
 task("printVersionNumber") {
     doLast {
-        println("Rover Campaigns Android SDK version $roverCampaignsVersion")
+        println("Rover Android SDK version $roverSdkVersion")
         // GitHub Actions detects this syntax on stdout and sets an output variable (`VERSION` in this case)
         // that we can use later on within the workflow.
 
-        // Groovy: println "::set-output name=VERSION::${roverCampaignsVersion}"
-        println("::set-output name=VERSION::$roverCampaignsVersion")
+        // Groovy: println "::set-output name=VERSION::${roverSdkVersion}"
+        println("::set-output name=VERSION::$roverSdkVersion")
     }
 }

@@ -3,10 +3,10 @@ package io.rover.ticketmaster
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
-import io.rover.campaigns.core.data.graphql.safeOptString
-import io.rover.campaigns.ticketmaster.TicketmasterManager.Member
-import io.rover.campaigns.ticketmaster.decodeJson
-import io.rover.campaigns.ticketmaster.encodeJson
+import io.rover.sdk.core.data.graphql.safeOptString
+import io.rover.sdk.ticketmaster.TicketmasterManager.Member
+import io.rover.sdk.ticketmaster.decodeJson
+import io.rover.sdk.ticketmaster.encodeJson
 import junit.framework.Assert.assertEquals
 import org.json.JSONObject
 import org.junit.Test

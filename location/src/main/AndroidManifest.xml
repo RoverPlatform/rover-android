@@ -1,8 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 <application>
-    <receiver android:name=".LocationBroadcastReceiver" />
-    <receiver android:name=".GeofenceBroadcastReceiver" />
-    <receiver android:name=".BeaconBroadcastReceiver" />
+    <receiver android:name="io.rover.location.io.rover.sdk.location.LocationBroadcastReceiver" />
+    <receiver android:name="io.rover.location.io.rover.sdk.location.GeofenceBroadcastReceiver" />
+    <receiver android:name="io.rover.location.io.rover.sdk.location.BeaconBroadcastReceiver" />
 </application>
 </manifest>

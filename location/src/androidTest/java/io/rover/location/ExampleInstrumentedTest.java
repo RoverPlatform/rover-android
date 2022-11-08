@@ -1,4 +1,4 @@
-package io.rover.campaigns.location;
+package io.rover.sdk.location;
 
 import android.content.Context;
 import androidx.test.platform.app.InstrumentationRegistry;

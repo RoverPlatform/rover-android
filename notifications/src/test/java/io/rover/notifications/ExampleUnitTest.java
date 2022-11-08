@@ -1,4 +1,4 @@
-package io.rover.campaigns.notifications;
+package io.rover.notifications;
 
 import org.junit.Test;
 

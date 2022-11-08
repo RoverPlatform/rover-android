@@ -5,7 +5,7 @@ plugins {
     id("kotlin-parcelize")
 }
 
-val roverCampaignsVersion: String by rootProject.extra
+val roverSdkVersion: String by rootProject.extra
 val kotlinVersion: String by rootProject.extra
 
 android {
@@ -14,7 +14,7 @@ android {
     defaultConfig {
         minSdk = 21
 
-        buildConfigField("String", "VERSION_NAME", "\"${roverCampaignsVersion}\"")
+        buildConfigField("String", "VERSION_NAME", "\"${roverSdkVersion}\"")
     }
 
     buildTypes {
@@ -37,7 +37,7 @@ android {
         jvmTarget = "1.8"
     }
 
-    namespace = "io.rover.campaigns.experiences"
+    namespace = "io.rover.experiences"
 }
 
 dependencies {
@@ -69,18 +69,18 @@ afterEvaluate {
             create<MavenPublication>("release") {
                 from(components["release"])
 
-                groupId = "io.rover.campaigns"
+                groupId = "io.rover.sdk"
                 artifactId = "experiences"
-                version = roverCampaignsVersion
+                version = roverSdkVersion
 
                 pom {
-                    name.set("Rover Campaigns SDK Experiences Module")
-                    description.set("From the Rover Campaigns Android SDK")
-                    url.set("https://github.com/roverplatform/rover-campaigns-android")
+                    name.set("Rover  SDK Experiences Module")
+                    description.set("From the Rover  Android SDK")
+                    url.set("https://github.com/roverplatform/rover-android")
                     licenses {
                         license {
                             name.set("Apache 2.0 License")
-                            url.set("https://github.com/RoverPlatform/rover-campaigns-android/blob/master/LICENSE")
+                            url.set("https://github.com/roverplatform/rover-android/blob/master/LICENSE")
                         }
                     }
                 }

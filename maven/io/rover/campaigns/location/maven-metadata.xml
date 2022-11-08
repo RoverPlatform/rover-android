@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <metadata>
-  <groupId>io.rover.campaigns</groupId>
+  <groupId>io.rover.sdk</groupId>
   <artifactId>location</artifactId>
   <versioning>
     <latest>3.9.1</latest>

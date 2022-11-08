@@ -4,7 +4,7 @@ plugins {
     id("maven-publish")
 }
 
-val roverCampaignsVersion: String by rootProject.extra
+val roverSdkVersion: String by rootProject.extra
 val kotlinVersion: String by rootProject.extra
 
 android {
@@ -34,7 +34,7 @@ android {
         jvmTarget = "1.8"
     }
 
-    namespace = "io.rover.campaigns.debug"
+    namespace = "io.rover.debug"
 }
 
 dependencies {
@@ -52,18 +52,18 @@ afterEvaluate {
             create<MavenPublication>("release") {
                 from(components["release"])
 
-                groupId = "io.rover.campaigns"
+                groupId = "io.rover.sdk"
                 artifactId = "debug"
-                version = roverCampaignsVersion
+                version = roverSdkVersion
 
                 pom {
-                    name.set("Rover Campaigns SDK Debug Module")
-                    description.set("From the Rover Campaigns Android SDK")
-                    url.set("https://github.com/roverplatform/rover-campaigns-android")
+                    name.set("Rover  SDK Debug Module")
+                    description.set("From the Rover  Android SDK")
+                    url.set("https://github.com/roverplatform/rover-android")
                     licenses {
                         license {
                             name.set("Apache 2.0 License")
-                            url.set("https://github.com/RoverPlatform/rover-campaigns-android/blob/master/LICENSE")
+                            url.set("https://github.com/roverplatform/rover-android/blob/master/LICENSE")
                         }
                     }
                 }

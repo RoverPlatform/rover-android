@@ -1,7 +1,7 @@
 {
   "formatVersion": "1.1",
   "component": {
-    "group": "io.rover.campaigns",
+    "group": "io.rover.sdk",
     "module": "notifications",
     "version": "3.9.1",
     "attributes": {
@@ -100,7 +100,7 @@
           }
         },
         {
-          "group": "io.rover.campaigns",
+          "group": "io.rover.sdk",
           "module": "core",
           "version": {
             "requires": "3.9.1"

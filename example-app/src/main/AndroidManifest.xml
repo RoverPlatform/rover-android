@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- (Optionally) Used by the location module, enabling Geofence and Beacon support -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
@@ -28,7 +29,7 @@
 
         <!-- Firebase Receivers -->
         <service
-            android:name=".fcm.MyFirebaseMessagingService"
+            android:name="io.rover.sdk.example.fcm.MyFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
@@ -45,7 +46,8 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="@string/rover_uri_scheme" />
-                <data android:host="presentSettings" />
+                <data android:host="presentSettings"
+                    tools:ignore="AppLinkUrlError" />
             </intent-filter>
 
             <!-- for deep links to open the Rover SDK notification center-->
@@ -55,7 +57,8 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="@string/rover_uri_scheme" />
-                <data android:host="presentNotificationCenter" />
+                <data android:host="presentNotificationCenter"
+                    tools:ignore="AppLinkUrlError" />
             </intent-filter>
 
 

@@ -29,12 +29,7 @@ class LocaleContextProvider(
             localeLanguage = locale.language,
 
             // ISO 15924 alpha-4.
-            localeScript = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                locale.script
-            } else {
-                // no straight-forward way to get the locale Script on older Android, alas.
-                null
-            },
+            localeScript = locale.script,
 
             // ISO 3166 alpha-2.
             localeRegion = locale.country

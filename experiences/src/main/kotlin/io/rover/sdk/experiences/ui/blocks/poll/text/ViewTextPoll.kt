@@ -158,7 +158,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
     private fun setVoteResultsReceived(votingResults: VotingState.SubmittingAnswer) {
         val maxVotingValue = votingResults.optionResults.results.map { it.value }.max() ?: 0
 
-            votingResults.optionResults.results.forEach { (id, votingShare) ->
+        votingResults.optionResults.results.forEach { (id, votingShare) ->
             val option = optionViews[id]
             option?.setOnClickListener(null)
             val isSelectedOption = id == votingResults.selectedOption
@@ -166,7 +166,7 @@ internal class ViewTextPoll(override val view: LinearLayout) : ViewTextPollInter
 
             viewModelBinding?.viewModel?.let {
                 option?.goToResultsState(votingShare, isSelectedOption, it.textPoll.options.find { it.id == id }!!,
-                    votingResults.shouldAnimate, viewModelBinding?.measuredSize?.width, maxVotingValue)
+                        votingResults.shouldAnimate, viewModelBinding?.measuredSize?.width, maxVotingValue)
             }
         }
     }

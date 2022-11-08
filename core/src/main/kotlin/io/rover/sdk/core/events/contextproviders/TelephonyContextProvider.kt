@@ -1,6 +1,7 @@
 package io.rover.sdk.core.events.contextproviders
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.telephony.TelephonyManager
 import androidx.core.app.ActivityCompat
@@ -42,6 +43,7 @@ class TelephonyContextProvider(
         }
     }
 
+    @SuppressLint("MissingPermission")
     override fun captureContext(deviceContext: DeviceContext): DeviceContext {
         val targetSdkVersion = applicationContext.applicationInfo.targetSdkVersion
 

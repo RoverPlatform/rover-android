@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
-        <activity android:name="io.rover.notifications.io.rover.sdk.notifications.TransientNotificationLaunchActivity" />
-        <activity android:name="io.rover.notifications.io.rover.sdk.notifications.ui.containers.NotificationCenterActivity" />
+        <activity android:name="io.rover.sdk.notifications.TransientNotificationLaunchActivity" />
+        <activity android:name="io.rover.sdk.notifications.ui.containers.NotificationCenterActivity" />
     </application>
 
     <queries>

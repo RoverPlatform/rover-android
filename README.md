@@ -1,6 +1,6 @@
-# Rover  Android SDK
+# Rover Android SDK
 
-## Rover  Android SDK 3.0
+## Rover Android SDK 3.0
 
 The first step is to add the library dependencies. We’ll start with a default
 installation, featuring all of the Rover libraries.
@@ -27,11 +27,11 @@ block.
 ```groovy
 dependencies {
     // ...
-    implementation "io.rover.sdk:core:3.10.0"
-    implementation "io.rover.sdk:notifications:3.10.0"
-    implementation "io.rover.sdk:location:3.10.0"
-    implementation "io.rover.sdk:debug:3.10.0"
-    implementation "io.rover.sdk:experiences:3.10.0"
+    implementation "io.rover.sdk:core:4.0.0"
+    implementation "io.rover.sdk:notifications:4.0.0"
+    implementation "io.rover.sdk:location:4.0.0"
+    implementation "io.rover.sdk:debug:4.0.0"
+    implementation "io.rover.sdk:experiences:4.0.0"
 }
 ```
 

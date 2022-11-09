@@ -3,6 +3,7 @@ package io.rover.sdk.debug
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import androidx.preference.EditTextPreference
+import androidx.preference.Preference
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
@@ -34,10 +35,17 @@ class DebugPreferences(
                 EditTextPreference(
                     preferenceManager.context
                 ).apply {
-                    isSelectable = false
+                    isSelectable = true
                     isPersistent = false
                     title = context.getText(R.string.debug_settings_device_name)
                     summary = deviceIdentification.deviceName
+                    key = "edit_device_name"
+                    dialogMessage = "Set the device name to be used for testing."
+                    onPreferenceChangeListener = Preference.OnPreferenceChangeListener { _, newValue ->
+                        deviceIdentification.deviceName = newValue as String
+                        summary = newValue
+                        true
+                    }
                 }
             )
             addPreference(

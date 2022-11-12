@@ -71,8 +71,8 @@ afterEvaluate {
                 version = roverSdkVersion
 
                 pom {
-                    name.set("Rover  SDK Notifications Module")
-                    description.set("From the Rover  Android SDK")
+                    name.set("Rover SDK Notifications Module")
+                    description.set("From the Rover Android SDK")
                     url.set("https://github.com/roverplatform/rover-android")
                     licenses {
                         license {

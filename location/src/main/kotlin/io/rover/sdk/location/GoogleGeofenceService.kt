@@ -257,7 +257,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val rover = Rover.shared
         if (rover == null) {
-            log.e("Received a geofence result from Google, but Rover  is not initialized.  Ignoring.")
+            log.e("Received a geofence result from Google, but Rover is not initialized.  Ignoring.")
             return
         }
         val geofenceService = rover.resolve(GoogleGeofenceServiceInterface::class.java)

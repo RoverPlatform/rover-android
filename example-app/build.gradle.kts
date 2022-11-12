@@ -60,7 +60,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.6.0")
     implementation("androidx.work:work-runtime-ktx:2.7.1")
 
-    // Rover  itself.
+    // Rover itself.
     // Note that it in a real app, you would use the fully-qualified package names here
     // (eg. "io.rover.sdk:core:4.0.0") instead as per the documentation.
     implementation(project(":core"))

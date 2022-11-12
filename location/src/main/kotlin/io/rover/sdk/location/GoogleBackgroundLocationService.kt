@@ -218,7 +218,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
             }
             val rover = Rover.shared
             if (rover == null) {
-                log.e("Received a location result from Google, but Rover  is not initialized.  Ignoring.")
+                log.e("Received a location result from Google, but Rover is not initialized.  Ignoring.")
                 return
             }
             val backgroundLocationService = rover.resolve(GoogleBackgroundLocationServiceInterface::class.java)

@@ -42,12 +42,12 @@ class RoverDebugActivity : AppCompatActivity() {
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             val rover = Rover.shared
             if (rover == null) {
-                log.e("RoverDebugActivity cannot work if Rover  is not initialized.  Ignoring.")
+                log.e("RoverDebugActivity cannot work if Rover is not initialized.  Ignoring.")
                 return
             }
             val debugPreferences = rover.resolve(DebugPreferences::class.java)
             if (debugPreferences == null) {
-                log.e("RoverDebugActivity cannot work if Rover  is not initialized, but DebugPreferences is not registered in the Rover container. Ensure DebugAssembler() is in Rover.initialize(). Ignoring.")
+                log.e("RoverDebugActivity cannot work if Rover is not initialized, but DebugPreferences is not registered in the Rover container. Ensure DebugAssembler() is in Rover.initialize(). Ignoring.")
                 return
             }
 

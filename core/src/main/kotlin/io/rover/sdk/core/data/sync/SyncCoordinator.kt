@@ -185,7 +185,7 @@ class SyncCoordinator(
                 SyncCoordinatorInterface.Result.Succeeded -> Result.success()
                 SyncCoordinatorInterface.Result.RetryNeeded -> Result.retry()
                 null -> {
-                    log.w("Rover  isn't initialized or CoreAssembler hasn't been added, but the background sync job with work manager is still scheduled. Marking as failed.")
+                    log.w("Rover isn't initialized or CoreAssembler hasn't been added, but the background sync job with work manager is still scheduled. Marking as failed.")
                     Result.failure()
                 }
             }

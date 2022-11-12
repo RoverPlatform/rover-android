@@ -80,7 +80,7 @@ class MainActivity : ComponentActivity() {
                         verticalArrangement = Arrangement.spacedBy(Dp(8.0f)),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        TopAppBar(title = { Text(text = "Rover  Example App") })
+                        TopAppBar(title = { Text(text = "Rover Example App") })
 
                         Button(onClick = {
                             startActivity(

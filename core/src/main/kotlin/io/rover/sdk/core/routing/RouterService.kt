@@ -33,7 +33,7 @@ class RouterService(
                 null
             }
             else -> {
-                log.i("No built-in Rover  route matched `$uri`.  Opening it as an Intent.")
+                log.i("No built-in Rover route matched `$uri`.  Opening it as an Intent.")
                 Intent(Intent.ACTION_VIEW, Uri.parse(uri.toString()))
             }
         }

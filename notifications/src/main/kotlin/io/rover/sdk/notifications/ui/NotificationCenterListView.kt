@@ -59,7 +59,7 @@ open class NotificationCenterListView :
             viewModel = if (activity == null) {
                 null
             } else Rover.shared?.resolve(NotificationCenterListViewModelInterface::class.java, null, activity.lifecycle) ?: throw RuntimeException(
-                "Ensure Rover  is initialized and NotificationsAssembler() added before using notification center."
+                "Ensure Rover is initialized and NotificationsAssembler() added before using notification center."
             )
         }
 
@@ -74,7 +74,7 @@ open class NotificationCenterListView :
     fun makeNotificationRowView(): BindableView<NotificationItemViewModelInterface> {
         @Suppress("IMPLICIT_CAST_TO_ANY", "UNCHECKED_CAST")
         return (Rover.shared?.resolve(BindableView::class.java, "notificationItemView", context) ?: throw RuntimeException(
-            "Please be sure that Rover  is initialized and NotificationsAssembler is added to Rover.init before using NotificationCenterListView."
+            "Please be sure that Rover is initialized and NotificationsAssembler is added to Rover.init before using NotificationCenterListView."
         )) as BindableView<NotificationItemViewModelInterface>
     }
 
@@ -96,7 +96,7 @@ open class NotificationCenterListView :
             "notificationItemSwipeToDeleteBackgroundView",
             context
         ) ?: throw RuntimeException(
-            "Please be sure that Rover  is initialized and NotificationsAssembler is added before using NotificationCenterListView."
+            "Please be sure that Rover is initialized and NotificationsAssembler is added before using NotificationCenterListView."
         )
     }
 
@@ -110,7 +110,7 @@ open class NotificationCenterListView :
             null,
             notification
         ) ?: throw RuntimeException(
-            "Please be sure that Rover  is initialized and NotificationsAssembler is added before using NotificationCenterListView."
+            "Please be sure that Rover is initialized and NotificationsAssembler is added before using NotificationCenterListView."
         )
     }
 

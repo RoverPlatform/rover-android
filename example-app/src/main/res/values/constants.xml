@@ -1,6 +1,13 @@
-<!-- You'll set these fields during the Installation and Initialization steps of the documentation.-->
 <resources>
+    <!-- Put your own Rover API token here! -->
     <string name="rover_api_token">blank</string>
-    <string name="uri_scheme">example</string>
-    <string name="associated_domain">blank</string>
+
+    <!-- This is the domain associated with your account in Rover Settings.  Rover can host
+    Experiences with App Links (Universal Links) that can be opened in a web browser or your
+    suitably enabled app. -->
+    <string name="rover_associated_domain">example.rover.io</string>
+
+    <!-- The Rover Campaigns SDK has several built-in deep link handlers.  This field should be set
+    to match the URL Scheme set in your Rover Settings. -->
+    <string name="rover_uri_scheme">rv-example</string>
 </resources>

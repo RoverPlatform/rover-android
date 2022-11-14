@@ -1,0 +1,5 @@
+<resources>
+    <declare-styleable name="ExperienceActivity">
+        <attr name="displayNoCustomThemeWarningMessage" format="boolean"/>
+    </declare-styleable>
+</resources>

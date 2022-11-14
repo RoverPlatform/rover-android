@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "324173573929",
+    "firebase_url": "https://rover-android-example-app.firebaseio.com",
+    "project_id": "rover-android-example-app",
+    "storage_bucket": "rover-android-example-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:324173573929:android:f700be60a598b52c",
+        "android_client_info": {
+          "package_name": "io.rover.Example"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "324173573929-uuin6do1tbes1bqd8duuqptjbc410bdj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBX-CobPw2eBvdhW0U83Bi-ed1RcyD81o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "324173573929-uuin6do1tbes1bqd8duuqptjbc410bdj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

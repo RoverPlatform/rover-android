@@ -40,7 +40,8 @@ class DebugPreferences(
                     title = context.getText(R.string.debug_settings_device_name)
                     summary = deviceIdentification.deviceName
                     key = "edit_device_name"
-                    dialogMessage = "Set the device name to be used for testing."
+                    dialogTitle = context.getText(R.string.debug_settings_set_device_id)
+                    dialogMessage = context.getText(R.string.debug_settings_device_id_description)
                     onPreferenceChangeListener = Preference.OnPreferenceChangeListener { _, newValue ->
                         deviceIdentification.deviceName = newValue as String
                         summary = newValue

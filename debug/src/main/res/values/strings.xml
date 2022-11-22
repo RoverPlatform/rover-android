@@ -4,4 +4,6 @@
     <string name="debug_settings_test_device">Test Device</string>
     <string name="debug_settings_device_name">Device Name</string>
     <string name="debug_settings_device_id">Device ID</string>
+    <string name="debug_settings_set_device_name">Set Device Name</string>
+    <string name="debug_settings_device_name_description">Set the device name to be used for testing</string>
 </resources>

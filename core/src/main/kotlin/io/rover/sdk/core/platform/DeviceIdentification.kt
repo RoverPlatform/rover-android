@@ -2,7 +2,6 @@ package io.rover.sdk.core.platform
 
 import android.content.Context
 import android.os.Build
-import android.provider.Settings
 import io.rover.sdk.core.logging.log
 import java.io.FileNotFoundException
 import java.util.UUID
@@ -16,7 +15,7 @@ interface DeviceIdentificationInterface {
     /**
      * User-set name for the device, if available.
      */
-    val deviceName: String?
+    var deviceName: String?
 }
 
 /**
@@ -27,14 +26,15 @@ class DeviceIdentification(
     localStorage: LocalStorage
 ) : DeviceIdentificationInterface {
     private val identifierKey = "identifier"
+    private val deviceNameKey = "deviceName"
     private val storage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
 
     override val installationIdentifier by lazy {
         // Further reading: https://developer.android.com/training/articles/user-data-ids.html
         // if persisted UUID not present then generate and persist a new one. Memoize it in memory.
-        (storage.get(identifierKey) ?: (
+        (storage[identifierKey] ?: (
             (getAndClearSdk2IdentifierIfPresent() ?: UUID.randomUUID().toString()).apply {
-                storage.set(identifierKey, this)
+                storage[identifierKey] = this
             }
         )).apply {
             log.v("Device Rover installation identifier: $this")
@@ -44,17 +44,16 @@ class DeviceIdentification(
     // On many manufacturers' Android devices, the set device name manifests as the Bluetooth name,
     // but not as the device hostname.  So, we'll ignore the device hostname and use the Bluetooth
     // name, if available.
-    override val deviceName: String?
+    override var deviceName: String?
         get() {
-            return if (Build.VERSION.SDK_INT < 31) {
-                return Settings.Secure.getString(
-                    applicationContext.contentResolver,
-                    "bluetooth_name"
-                )
-            } else {
-                // TODO: fallback to getting hostname or similar.
-                null
+            return (storage[deviceNameKey] ?: "Phone").apply {
+                log.v("Device name: $this")
             }
+        }
+
+        set(value) {
+            storage[deviceNameKey] = value
+            log.v("Device name set to: $value")
         }
 
     private fun getAndClearSdk2IdentifierIfPresent(): String? {

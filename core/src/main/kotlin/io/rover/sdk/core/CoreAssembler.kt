@@ -1,14 +1,31 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 @file:JvmName("Core")
 
 package io.rover.sdk.core
 
 import android.app.Application
-import androidx.lifecycle.ProcessLifecycleOwner
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import androidx.annotation.ColorInt
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.WorkManager
 import io.rover.sdk.core.assets.AndroidAssetService
 import io.rover.sdk.core.assets.AssetService
@@ -157,7 +174,6 @@ class CoreAssembler @JvmOverloads constructor(
             application
         }
 
-
         if (openAppIntent != null || application.packageManager.getLaunchIntentForPackage(application.packageName) != null) {
             container.register(Scope.Singleton, Intent::class.java, "openApp") { _ ->
                 openAppIntent ?: application.packageManager.getLaunchIntentForPackage(application.packageName) ?: Intent()
@@ -174,7 +190,7 @@ class CoreAssembler @JvmOverloads constructor(
                 }
             }
 
-            UrlSchemes(urlSchemes, associatedDomains)
+            UrlSchemes(urlSchemes.map { it.lowercase() }, associatedDomains.map { it.lowercase() })
         }
 
         container.register(Scope.Singleton, NetworkClient::class.java) { resolver ->
@@ -473,38 +489,34 @@ data class UrlSchemes(
     val associatedDomains: List<String>
 )
 
-@Deprecated("Use .resolve(EventQueueServiceInterface::class.java)")
 val Rover.eventQueue: EventQueueServiceInterface
     get() = this.resolve(EventQueueServiceInterface::class.java)
         ?: throw missingDependencyError("EventQueueService")
 
-@Deprecated("Use .resolve(PermissionsNotifierInterface::class.java)")
 val Rover.permissionsNotifier: PermissionsNotifierInterface
     get() = this.resolve(PermissionsNotifierInterface::class.java)
         ?: throw missingDependencyError("PermissionsNotifier")
 
-@Deprecated("Use .resolve(LinkOpenInterface::class.java)")
 val Rover.linkOpen: LinkOpenInterface
     get() = this.resolve(LinkOpenInterface::class.java) ?: throw missingDependencyError("LinkOpen")
 
-@Deprecated("Use .resolve(AssetService::class.java)")
 val Rover.assetService: AssetService
     get() = this.resolve(AssetService::class.java) ?: throw missingDependencyError("AssetService")
 
-@Deprecated("Use .resolve(Router::class.java)")
 val Rover.router: Router
     get() = this.resolve(Router::class.java) ?: throw missingDependencyError("Router")
 
-@Deprecated("Use .resolve(EmbeddedWebBrowserDisplayInterface::class.java)")
 val Rover.embeddedWebBrowserDisplay
     get() = this.resolve(EmbeddedWebBrowserDisplayInterface::class.java)
         ?: throw missingDependencyError("EmbeddedWebBrowserDisplayInterface")
 
-@Deprecated("Use .resolve(DeviceIdentificationInterface::class.java)")
 val Rover.deviceIdentification
     get() = this.resolve(DeviceIdentificationInterface::class.java) ?: throw missingDependencyError(
         "DeviceIdentificationInterface"
     )
+
+val Rover.userInfoManager: UserInfoInterface
+    get() = this.resolve(UserInfoInterface::class.java) ?: throw missingDependencyError("UserInfoInterface")
 
 private fun missingDependencyError(name: String): Throwable {
     throw RuntimeException("Dependency not registered: $name.  Did you include CoreAssembler() in the assembler list?")

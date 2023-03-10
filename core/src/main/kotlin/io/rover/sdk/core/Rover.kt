@@ -1,6 +1,25 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.core
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import io.rover.core.BuildConfig
 import io.rover.sdk.core.container.Assembler
 import io.rover.sdk.core.container.ContainerResolver
@@ -10,6 +29,7 @@ import io.rover.sdk.core.logging.AndroidLogger
 import io.rover.sdk.core.logging.GlobalStaticLogHolder
 import io.rover.sdk.core.logging.LogBuffer
 import io.rover.sdk.core.logging.log
+import io.rover.sdk.core.routing.LinkOpenInterface
 import java.net.HttpURLConnection
 
 /**
@@ -38,20 +58,50 @@ class Rover(
         initializeContainer()
     }
 
+    // And here are several helper routines for common tasks, easily discoverable and
+    // allowing the user to avoid doing container lookups.
+
+    /**
+     * If Rover can handle this link, returns an intent that can launch it.
+     *
+     * Returns null if this link not handled by Rover.
+     */
+    fun intentForLink(uri: Uri): Intent? = shared.resolveSingletonOrFail(LinkOpenInterface::class.java).intentForLink(
+        shared.resolveSingletonOrFail(Context::class.java),
+        uri
+    )
+
+    val associatedDomains: List<String>
+        get() = shared.resolveSingletonOrFail(UrlSchemes::class.java).associatedDomains
+
+    // And here is the singleton logic:
+
     companion object {
+        // we have a global singleton of the Rover container.
         private var sharedInstanceBackingField: Rover? = null
 
-        // we have a global singleton of the Rover container.
+        /**
+         * Access the Rover singleton.
+         */
         @JvmStatic
-        @Deprecated("Please use shared instead.")
-        val sharedInstance: Rover
-            get() = sharedInstanceBackingField ?: throw RuntimeException("Rover shared instance accessed before calling initialize.\n\n" +
-                "Did you remember to call Rover.initialize() in your Application.onCreate()?")
+        val shared: Rover
+            get() = sharedInstanceBackingField ?: throw RuntimeException(
+                "Rover shared instance accessed before calling initialize.\n\n" +
+                    "Did you remember to call Rover.initialize() in your Application.onCreate()?"
+            )
 
-        @JvmStatic
-        val shared: Rover?
-            get() = sharedInstanceBackingField ?: log.w("Rover shared instance accessed before calling initialize.\n\n" +
-                "Did you remember to call Rover.initialize() in your Application.onCreate()?").let { null }
+        /**
+         * This is a failable version of [Rover.sharedInstance], which you can use to test if
+         * Rover is available if you want to avoid a crash if Rover is not initialized.
+         */
+        val failableShared: Rover?
+            get() = sharedInstanceBackingField ?: log.w(
+                "Rover shared instance accessed before calling initialize.\n\n" +
+                        "Did you remember to call Rover.initialize() in your Application.onCreate()?"
+            ).let { null }
+
+        val sdkVersion: String
+            get() = BuildConfig.ROVER_SDK_VERSION
 
         @JvmStatic
         fun initialize(vararg assemblers: Assembler) {

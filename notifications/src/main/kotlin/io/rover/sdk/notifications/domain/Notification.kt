@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.notifications.domain
 
 import io.rover.sdk.notifications.NotificationsAssembler
@@ -16,25 +33,25 @@ import java.util.Date
  *
  */
 data class Notification(
-        val id: String,
+    val id: String,
 
-        /**
+    /**
      * An Android channel ID.  If not set, Rover will use the default channel id set in (see
      * [NotificationsAssembler]).
      */
     val channelId: String?,
 
-        val title: String?,
-        val body: String,
+    val title: String?,
+    val body: String,
 
-        /**
+    /**
      * Has this notification been read?
      *
      * (when received over push this will always be false)
      */
     val isRead: Boolean,
 
-        /**
+    /**
      * Has this notification been deleted?
      *
      * When received over push will always be false.
@@ -45,17 +62,17 @@ data class Notification(
      */
     val isDeleted: Boolean,
 
-        val isNotificationCenterEnabled: Boolean,
+    val isNotificationCenterEnabled: Boolean,
 
-        val expiresAt: Date?,
+    val expiresAt: Date?,
 
-        val deliveredAt: Date,
+    val deliveredAt: Date,
 
-        val tapBehavior: TapBehavior,
+    val tapBehavior: TapBehavior,
 
-        val attachment: NotificationAttachment?,
+    val attachment: NotificationAttachment?,
 
-        val campaignId: String
+    val campaignId: String
 ) {
     sealed class TapBehavior {
         data class PresentWebsite(val url: URI) : TapBehavior()

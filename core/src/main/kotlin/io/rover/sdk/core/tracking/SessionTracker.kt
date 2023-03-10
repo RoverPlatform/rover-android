@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.core.tracking
 
 import android.os.Handler
@@ -19,11 +36,11 @@ import java.util.UUID
 import kotlin.math.max
 
 class SessionTracker(
-        private val eventQueueService: EventQueueServiceInterface,
+    private val eventQueueService: EventQueueServiceInterface,
 
-        private val sessionStore: SessionStoreInterface,
+    private val sessionStore: SessionStoreInterface,
 
-        /**
+    /**
      * The number of seconds to leave the session open for in the event that the user leaves
      * temporarily.
      */
@@ -198,11 +215,11 @@ class SessionStore(
 
         return expiringEntries.map { (key, entry) ->
             SessionStoreInterface.ExpiredSession(
-                    key,
-                    entry.uuid,
-                    entry.sessionEventName,
-                    entry.sessionAttributes,
-                    ((entry.closedAt?.time!! - entry.startedAt.time) / 1000L).toInt()
+                key,
+                entry.uuid,
+                entry.sessionEventName,
+                entry.sessionAttributes,
+                ((entry.closedAt?.time!! - entry.startedAt.time) / 1000L).toInt()
             )
         }
     }
@@ -226,21 +243,21 @@ class SessionStore(
     }
 
     data class SessionEntry(
-            val uuid: UUID,
+        val uuid: UUID,
 
-            val sessionEventName: String,
+        val sessionEventName: String,
 
-            /**
+        /**
          * When was this session started?
          */
         val startedAt: Date,
 
-            /**
+        /**
          * Any other attributes to include with the session event.
          */
         val sessionAttributes: Attributes,
 
-            /**
+        /**
          * When was the session closed?
          */
         val closedAt: Date?

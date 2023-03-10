@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.core.events
 
 import android.app.Activity
@@ -14,13 +31,13 @@ import io.rover.sdk.core.data.graphql.operations.data.asJson
 import io.rover.sdk.core.data.graphql.operations.data.decodeJson
 import io.rover.sdk.core.events.domain.Event
 import io.rover.sdk.core.logging.log
-import io.rover.sdk.core.streams.subscribe
 import io.rover.sdk.core.platform.DateFormattingInterface
 import io.rover.sdk.core.platform.LocalStorage
 import io.rover.sdk.core.streams.PublishSubject
 import io.rover.sdk.core.streams.Scheduler
 import io.rover.sdk.core.streams.observeOn
 import io.rover.sdk.core.streams.share
+import io.rover.sdk.core.streams.subscribe
 import org.json.JSONArray
 import org.reactivestreams.Publisher
 import java.lang.AssertionError
@@ -29,15 +46,15 @@ import java.util.LinkedList
 import java.util.concurrent.Executors
 
 class EventQueueService(
-        private val graphQlApiService: GraphQlApiServiceInterface,
-        localStorage: LocalStorage,
-        private val dateFormatting: DateFormattingInterface,
-        application: Application,
-        mainScheduler: Scheduler,
-        private val flushAt: Int,
-        private val flushIntervalSeconds: Double,
-        private val maxBatchSize: Int,
-        private val maxQueueSize: Int
+    private val graphQlApiService: GraphQlApiServiceInterface,
+    localStorage: LocalStorage,
+    private val dateFormatting: DateFormattingInterface,
+    application: Application,
+    mainScheduler: Scheduler,
+    private val flushAt: Int,
+    private val flushIntervalSeconds: Double,
+    private val maxBatchSize: Int,
+    private val maxQueueSize: Int
 ) : EventQueueServiceInterface {
     private val serialQueueExecutor = Executors.newSingleThreadExecutor()
     private val contextProviders: MutableList<ContextProvider> = mutableListOf()

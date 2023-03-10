@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.experiences.events.contextproviders
 
 import io.rover.sdk.core.data.domain.DeviceContext
@@ -5,17 +22,17 @@ import io.rover.sdk.core.events.ContextProvider
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.LocalStorage
 import io.rover.sdk.core.streams.subscribe
-import io.rover.sdk.experiences.data.events.RoverEvent
-import io.rover.sdk.experiences.services.EventEmitter
+import io.rover.sdk.experiences.data.events.MiniAnalyticsEvent
+import io.rover.sdk.experiences.services.ClassicEventEmitter
 import org.json.JSONObject
 import java.util.Date
 import java.util.Locale
 
-class ConversionsContextProvider(
+internal class ConversionsContextProvider(
     localStorage: LocalStorage
 ) : ContextProvider {
 
-    fun startListening(emitter: EventEmitter) {
+    fun startListening(emitter: ClassicEventEmitter) {
         emitter.trackedEvents.subscribe { event ->
             getConversion(event)?.let { (tag, expires) ->
                 currentConversions =
@@ -46,24 +63,24 @@ class ConversionsContextProvider(
             store[CONVERSIONS_KEY] = field.encodeJson()
         }
 
-    private fun getConversion(event: RoverEvent): Pair<String, Long>? =
+    private fun getConversion(event: MiniAnalyticsEvent): Pair<String, Long>? =
         when (event) {
-            is RoverEvent.BlockTapped -> event.block.conversion?.let {
+            is MiniAnalyticsEvent.BlockTapped -> event.block.conversion?.let {
                 Pair(
                     it.tag,
                     it.expires.seconds
                 )
             }
-            is RoverEvent.ScreenPresented -> event.screen.conversion?.let {
+            is MiniAnalyticsEvent.ScreenPresented -> event.screen.conversion?.let {
                 Pair(
                     it.tag,
                     it.expires.seconds
                 )
             }
             // NOTE: We always append the poll's option to the tag
-            is RoverEvent.PollAnswered -> event.block.conversion?.let {
+            is MiniAnalyticsEvent.PollAnswered -> event.block.conversion?.let {
                 val pollTag = event.option.text.replace(" ", "_").toLowerCase(Locale.ROOT)
-                Pair("${it.tag}_${pollTag}", it.expires.seconds)
+                Pair("${it.tag}_$pollTag", it.expires.seconds)
             }
             else -> null
         }
@@ -89,9 +106,11 @@ private data class TagSet(
     fun filterActiveTags() = TagSet(data = data.filter { Date().before(it.value) })
 
     fun encodeJson(): String {
-        return JSONObject(data.map {
-            Pair(it.key, it.value.time)
-        }.associate { it }).toString()
+        return JSONObject(
+            data.map {
+                Pair(it.key, it.value.time)
+            }.associate { it }
+        ).toString()
     }
 
     companion object {

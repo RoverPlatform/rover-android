@@ -1,6 +1,25 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.core.routing
 
+import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import io.rover.sdk.core.container.Assembler
 import java.net.URI
 
@@ -34,7 +53,24 @@ interface Route {
 
 interface LinkOpenInterface {
     /**
+     * If Rover can handle this link, returns an intent that can launch it.
+     *
+     * Returns null if this link not handled by Rover.
+     */
+    fun intentForLink(context: Context, uri: Uri): Intent? {
+        val androidUri = URI(uri.toString())
+        return if (localIntentForReceived(androidUri).isNotEmpty()) {
+            TransientLinkLaunchActivity.makeIntent(context, androidUri)
+        } else {
+            null
+        }
+    }
+
+    /**
      * Map a URI just received for a deep link to an explicit, mapped intent.
+     *
+     * May return more than one intent, meant for synthesizing a back stack in the event
+     * of the target needing synthesized back stack entries.
      */
     fun localIntentForReceived(receivedUri: URI): List<Intent>
 }

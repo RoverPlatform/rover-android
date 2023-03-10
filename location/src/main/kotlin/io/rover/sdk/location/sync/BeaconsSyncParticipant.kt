@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.location.sync
 
 import android.content.ContentValues
@@ -33,9 +50,9 @@ import java.util.HashMap
 import java.util.UUID
 
 class BeaconsRepository(
-        private val syncCoordinator: SyncCoordinatorInterface,
-        private val beaconsSqlStorage: BeaconsSqlStorage,
-        private val ioScheduler: Scheduler
+    private val syncCoordinator: SyncCoordinatorInterface,
+    private val beaconsSqlStorage: BeaconsSqlStorage,
+    private val ioScheduler: Scheduler
 ) {
     fun allBeacons(): Publisher<ClosableSequence<Beacon>> = syncCoordinator
         .updates
@@ -155,7 +172,8 @@ class BeaconsSqlStorage(
         private const val TABLE_NAME = "beacons"
 
         fun initSchema(sqLiteDatabase: SQLiteDatabase) {
-            sqLiteDatabase.execSQL("""
+            sqLiteDatabase.execSQL(
+                """
                 CREATE TABLE $TABLE_NAME (
                     id TEXT PRIMARY KEY,
                     name TEXT,
@@ -164,14 +182,17 @@ class BeaconsSqlStorage(
                     minor INTEGER,
                     tags TEXT
                 )
-            """.trimIndent())
+                """.trimIndent()
+            )
         }
 
         fun dropSchema(sqLiteDatabase: SQLiteDatabase) {
             try {
-                sqLiteDatabase.execSQL("""
+                sqLiteDatabase.execSQL(
+                    """
                 DROP TABLE $TABLE_NAME
-            """.trimIndent())
+                    """.trimIndent()
+                )
             } catch (e: SQLiteException) {
                 log.w("Unable to drop existing table, assuming it does not exist: $e")
             }
@@ -213,10 +234,13 @@ class BeaconsSyncResource(
 
         val values: HashMap<String, Any> = hashMapOf(
             Pair(SyncQuery.Argument.first.name, 500),
-            Pair(SyncQuery.Argument.orderBy.name, hashMapOf(
-                Pair("field", "UPDATED_AT"),
-                Pair("direction", "ASC")
-            ))
+            Pair(
+                SyncQuery.Argument.orderBy.name,
+                hashMapOf(
+                    Pair("field", "UPDATED_AT"),
+                    Pair("direction", "ASC")
+                )
+            )
         )
 
         if (cursor != null) {
@@ -285,7 +309,9 @@ val SyncQuery.Companion.beacons: SyncQuery
             }
         """.trimIndent(),
         arguments = listOf(
-            SyncQuery.Argument.first, SyncQuery.Argument.after, SyncQuery.Argument.orderBy
+            SyncQuery.Argument.first,
+            SyncQuery.Argument.after,
+            SyncQuery.Argument.orderBy
         ),
         fragments = listOf("beaconFields")
     )

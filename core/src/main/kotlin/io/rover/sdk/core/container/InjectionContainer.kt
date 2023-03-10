@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.core.container
 
 import io.rover.sdk.core.streams.PublishSubject
@@ -27,7 +44,7 @@ class InjectionContainer(
         } catch (e: ClassCastException) {
             throw(
                 RuntimeException(errorMessageForFactoryInvocationFailure(type, name), e)
-            )
+                )
         }
     }
 
@@ -37,7 +54,7 @@ class InjectionContainer(
         } catch (e: ClassCastException) {
             throw(
                 RuntimeException(errorMessageForFactoryInvocationFailure(type, name), e)
-            )
+                )
         }
     }
 
@@ -47,7 +64,7 @@ class InjectionContainer(
         } catch (e: ClassCastException) {
             throw(
                 RuntimeException(errorMessageForFactoryInvocationFailure(type, name), e)
-            )
+                )
         }
     }
 
@@ -57,7 +74,7 @@ class InjectionContainer(
         } catch (e: ClassCastException) {
             throw(
                 RuntimeException(errorMessageForFactoryInvocationFailure(type, name), e)
-            )
+                )
         }
     }
 
@@ -86,11 +103,11 @@ class InjectionContainer(
 
                         // side-effect: since we're constructing a new instance, emit an Activation event.
                         activations.onNext(
-                                Resolver.Activation(
-                                        type,
-                                        this,
-                                        name
-                                )
+                            Resolver.Activation(
+                                type,
+                                this,
+                                name
+                            )
                         )
                     }
                 } as TFactory
@@ -159,9 +176,9 @@ class InjectionContainer(
          * It does not support parameters.
          */
         data class Singleton<T : Any>(
-                val factory: (Resolver) -> T,
+            val factory: (Resolver) -> T,
 
-                /**
+            /**
              * The ServiceEntry will memoize (cache) the object instantiated by the factory. That is, it
              * will behave as a singleton.
              */

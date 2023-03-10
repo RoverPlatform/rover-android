@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.notifications
 
 import android.annotation.SuppressLint
@@ -24,7 +41,7 @@ import io.rover.sdk.core.streams.subscribe
 import io.rover.sdk.core.streams.subscribeOn
 import io.rover.sdk.core.streams.timeout
 import io.rover.sdk.notifications.domain.NotificationAttachment
-import io.rover.sdk.notifications.ui.concerns.NotificationsRepositoryInterface
+import io.rover.sdk.notifications.ui.concerns.NotificationStoreInterface
 import org.reactivestreams.Publisher
 import java.util.concurrent.TimeUnit
 
@@ -33,20 +50,20 @@ import java.util.concurrent.TimeUnit
  * Notification Center.
  */
 class NotificationDispatcher(
-        private val applicationContext: Context,
+    private val applicationContext: Context,
 
-        private val mainThreadScheduler: Scheduler,
+    private val mainThreadScheduler: Scheduler,
 
     // add this back after solving injection issues.
-        private val notificationsRepository: NotificationsRepositoryInterface,
+    private val notificationsRepository: NotificationStoreInterface,
 
-        private val notificationOpen: NotificationOpenInterface,
+    private val notificationOpen: NotificationOpenInterface,
 
-        private val assetService: AssetService,
+    private val assetService: AssetService,
 
-        private val influenceTrackerService: InfluenceTrackerServiceInterface,
+    private val influenceTrackerService: InfluenceTrackerServiceInterface,
 
-        /**
+    /**
      * A small icon is necessary for Android push notifications.  Pass a resid.
      *
      * Android design guidelines suggest that you use a multi-level drawable for your application
@@ -56,18 +73,18 @@ class NotificationDispatcher(
     @param:DrawableRes
     private val smallIconResId: Int,
 
-        /**
+    /**
      * The drawable level of [smallIconResId] that should be used for the icon silhouette used in
      * the notification drawer.
      */
     private val smallIconDrawableLevel: Int = 0,
 
-        /**
+    /**
      * This Channel Id will be used for any push notifications arrive without an included Channel
      * Id.
      */
     private val defaultChannelId: String? = null,
-        private val iconColor: Int? = null
+    private val iconColor: Int? = null
 ) {
     fun ingest(notificationFromAction: io.rover.sdk.notifications.domain.Notification) {
         Publishers.defer {

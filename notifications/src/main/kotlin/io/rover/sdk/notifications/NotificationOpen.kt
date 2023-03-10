@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.notifications
 
 import android.app.PendingIntent
@@ -18,17 +35,17 @@ import org.json.JSONObject
  * Open a notification by executing its [Notification.TapBehavior].
  */
 open class NotificationOpen(
-        private val applicationContext: Context,
-        private val dateFormatting: DateFormattingInterface,
-        private val eventsService: EventQueueServiceInterface,
-        private val router: Router,
-        private val openAppIntent: Intent?,
-        private val embeddedWebBrowserDisplay: EmbeddedWebBrowserDisplayInterface
+    private val applicationContext: Context,
+    private val dateFormatting: DateFormattingInterface,
+    private val eventsService: EventQueueServiceInterface,
+    private val router: Router,
+    private val openAppIntent: Intent?,
+    private val embeddedWebBrowserDisplay: EmbeddedWebBrowserDisplayInterface
 ) : NotificationOpenInterface {
     override fun pendingIntentForAndroidNotification(notification: Notification): PendingIntent {
         return TransientNotificationLaunchActivity.generateLaunchIntent(
-                applicationContext,
-                notification
+            applicationContext,
+            notification
         )
     }
 
@@ -48,7 +65,7 @@ open class NotificationOpen(
 
         issueNotificationOpenedEvent(
             notification,
-                NotificationSource.Push
+            NotificationSource.Push
         )
 
         return intentForNotification(notification)
@@ -60,7 +77,7 @@ open class NotificationOpen(
 
         issueNotificationOpenedEvent(
             notification,
-                NotificationSource.NotificationCenter
+            NotificationSource.NotificationCenter
         )
 
         return when (notification.tapBehavior) {
@@ -71,8 +88,8 @@ open class NotificationOpen(
     }
 
     protected open fun issueNotificationOpenedEvent(
-            notification: Notification,
-            source: NotificationSource
+        notification: Notification,
+        source: NotificationSource
     ) {
         eventsService.trackEvent(
             Event(
@@ -91,7 +108,7 @@ open class NotificationOpen(
     ) {
         issueNotificationOpenedEvent(
             notification,
-                NotificationSource.InfluencedOpen
+            NotificationSource.InfluencedOpen
         )
     }
 

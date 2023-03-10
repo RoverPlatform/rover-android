@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.experiences.services
 
 import android.graphics.Bitmap
@@ -6,11 +23,11 @@ import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Rect
 import android.graphics.RectF
-import io.rover.sdk.experiences.platform.toAndroidBitmap
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
+import io.rover.sdk.experiences.platform.toAndroidBitmap
 
 internal class BarcodeRenderingService {
     enum class Format {
@@ -29,9 +46,9 @@ internal class BarcodeRenderingService {
      * width, in points.
      */
     fun measureHeightNeededForBarcode(
-            text: String,
-            format: Format,
-            width: Float
+        text: String,
+        format: Format,
+        width: Float
     ): Float {
         val renderedBitmap = renderBarcode(text, format)
         val aspectRatio = renderedBitmap.width / renderedBitmap.height.toFloat()
@@ -144,7 +161,10 @@ internal class BarcodeRenderingService {
                     canvas.drawBitmap(
                         bitmap,
                         Rect(
-                            0, 0, bitmap.width, bitmap.height
+                            0,
+                            0,
+                            bitmap.width,
+                            bitmap.height
                         ),
                         destRect,
                         null

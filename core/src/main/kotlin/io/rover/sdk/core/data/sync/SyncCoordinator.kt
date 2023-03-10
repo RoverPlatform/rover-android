@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.core.data.sync
 
 import android.content.Context
@@ -33,10 +50,10 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 class SyncCoordinator(
-        private val ioScheduler: Scheduler,
-        mainThreadScheduler: Scheduler,
-        private val syncClient: SyncClientInterface,
-        private val hourlyTargetRefreshFrequency: Int = 1
+    private val ioScheduler: Scheduler,
+    mainThreadScheduler: Scheduler,
+    private val syncClient: SyncClientInterface,
+    private val hourlyTargetRefreshFrequency: Int = 1
 ) : SyncCoordinatorInterface {
 
     override fun registerParticipant(participant: SyncParticipant) {
@@ -58,7 +75,8 @@ class SyncCoordinator(
     override fun ensureBackgroundSyncScheduled() {
         log.v("Ensuring that Rover background sync is registered to execute every $hourlyTargetRefreshFrequency hours.")
         val request = PeriodicWorkRequestBuilder<WorkManagerWorker>(
-            hourlyTargetRefreshFrequency.toLong(), TimeUnit.HOURS
+            hourlyTargetRefreshFrequency.toLong(),
+            TimeUnit.HOURS
         ).setConstraints(
             Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -173,7 +191,7 @@ class SyncCoordinator(
     ) : Worker(context, params) {
         override fun doWork(): Result {
             val result = try {
-                Rover.shared?.resolve(SyncCoordinatorInterface::class.java)
+                Rover.failableShared?.resolve(SyncCoordinatorInterface::class.java)
                     ?.sync()
                     ?.first()
                     ?.blockForResult(300)?.first()

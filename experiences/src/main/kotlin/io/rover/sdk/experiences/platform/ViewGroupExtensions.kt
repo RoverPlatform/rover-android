@@ -1,18 +1,35 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.experiences.platform
 
 import android.graphics.Paint
-import androidx.appcompat.widget.AppCompatButton
-import androidx.appcompat.widget.AppCompatImageView
-import androidx.appcompat.widget.AppCompatTextView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
-import io.rover.sdk.experiences.ui.blocks.concerns.background.BackgroundColorDrawableWrapper
-import io.rover.sdk.experiences.ui.blocks.poll.text.TextOptionView
-import io.rover.sdk.experiences.ui.blocks.poll.image.ImagePollOptionView
-import io.rover.sdk.experiences.ui.blocks.poll.image.VotingIndicatorBar
-import io.rover.sdk.experiences.ui.blocks.poll.text.TextPollProgressBar
+import androidx.appcompat.widget.AppCompatButton
+import androidx.appcompat.widget.AppCompatImageView
+import androidx.appcompat.widget.AppCompatTextView
+import io.rover.sdk.experiences.classic.blocks.concerns.background.BackgroundColorDrawableWrapper
+import io.rover.sdk.experiences.classic.blocks.poll.image.ImagePollOptionView
+import io.rover.sdk.experiences.classic.blocks.poll.image.VotingIndicatorBar
+import io.rover.sdk.experiences.classic.blocks.poll.text.TextOptionView
+import io.rover.sdk.experiences.classic.blocks.poll.text.TextPollProgressBar
 
 // Extension functions to reduce the amount of boilerplate when programmatically creating
 // and modifying views

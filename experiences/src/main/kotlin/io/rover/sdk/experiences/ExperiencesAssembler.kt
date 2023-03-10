@@ -1,7 +1,31 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.experiences
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.material.Colors
+import androidx.compose.material.darkColors
+import androidx.compose.material.lightColors
+import androidx.compose.ui.graphics.toArgb
+import io.rover.sdk.core.Rover
 import io.rover.sdk.core.UrlSchemes
 import io.rover.sdk.core.container.Assembler
 import io.rover.sdk.core.container.Container
@@ -13,7 +37,9 @@ import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.LocalStorage
 import io.rover.sdk.core.routing.Router
+import io.rover.sdk.experiences.data.URLRequest
 import io.rover.sdk.experiences.events.contextproviders.ConversionsContextProvider
+import io.rover.sdk.experiences.services.ClassicEventEmitter
 import io.rover.sdk.experiences.services.EventEmitter
 
 /**
@@ -26,18 +52,23 @@ import io.rover.sdk.experiences.services.EventEmitter
  *
  * Note: if you use any of the below, then you must complete the Google Play Services setup as per
  * the SDK documentation (also needed for the Notifications module).
+ *
+ * @param appThemeDescription Customize the appearance of the app bar presented in Classic
+ * Experiences.
+ * @param experienceIntent The intent to launch when an experience is opened. Defaults to use the
+ * built-in [ExperienceActivity].  Set this value if you wish to replace [ExperienceActivity] with
+ * your own subclass
  */
-class ExperiencesAssembler : Assembler {
-    override fun assemble(container: Container) {
-        container.register(
-            Scope.Singleton,
-            PresentExperienceIntents::class.java
-        ) { resolver ->
-            PresentExperienceIntents(
-                resolver.resolveSingletonOrFail(Context::class.java)
-            )
-        }
+class ExperiencesAssembler(
+    private val appThemeDescription: AppThemeDescription = AppThemeDescription(),
+    private val experienceIntent: (Context, Uri) -> Intent = { context, uri -> ExperienceActivity.makeIntent(context, uri) }
+) : Assembler {
+    // TODO: here are some judo parameters that are probably needed:
+    //    val experienceCacheSize: Long = Environment.Sizes.EXPERIENCE_CACHE_SIZE,
+    //    val imageCacheSize: Long = Environment.Sizes.IMAGE_CACHE_SIZE,
+    //    var authorizers: List<Authorizer> = emptyList()
 
+    override fun assemble(container: Container) {
         container.register(
             Scope.Singleton,
             ContextProvider::class.java,
@@ -47,51 +78,124 @@ class ExperiencesAssembler : Assembler {
                 resolver.resolveSingletonOrFail(LocalStorage::class.java)
             )
         }
+
+        container.register(
+            Scope.Singleton,
+            EventEmitter::class.java
+        ) { resolver ->
+            EventEmitter(
+                resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java)
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            RoverExperiencesClassic::class.java
+        ) { resolver ->
+            RoverExperiencesClassic(
+                resolver.resolveSingletonOrFail(Application::class.java),
+                resolver.resolveSingletonOrFail(String::class.java, "accountToken"),
+                resolver.resolveSingletonOrFail(Int::class.java, "chromeTabBackgroundColor"),
+                resolver.resolveSingletonOrFail(GraphQlApiServiceInterface::class.java),
+                appThemeDescription = appThemeDescription
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            Authorizers::class.java
+        ) { resolver ->
+            Authorizers()
+        }
     }
 
     override fun afterAssembly(resolver: Resolver) {
         super.afterAssembly(resolver)
         resolver.resolveSingletonOrFail(Router::class.java).apply {
             val urlSchemes = resolver.resolveSingletonOrFail(UrlSchemes::class.java)
+            val context = resolver.resolveSingletonOrFail(Context::class.java)
             registerRoute(
                 PresentExperienceRoute(
+                    context = context,
                     urlSchemes = urlSchemes.schemes,
                     associatedDomains = urlSchemes.associatedDomains,
-                    presentExperienceIntents = resolver.resolveSingletonOrFail(
-                        PresentExperienceIntents::class.java
-                    )
+                    experienceIntent = experienceIntent
                 )
             )
         }
 
-        RoverExperiences.initialize(
-                resolver.resolveSingletonOrFail(Application::class.java),
-                resolver.resolveSingletonOrFail(String::class.java, "accountToken"),
-                resolver.resolveSingletonOrFail(Int::class.java, "chromeTabBackgroundColor"),
-                resolver.resolveSingletonOrFail(GraphQlApiServiceInterface::class.java)
-        )
-
         /**
-         * Attempt to retrieve the [EventEmitter] instance from the rover sdk in order to receive
+         * Attempt to retrieve the [ClassicEventEmitter] instance from the rover sdk in order to receive
          * events for analytics and automation purposes.
          */
-        val eventEmitter = RoverExperiences.shared?.eventEmitter
+        val classicEventEmitter = resolver.resolve(RoverExperiencesClassic::class.java)?.classicEventEmitter
 
-        eventEmitter?.let {
-            EventReceiver(
+        classicEventEmitter?.let {
+            ClassicEventDispatcher(
                 resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java)
             ).startListening(it)
 
-            (resolver.resolveSingletonOrFail(
-                ContextProvider::class.java,
-                "conversions"
-            ) as ConversionsContextProvider).startListening(it)
+            (
+                resolver.resolveSingletonOrFail(
+                    ContextProvider::class.java,
+                    "conversions"
+                ) as ConversionsContextProvider
+                ).startListening(it)
         }
             ?: log.w("A Rover SDK event emitter wasn't available; Rover events will not be tracked.  Make sure you call Rover.initialize() before initializing the Rover SDK.")
 
-
         resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java).addContextProvider(
             resolver.resolveSingletonOrFail(ContextProvider::class.java, "conversions")
+        )
+    }
+}
+
+/**
+ * Call this method to register a callback that can mutate outgoing HTTP requests to
+ * Data Source APIs being used in Experiences.
+ *
+ * Use this to add your own custom authentication headers for API keys, etc.
+ */
+fun Rover.authorize(pattern: String, callback: (URLRequest) -> Unit) {
+    this.resolveSingletonOrFail(Authorizers::class.java).registerAuthorizer(pattern, callback)
+}
+
+@Deprecated("If possible, migrate to using Rover.shared.registerScreenViewedCallback { }")
+val Rover.classicEventEmitter: ClassicEventEmitter
+    get() = resolveSingletonOrFail(RoverExperiencesClassic::class.java).classicEventEmitter
+
+/**
+ * A set of colors that describe the theme of your application.
+ *
+ * Used for providing default styling App Bars set to Auto in Rover
+ * Classic Experiences.
+ *
+ * If unset, defaults to stock Material Design Components colors.
+ *
+ * Note: if you are embedding an Experience within your own UI,
+ * the Jetpack Compose Material theme settings will apply instead of these.
+ */
+data class AppThemeDescription(
+    val lightColors: ThemeColors = ThemeColors(lightColors()),
+    val darkColors: ThemeColors = ThemeColors(darkColors())
+) {
+    constructor(
+        lightColors: Colors,
+        darkColors: Colors
+    ) : this(
+        lightColors = ThemeColors(lightColors),
+        darkColors = ThemeColors(darkColors)
+    )
+
+    data class ThemeColors(
+        val primary: Int,
+        val onPrimary: Int
+    ) {
+        constructor(
+            composeColors: Colors
+        ) : this(
+            composeColors.primary.toArgb(),
+            composeColors.onPrimary.toArgb()
         )
     }
 }

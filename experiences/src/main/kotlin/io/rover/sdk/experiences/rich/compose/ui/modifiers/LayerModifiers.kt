@@ -1,0 +1,66 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+package io.rover.sdk.experiences.rich.compose.ui.modifiers
+
+import io.rover.sdk.experiences.rich.compose.model.nodes.Node
+import io.rover.sdk.experiences.rich.compose.model.values.*
+
+// TODO: rename to LayerModifiers
+
+
+/**
+ * This value type captures the value for all the Experience modifiers (not to be confused with
+ * Compose modifiers) that can be applied to a layer.
+ */
+internal data class LayerModifiers(
+    val action: Action? = null,
+    val frame: Frame? = null,
+    val opacity: Float? = null,
+    val aspectRatio: Float? = null,
+    val padding: Padding? = null,
+    val layoutPriority: Int? = null,
+    val offset: Point? = null,
+    val shadow: Shadow? = null,
+    val mask: Node? = null,
+    val overlay: Overlay? = null,
+    val background: Background? = null,
+    val accessibility: Accessibility? = null,
+
+    /**
+     * Contains a reference to the original node that produced these modifiers, if available.
+     *
+     * For diagnostic use only.
+     */
+    val debugNode: Node? = null
+) {
+    constructor(node: Node) : this(
+        action = node.action,
+        frame = node.frame,
+        opacity = node.opacity,
+        aspectRatio = node.aspectRatio,
+        padding = node.padding,
+        layoutPriority = node.layoutPriority,
+        offset = node.offset,
+        shadow = node.shadow,
+        mask = node.mask,
+        overlay = node.overlay,
+        background = node.background,
+        accessibility = node.accessibility,
+        debugNode = node
+    )
+}

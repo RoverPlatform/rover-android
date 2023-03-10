@@ -1,25 +1,43 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.experiences.services
 
 import android.os.Handler
 import android.os.Looper
 import io.rover.sdk.core.data.graphql.safeGetString
 import io.rover.sdk.core.data.graphql.safeOptInt
-import io.rover.sdk.experiences.data.events.RoverEvent
-import io.rover.sdk.experiences.logging.log
+import io.rover.sdk.core.logging.log
+import io.rover.sdk.experiences.data.events.MiniAnalyticsEvent
 import io.rover.sdk.experiences.platform.LocalStorage
 import io.rover.sdk.experiences.platform.debugExplanation
 import io.rover.sdk.experiences.platform.whenNotNull
 import org.json.JSONObject
-import java.util.Date
-import java.util.UUID
+import java.util.*
 import kotlin.math.max
 
+// TODO: won't bother implementing this for new Experiences, since we have way simplified our approach to analytics.
+
 internal class SessionTracker(
-        private val eventEmitter: EventEmitter,
+    private val classicEventEmitter: ClassicEventEmitter,
 
-        private val sessionStore: SessionStore,
+    private val sessionStore: SessionStore,
 
-        /**
+    /**
      * The number of seconds to leave the session open for in the event that the user leaves
      * temporarily.
      */
@@ -40,14 +58,14 @@ internal class SessionTracker(
      * after the timeout completes.
      */
     fun enterSession(
-            sessionKey: Any,
-            sessionStartEvent: RoverEvent,
-            sessionEvent: RoverEvent
+        sessionKey: Any,
+        sessionStartEvent: MiniAnalyticsEvent,
+        sessionEvent: MiniAnalyticsEvent
     ) {
         log.v("Entering session $sessionKey")
         sessionStore.enterSession(sessionKey, sessionEvent)
 
-        eventEmitter.trackEvent(
+        classicEventEmitter.trackEvent(
             sessionStartEvent
         )
     }
@@ -75,17 +93,17 @@ internal class SessionTracker(
         sessionStore.collectExpiredSessions(keepAliveTime).forEach { expiredSession ->
             log.v("Session closed: ${expiredSession.sessionKey}")
 
-            val eventToSend: RoverEvent = when (val event = expiredSession.sessionEvent) {
-                is RoverEvent.ScreenViewed -> {
+            val eventToSend: MiniAnalyticsEvent = when (val event = expiredSession.sessionEvent) {
+                is MiniAnalyticsEvent.ScreenViewed -> {
                     event.copy(duration = expiredSession.durationSeconds)
                 }
-                is RoverEvent.ExperienceViewed -> {
+                is MiniAnalyticsEvent.ExperienceViewed -> {
                     event.copy(duration = expiredSession.durationSeconds)
                 }
                 else -> event
             }
 
-            eventEmitter.trackEvent(eventToSend)
+            classicEventEmitter.trackEvent(eventToSend)
         }
 
         updateTimer()
@@ -93,12 +111,12 @@ internal class SessionTracker(
 
     fun leaveSession(
         sessionKey: Any,
-        sessionEndEvent: RoverEvent
+        sessionEndEvent: MiniAnalyticsEvent
     ) {
         log.v("Leaving session $sessionKey")
         sessionStore.leaveSession(sessionKey)
 
-        eventEmitter.trackEvent(sessionEndEvent)
+        classicEventEmitter.trackEvent(sessionEndEvent)
 
         updateTimer()
     }
@@ -118,7 +136,7 @@ internal class SessionStore(
      *
      * Returns the new session's UUID, or, if a session is already active, null.
      */
-    fun enterSession(sessionKey: Any, sessionEvent: RoverEvent) {
+    fun enterSession(sessionKey: Any, sessionEvent: MiniAnalyticsEvent) {
         val session = getEntry(sessionKey)?.copy(
             // clear closedAt to avoid expiring the session if it is being re-opened.
             closedAt = null
@@ -239,26 +257,26 @@ internal class SessionStore(
     }
 
     data class ExpiredSession(
-            val sessionKey: Any,
-            val uuid: UUID,
-            val sessionEvent: RoverEvent,
-            val durationSeconds: Int
+        val sessionKey: Any,
+        val uuid: UUID,
+        val sessionEvent: MiniAnalyticsEvent,
+        val durationSeconds: Int
     )
 
     data class SessionEntry(
-            val uuid: UUID,
+        val uuid: UUID,
 
-            /**
+        /**
          * When was this session started?
          */
         val startedAt: Date,
 
-            /**
+        /**
          * Any other attributes to include with the session event.
          */
-        val sessionEvent: RoverEvent,
+        val sessionEvent: MiniAnalyticsEvent,
 
-            /**
+        /**
          * When was the session closed?
          */
         val closedAt: Date?
@@ -279,7 +297,7 @@ internal class SessionStore(
                 return SessionEntry(
                     UUID.fromString(jsonObject.safeGetString("uuid")),
                     Date(jsonObject.getInt("started-at") * 1000L),
-                    RoverEvent.decodeJson(jsonObject.getJSONObject("session-attributes")),
+                    MiniAnalyticsEvent.decodeJson(jsonObject.getJSONObject("session-attributes")),
                     jsonObject.safeOptInt("closed-at").whenNotNull { Date(it * 1000L) }
                 )
             }

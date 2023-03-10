@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.location
 
 import android.Manifest
@@ -46,16 +63,16 @@ import java.util.Date
  * Google documentation: https://developer.android.com/training/location/receive-location-updates.html
  */
 class GoogleBackgroundLocationService(
-        private val fusedLocationProviderClient: FusedLocationProviderClient,
-        private val applicationContext: Context,
-        private val permissionsNotifier: PermissionsNotifierInterface,
-        private val locationReportingService: LocationReportingServiceInterface,
-        private val geocoder: Geocoder,
-        ioScheduler: Scheduler,
-        mainScheduler: Scheduler,
-        private val trackLocation: Boolean = false,
-        localStorage: LocalStorage,
-        private val dateFormatting: DateFormattingInterface
+    private val fusedLocationProviderClient: FusedLocationProviderClient,
+    private val applicationContext: Context,
+    private val permissionsNotifier: PermissionsNotifierInterface,
+    private val locationReportingService: LocationReportingServiceInterface,
+    private val geocoder: Geocoder,
+    ioScheduler: Scheduler,
+    mainScheduler: Scheduler,
+    private val trackLocation: Boolean = false,
+    localStorage: LocalStorage,
+    private val dateFormatting: DateFormattingInterface
 ) : GoogleBackgroundLocationServiceInterface {
 
     private val keyValueStorage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
@@ -216,7 +233,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
                 log.w("Received a location result from Google, but result could not be extracted.")
                 return
             }
-            val rover = Rover.shared
+            val rover = Rover.failableShared
             if (rover == null) {
                 log.e("Received a location result from Google, but Rover is not initialized.  Ignoring.")
                 return

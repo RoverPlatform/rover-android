@@ -1,9 +1,26 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.notifications.ui.concerns
 
 import android.graphics.Bitmap
-import org.reactivestreams.Publisher
 import io.rover.sdk.core.ui.concerns.BindableViewModel
 import io.rover.sdk.notifications.domain.Notification
+import org.reactivestreams.Publisher
 
 /**
  * This repository syncs and stores the Push Notifications.
@@ -19,14 +36,14 @@ import io.rover.sdk.notifications.domain.Notification
  * any arbitrary amount of time in the future.  This Repository is responsible for maintaining its
  * own state for read and deleted.
  */
-interface NotificationsRepositoryInterface {
+interface NotificationStoreInterface {
     /**
      * Obtain the list of push notifications received by this device (and that were marked for
-     * storage in the Notification Center).
+     * storage in the Inbox).
      *
      * A refresh is triggered when subscribed.
      */
-    fun updates(): Publisher<Emission.Update>
+    fun notifications(): Publisher<List<Notification>>
 
     /**
      * Subscribe to this to be notified of the current count of unread messages.
@@ -46,7 +63,7 @@ interface NotificationsRepositoryInterface {
 
     /**
      * Request that the notification be as marked as read.  This method will return immediately.
-     * The consumer will see the changes by a new [Emission.Update] being updated on the [updates]
+     * The consumer will see the changes by a new [Emission.Update] being updated on the [notifications]
      * publisher.
      */
     fun markRead(notification: Notification)
@@ -64,7 +81,7 @@ interface NotificationsRepositoryInterface {
 
     /**
      * Request that the notification be marked as deleted.  This method will return immediately.
-     * The consumer will see the changes by a new [Emission.Update] being updated on the [updates]
+     * The consumer will see the changes by a new [Emission.Update] being updated on the [notifications]
      * publisher.
      */
     fun delete(notification: Notification)
@@ -81,7 +98,7 @@ interface NotificationsRepositoryInterface {
     }
 }
 
-interface NotificationCenterListViewModelInterface : BindableViewModel {
+interface InboxListViewModelInterface : BindableViewModel {
     /**
      * Subscribe to this event stream to be informed of when a user performs an action that needs
      * to be handled.
@@ -104,7 +121,7 @@ interface NotificationCenterListViewModelInterface : BindableViewModel {
          *
          * This is to better suit View implementations that may display any arbitrary detail of the
          * Notification.  Notification itself is a value object.
-        */
+         */
         data class ListUpdated(val notifications: List<Notification>, val stableIds: Map<String, Int>) : Event()
 
         data class Navigate(val notification: Notification) : Event()
@@ -136,7 +153,7 @@ interface NotificationCenterListViewModelInterface : BindableViewModel {
 }
 
 /**
- * View model for notification list items in the notification center.
+ * View model for notification list items in the inbox.
  */
 interface NotificationItemViewModelInterface : BindableViewModel {
     /**

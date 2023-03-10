@@ -1,12 +1,29 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.notifications
 
+import android.app.Activity
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import io.rover.sdk.core.Rover
 import io.rover.sdk.core.logging.log
@@ -14,7 +31,7 @@ import io.rover.sdk.core.platform.DateFormattingInterface
 import io.rover.sdk.notifications.domain.Notification
 import io.rover.sdk.notifications.graphql.decodeJson
 import io.rover.sdk.notifications.graphql.encodeJson
-import io.rover.sdk.notifications.ui.concerns.NotificationsRepositoryInterface
+import io.rover.sdk.notifications.ui.concerns.NotificationStoreInterface
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -28,7 +45,7 @@ import org.json.JSONObject
  * So, this Activity will be responsible for emitting that that side-effect happens, although
  * it does so by delegating to [NotificationOpen].
  */
-class TransientNotificationLaunchActivity : AppCompatActivity() {
+class TransientNotificationLaunchActivity : Activity() {
 
     // TODO: make transparent/invisible somehow to avoid flicker
 
@@ -36,10 +53,7 @@ class TransientNotificationLaunchActivity : AppCompatActivity() {
         super.onStart()
 
         val rover = Rover.shared
-        if (rover == null) {
-            log.e("TransientNotificationLaunchActivity cannot be used before Rover is initialized.")
-            return
-        }
+
         val notificationOpen = rover.resolve(NotificationOpenInterface::class.java)
         if (notificationOpen == null) {
             log.e("Could not resolve NotificationOpenInterface in Rover container.  Ensure NotificationAssembler() is added to Rover.initialize.")
@@ -55,7 +69,7 @@ class TransientNotificationLaunchActivity : AppCompatActivity() {
             log.e("Could not resolve DateFormattingInterface in Rover container.  Ensure NotificationAssembler() is added to Rover.initialize.")
             return
         }
-        val notificationsRepository = rover.resolve(NotificationsRepositoryInterface::class.java)
+        val notificationsRepository = rover.resolve(NotificationStoreInterface::class.java)
         if (notificationsRepository == null) {
             log.e("Could not resolve NotificationsRepositoryInterface in the Rover container.  Ensure NotificationAssembler() is added to Rover.initialize.")
         }
@@ -115,7 +129,6 @@ class TransientNotificationLaunchActivity : AppCompatActivity() {
             val notificationJson = notification.encodeJson(
                 (
                     Rover.shared
-                        ?: throw RuntimeException("Cannot generate Rover intent when Rover is not initialized.")
                     )
                     .resolveSingletonOrFail(DateFormattingInterface::class.java)
             )

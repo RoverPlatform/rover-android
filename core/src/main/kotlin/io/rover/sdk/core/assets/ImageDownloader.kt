@@ -1,8 +1,25 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.core.assets
 
 import android.net.http.HttpResponseCache
-import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.data.http.AndroidHttpsUrlConnectionNetworkClient
+import io.rover.sdk.core.logging.log
 import org.reactivestreams.Publisher
 import org.reactivestreams.Subscription
 import java.io.BufferedInputStream
@@ -74,9 +91,9 @@ class ImageDownloader(
                             log.w("$url -> connection failure: ${e.message}")
 
                             if (!cancelled) subscriber.onNext(
-                                    HttpClientResponse.ConnectionFailure(
-                                            e
-                                    )
+                                HttpClientResponse.ConnectionFailure(
+                                    e
+                                )
                             )
                             if (!cancelled) subscriber.onComplete()
 
@@ -89,18 +106,18 @@ class ImageDownloader(
                             in 200..299, 304 -> {
                                 try {
                                     HttpClientResponse.Success(
-                                            CloseableBufferedInputStream(
-                                                    connection.inputStream
-                                            ) {
-                                                // when done reading the buffered stream, I can close out
-                                                // the connection (actually, the platform usually interprets
-                                                // this as returning it to the connection pool).
-                                                connection.disconnect()
-                                            }
+                                        CloseableBufferedInputStream(
+                                            connection.inputStream
+                                        ) {
+                                            // when done reading the buffered stream, I can close out
+                                            // the connection (actually, the platform usually interprets
+                                            // this as returning it to the connection pool).
+                                            connection.disconnect()
+                                        }
                                     )
                                 } catch (e: IOException) {
                                     HttpClientResponse.ConnectionFailure(
-                                            e
+                                        e
                                     )
                                 }
                             }
@@ -112,8 +129,8 @@ class ImageDownloader(
                                             errorStream
                                         )
                                         val result = HttpClientResponse.ApplicationError(
-                                                responseCode,
-                                                stream.reader(Charsets.UTF_8).readText()
+                                            responseCode,
+                                            stream.reader(Charsets.UTF_8).readText()
                                         )
                                         stream.close()
                                         connection.disconnect()
@@ -121,7 +138,7 @@ class ImageDownloader(
                                     }
                                 } catch (e: IOException) {
                                     HttpClientResponse.ConnectionFailure(
-                                            e
+                                        e
                                     )
                                 }
                             }

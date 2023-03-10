@@ -1,17 +1,34 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 @file:JvmName("Notifications")
 
 package io.rover.sdk.notifications
 
 import android.app.Application
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ProcessLifecycleOwner
 import android.content.Context
 import android.content.Intent
-import androidx.annotation.DrawableRes
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.TextView
+import androidx.annotation.DrawableRes
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ProcessLifecycleOwner
 import io.rover.core.R
 import io.rover.sdk.core.Rover
 import io.rover.sdk.core.UrlSchemes
@@ -38,19 +55,19 @@ import io.rover.sdk.core.tracking.SessionTrackerInterface
 import io.rover.sdk.core.ui.concerns.BindableView
 import io.rover.sdk.notifications.domain.Notification
 import io.rover.sdk.notifications.routing.routes.PresentNotificationCenterRoute
-import io.rover.sdk.notifications.ui.NotificationCenterListViewModel
+import io.rover.sdk.notifications.ui.InboxListViewModel
 import io.rover.sdk.notifications.ui.NotificationItemView
 import io.rover.sdk.notifications.ui.NotificationItemViewModel
-import io.rover.sdk.notifications.ui.concerns.NotificationCenterListViewModelInterface
+import io.rover.sdk.notifications.ui.concerns.InboxListViewModelInterface
 import io.rover.sdk.notifications.ui.concerns.NotificationItemViewModelInterface
-import io.rover.sdk.notifications.ui.concerns.NotificationsRepositoryInterface
-import io.rover.sdk.notifications.ui.containers.NotificationCenterActivity
+import io.rover.sdk.notifications.ui.concerns.NotificationStoreInterface
+import io.rover.sdk.notifications.ui.containers.InboxActivity
 import java.util.concurrent.Executor
 
 class NotificationsAssembler @JvmOverloads constructor(
-        private val applicationContext: Context,
+    private val applicationContext: Context,
 
-        /**
+    /**
      * A small icon is necessary for Android push notifications.  Pass a drawable res id here.
      * Android will display it in the Android status bar when a notification from your app is
      * waiting, as a monochromatic silhouette.
@@ -63,44 +80,44 @@ class NotificationsAssembler @JvmOverloads constructor(
     @param:DrawableRes
     private val smallIconResId: Int,
 
-        /**
+    /**
      * The drawable level of [smallIconResId] that should be used for the icon silhouette used in
      * the notification drawer.
      */
     private val smallIconDrawableLevel: Int = 0,
 
-        /**
-    * Since Android O, all notifications need to have a "channel" selected, the list of which is
-    * defined by the app the developer.  The channels are meant to discriminate between different
-    * categories of push notification (eg. "account updates", "marketing messages", etc.) to allow
-    * the user to configure which channels of message they want to see from your app right from the
-    * Android notifications area.
-    *
-    * You should consider registering a set of channels when When configuring your campaigns you
-    * should consider setting the channel ID.  If you do not, then the push notifications arriving
-    * in your app through that campaign will instead be published to the Android notification area
-    * with the default channel ID "Rover".
-    *
-    * If you give an unregistered channel, or leave it set as the default, "Rover", Rover will
-    * attempt to register and configure it with the Android OS for you.  However, the channel
-    * description and other metadata will be descriptive.
-    */
+    /**
+     * Since Android O, all notifications need to have a "channel" selected, the list of which is
+     * defined by the app the developer.  The channels are meant to discriminate between different
+     * categories of push notification (eg. "account updates", "marketing messages", etc.) to allow
+     * the user to configure which channels of message they want to see from your app right from the
+     * Android notifications area.
+     *
+     * You should consider registering a set of channels when When configuring your campaigns you
+     * should consider setting the channel ID.  If you do not, then the push notifications arriving
+     * in your app through that campaign will instead be published to the Android notification area
+     * with the default channel ID "Rover".
+     *
+     * If you give an unregistered channel, or leave it set as the default, "Rover", Rover will
+     * attempt to register and configure it with the Android OS for you.  However, the channel
+     * description and other metadata will be descriptive.
+     */
     private val defaultChannelId: String = "rover",
 
-        /**
+    /**
      * The accent color of the small notification icon applied when the notification drawer is
      * expanded to display notifications.
      */
     private val iconColor: Int? = null,
 
-        /**
-     * Provide an [Intent] for opening your Notification Center.  While you can refrain from
+    /**
+     * Provide an [Intent] for opening your Inbox.  While you can refrain from
      * providing one, in that case the Rover SDK will use a very simple built-in version of the
-     * Notification Center which is probably not appropriate for the final version of your product.
+     * Inbox which is probably not appropriate for the final version of your product.
      */
-    private val notificationCenterIntent: Intent = NotificationCenterActivity.makeIntent(applicationContext),
+    private val inboxIntent: Intent = InboxActivity.makeIntent(applicationContext),
 
-        /**
+    /**
      * Rover will ask you to request a push token from Firebase, which is delivered back to you
      * asynchronously.  Then you should deliver the token back to Rover via a callback.
      *
@@ -119,9 +136,9 @@ class NotificationsAssembler @JvmOverloads constructor(
     override fun assemble(container: Container) {
         container.register(
             Scope.Singleton,
-            NotificationsRepositoryInterface::class.java
+            NotificationStoreInterface::class.java
         ) { resolver ->
-            NotificationsRepository(
+            NotificationStore(
                 resolver.resolveSingletonOrFail(DateFormattingInterface::class.java),
                 resolver.resolveSingletonOrFail(Executor::class.java, "io"),
                 resolver.resolveSingletonOrFail(Scheduler::class.java, "main"),
@@ -137,7 +154,7 @@ class NotificationsAssembler @JvmOverloads constructor(
         ) { resolver ->
             NotificationsSyncResource(
                 resolver.resolveSingletonOrFail(DeviceIdentificationInterface::class.java),
-                resolver.resolveSingletonOrFail(NotificationsRepositoryInterface::class.java)
+                resolver.resolveSingletonOrFail(NotificationStoreInterface::class.java)
             )
         }
 
@@ -176,10 +193,10 @@ class NotificationsAssembler @JvmOverloads constructor(
 
         container.register(
             Scope.Transient, // can be a singleton because it is stateless and has no parameters.
-            NotificationCenterListViewModelInterface::class.java
+            InboxListViewModelInterface::class.java
         ) { resolver, activityLifecycle: Lifecycle ->
-            NotificationCenterListViewModel(
-                resolver.resolveSingletonOrFail(NotificationsRepositoryInterface::class.java),
+            InboxListViewModel(
+                resolver.resolveSingletonOrFail(NotificationStoreInterface::class.java),
                 resolver.resolveSingletonOrFail(SessionTrackerInterface::class.java),
                 activityLifecycle
             )
@@ -277,7 +294,7 @@ class NotificationsAssembler @JvmOverloads constructor(
             NotificationDispatcher(
                 applicationContext,
                 resolver.resolveSingletonOrFail(Scheduler::class.java, "main"),
-                resolver.resolveSingletonOrFail(NotificationsRepositoryInterface::class.java),
+                resolver.resolveSingletonOrFail(NotificationStoreInterface::class.java),
                 resolver.resolveSingletonOrFail(NotificationOpenInterface::class.java),
                 resolver.resolveSingletonOrFail(AssetService::class.java),
                 resolver.resolveSingletonOrFail(InfluenceTrackerServiceInterface::class.java),
@@ -302,7 +319,7 @@ class NotificationsAssembler @JvmOverloads constructor(
             resolver.resolveSingletonOrFail(ContextProvider::class.java, "notification")
         )
 
-        resolver.resolveSingletonOrFail(NotificationsRepositoryInterface::class.java)
+        resolver.resolveSingletonOrFail(NotificationStoreInterface::class.java)
 
         resolver.resolveSingletonOrFail(InfluenceTrackerServiceInterface::class.java).startListening()
 
@@ -310,7 +327,7 @@ class NotificationsAssembler @JvmOverloads constructor(
             registerRoute(
                 PresentNotificationCenterRoute(
                     resolver.resolveSingletonOrFail(UrlSchemes::class.java).schemes,
-                    notificationCenterIntent
+                    inboxIntent
                 )
             )
         }
@@ -324,17 +341,18 @@ class NotificationsAssembler @JvmOverloads constructor(
         }
     }
 }
-@Deprecated("Use .resolve(PushReceiverInterface::class.java)")
+
 val Rover.pushReceiver: PushReceiverInterface
     get() = this.resolve(PushReceiverInterface::class.java) ?: throw missingDependencyError("PushReceiverInterface")
 
-@Deprecated("Use .resolve(NotificationOpenInterface::class.java)")
 val Rover.notificationOpen: NotificationOpenInterface
     get() = this.resolve(NotificationOpenInterface::class.java) ?: throw missingDependencyError("NotificationOpenInterface")
 
-@Deprecated("Use .resolve(InfluenceTrackerServiceInterface::class.java)")
 val Rover.influenceTracker: InfluenceTrackerServiceInterface
     get() = this.resolve(InfluenceTrackerServiceInterface::class.java) ?: throw missingDependencyError("InfluenceTrackerService")
+
+val Rover.notificationStore: NotificationStoreInterface
+    get() = this.resolve(NotificationStoreInterface::class.java) ?: throw missingDependencyError("NotificationsStoreInterface")
 
 private fun missingDependencyError(name: String): Throwable {
     throw RuntimeException("Dependency not registered: $name.  Did you include NotificationsAssembler() in the assembler list?")

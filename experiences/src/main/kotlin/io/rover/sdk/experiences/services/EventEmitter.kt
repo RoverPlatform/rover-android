@@ -1,76 +1,136 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.experiences.services
 
-import io.rover.sdk.experiences.data.events.RoverEvent
-import io.rover.sdk.experiences.logging.log
-import io.rover.sdk.core.streams.PublishSubject
-import io.rover.sdk.core.streams.share
-import org.reactivestreams.Publisher
+import android.app.Activity
+import io.rover.sdk.core.events.EventQueueServiceInterface
+import io.rover.sdk.core.events.domain.Event
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 /**
- * Provides a single source for Rover events being emitted.
+ * Subscribe to this to receive events emitted by Experiences.
  *
- * You can subscribe to the [trackedEvents] Publisher to be informed of them.
+ * Will also be responsible for dispatching Experience events to the Rover
+ * event queue in the format needed by the cloud-side services.
  *
- * Alternatively, you can add a [RoverEventListener] to receive event updates
+ * Note, this does not offer events for classic experiences. For that,
+ * see [ClassicEventEmitter].
  */
-class EventEmitter {
-    private val eventSubject = PublishSubject<RoverEvent>()
+internal class EventEmitter(
+    private val eventQueueServiceInterface: EventQueueServiceInterface
+) {
+    private val sharedFlow: MutableSharedFlow<ExperienceEvent> = MutableSharedFlow()
 
-    val trackedEvents: Publisher<RoverEvent> by lazy { eventSubject.share() }
+    private val dispatcher = Dispatchers.IO
 
-    internal fun trackEvent(roverEvent: RoverEvent) {
-        eventSubject.onNext(roverEvent)
-        log.d("Event emitted: $roverEvent")
-        when (roverEvent) {
-            is RoverEvent.BlockTapped -> listeners.forEach { it.onBlockTapped(roverEvent) }
-            is RoverEvent.ExperienceDismissed -> listeners.forEach {
-                it.onExperienceDismissed(
-                    roverEvent
-                )
+    internal val events = sharedFlow.asSharedFlow()
+
+    internal fun emit(
+        event: ExperienceEvent
+    ) {
+        CoroutineScope(dispatcher).launch {
+            // emit the event to any listeners:
+            sharedFlow.emit(event)
+
+            // dispatch the event to the event queue (on main thread):
+            launch(Dispatchers.Main) {
+                event.toEventQueueFormat()?.let { roverEvent ->
+                    eventQueueServiceInterface.trackEvent(
+                        roverEvent,
+                        "rover"
+                    )
+                }
             }
-            is RoverEvent.ScreenDismissed -> listeners.forEach { it.onScreenDismissed(roverEvent) }
-            is RoverEvent.ExperiencePresented -> listeners.forEach {
-                it.onExperiencePresented(
-                    roverEvent
-                )
-            }
-            is RoverEvent.ExperienceViewed -> listeners.forEach { it.onExperienceViewed(roverEvent) }
-            is RoverEvent.ScreenViewed -> listeners.forEach { it.onScreenViewed(roverEvent) }
-            is RoverEvent.ScreenPresented -> listeners.forEach { it.onScreenPresented(roverEvent) }
-            is RoverEvent.PollAnswered -> listeners.forEach { it.onPollAnswered(roverEvent) }
-            is RoverEvent.AppOpened -> { /* no-op */ }
         }
-    }
-
-    private val listeners: MutableList<RoverEventListener> = mutableListOf()
-
-    fun addEventListener(listener: RoverEventListener) {
-        listeners.add(listener)
-    }
-
-    fun removeEventListener(listener: RoverEventListener) {
-        listeners.remove(listener)
-    }
-
-    fun removeAllListeners() {
-        listeners.clear()
     }
 }
 
-interface RoverEventListener {
-    fun onBlockTapped(event: RoverEvent.BlockTapped) {}
+internal interface ExperienceEvent {
+    /**
+     * Create the [Event] type used for the event queue.
+     *
+     * Returns null if this event should not be sent to the event queue.
+     */
+    fun toEventQueueFormat(): Event?
+}
 
-    fun onExperienceDismissed(event: RoverEvent.ExperienceDismissed) {}
+internal data class ExperienceScreenViewed(
+    val experienceName: String?,
+    val experienceId: String?,
+    val screenName: String?,
+    val screenId: String,
+    val screenTags: List<String>,
+    val screenProperties: Map<String, String>,
+    val data: Any?,
+    val urlParameters: Map<String, String>,
+    val campaignId: String?
+) : ExperienceEvent {
+    /**
+     * Create the [Event] type used for the event queue.
+     */
+    override fun toEventQueueFormat(): Event {
+        val experienceAttributes = mapOf(
+            "name" to experienceName,
+            "id" to experienceId,
+            "campaignID" to campaignId
+        ).filterNullValues()
 
-    fun onScreenDismissed(event: RoverEvent.ScreenDismissed) {}
+        val screenAttributes = mapOf(
+            "name" to screenName,
+            "id" to screenId
+        ).filterNullValues()
 
-    fun onExperiencePresented(event: RoverEvent.ExperiencePresented) {}
+        val attributes: Map<String, Any> = mapOf(
+            "experience" to experienceAttributes,
+            "screen" to screenAttributes
+        ).filterNullValues()
 
-    fun onExperienceViewed(event: RoverEvent.ExperienceViewed) {}
+        return Event(
+            name = "Experience Screen Viewed",
+            attributes = attributes
+        )
+    }
+}
 
-    fun onScreenViewed(event: RoverEvent.ScreenViewed) {}
+internal data class CustomActionActivated(
+    val experienceName: String?,
+    val experienceId: String?,
+    val screenName: String?,
+    val screenId: String,
+    val screenTags: List<String>,
+    val screenProperties: Map<String, String>,
+    val data: Any?,
+    val urlParameters: Map<String, String>,
+    val campaignId: String?,
 
-    fun onScreenPresented(event: RoverEvent.ScreenPresented) {}
+    val nodeName: String?,
+    val nodeId: String,
+    val nodeTags: List<String>,
+    val nodeProperties: Map<String, String>,
 
-    fun onPollAnswered(event: RoverEvent.PollAnswered) {}
+    val activity: Activity?
+) : ExperienceEvent {
+    override fun toEventQueueFormat(): Event? = null
+}
+
+private fun <K, V> Map<K, V?>.filterNullValues(): Map<K, V> {
+    @Suppress("UNCHECKED_CAST")
+    return this.filterValues { it != null } as Map<K, V>
 }

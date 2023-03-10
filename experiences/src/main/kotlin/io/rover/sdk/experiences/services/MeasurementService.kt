@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.experiences.services
 
 import android.annotation.SuppressLint
@@ -9,17 +26,17 @@ import android.text.SpannableString
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.DisplayMetrics
-import io.rover.sdk.experiences.ui.blocks.barcode.BarcodeViewModelInterface
-import io.rover.sdk.experiences.ui.blocks.concerns.text.Font
-import io.rover.sdk.experiences.ui.blocks.concerns.text.FontAppearance
-import io.rover.sdk.experiences.ui.blocks.concerns.text.RichTextToSpannedTransformer
-import io.rover.sdk.experiences.ui.dpAsPx
-import io.rover.sdk.experiences.ui.pxAsDp
+import io.rover.sdk.experiences.classic.blocks.barcode.BarcodeViewModelInterface
+import io.rover.sdk.experiences.classic.blocks.concerns.text.Font
+import io.rover.sdk.experiences.classic.blocks.concerns.text.FontAppearance
+import io.rover.sdk.experiences.classic.blocks.concerns.text.RichTextToSpannedTransformer
+import io.rover.sdk.experiences.classic.dpAsPx
+import io.rover.sdk.experiences.classic.pxAsDp
 
 internal class MeasurementService(
-        private val displayMetrics: DisplayMetrics,
-        private val richTextToSpannedTransformer: RichTextToSpannedTransformer,
-        private val barcodeRenderingService: BarcodeRenderingService
+    private val displayMetrics: DisplayMetrics,
+    private val richTextToSpannedTransformer: RichTextToSpannedTransformer,
+    private val barcodeRenderingService: BarcodeRenderingService
 ) {
     // Snap the given Dp value to the nearest pixel, returning the equivalent Dp value.  The goal
     // here is to ensure when the resulting Dp value is converted to a Px value (for the same
@@ -30,10 +47,10 @@ internal class MeasurementService(
     }
 
     fun measureHeightNeededForMultiLineTextInTextView(
-            text: String,
-            fontAppearance: FontAppearance,
-            width: Float,
-            textViewLineSpacing: Float = 1.0f
+        text: String,
+        fontAppearance: FontAppearance,
+        width: Float,
+        textViewLineSpacing: Float = 1.0f
     ): Float {
         val spanned = SpannableString(text)
 
@@ -49,8 +66,15 @@ internal class MeasurementService(
             Paint.Align.RIGHT -> Layout.Alignment.ALIGN_OPPOSITE
         }
 
-        val layout = StaticLayout(spanned, paint, width.dpAsPx(displayMetrics), textLayoutAlign,
-            textViewLineSpacing, 0f, true)
+        val layout = StaticLayout(
+            spanned,
+            paint,
+            width.dpAsPx(displayMetrics),
+            textLayoutAlign,
+            textViewLineSpacing,
+            0f,
+            true
+        )
         return layout.height.pxAsDp(displayMetrics)
     }
 
@@ -67,17 +91,18 @@ internal class MeasurementService(
      */
     @SuppressLint("NewApi")
     fun measureHeightNeededForRichText(
-            richText: String,
-            fontAppearance: FontAppearance,
-            boldFontAppearance: Font,
-            width: Float
+        richText: String,
+        fontAppearance: FontAppearance,
+        boldFontAppearance: Font,
+        width: Float
     ): Float {
         val spanned = richTextToSpannedTransformer.transform(richText, boldFontAppearance)
 
         val paint = TextPaint().apply {
             textSize = fontAppearance.fontSize.toFloat() * displayMetrics.scaledDensity
             typeface = Typeface.create(
-                fontAppearance.font.fontFamily, fontAppearance.font.fontStyle
+                fontAppearance.font.fontFamily,
+                fontAppearance.font.fontStyle
             )
             textAlign = fontAppearance.align
             isAntiAlias = true
@@ -96,11 +121,9 @@ internal class MeasurementService(
                 .Builder.obtain(spanned, 0, spanned.length, paint, width.dpAsPx(displayMetrics))
                 .setAlignment(textLayoutAlign)
                 .setLineSpacing(0f, 1.0f)
-
                 // includePad ensures we don't clip off any of the ligatures that extend down past
                 // the rule line.
                 .setIncludePad(true)
-
                 // Experiences app does not appear to wrap text on text blocks.  This seems particularly
                 // important for short, tight blocks.
                 .setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE)
@@ -138,9 +161,9 @@ internal class MeasurementService(
      * width, in dps.
      */
     fun measureHeightNeededForBarcode(
-            text: String,
-            type: BarcodeViewModelInterface.BarcodeType,
-            width: Float
+        text: String,
+        type: BarcodeViewModelInterface.BarcodeType,
+        width: Float
     ): Float {
         return barcodeRenderingService.measureHeightNeededForBarcode(
             text,

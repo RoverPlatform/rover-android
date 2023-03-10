@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
+ * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
+ * copy, modify, and distribute this software in source code or binary form for use
+ * in connection with the web services and APIs provided by Rover.
+ *
+ * This copyright notice shall be included in all copies or substantial portions of
+ * the software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 package io.rover.sdk.core.data.http
 
 import android.content.Context
@@ -23,21 +40,21 @@ import javax.net.ssl.HttpsURLConnection
  * An implementation of [NetworkClient] powered by Android's stock [HttpsURLConnection].
  */
 class AndroidHttpsUrlConnectionNetworkClient(
-        private val ioScheduler: Scheduler,
-        private val appPackageInfo: PackageInfo
+    private val ioScheduler: Scheduler,
+    private val appPackageInfo: PackageInfo
 ) : NetworkClient {
 
     override fun request(
-            request: HttpRequest,
-            bodyData: String?
+        request: HttpRequest,
+        bodyData: String?
     ): Publisher<HttpClientResponse> {
         return request(request, bodyData, true)
     }
 
     fun request(
-            request: HttpRequest,
-            bodyData: String?,
-            gzip: Boolean
+        request: HttpRequest,
+        bodyData: String?,
+        gzip: Boolean
     ): Publisher<HttpClientResponse> {
         // synchronous API.
 
@@ -101,9 +118,9 @@ class AndroidHttpsUrlConnectionNetworkClient(
                 }
             } catch (e: IOException) {
                 subscriber.onNext(
-                        HttpClientResponse.ConnectionFailure(
-                                e
-                        )
+                    HttpClientResponse.ConnectionFailure(
+                        e
+                    )
                 )
                 return@create
             }
@@ -113,9 +130,9 @@ class AndroidHttpsUrlConnectionNetworkClient(
                 connection.responseCode
             } catch (e: IOException) {
                 subscriber.onNext(
-                        HttpClientResponse.ConnectionFailure(
-                                e
-                        )
+                    HttpClientResponse.ConnectionFailure(
+                        e
+                    )
                 )
                 return@create
             }
@@ -123,18 +140,18 @@ class AndroidHttpsUrlConnectionNetworkClient(
             this@AndroidHttpsUrlConnectionNetworkClient.log.d("$request : $responseCode")
 
             val result = when (responseCode) {
-            // success codes, and also handle 304 cached handling treat body as normal
-            // because the cache set up below is handling it.
+                // success codes, and also handle 304 cached handling treat body as normal
+                // because the cache set up below is handling it.
                 in 200..299, 304 -> {
                     try {
                         HttpClientResponse.Success(
-                                BufferedInputStream(
-                                        connection.inputStream
-                                )
+                            BufferedInputStream(
+                                connection.inputStream
+                            )
                         )
                     } catch (e: IOException) {
                         HttpClientResponse.ConnectionFailure(
-                                e
+                            e
                         )
                     }
                 }
@@ -149,8 +166,8 @@ class AndroidHttpsUrlConnectionNetworkClient(
                                     it
                                 ).reader(Charsets.UTF_8)
                                 val result = HttpClientResponse.ApplicationError(
-                                        responseCode,
-                                        stream.use { it.readText() }
+                                    responseCode,
+                                    stream.use { it.readText() }
                                 )
 
                                 result
@@ -158,7 +175,7 @@ class AndroidHttpsUrlConnectionNetworkClient(
                         }
                     } catch (e: IOException) {
                         HttpClientResponse.ConnectionFailure(
-                                e
+                            e
                         )
                     }
                 }
@@ -189,10 +206,12 @@ class AndroidHttpsUrlConnectionNetworkClient(
 
         @JvmStatic
         fun emitMissingCacheWarning() {
-            log.e("An HTTPUrlConnection cache is not enabled.\n" +
-                "Please see the Rover documentation for Installation and Initialization of the Rover SDK: https://developer.rover.io/v2/android/\n" +
-                "Ensure you are calling Rover.installSaneGlobalHttpCache() before Rover.initialize().\n" +
-                "Currently installed cache appears to be: ${HttpResponseCache.getInstalled()}")
+            log.e(
+                "An HTTPUrlConnection cache is not enabled.\n" +
+                    "Please see the Rover documentation for Installation and Initialization of the Rover SDK: https://developer.rover.io/v2/android/\n" +
+                    "Ensure you are calling Rover.installSaneGlobalHttpCache() before Rover.initialize().\n" +
+                    "Currently installed cache appears to be: ${HttpResponseCache.getInstalled()}"
+            )
         }
     }
 

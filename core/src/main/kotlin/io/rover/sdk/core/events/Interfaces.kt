@@ -129,3 +129,12 @@ interface UserInfoInterface {
      */
     val currentUserInfo: Attributes
 }
+
+interface AppLastSeenInterface {
+    /**
+     * Call this to set the last seen time of the app.
+     *
+     * This will allow you to track the last time the app was seen by the user.
+     */
+    fun markAppLastSeen()
+}

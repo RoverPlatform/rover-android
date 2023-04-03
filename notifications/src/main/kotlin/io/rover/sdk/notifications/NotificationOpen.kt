@@ -20,12 +20,14 @@ package io.rover.sdk.notifications
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import io.rover.sdk.core.Rover
 import io.rover.sdk.core.events.EventQueueService
 import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.core.events.domain.Event
 import io.rover.sdk.core.platform.DateFormattingInterface
 import io.rover.sdk.core.routing.Router
 import io.rover.sdk.core.routing.website.EmbeddedWebBrowserDisplayInterface
+import io.rover.sdk.core.tracking.ConversionsTrackerService
 import io.rover.sdk.notifications.domain.Notification
 import io.rover.sdk.notifications.domain.events.asAttributeValue
 import io.rover.sdk.notifications.graphql.decodeJson
@@ -63,6 +65,11 @@ open class NotificationOpen(
         // side-effect: issue open event.
         val notification = Notification.decodeJson(JSONObject(notificationJson), dateFormatting)
 
+        notification.conversionTags?.let { conversionTags ->
+            val conversionTrackerService = Rover.shared.resolve(ConversionsTrackerService::class.java)
+            conversionTrackerService?.trackConversions(conversionTags)
+        }
+
         issueNotificationOpenedEvent(
             notification,
             NotificationSource.Push
@@ -74,6 +81,11 @@ open class NotificationOpen(
     override fun intentForOpeningNotificationDirectly(notification: Notification): Intent? {
         // we only want to open the given notification's action in the case where it would
         // navigate somewhere useful, not just re-open the app.
+
+        notification.conversionTags?.let { conversionTags ->
+            val conversionTrackerService = Rover.shared.resolve(ConversionsTrackerService::class.java)
+            conversionTrackerService?.trackConversions(conversionTags)
+        }
 
         issueNotificationOpenedEvent(
             notification,

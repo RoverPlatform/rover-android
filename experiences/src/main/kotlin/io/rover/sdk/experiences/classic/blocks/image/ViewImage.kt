@@ -44,10 +44,12 @@ internal class ViewImage(
             val measuredSize = binding.measuredSize ?: throw RuntimeException("ViewImage may only be used with a view model binding including a measured size (ie. used within a Rover screen layout).")
 
             with(imageView) {
-
                 alpha = 0f
                 val isAccessible = binding.viewModel.isClickable || !binding.viewModel.isDecorative
-                isFocusableInTouchMode = isAccessible
+                // We do not want to set the image as focusable, because this causes undesirable
+                // behaviour for users not using TalkBack/a11y technology: they'd have to click
+                // the image twice if it has a click action on it.  importantForAccessibility
+                // is all we need to have the image be announced by TalkBack.
                 importantForAccessibility = if (isAccessible) {
                     contentDescription = binding.viewModel.accessibilityLabel
                     View.IMPORTANT_FOR_ACCESSIBILITY_YES

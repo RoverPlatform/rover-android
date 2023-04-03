@@ -45,6 +45,7 @@ import io.rover.sdk.core.data.sync.SyncClient
 import io.rover.sdk.core.data.sync.SyncClientInterface
 import io.rover.sdk.core.data.sync.SyncCoordinator
 import io.rover.sdk.core.data.sync.SyncCoordinatorInterface
+import io.rover.sdk.core.events.AppLastSeenInterface
 import io.rover.sdk.core.events.ContextProvider
 import io.rover.sdk.core.events.EventQueueService
 import io.rover.sdk.core.events.EventQueueServiceInterface
@@ -52,9 +53,11 @@ import io.rover.sdk.core.events.UserInfo
 import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.core.events.contextproviders.ApplicationContextProvider
 import io.rover.sdk.core.events.contextproviders.BluetoothContextProvider
+import io.rover.sdk.core.events.contextproviders.ConversionsContextProvider
 import io.rover.sdk.core.events.contextproviders.DarkModeContextProvider
 import io.rover.sdk.core.events.contextproviders.DeviceContextProvider
 import io.rover.sdk.core.events.contextproviders.DeviceIdentifierContextProvider
+import io.rover.sdk.core.events.contextproviders.LastSeenContextProvider
 import io.rover.sdk.core.events.contextproviders.LocaleContextProvider
 import io.rover.sdk.core.events.contextproviders.LocationServicesContextProvider
 import io.rover.sdk.core.events.contextproviders.ReachabilityContextProvider
@@ -83,6 +86,8 @@ import io.rover.sdk.core.streams.Scheduler
 import io.rover.sdk.core.streams.forAndroidMainThread
 import io.rover.sdk.core.streams.forExecutor
 import io.rover.sdk.core.tracking.ApplicationSessionEmitter
+import io.rover.sdk.core.tracking.ConversionsManager
+import io.rover.sdk.core.tracking.ConversionsTrackerService
 import io.rover.sdk.core.tracking.SessionStore
 import io.rover.sdk.core.tracking.SessionStoreInterface
 import io.rover.sdk.core.tracking.SessionTracker
@@ -332,12 +337,22 @@ class CoreAssembler @JvmOverloads constructor(
             "deviceIdentifier"
         ) { resolver ->
             DeviceIdentifierContextProvider(
-                resolver.resolveSingletonOrFail(DeviceIdentificationInterface::class.java)
+                    resolver.resolveSingletonOrFail(DeviceIdentificationInterface::class.java)
             )
         }
 
         container.register(Scope.Singleton, ContextProvider::class.java, "sdkVersion") { _ ->
             SdkVersionContextProvider()
+        }
+
+        container.register(Scope.Singleton, ContextProvider::class.java, "lastSeen") { resolver ->
+            LastSeenContextProvider(
+                    resolver.resolveSingletonOrFail(LocalStorage::class.java)
+            )
+        }
+
+        container.register(Scope.Singleton, AppLastSeenInterface::class.java) { resolver ->
+            resolver.resolve(ContextProvider::class.java, "lastSeen") as AppLastSeenInterface
         }
 
         BluetoothAdapter.getDefaultAdapter().whenNotNull { bluetoothAdapter ->
@@ -438,24 +453,54 @@ class CoreAssembler @JvmOverloads constructor(
                 ProcessLifecycleOwner.get().lifecycle
             )
         }
+
+        container.register(
+                Scope.Singleton,
+                ConversionsManager::class.java
+        ) { resolver ->
+            ConversionsManager(
+                    resolver.resolveSingletonOrFail(LocalStorage::class.java)
+            )
+        }
+
+        container.register(
+                Scope.Singleton,
+                ConversionsTrackerService::class.java
+        ) { resolver ->
+            ConversionsTrackerService(
+                    resolver.resolveSingletonOrFail(ConversionsManager::class.java)
+            )
+        }
+
+        container.register(
+                Scope.Singleton,
+                ContextProvider::class.java,
+                "conversions"
+        ) { resolver ->
+            ConversionsContextProvider(
+                    resolver.resolveSingletonOrFail(ConversionsManager::class.java)
+            )
+        }
     }
 
     override fun afterAssembly(resolver: Resolver) {
         val eventQueue = resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java)
 
         listOf(
-            resolver.resolveSingletonOrFail(ContextProvider::class.java, "device"),
-            resolver.resolveSingletonOrFail(ContextProvider::class.java, "locale"),
-            resolver.resolveSingletonOrFail(ContextProvider::class.java, "darkMode"),
-            resolver.resolveSingletonOrFail(ContextProvider::class.java, "reachability"),
-            resolver.resolveSingletonOrFail(ContextProvider::class.java, "screen"),
-            resolver.resolveSingletonOrFail(ContextProvider::class.java, "telephony"),
-            resolver.resolveSingletonOrFail(ContextProvider::class.java, "timeZone"),
-            resolver.resolveSingletonOrFail(ContextProvider::class.java, "attributes"),
-            resolver.resolveSingletonOrFail(ContextProvider::class.java, "application"),
-            resolver.resolveSingletonOrFail(ContextProvider::class.java, "deviceIdentifier"),
-            resolver.resolveSingletonOrFail(ContextProvider::class.java, "sdkVersion"),
-            resolver.resolveSingletonOrFail(ContextProvider::class.java, "locationAuthorization")
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "device"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "locale"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "darkMode"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "reachability"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "screen"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "telephony"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "timeZone"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "attributes"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "application"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "deviceIdentifier"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "sdkVersion"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "locationAuthorization"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "conversions"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "lastSeen")
         ).forEach { eventQueue.addContextProvider(it) }
 
         resolver.resolveSingletonOrFail(VersionTrackerInterface::class.java).trackAppVersion()
@@ -480,6 +525,10 @@ class CoreAssembler @JvmOverloads constructor(
         } else {
             // deschedule any prior rover sync jobs.
             WorkManager.getInstance(application).cancelAllWorkByTag("rover-sync")
+        }
+
+        resolver.resolveSingletonOrFail(ConversionsManager::class.java).apply {
+            this.migrateLegacyTags()
         }
     }
 }

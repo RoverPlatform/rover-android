@@ -72,7 +72,9 @@ data class Notification(
 
     val attachment: NotificationAttachment?,
 
-    val campaignId: String
+    val campaignId: String,
+
+    val conversionTags: List<String>?
 ) {
     sealed class TapBehavior {
         data class PresentWebsite(val url: URI) : TapBehavior()

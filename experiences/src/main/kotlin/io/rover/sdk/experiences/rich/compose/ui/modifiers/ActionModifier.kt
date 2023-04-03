@@ -33,7 +33,14 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
+import io.rover.sdk.core.data.domain.Attributes
+import io.rover.sdk.core.eventQueue
+import io.rover.sdk.core.events.EventQueueService
+import io.rover.sdk.core.events.domain.Event
+import io.rover.sdk.experiences.rich.compose.model.nodes.Node
+import io.rover.sdk.experiences.rich.compose.model.nodes.Screen
 import io.rover.sdk.experiences.rich.compose.model.values.Action
+import io.rover.sdk.experiences.rich.compose.model.values.ExperienceModel
 import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.Services
 import io.rover.sdk.experiences.rich.compose.ui.data.Interpolator
@@ -60,6 +67,42 @@ internal fun ActionModifier(
     )
 
     Services.Inject { services ->
+        val node = Environment.LocalNode.current
+        val screen = Environment.LocalScreen.current
+        val experienceUrl = Environment.LocalExperienceUrl.current
+        val urlParameters = Environment.LocalUrlParameters.current
+        val experienceId = Environment.LocalExperienceId.current
+        val experienceName = Environment.LocalExperienceName.current
+        val localData = Environment.LocalData.current
+        val localActivity = LocalContext.current as? Activity
+
+        val experience = Environment.LocalExperienceModel.current
+        val campaignId = urlParameters["campaignID"]
+
+        fun fireEvent() {
+            if (experience == null || screen == null || node == null) {
+                Log.w(tag, "Button tapped with LocalExperienceModel environment local missing. Skipping event send.")
+                return
+            }
+
+            val attributes: Attributes = mapOf(
+                "experience" to experience.experienceAttributes(
+                    id = experienceId,
+                    name = experienceName,
+                    campaignId = campaignId
+                ),
+                "screen" to screen.screenAttributes(),
+                "node" to node.nodeAttributes()
+            )
+            services.rover.eventQueue.trackEvent(
+                Event(
+                    "Experience Button Tapped",
+                    attributes = attributes
+                ),
+                EventQueueService.ROVER_NAMESPACE
+            )
+        }
+
         when (action) {
             is Action.PerformSegue -> {
                 val navigateFunction = Environment.LocalNavigateToScreen.current
@@ -67,6 +110,7 @@ internal fun ActionModifier(
 
                 ActionModifierButton(
                     onClick = {
+                        fireEvent()
                         when (val screen = action.screenID) {
                             is String -> navigateFunction?.invoke(screen, localData)
                             null -> Log.w(tag, "Tried to do $action without a screen ID. Ignoring!")
@@ -86,6 +130,7 @@ internal fun ActionModifier(
 
                 ActionModifierButton(
                     onClick = {
+                        fireEvent()
                         interpolator.interpolate(action.url)?.let { url ->
                             val intent = services.rover.intentForLink(Uri.parse(url)) ?: Intent(
                                 Intent.ACTION_VIEW,
@@ -112,6 +157,7 @@ internal fun ActionModifier(
 
                 ActionModifierButton(
                     onClick = {
+                        fireEvent()
                         interpolator.interpolate(action.url)?.let {
                             try {
                                 customTabIntent.launchUrl(context, Uri.parse(it))
@@ -130,7 +176,10 @@ internal fun ActionModifier(
                 val dismissExperienceFunction = Environment.LocalDismissExperience.current
 
                 ActionModifierButton(
-                    onClick = { dismissExperienceFunction?.invoke() },
+                    onClick = {
+                        fireEvent()
+                        dismissExperienceFunction?.invoke()
+                    },
                     modifier = modifier
                 ) {
                     content(modifier = Modifier)
@@ -139,18 +188,16 @@ internal fun ActionModifier(
 
             is Action.Custom -> {
                 val dismissExperienceFunction = if (action.dismissExperience) Environment.LocalDismissExperience.current else null
-                val node = Environment.LocalNode.current ?: return@Inject
-                val screen = Environment.LocalScreen.current ?: return@Inject
-                val experienceUrl = Environment.LocalExperienceUrl.current
-                val urlParameters = Environment.LocalUrlParameters.current
-                val experienceId = Environment.LocalExperienceId.current
-                val experienceName = Environment.LocalExperienceName.current
-                val localData = Environment.LocalData.current
-                val localActivity = LocalContext.current as? Activity
 
                 ActionModifierButton(
                     onClick = {
+                        fireEvent()
                         dismissExperienceFunction?.invoke()
+
+                        if(screen == null || node == null) {
+                            Log.w(tag, "Custom action activated with LocalScreen or LocalNode environment local missing. Skipping event send.")
+                            return@ActionModifierButton
+                        }
 
                         services.eventEmitter.emit(
                             CustomActionActivated(
@@ -162,7 +209,7 @@ internal fun ActionModifier(
                                 screenProperties = screen.metadata?.propertiesMap ?: emptyMap(),
                                 data = localData,
                                 urlParameters = urlParameters,
-                                campaignId = urlParameters["campaignID"],
+                                campaignId = campaignId,
                                 nodeName = node.name,
                                 nodeId = node.id,
                                 nodeTags = node.metadata?.tags?.toList() ?: emptyList(),
@@ -199,4 +246,39 @@ private fun ActionModifierButton(
             indication = rememberRipple()
         )
     )
+}
+
+private fun ExperienceModel.experienceAttributes(
+    id: String?,
+    name: String?,
+    campaignId: String?
+): Map<String, String> {
+    val optionalMap: Map<String, String?> =
+        mapOf(
+            "id" to id,
+            "name" to name,
+            "campaignID" to campaignId
+        )
+
+    return optionalMap.filterValues { it != null }.mapValues { it.value!! }
+}
+
+private fun Screen.screenAttributes(): Map<String, String> {
+    val optionalMap: Map<String, String?> =
+        mapOf(
+            "id" to id,
+            "name" to name
+        )
+
+    return optionalMap.filterValues { it != null }.mapValues { it.value!! }
+}
+
+private fun Node.nodeAttributes(): Map<String, String> {
+    val optionalMap: Map<String, String?> =
+        mapOf(
+            "id" to id,
+            "name" to name
+        )
+
+    return optionalMap.filterValues { it != null }.mapValues { it.value!! }
 }

@@ -20,6 +20,8 @@ package io.rover.sdk.core.tracking
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
+import io.rover.sdk.core.Rover
+import io.rover.sdk.core.events.AppLastSeenInterface
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.whenNotNull
 
@@ -43,6 +45,8 @@ class ApplicationSessionEmitter(
                         "App Viewed",
                         hashMapOf()
                     )
+                    Rover.shared.resolveSingletonOrFail(AppLastSeenInterface::class.java)
+                            .markAppLastSeen()
                 }
 
                 @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)

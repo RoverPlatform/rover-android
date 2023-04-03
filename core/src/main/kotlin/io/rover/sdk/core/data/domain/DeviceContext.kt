@@ -104,7 +104,13 @@ data class DeviceContext(
     /**
      * A list of conversion tags
      */
-    val conversions: List<String>
+    val conversions: List<String>,
+
+    /**
+     * A timestamp indicating when the device was last seen by the user.
+     * This is an ISO 8601 formatted string.
+     */
+    val lastSeen: String?
 ) {
     companion object {
         internal fun blank(): DeviceContext {
@@ -112,7 +118,7 @@ data class DeviceContext(
                 null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null,
-                null, null, null, null, null, null, false, null, hashMapOf(), null, listOf()
+                null, null, null, null, null, null, false, null, hashMapOf(), null, listOf(), null
             )
         }
     }

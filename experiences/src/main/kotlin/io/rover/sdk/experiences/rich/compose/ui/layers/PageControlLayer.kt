@@ -21,12 +21,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import io.rover.sdk.experiences.rich.compose.model.nodes.PageControl
+import io.rover.sdk.experiences.rich.compose.model.values.Axis
 import io.rover.sdk.experiences.rich.compose.model.values.PageControlStyle
 import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.ViewID
-import io.rover.sdk.experiences.rich.compose.ui.layout.StripPackedIntrinsics
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
+import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandLayoutModifier
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeColor
 import io.rover.sdk.experiences.rich.compose.vendor.accompanist.pager.*
 
@@ -45,7 +47,14 @@ internal fun PageControlLayer(node: PageControl) {
                 inactiveColor = node.inactiveColor(),
                 pageIndexMapping = { (it - carouselState.startIndex).floorMod(carouselState.collectionSize) },
                 modifier = Modifier
-                    .then(StripPackedIntrinsics())
+                    .then(
+                        ExpandLayoutModifier(
+                            false,
+                            Axis.HORIZONTAL,
+                            otherAxisSize = 20.dp,
+                            centerSmallChild = true
+                        )
+                    )
             )
         }
     }

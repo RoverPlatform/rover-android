@@ -18,20 +18,30 @@
 package io.rover.sdk.notifications.graphql
 
 import io.rover.sdk.core.data.graphql.getDate
+import io.rover.sdk.core.data.graphql.getStringIterable
 import io.rover.sdk.core.data.graphql.putProp
 import io.rover.sdk.core.data.graphql.safeGetString
 import io.rover.sdk.core.data.graphql.safeGetUri
+import io.rover.sdk.core.data.graphql.safeOptArray
 import io.rover.sdk.core.data.graphql.safeOptDate
 import io.rover.sdk.core.data.graphql.safeOptString
 import io.rover.sdk.core.platform.DateFormattingInterface
 import io.rover.sdk.core.platform.whenNotNull
 import io.rover.sdk.notifications.domain.Notification
 import io.rover.sdk.notifications.domain.NotificationAttachment
+import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import java.net.URL
 
 internal fun Notification.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
+    val conversionTagsArray = JSONArray()
+    if (conversionTags != null) {
+        for (element in conversionTags) {
+            conversionTagsArray.put(element)
+        }
+    }
+
     return JSONObject().apply {
         putProp(this@encodeJson, Notification::id, "id")
         putProp(this@encodeJson, Notification::title, "title")
@@ -45,6 +55,9 @@ internal fun Notification.encodeJson(dateFormatting: DateFormattingInterface): J
         putProp(this@encodeJson, Notification::attachment, "attachment") { it.whenNotNull { it.encodeJson() } }
         putProp(this@encodeJson, Notification::tapBehavior, "tapBehavior") { it.encodeJson() }
         putProp(this@encodeJson, Notification::campaignId, "campaignID")
+        if (conversionTags != null) {
+            put("conversionTags", conversionTagsArray)
+        }
     }
 }
 
@@ -76,19 +89,20 @@ internal fun NotificationAttachment.encodeJson(): JSONObject {
 
 internal fun Notification.Companion.decodeJson(json: JSONObject, dateFormatting: DateFormattingInterface): Notification {
     return Notification(
-        id = json.safeGetString("id"),
-        title = json.safeOptString("title"),
-        body = json.safeGetString("body"),
+            id = json.safeGetString("id"),
+            title = json.safeOptString("title"),
+            body = json.safeGetString("body"),
 //        channelId = json.safeOptString("channelId"), TODO put this back
-        channelId = null,
-        isRead = json.getBoolean("isRead"),
-        isDeleted = json.getBoolean("isDeleted"),
-        expiresAt = json.safeOptDate("expiresAt", dateFormatting),
-        deliveredAt = json.getDate("deliveredAt", dateFormatting),
-        isNotificationCenterEnabled = json.getBoolean("isNotificationCenterEnabled"),
-        tapBehavior = Notification.TapBehavior.decodeJson(json.getJSONObject("tapBehavior")),
-        attachment = if (json.has("attachment") && !json.isNull("attachment")) NotificationAttachment.decodeJson(json.getJSONObject("attachment")) else null,
-        campaignId = json.safeGetString("campaignID")
+            channelId = null,
+            isRead = json.getBoolean("isRead"),
+            isDeleted = json.getBoolean("isDeleted"),
+            expiresAt = json.safeOptDate("expiresAt", dateFormatting),
+            deliveredAt = json.getDate("deliveredAt", dateFormatting),
+            isNotificationCenterEnabled = json.getBoolean("isNotificationCenterEnabled"),
+            tapBehavior = Notification.TapBehavior.decodeJson(json.getJSONObject("tapBehavior")),
+            attachment = if (json.has("attachment") && !json.isNull("attachment")) NotificationAttachment.decodeJson(json.getJSONObject("attachment")) else null,
+            campaignId = json.safeGetString("campaignID"),
+            conversionTags = json.safeOptArray("conversionTags")?.getStringIterable()?.toList(),
     )
 }
 

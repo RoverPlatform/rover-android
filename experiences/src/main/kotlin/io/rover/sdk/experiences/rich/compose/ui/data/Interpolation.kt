@@ -17,32 +17,17 @@
 
 package io.rover.sdk.experiences.rich.compose.ui.data
 
-/*
- * Copyright (c) 2020-present, Rover Labs, Inc. All rights reserved.
- * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
- * copy, modify, and distribute this software in source code or binary form for use
- * in connection with the web services and APIs provided by Rover.
- *
- * This copyright notice shall be included in all copies or substantial portions of
- * the software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
- * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
- * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
 import android.util.Log
 import java.lang.NumberFormatException
 import java.math.RoundingMode
 import java.text.NumberFormat
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
 import java.util.*
+import java.util.regex.Pattern
 import kotlin.Exception
 
 /**
@@ -51,10 +36,13 @@ import kotlin.Exception
  * The passed [String] is deserialized and the operations happen outwards from the most nested point.
  */
 internal class Interpolator(
-    private val dataContext: DataContext
+    private val dataContext: DataContext,
+    private val overrideTimeZone: ZoneId? = null
 ) {
     companion object {
         internal const val TAG = "Interpolator"
+
+        // it's weird here that there's redundancy between these types and LocalDateTime and OffsetDateTime selection.
 
         internal val dateTimeFormatterTypes = listOf(
             DateTimeFormatter.ISO_OFFSET_DATE_TIME,
@@ -65,6 +53,8 @@ internal class Interpolator(
             DateTimeFormatter.ISO_TIME,
             DateTimeFormatter.ISO_LOCAL_DATE_TIME
         )
+
+        internal val offsetDetector = Pattern.compile("(?:Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])")
     }
 
     fun interpolate(theTextToInterpolate: String): String? {
@@ -246,7 +236,7 @@ internal class Interpolator(
             .replace(" ", "T")
 
         // Here we add the : to dates that specify the timezone offset, but do 4 straight digits.
-        // I.e. +0000 becomes +00:00 so the LocalDateTime parser is happy.
+        // I.e. +0000 becomes +00:00 so the OffsetDateTime parser is happy.
         // If the inputted date doesn't have an offset, we do nothing as we also support those formats later on.
         if ((dateString.lastIndex - dateString.indexOf("+")) == 4) {
             dateString = StringBuilder(dateString).insert(dateString.lastIndex - 1, ":").toString()
@@ -261,7 +251,7 @@ internal class Interpolator(
 
             return DateTimeFormatter
                 .ofPattern(getStringValue(desiredFormatString))
-                .withZone(ZoneId.systemDefault())
+                .withZone(overrideTimeZone ?: ZoneId.systemDefault())
                 .format(dateTime)
         } catch (e: Throwable) {
             Log.e(
@@ -282,9 +272,23 @@ internal class Interpolator(
     private fun tryParsingDateOrDateTime(input: String): TemporalAccessor {
         var result: TemporalAccessor? = null
 
+        // quite a lot of farting around has to be done here on account of the 'new' JSR-310
+        // java.time library has no useful equivalent to Joda Time's ISODateTimeFormat.dateTimeParser(),
+        // and can't handle the various variants of 8601 formats out of the box, including:
+
+        // - explicit zone offset vs local
+        // - time being included vs not
+
         for (type in dateTimeFormatterTypes) {
             try {
-                result = LocalDateTime.parse(input, type)
+                result = if (offsetDetector.matcher(input).find()) {
+                    // timestamp specifies zone
+                    OffsetDateTime.parse(input, type)
+                } else {
+                    // timestamp does not specify zone (thus should be treated as local)
+                    LocalDateTime.parse(input, type)
+                }
+
                 if (result != null) break
             } catch (t: Throwable) {
                 Log.d(

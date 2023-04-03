@@ -26,6 +26,8 @@ import io.rover.sdk.core.CoreAssembler
 import io.rover.sdk.core.Rover
 import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.debug.DebugAssembler
+import io.rover.sdk.example.ui.theme.DarkColorPalette
+import io.rover.sdk.example.ui.theme.LightColorPalette
 import io.rover.sdk.experiences.AppThemeDescription
 import io.rover.sdk.experiences.ExperiencesAssembler
 import io.rover.sdk.experiences.authorize
@@ -69,18 +71,27 @@ class ExampleApplication : Application() {
             TicketmasterAssembler(),
             ExperiencesAssembler(
                 // pass in your theme's colors here to enable default styles
-                // on certain components:
+                // on certain components. You can either specify classic Android colour values,
+                // or Jetpack Compose theme colours.
+
+                // Using your Android XML color resources:
+//                appThemeDescription = AppThemeDescription(
+//                    lightColors = AppThemeDescription.ThemeColors(
+//                        // get your colors from your theme resources like this:
+//                        primary = this.resources.getColor(R.color.colorPrimary, null),
+//                        onPrimary = this.resources.getColor(R.color.colorAccent, null)
+//                    ),
+//                    darkColors = AppThemeDescription.ThemeColors(
+//                        // get your colors from your theme resources like this:
+//                        primary = this.resources.getColor(R.color.colorPrimaryDark, null),
+//                        onPrimary = this.resources.getColor(R.color.colorAccent, null)
+//                    )
+//                )
+
+                // Or, you can use your jetpack compose Colors:
                 appThemeDescription = AppThemeDescription(
-                    lightColors = AppThemeDescription.ThemeColors(
-                        // use your real theme colors here:
-                        primary = Color.RED,
-                        onPrimary = Color.GREEN
-                    ),
-                    darkColors = AppThemeDescription.ThemeColors(
-                        // use your real theme colors here:
-                        primary = Color.GREEN,
-                        onPrimary = Color.RED
-                    )
+                    lightColors = AppThemeDescription.ThemeColors(LightColorPalette),
+                    darkColors = AppThemeDescription.ThemeColors(DarkColorPalette)
                 )
             )
         )

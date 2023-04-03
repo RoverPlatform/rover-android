@@ -64,7 +64,8 @@ internal fun DeviceContext.asJson(dateFormatting: DateFormattingInterface): JSON
             DeviceContext::isBluetoothEnabled,
             DeviceContext::sdkVersion,
             DeviceContext::isTestDevice,
-            DeviceContext::advertisingIdentifier
+            DeviceContext::advertisingIdentifier,
+            DeviceContext::lastSeen
         )
 
         props.forEach { putProp(this@asJson, it) }
@@ -121,7 +122,8 @@ internal fun DeviceContext.Companion.decodeJson(json: JSONObject, dateFormatting
             Location.decodeJson(locationJson, dateFormatting)
         },
         advertisingIdentifier = json.safeOptString("advertisingIdentifier"),
-        conversions = json.optJSONArray("conversions")?.getStringIterable()?.toList() ?: emptyList()
+        conversions = json.optJSONArray("conversions")?.getStringIterable()?.toList() ?: emptyList(),
+        lastSeen = json.safeOptString("lastSeen")
     )
 }
 

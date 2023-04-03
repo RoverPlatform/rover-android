@@ -133,6 +133,10 @@ fun JSONObject.safeOptDate(name: String, dateFormatting: DateFormattingInterface
     }
 }
 
+fun JSONObject.safeOptArray(name: String): JSONArray? {
+    return if (isNull(name) || !this.has(name)) null else optJSONArray(name)
+}
+
 fun <T, R> JSONObject.putProp(obj: T, prop: KProperty1<T, R>, transform: ((R) -> Any?)? = null) {
     put(
         prop.name,

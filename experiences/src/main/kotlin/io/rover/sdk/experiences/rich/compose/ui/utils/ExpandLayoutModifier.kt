@@ -32,7 +32,7 @@ import io.rover.sdk.experiences.rich.compose.ui.layout.mapMinIntrinsicAsFlex
  * This measurement policy expands to proposed space, participating in the Rover packed
  * intrinsics system.
  *
- * Note that it may be used on native Jetpack Compose measurables as well as Experiences ones,
+ * Note that it may be used on native Jetpack Compose measurables as well as Experiences' ones,
  * as it does not need to use child intrinsics.
  */
 internal class ExpandLayoutModifier(
@@ -57,7 +57,12 @@ internal class ExpandLayoutModifier(
     /**
      * The size to consume along any not expanded axis. Default 0 dp.
      */
-    private val otherAxisSize: Dp = 0.dp
+    private val otherAxisSize: Dp = 0.dp,
+
+    /**
+     * If the child is smaller than the available space, center it.
+     */
+    private val centerSmallChild: Boolean = false
 ) : LayoutModifier {
     override fun MeasureScope.measure(
         measurable: Measurable,
@@ -83,10 +88,18 @@ internal class ExpandLayoutModifier(
                 maxHeight = if (maxHeight == Constraints.Infinity) infinityDefault.roundToPx() else maxHeight
             )
         }
+        val placeable = measurable.measure(
+            maxConstraints
+        )
         return layout(maxConstraints.maxWidth, maxConstraints.maxHeight) {
-            measurable.measure(
-                maxConstraints
-            ).place(0, 0)
+            if(centerSmallChild) {
+                placeable.place(
+                    (maxConstraints.maxWidth - placeable.width) / 2,
+                    (maxConstraints.maxHeight - placeable.height) / 2
+                )
+            } else {
+                placeable.place(0, 0)
+            }
         }
     }
 
@@ -241,8 +254,8 @@ internal fun ExpandMeasurePolicy(
             return mapMinIntrinsicAsFlex {
                 // flexible or inflexible depending on axis
                 when (axis) {
-                    Axis.HORIZONTAL, null -> IntRange(0, Constraints.Infinity)
-                    Axis.VERTICAL -> IntRange(0, 0)
+                    Axis.VERTICAL, null -> IntRange(0, Constraints.Infinity)
+                    Axis.HORIZONTAL -> IntRange(0, 0)
                 }
             }
         }

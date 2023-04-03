@@ -155,7 +155,7 @@ internal class LoadExperienceViewModel : ViewModel() {
                         fontSources
                     )
                 } catch (exception: Exception) {
-                    Log.e(tag, "Unable to load experience: $exception")
+                    Log.e(tag, "Unable to load experience", exception)
                 }
             }
         }

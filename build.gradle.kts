@@ -17,8 +17,13 @@
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
-val roverSdkVersion by extra("4.1.1")
-val kotlinVersion by extra("1.7.10")
+// The version number for the build SDK modules and testbench app.
+val roverSdkVersion by extra("4.1.2")
+
+// Definitions of several core shared dependencies:
+val kotlinVersion by extra("1.8.20") // NB: when changing this one check the two duplicates of this number below
+val composeBomVersion by extra("2023.04.00")
+val composeKotlinCompilerExtensionVersion by extra("1.4.5")
 
 buildscript {
     repositories {
@@ -27,8 +32,9 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.android.tools.build:gradle:7.3.1")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.10")
+        classpath("com.android.tools.build:gradle:7.4.2")
+        // Kotlin version duplicated here because of goofy kts scoping rules.
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.20")
         classpath("com.google.gms:google-services:4.3.15")
     }
 }
@@ -36,7 +42,8 @@ buildscript {
 plugins {
     id("com.android.application") version "7.1.1" apply false
     id("com.android.library") version "7.1.1" apply false
-    id("org.jetbrains.kotlin.android") version "1.7.10" apply false
+    // Kotlin version duplicated here because of goofy kts scoping rules.
+    id("org.jetbrains.kotlin.android") version "1.8.20" apply false
 }
 
 task("printVersionNumber") {

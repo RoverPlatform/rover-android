@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package io.rover.sdk.experiences.rich.compose.ui.vendor.compose.ui
+package io.rover.sdk.experiences.rich.compose.vendor.compose.ui
 
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
-import io.rover.sdk.experiences.rich.compose.ui.vendor.graphicsLayer
 
 /**
  * Draw content with modified alpha that may be less than 1.
@@ -37,11 +36,9 @@ import io.rover.sdk.experiences.rich.compose.ui.vendor.graphicsLayer
  *
  * @param alpha the fraction of children's alpha value and must be between `0` and `1`, inclusive.
  */
+// ROVER: replaced graphicsLayer() with our own vendored version that tolerates packed intrinsics.
 @Stable
 internal fun Modifier.alpha(
     /*@FloatRange(from = 0.0, to = 1.0)*/
     alpha: Float
-): Modifier {
-    // ROVER: replaced graphicsLayer() with our own vendored version that tolerates packed intrinsics.
-    return if (alpha != 1.0f) graphicsLayer(alpha = alpha, clip = true) else this
-}
+) = if (alpha != 1.0f) graphicsLayer(alpha = alpha, clip = true) else this

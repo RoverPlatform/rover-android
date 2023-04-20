@@ -20,7 +20,7 @@ their measurement policies to do intrinsics pass-through.
 The methodology here was to copy the needed components over along with any of
 their needed dependencies, and then making the below changes:
 
-- Grab Scroll and i's needed dependencies (including clip, overscroll, and
+- Grab GraphicsLayerModifier and Scroll needed dependencies (including clip, overscroll, and
   graphicsLayer). Replace any `.layout()` modifiers with our
   `layoutWithIntrinsicsPassthrough()`.
 - Graph Modifier.opacity(). Should now use graphicsLayer modifier brought over above.
@@ -28,6 +28,7 @@ their needed dependencies, and then making the below changes:
   well as needed by Experiences's MaskModifier) to pass through intrinsics.
 - move them all into the `io.rover.sdk.experiences.rich.compose.ui.vendor.[ui/foundation]` package.
 - mark them anything previously `public` as `internal` to avoid leaking them to clients.
+- various changes to use vendored copy of any dependencies.
 
 Any places where those modifications have been made has been marked with a
 `ROVER:` comment.
@@ -39,7 +40,14 @@ running through that same procedure again.
 
 While we were lucky that, after duplicating things to a certain depth, we were
 indeed able to vendor these components without running into intractable issues
-with Private API, many of them do depend on ExperimentalFoundationApi optins. So
-there is a risk of ABI stability even across theoretically stable releases. This
-may materialize as integration issues for customers. We'll have to cross that
-bridge when we come to it.
+with Private API, many of them do depend on ExperimentalFoundationApi optins.
+
+Jetpack Compose has proved to have unstable public APIs in the areas that the vendored items call,
+even across minor releases with theoretically stable APIs. This means that for all Jetpack
+Compose releases this procedure basically needs to be redone.
+
+## Ongoing Strategy
+
+We've also determined that we should stay abreast of the latest Jetpack Compose BoM release,
+in order to avoid having our Compose dep brought forward to an incompatible release within
+a customer's app.

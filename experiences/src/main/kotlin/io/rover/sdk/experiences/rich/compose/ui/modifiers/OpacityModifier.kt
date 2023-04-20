@@ -19,19 +19,19 @@ package io.rover.sdk.experiences.rich.compose.ui.modifiers
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import io.rover.sdk.experiences.rich.compose.ui.vendor.compose.ui.alpha
+import io.rover.sdk.experiences.rich.compose.vendor.compose.ui.alpha
 
 @Composable
 internal fun OpacityModifier(
     opacity: Float?,
     modifier: Modifier,
-    content: @Composable (modifier: Modifier) -> Unit
+    content: @Composable (modifier: Modifier) -> Unit,
 ) {
     if (opacity != null) {
         content(
             Modifier
                 .alpha(opacity)
-                .then(modifier)
+                .then(modifier),
 
             // compose order: outermost first.
             // swiftui: innermost first.

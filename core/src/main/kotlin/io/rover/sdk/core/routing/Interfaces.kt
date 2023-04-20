@@ -26,14 +26,11 @@ import java.net.URI
 interface Router {
     /**
      * Map the given [uri] to an Intent as per the relevant registered [Route].  If nothing in the
-     * currently installed Rover SDK modules can provide an Intent for the URI.
+     * currently installed Rover SDK modules can provide an Intent for the URI, returns null.
      *
-     * @param inbound If true, means the link is being executed by something outside of the Rover
-     * SDK, that is, an intent arriving from Android.  If false, means the link is being emitted by
-     * something within the Rover SDK, and that any URIs that fail to match any registered routes
-     * should be deferred to Android itself.
+     * @param inbound This parameter is unused.
      */
-    fun route(uri: URI?, inbound: Boolean): Intent?
+    fun route(uri: URI?, inbound: Boolean = false): Intent?
 
     /**
      * Register the given route.  Should typically be called in [Assembler.afterAssembly]

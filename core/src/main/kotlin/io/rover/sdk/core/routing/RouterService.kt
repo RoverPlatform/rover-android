@@ -22,9 +22,7 @@ import android.net.Uri
 import io.rover.sdk.core.logging.log
 import java.net.URI
 
-class RouterService(
-    private val openAppIntent: Intent?
-) : Router {
+class RouterService() : Router {
     private val registeredRoutes: MutableSet<Route> = mutableSetOf()
 
     override fun route(uri: URI?, inbound: Boolean): Intent? {
@@ -33,27 +31,13 @@ class RouterService(
         if (mappedUris.size > 1) {
             log.w(
                 "More than one Route matched the the given URI (`$uri`), resulting in the following intents: \n" +
-                    "    -> ${mappedUris.joinToString { it.toString() }}\n"
+                    "    -> ${mappedUris.joinToString { it.toString() }}\n",
             )
         }
 
         val handledByRover = mappedUris.firstOrNull()
 
-        return when {
-            handledByRover != null -> handledByRover
-            (inbound || uri == null && openAppIntent != null) -> {
-                log.w("No Route matched `$uri`, just opening the app.")
-                openAppIntent!!
-            }
-            (inbound || uri == null && openAppIntent == null) -> {
-                log.w("No Route matched `$uri` and openAppIntent null.")
-                null
-            }
-            else -> {
-                log.i("No built-in Rover route matched `$uri`.  Opening it with the system.")
-                Intent(Intent.ACTION_VIEW, Uri.parse(uri.toString()))
-            }
-        }
+        return handledByRover
     }
 
     override fun registerRoute(route: Route) {

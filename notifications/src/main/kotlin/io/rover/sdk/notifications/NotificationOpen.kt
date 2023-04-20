@@ -25,6 +25,7 @@ import io.rover.sdk.core.events.EventQueueService
 import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.core.events.domain.Event
 import io.rover.sdk.core.platform.DateFormattingInterface
+import io.rover.sdk.core.platform.asAndroidUri
 import io.rover.sdk.core.routing.Router
 import io.rover.sdk.core.routing.website.EmbeddedWebBrowserDisplayInterface
 import io.rover.sdk.core.tracking.ConversionsTrackerService
@@ -54,7 +55,7 @@ open class NotificationOpen(
     private fun intentForNotification(notification: Notification): Intent? {
         return when (notification.tapBehavior) {
             is Notification.TapBehavior.OpenApp -> openAppIntent
-            is Notification.TapBehavior.OpenUri -> router.route(notification.tapBehavior.uri, false)
+            is Notification.TapBehavior.OpenUri -> router.route(notification.tapBehavior.uri) ?: Intent(Intent.ACTION_VIEW, notification.tapBehavior.uri.asAndroidUri())
             is Notification.TapBehavior.PresentWebsite -> embeddedWebBrowserDisplay.intentForViewingWebsiteViaEmbeddedBrowser(
                 notification.tapBehavior.url.toString()
             )

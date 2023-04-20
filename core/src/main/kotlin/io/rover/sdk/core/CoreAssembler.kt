@@ -402,9 +402,7 @@ class CoreAssembler @JvmOverloads constructor(
             Scope.Singleton,
             Router::class.java
         ) { resolver ->
-            RouterService(
-                resolver.resolve(Intent::class.java, "openApp")
-            )
+            RouterService()
         }
 
         container.register(

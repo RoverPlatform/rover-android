@@ -17,14 +17,28 @@
 
 package io.rover.sdk.core.ui
 
+import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.routing.LinkOpenInterface
 import io.rover.sdk.core.routing.Router
+import io.rover.sdk.core.routing.TransientLinkLaunchActivity
 import java.net.URI
 
 class LinkOpen(
-    private val router: Router
+    private val router: Router,
 ) : LinkOpenInterface {
+
+    override fun intentForLink(context: Context, uri: Uri): Intent? {
+        val javaURI = try { URI(uri.toString()) } catch (e: Throwable) {
+            log.e("Unable to parse URI: $uri")
+            return null
+        }
+        return router.route(javaURI)
+    }
+
+    @Deprecated("Use intentForLink() instead.")
     override fun localIntentForReceived(receivedUri: URI): List<Intent> {
         return listOfNotNull(router.route(receivedUri))
     }

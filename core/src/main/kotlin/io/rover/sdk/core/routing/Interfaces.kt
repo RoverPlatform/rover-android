@@ -54,14 +54,7 @@ interface LinkOpenInterface {
      *
      * Returns null if this link not handled by Rover.
      */
-    fun intentForLink(context: Context, uri: Uri): Intent? {
-        val androidUri = URI(uri.toString())
-        return if (localIntentForReceived(androidUri).isNotEmpty()) {
-            TransientLinkLaunchActivity.makeIntent(context, androidUri)
-        } else {
-            null
-        }
-    }
+    fun intentForLink(context: Context, uri: Uri): Intent?
 
     /**
      * Map a URI just received for a deep link to an explicit, mapped intent.
@@ -69,5 +62,6 @@ interface LinkOpenInterface {
      * May return more than one intent, meant for synthesizing a back stack in the event
      * of the target needing synthesized back stack entries.
      */
+    @Deprecated("Use intentForLink() instead.")
     fun localIntentForReceived(receivedUri: URI): List<Intent>
 }

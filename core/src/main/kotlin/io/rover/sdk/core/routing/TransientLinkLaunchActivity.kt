@@ -46,15 +46,25 @@ open class TransientLinkLaunchActivity : Activity() {
             return
         }
 
-        val uri = URI(intent.data.toString())
+        val uri = intent.data ?: run {
+            log.e("Transient link launch activity was launched, but no URI was provided.  Ignoring.")
+            return
+        }
 
         log.v("Transient link launch activity running for received URI: '${intent.data}'")
 
-        val intentStack = linkOpen.localIntentForReceived(uri)
+        val linkIntent = linkOpen.intentForLink(this, uri) ?: run {
+            // no fallback to making a stock ACTION_VIEW intent for this uri is needed if Rover
+            // Router fails to produce a Uri is needed. This is because Link Launch activity
+            // is only used for *inbound* links being launched with the Rover SDK.
+            log.e("Rover router could not give us a URL for the URI: '$uri'.  Ignoring.")
+            return
+        }
 
-        log.v("Launching stack ${intentStack.size} deep: ${intentStack.joinToString("\n") { it.toString() }}")
+        log.v("Launching intent: $linkIntent")
 
-        if (intentStack.isNotEmpty()) ContextCompat.startActivities(this, intentStack.toTypedArray())
+        ContextCompat.startActivity(this, linkIntent, null)
+
         finish()
     }
 

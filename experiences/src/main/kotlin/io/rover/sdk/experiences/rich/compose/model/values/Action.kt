@@ -23,9 +23,12 @@ import com.squareup.moshi.ToJson
 import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
 
 internal sealed class Action {
+    open val conversionTags: List<String> = emptyList()
 
     @JsonClass(generateAdapter = true)
-    class Close : Action() {
+    class Close(
+        override val conversionTags: List<String> = emptyList()
+    ) : Action() {
         override fun equals(other: Any?): Boolean {
             return other is Close
         }
@@ -40,7 +43,8 @@ internal sealed class Action {
         @Transient
         var screenID: String? = null,
         @Transient
-        var segueStyle: SegueStyle? = null
+        var segueStyle: SegueStyle? = null,
+        override val conversionTags: List<String> = emptyList()
     ) : Action() {
         @Transient
         var data: Any? = null
@@ -49,18 +53,21 @@ internal sealed class Action {
     @JsonClass(generateAdapter = true)
     data class OpenURL(
         val url: String,
-        val dismissExperience: Boolean
+        val dismissExperience: Boolean,
+        override val conversionTags: List<String> = emptyList()
     ) : Action()
 
     @JsonClass(generateAdapter = true)
     data class PresentWebsite(
-        val url: String
+        val url: String,
+        override val conversionTags: List<String> = emptyList()
     ) : Action()
 
     @JsonClass(generateAdapter = true)
     @Suppress("CanSealedSubClassBeObject")
     class Custom(
-        val dismissExperience: Boolean
+        val dismissExperience: Boolean,
+        override val conversionTags: List<String> = emptyList()
     ) : Action()
 
     companion object {

@@ -20,25 +20,25 @@ package io.rover.sdk.experiences.rich.compose.ui.modifiers
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import io.rover.sdk.experiences.rich.compose.model.nodes.Node
 import io.rover.sdk.experiences.rich.compose.model.nodes.Rectangle
 import io.rover.sdk.experiences.rich.compose.model.values.Fill
 import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeColor
-import io.rover.sdk.experiences.rich.compose.ui.vendor.clip
+import io.rover.sdk.experiences.rich.compose.vendor.compose.ui.alpha
+import io.rover.sdk.experiences.rich.compose.vendor.compose.ui.clip
 
 @Composable
 internal fun MaskModifier(
     mask: Node?,
     modifier: Modifier,
-    content: @Composable (modifier: Modifier) -> Unit
+    content: @Composable (modifier: Modifier) -> Unit,
 ) {
     if (mask != null) {
         content(
             modifier
-                .experiencesMask(mask, Environment.LocalIsDarkTheme.current)
+                .experiencesMask(mask, Environment.LocalIsDarkTheme.current),
         )
     } else {
         content(modifier)
@@ -62,5 +62,5 @@ private fun Modifier.experiencesMask(mask: Node, isDarkMode: Boolean) = this
             this.then(modifier)
         } else {
             this
-        }
+        },
     )

@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package io.rover.sdk.experiences.rich.compose.ui.vendor
+package io.rover.sdk.experiences.rich.compose.vendor.compose.foundation
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
@@ -26,6 +25,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import io.rover.sdk.experiences.rich.compose.vendor.compose.ui.clip
 
 /**
  * Clips bounds of scrollable container on main axis while leaving space for background effects
@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.dp
  *
  * @param orientation orientation of the scrolling
  */
-@ExperimentalFoundationApi
 internal fun Modifier.clipScrollableContainer(orientation: Orientation) =
     then(
         if (orientation == Orientation.Vertical) {

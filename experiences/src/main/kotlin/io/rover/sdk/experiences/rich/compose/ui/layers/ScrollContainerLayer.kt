@@ -42,9 +42,9 @@ import io.rover.sdk.experiences.rich.compose.ui.layout.experiencesMeasure
 import io.rover.sdk.experiences.rich.compose.ui.layout.mapMaxIntrinsicWidthAsMeasure
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.utils.ifInfinity
-import io.rover.sdk.experiences.rich.compose.ui.vendor.horizontalScroll
-import io.rover.sdk.experiences.rich.compose.ui.vendor.rememberScrollState
-import io.rover.sdk.experiences.rich.compose.ui.vendor.verticalScroll
+import io.rover.sdk.experiences.rich.compose.vendor.compose.foundation.horizontalScroll
+import io.rover.sdk.experiences.rich.compose.vendor.compose.foundation.rememberScrollState
+import io.rover.sdk.experiences.rich.compose.vendor.compose.foundation.verticalScroll
 
 @Composable
 internal fun ScrollContainerLayer(node: ScrollContainer) {
@@ -73,7 +73,7 @@ internal fun ScrollContainerLayer(axis: Axis = Axis.VERTICAL, layerModifiers: La
                             modifier = Modifier
                                 .then(NestedScrollProtector(Axis.VERTICAL))
                                 .verticalScroll(rememberScrollState())
-                                .then(FillSpaceModifier(Axis.VERTICAL))
+                                .then(FillSpaceModifier(Axis.VERTICAL)),
                         ) {
                             content()
                         }
@@ -84,14 +84,14 @@ internal fun ScrollContainerLayer(axis: Axis = Axis.VERTICAL, layerModifiers: La
                             modifier = Modifier
                                 .then(NestedScrollProtector(Axis.HORIZONTAL))
                                 .horizontalScroll(rememberScrollState())
-                                .then(FillSpaceModifier(Axis.HORIZONTAL))
+                                .then(FillSpaceModifier(Axis.HORIZONTAL)),
                         ) {
                             content()
                         }
                     }
                 }
             },
-            measurePolicy = ScrollContainerMeasurePolicy(axis)
+            measurePolicy = ScrollContainerMeasurePolicy(axis),
         )
     }
 }
@@ -102,13 +102,13 @@ internal fun ScrollContainerLayer(axis: Axis = Axis.VERTICAL, layerModifiers: La
  * container's content.)
  */
 internal fun ScrollContainerMeasurePolicy(
-    axis: Axis
+    axis: Axis,
 ): MeasurePolicy {
     return object : MeasurePolicy {
 
         override fun MeasureScope.measure(
             measurables: List<Measurable>,
-            constraints: Constraints
+            constraints: Constraints,
         ): MeasureResult {
             // measure children with the existing constraints. (note: the scrollable modifier
             // inside will replace the max constraint on the axis of direction with infinity,
@@ -117,8 +117,8 @@ internal fun ScrollContainerMeasurePolicy(
                 it.measure(
                     Constraints(
                         maxWidth = constraints.maxWidth,
-                        maxHeight = constraints.maxHeight
-                    )
+                        maxHeight = constraints.maxHeight,
+                    ),
                 )
             }
             val width = constraints.maxWidth.ifInfinity { placeables.maxOf { it.width } }
@@ -128,7 +128,7 @@ internal fun ScrollContainerMeasurePolicy(
                 // if the scroll container itself was given an infinity, fall back to the size
                 // selected by the content rather than expanding to fill space.
                 width,
-                height
+                height,
             ) {
                 placeables.forEach { placeable ->
                     placeable.place(0, 0)
@@ -138,7 +138,7 @@ internal fun ScrollContainerMeasurePolicy(
 
         override fun IntrinsicMeasureScope.maxIntrinsicWidth(
             measurables: List<IntrinsicMeasurable>,
-            height: Int
+            height: Int,
         ): Int {
             return mapMaxIntrinsicWidthAsMeasure(height) { (proposedWidth, proposedHeight) ->
                 val sizes = measurables.map {
@@ -154,8 +154,8 @@ internal fun ScrollContainerMeasurePolicy(
                     it.experiencesMeasure(
                         Size(
                             if (axis == Axis.HORIZONTAL) Constraints.Infinity else proposedWidth,
-                            if (axis == Axis.VERTICAL) Constraints.Infinity else proposedHeight
-                        )
+                            if (axis == Axis.VERTICAL) Constraints.Infinity else proposedHeight,
+                        ),
                     )
                 }
 
@@ -167,7 +167,7 @@ internal fun ScrollContainerMeasurePolicy(
 
         override fun IntrinsicMeasureScope.minIntrinsicWidth(
             measurables: List<IntrinsicMeasurable>,
-            height: Int
+            height: Int,
         ): Int {
             return mapMinIntrinsicAsFlex {
                 // scroll containers are always flexible, and only case where they may not be
@@ -179,7 +179,7 @@ internal fun ScrollContainerMeasurePolicy(
 
         override fun IntrinsicMeasureScope.minIntrinsicHeight(
             measurables: List<IntrinsicMeasurable>,
-            width: Int
+            width: Int,
         ): Int {
             return mapMinIntrinsicAsFlex {
                 // scroll containers are always flexible, and only case where they may not be
@@ -191,7 +191,7 @@ internal fun ScrollContainerMeasurePolicy(
 
         override fun IntrinsicMeasureScope.maxIntrinsicHeight(
             measurables: List<IntrinsicMeasurable>,
-            width: Int
+            width: Int,
         ): Int {
             throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
         }
@@ -211,7 +211,7 @@ internal fun ScrollContainerMeasurePolicy(
 private class FillSpaceModifier(private val axis: Axis) : LayoutModifier {
     override fun MeasureScope.measure(
         measurable: Measurable,
-        constraints: Constraints
+        constraints: Constraints,
     ): MeasureResult {
         // fill up to max constraints, place measurable in the middle. filling space on the
         // opposing dimension.
@@ -249,22 +249,22 @@ private class FillSpaceModifier(private val axis: Axis) : LayoutModifier {
 
     override fun IntrinsicMeasureScope.maxIntrinsicHeight(
         measurable: IntrinsicMeasurable,
-        width: Int
+        width: Int,
     ): Int = measurable.maxIntrinsicHeight(width)
 
     override fun IntrinsicMeasureScope.maxIntrinsicWidth(
         measurable: IntrinsicMeasurable,
-        height: Int
+        height: Int,
     ): Int = measurable.maxIntrinsicWidth(height)
 
     override fun IntrinsicMeasureScope.minIntrinsicHeight(
         measurable: IntrinsicMeasurable,
-        width: Int
+        width: Int,
     ): Int = measurable.minIntrinsicHeight(width)
 
     override fun IntrinsicMeasureScope.minIntrinsicWidth(
         measurable: IntrinsicMeasurable,
-        height: Int
+        height: Int,
     ): Int = measurable.minIntrinsicWidth(height)
 }
 
@@ -276,7 +276,7 @@ private fun ScrollContainerSmallWideContent() {
     ScrollContainerLayer {
         RectangleLayer(
             fill = Fill.FlatFill(ColorReference.SystemColor("blue")),
-            modifier = Modifier.requiredHeight(50.dp)
+            modifier = Modifier.requiredHeight(50.dp),
         )
     }
 }
@@ -305,7 +305,7 @@ private fun ScrollContainerSmallLong() {
     ScrollContainerLayer {
         RectangleLayer(
             fill = Fill.FlatFill(ColorReference.SystemColor("blue")),
-            modifier = Modifier.requiredSize(50.dp)
+            modifier = Modifier.requiredSize(50.dp),
         )
     }
 }
@@ -340,11 +340,11 @@ private fun CrossAxisNestedScrollContainers() {
  * the Mac app, and we should produce the same results without crashing.
  */
 private class NestedScrollProtector(
-    private val axis: Axis
+    private val axis: Axis,
 ) : LayoutModifier {
     override fun MeasureScope.measure(
         measurable: Measurable,
-        constraints: Constraints
+        constraints: Constraints,
     ): MeasureResult {
         // here the goal is to maintain the sizing/measurement behaviour of the child,
         // except in one case: if we are proposed infinity on axis of expansion, that means
@@ -358,18 +358,18 @@ private class NestedScrollProtector(
                 constraints.copy(
                     maxWidth = constraints.maxWidth.ifInfinity {
                         measurable.experiencesMeasure(
-                            Size(constraints.maxWidth, constraints.maxHeight)
+                            Size(constraints.maxWidth, constraints.maxHeight),
                         ).width
-                    }
+                    },
                 )
             }
             Axis.VERTICAL -> {
                 constraints.copy(
                     maxHeight = constraints.maxHeight.ifInfinity {
                         measurable.experiencesMeasure(
-                            Size(constraints.maxWidth, constraints.maxHeight)
+                            Size(constraints.maxWidth, constraints.maxHeight),
                         ).height
-                    }
+                    },
                 )
             }
         }
@@ -384,28 +384,28 @@ private class NestedScrollProtector(
 
     override fun IntrinsicMeasureScope.maxIntrinsicHeight(
         measurable: IntrinsicMeasurable,
-        width: Int
+        width: Int,
     ): Int {
         return measurable.maxIntrinsicHeight(width)
     }
 
     override fun IntrinsicMeasureScope.maxIntrinsicWidth(
         measurable: IntrinsicMeasurable,
-        height: Int
+        height: Int,
     ): Int {
         return measurable.maxIntrinsicWidth(height)
     }
 
     override fun IntrinsicMeasureScope.minIntrinsicHeight(
         measurable: IntrinsicMeasurable,
-        width: Int
+        width: Int,
     ): Int {
         return measurable.minIntrinsicHeight(width)
     }
 
     override fun IntrinsicMeasureScope.minIntrinsicWidth(
         measurable: IntrinsicMeasurable,
-        height: Int
+        height: Int,
     ): Int {
         return measurable.minIntrinsicWidth(height)
     }

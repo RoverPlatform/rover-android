@@ -17,7 +17,11 @@
 
 package io.rover.sdk.core.data.domain
 
+import io.rover.sdk.core.Rover
+import io.rover.sdk.core.data.graphql.operations.data.asJson
+import io.rover.sdk.core.data.graphql.operations.data.encodeJson
 import io.rover.sdk.core.events.domain.Event
+import io.rover.sdk.core.platform.DateFormattingInterface
 import java.util.Date
 import java.util.UUID
 
@@ -54,4 +58,8 @@ data class EventSnapshot(
             )
         }
     }
+
+    var debugAttributesDescription: String = this.attributes.encodeJson().toString(4)
+
+    var debugDeviceContextDescription: String = this.deviceContext.asJson(Rover.shared.resolve(DateFormattingInterface::class.java)!!).toString(4)
 }

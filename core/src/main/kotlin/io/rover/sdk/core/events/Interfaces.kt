@@ -19,6 +19,7 @@ package io.rover.sdk.core.events
 
 import io.rover.sdk.core.data.domain.Attributes
 import io.rover.sdk.core.data.domain.DeviceContext
+import io.rover.sdk.core.data.domain.EventSnapshot
 import io.rover.sdk.core.events.contextproviders.UserInfoContextProvider
 import io.rover.sdk.core.events.domain.Event
 import org.reactivestreams.Publisher
@@ -83,7 +84,7 @@ interface EventQueueServiceInterface {
     fun trackScreenViewed(
         screenName: String,
         contentID: String? = null,
-        contentName: String? = null
+        contentName: String? = null,
     )
 
     /**
@@ -103,6 +104,12 @@ interface EventQueueServiceInterface {
      * Subscribe to this Publisher to be informed whenever a new Event is tracked into the Queue.
      */
     val trackedEvents: Publisher<Event>
+
+    /**
+     * Subscribe to this publisher to be informed whenever a new Event is tracked into the Queue,
+     * including the additional details of device context.
+     */
+    val enqueuedEvents: Publisher<EventSnapshot>
 }
 
 interface UserInfoInterface {

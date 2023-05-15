@@ -34,14 +34,15 @@ private const val FIRST_NAME = "example first name"
 
 class TicketMasterManagerTest {
     @Test
-    fun `getNonNullPropertiesMapWithoutID() returns all non null except ID properties`() {
+    fun `getNonNullPropertiesMap() returns all non null properties`() {
         val member = Member(ID, EMAIL, FIRST_NAME)
         val expectedMap = mapOf(
             member::email.name to EMAIL,
-            member::firstName.name to FIRST_NAME
+            member::firstName.name to FIRST_NAME,
+            member::ticketmasterID.name to ID,
         )
 
-        assertEquals(expectedMap, member.getNonNullPropertiesMapWithoutId())
+        assertEquals(expectedMap, member.getNonNullPropertiesMap())
     }
 
     @Test
@@ -49,7 +50,7 @@ class TicketMasterManagerTest {
         val member = Member(null, null, null)
         val expectedMap = mapOf<String, String>()
 
-        assertEquals(expectedMap, member.getNonNullPropertiesMapWithoutId())
+        assertEquals(expectedMap, member.getNonNullPropertiesMap())
     }
 
     @Test

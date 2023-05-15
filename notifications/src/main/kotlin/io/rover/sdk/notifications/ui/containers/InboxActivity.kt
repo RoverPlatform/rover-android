@@ -32,8 +32,6 @@ class InboxActivity : AppCompatActivity() {
             this
         )
 
-        listView.activity = this
-
         title = getString(R.string.inbox_title)
 
         setContentView(

@@ -19,29 +19,36 @@ package io.rover.sdk.example
 
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
-import androidx.fragment.app.FragmentActivity
-import io.rover.sdk.experiences.ExperienceFragment
+import android.net.Uri
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import io.rover.sdk.experiences.ExperienceComposable
 
 /**
- * This is an example of how to use [ExperienceFragment] to embed an Experience within your
+ * This is an example of how to use [ExperienceComposable] to embed an Experience within your
  * own Activity.
  */
-public class FragmentEmbedDemoActivity : FragmentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
+class ComposeEmbedDemoActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // fill the screen with [ExperienceFragment], programmatically without using XML layout.
-        this.supportFragmentManager
-            .beginTransaction()
-            .replace(
-                android.R.id.content,
-                ExperienceFragment("<EXAMPLE-EXP-URL>"),
+        setContent {
+            ExperienceComposable(
+                Uri.parse("<EXAMPLE-EXP-URL>"),
+
+                // ExperienceComposable's sizing behaviour is to expand to the maximum size given.
+                // In many instances, you will want to limit it. By using the height modifier
+                // below, the Experience will expand to fill width of the display but
+                // only take 300dp in height.
+                modifier = Modifier.height(300.dp),
             )
-            .commit()
+        }
     }
 
     companion object {
-        fun createIntent(context: Context) = Intent(context, FragmentEmbedDemoActivity::class.java)
+        fun createIntent(context: Context) = Intent(context, ComposeEmbedDemoActivity::class.java)
     }
 }

@@ -65,7 +65,7 @@ class TicketmasterManager(
 
     @Suppress("UNCHECKED_CAST")
     private fun updateUserInfoWithMemberAttributes() {
-        val localPropertiesMap = member?.getNonNullPropertiesMapWithoutId()
+        val localPropertiesMap = member?.getNonNullPropertiesMap()
 
         userInfo.update {
             if (it.containsKey(TICKETMASTER_MAP_KEY)) {
@@ -110,7 +110,7 @@ class TicketmasterManager(
         return try {
             val profileAttributesFromNetwork =
                 TicketmasterSyncResponseData.decodeJson(json.getJSONObject("data")).ticketmasterProfile.attributes
-            val localMemberProperties = member?.getNonNullPropertiesMapWithoutId()
+            val localMemberProperties = member?.getNonNullPropertiesMap()
             val mutableMapFromNetwork = profileAttributesFromNetwork?.toMutableMap()
 
             localMemberProperties?.forEach { (key, value) ->
@@ -177,8 +177,9 @@ class TicketmasterManager(
     ) {
         companion object
 
-        fun getNonNullPropertiesMapWithoutId(): Map<String, String> {
+        fun getNonNullPropertiesMap(): Map<String, String> {
             val propertiesMap = mutableMapOf<String, String>()
+            ticketmasterID.whenNotNull { propertiesMap.put(Member::ticketmasterID.name, it)}
             email.whenNotNull { propertiesMap.put(Member::email.name, it) }
             firstName.whenNotNull { propertiesMap.put(Member::firstName.name, it) }
             return propertiesMap

@@ -57,16 +57,6 @@ internal class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelIn
 
         importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
 
-        viewTreeObserver.addOnGlobalLayoutListener {
-            vtoMeasuredSizeSubject.onNext(
-                MeasuredSize(
-                    width.pxAsDp(this@ScreenView.context.resources.displayMetrics),
-                    height.pxAsDp(this@ScreenView.context.resources.displayMetrics),
-                    resources.displayMetrics.density
-                )
-            )
-        }
-
         val viewModelBindingAndSize: Publisher<Pair<MeasuredBindableView.Binding<ScreenViewModelInterface>, MeasuredSize>> =
             Publishers.combineLatest(
                 viewModelSubject,
@@ -142,6 +132,13 @@ internal class ScreenView : RecyclerView, MeasuredBindableView<ScreenViewModelIn
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         viewComposition.onSizeChanged(w, h, oldw, oldh)
+
+        // Workaround: The VTO is not always reliable (perhaps due to being embedded Compose
+        // AndroidView), so also emit the size from here, too.  .distinctUntilChanged() above
+        // ensures the potentially duplicate size calls are ignored.
+        vtoMeasuredSizeSubject.onNext(
+            MeasuredSize(w.pxAsDp(resources.displayMetrics), h.pxAsDp(resources.displayMetrics), resources.displayMetrics.density)
+        )
     }
 
     override fun onDetachedFromWindow() {

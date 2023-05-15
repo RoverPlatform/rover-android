@@ -33,6 +33,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.rover.experiences.R
+import io.rover.sdk.core.Rover
+import io.rover.sdk.core.tracking.ConversionsTrackerService
 import io.rover.sdk.experiences.rich.compose.model.nodes.*
 import io.rover.sdk.experiences.rich.compose.model.values.*
 import io.rover.sdk.experiences.rich.compose.ui.Environment
@@ -71,6 +73,9 @@ internal fun ScreenLayer(node: Screen, appearance: Appearance) {
 
     Services.Inject { services ->
         LaunchedEffect(true) {
+            val conversionTrackerService = Rover.shared.resolve(ConversionsTrackerService::class.java)
+            conversionTrackerService?.trackConversions(node.conversionTags)
+
             services.eventEmitter.emit(
                 ExperienceScreenViewed(
                     experienceName,

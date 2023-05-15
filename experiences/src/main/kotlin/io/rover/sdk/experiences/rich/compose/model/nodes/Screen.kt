@@ -41,7 +41,8 @@ internal data class Screen(
     override val childIDs: List<String> = emptyList(),
     val backgroundColor: ColorReference,
     val androidStatusBarBackgroundColor: ColorReference = ColorReference.CustomColor(ColorValue(alpha = 1.0f, red = 0.216f, green = 0f, blue = 0.712f)), // 3700B3FF
-    val androidStatusBarStyle: StatusBarStyle = StatusBarStyle.LIGHT
+    val androidStatusBarStyle: StatusBarStyle = StatusBarStyle.LIGHT,
+    val conversionTags: List<String> = emptyList()
 ) : Node {
     override val typeName = NodeType.SCREEN.code
 

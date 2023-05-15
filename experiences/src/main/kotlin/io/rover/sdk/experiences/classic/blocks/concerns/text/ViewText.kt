@@ -82,7 +82,7 @@ internal class ViewText(
                 binding.viewModel.fontAppearance.font.fontStyle
             )
 
-            textView.setSingleLine(binding.viewModel.singleLine)
+            textView.maxLines = if (binding.viewModel.singleLine) 1 else Int.MAX_VALUE
         }
     }
 }

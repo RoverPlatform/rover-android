@@ -72,8 +72,9 @@ import org.json.JSONObject
  * the surrounding UI from being usable.
  */
 @Composable
-fun Experience(
+internal fun Experience(
     url: Uri,
+    modifier: Modifier = Modifier,
     onCanceled: (() -> Unit)? = null
 ) {
     Services.Inject { services ->
@@ -102,7 +103,7 @@ fun Experience(
         }
 
         Surface(
-            modifier = Modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize(),
             color = MaterialTheme.colors.background
         ) {
             when (val state = viewModel.state.collectAsState().value) {

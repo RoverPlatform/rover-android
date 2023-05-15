@@ -110,8 +110,11 @@
         <!-- Registering RoverActivity from the Rover SDK in order to display experiences -->
         <activity android:name="io.rover.sdk.experiences.ExperienceActivity"/>
 
-        <!-- Register demo fragment activity -->
+        <!-- Register demo fragment embedding activity -->
         <activity android:name="io.rover.sdk.example.FragmentEmbedDemoActivity"/>
+
+        <!-- Register demo compose embedding activity -->
+        <activity android:name="io.rover.sdk.example.ComposeEmbedDemoActivity"/>
     </application>
 
 </manifest>

@@ -617,7 +617,7 @@ fun <T : Any> Publisher<T>.distinctUntilChanged(): Publisher<T> {
 }
 
 /**
- * Will filter out sequences of identitical (by comparison) items.  An item will not be
+ * Will filter out sequences of identical (by comparison) items.  An item will not be
  * emitted if it is the same as the prior.
  */
 fun <T : Any, K> Publisher<T>.distinctUntilChanged(selector: (T) -> K): Publisher<T> {

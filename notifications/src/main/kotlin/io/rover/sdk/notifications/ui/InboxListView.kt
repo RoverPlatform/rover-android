@@ -27,6 +27,10 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.ViewTreeLifecycleOwner
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
@@ -48,34 +52,29 @@ import io.rover.sdk.notifications.ui.concerns.NotificationItemViewModelInterface
  * through, as an "Inbox", "Notification Center", or similar.  You can even embed and configure this
  * view directly into your XML layouts.
  *
- * In order to display the list, there are several steps.
+ * Add [InboxListView] to your layout, either in XML or progammatically.
  *
- * 1. Add [InboxListView] to your layout, either in XML or progammatically.
- *
- * 2. Set [activity] with the host Activity that contains the List View.  This is needed for
- * navigation in response to tapping notifications to work correctly.
- *
- * 3. Resolve an instance of [InboxListViewModelInterface] from the Rover DI container
- * and set it as the [viewModel].
+ * Note: InboxListView requires a AppCompat (not AndroidX/Jetpack) theme.  To embed this view
+ * in a modern activity (or Jetpack Compose) that does not use AppCompat, use
+ * you can use `ContextThemeWrapper(context, R.style.Theme_AppCompat_Light)` to wrap your context.
  */
 open class InboxListView :
-    CoordinatorLayout {
+    CoordinatorLayout, LifecycleOwner {
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle)
 
     /**
-     * You must provide an Activity here before binding the view model.
+     * This property is deprecated.
      */
+    @Deprecated("This property no longer needs to be set.")
     var activity: AppCompatActivity? = null
-        set(activity) {
-            field = activity
-            viewModel = if (activity == null) {
-                null
-            } else Rover.shared.resolve(InboxListViewModelInterface::class.java, null, activity.lifecycle) ?: throw RuntimeException(
-                "Ensure Rover is initialized and NotificationsAssembler() added before using notification center."
-            )
-        }
+
+    private val registry by lazy {
+        LifecycleRegistry(this)
+    }
+
+    override fun getLifecycle(): Lifecycle = registry
 
     /**
      * This method will generate a row view.
@@ -149,40 +148,43 @@ open class InboxListView :
             setUpUnboundState()
         } else {
             viewModel.events()
-                .androidLifecycleDispose(this)
+                .androidLifecycleDispose(this as View)
                 .subscribe({ event ->
                     when (event) {
                         is InboxListViewModelInterface.Event.ListUpdated -> {
                             // update the adapter
                             log.v("List replaced with ${event.notifications.size} notifications")
-                            itemsView.visibility = if (event.notifications.isNotEmpty()) VISIBLE else GONE
-                            emptyLayout.visibility = if (event.notifications.isEmpty()) VISIBLE else GONE
+                            itemsView.visibility =
+                                if (event.notifications.isNotEmpty()) VISIBLE else GONE
+                            emptyLayout.visibility =
+                                if (event.notifications.isEmpty()) VISIBLE else GONE
                             currentNotificationsList = event.notifications
                             currentStableIdsMap = event.stableIds
                             adapter.notifyDataSetChanged()
                         }
+
                         is InboxListViewModelInterface.Event.Refreshing -> {
                             swipeRefreshLayout.isRefreshing = event.refreshing
                         }
+
                         is InboxListViewModelInterface.Event.DisplayProblemMessage -> {
                             // TODO: make error resource overridable.
-                            Snackbar.make(this, R.string.generic_problem, Snackbar.LENGTH_LONG).show()
+                            Snackbar.make(this, R.string.generic_problem, Snackbar.LENGTH_LONG)
+                                .show()
                         }
+
                         is InboxListViewModelInterface.Event.Navigate -> {
-                            val hostActivity = (
-                                activity
-                                    ?: throw RuntimeException("Please set the `activity` property on NotificationCenterListView.  Otherwise, navigation cannot work.")
-                                )
 
                             // A view is not normally considered an appropriate place to do this
                             // (perhaps, for example, the activity should subscribe to an event from the
                             // view model).  However, doing it here allows for a clearer interface for
                             // consumers: all they need to do is implement and provide the Host object.
-                            val intent = notificationOpen.intentForOpeningNotificationDirectly(event.notification)
+                            val intent =
+                                notificationOpen.intentForOpeningNotificationDirectly(event.notification)
                             if (intent != null) {
                                 try {
                                     log.v("Invoking tap behaviour for notification: ${event.notification.tapBehavior}")
-                                    hostActivity.startActivity(
+                                    context.startActivity(
                                         intent
                                     )
                                 } catch (e: ActivityNotFoundException) {
@@ -191,7 +193,7 @@ open class InboxListView :
                             } else log.w("Notification not suitable for launching from inbox (tap behaviour was ${event.notification.tapBehavior}.  Ignored.")
                         }
                     }
-                }, { throw(it) }, { subscription -> subscriptionCallback(subscription) })
+                }, { throw (it) }, { subscription -> subscriptionCallback(subscription) })
 
             swipeRefreshLayout.setOnRefreshListener {
                 viewModel.requestRefresh()
@@ -199,10 +201,11 @@ open class InboxListView :
         }
     }
 
-    private val swipeRefreshLayout =
+    private val swipeRefreshLayout by lazy {
         androidx.swiperefreshlayout.widget.SwipeRefreshLayout(
             context
         )
+    }
 
     private val emptySwitcherLayout = FrameLayout(
         context
@@ -331,6 +334,10 @@ open class InboxListView :
                 )
             }
         }).attachToRecyclerView(itemsView)
+
+        viewModel = Rover.shared.resolve(InboxListViewModelInterface::class.java, null, lifecycle) ?: throw RuntimeException(
+            "Ensure Rover is initialized and NotificationsAssembler() added before using the Inbox."
+        )
     }
 
     private fun notificationClicked(notification: Notification) {

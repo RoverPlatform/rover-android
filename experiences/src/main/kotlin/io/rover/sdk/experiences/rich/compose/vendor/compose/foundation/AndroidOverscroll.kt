@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.rover.sdk.experiences.rich.compose.ui.vendor.foundation
+package io.rover.sdk.experiences.rich.compose.vendor.compose.foundation
 
 import android.content.Context
 import android.os.Build
@@ -24,6 +24,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalOverscrollConfiguration
 import androidx.compose.foundation.OverscrollConfiguration
 import androidx.compose.foundation.OverscrollEffect
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.neverEqualPolicy
@@ -40,6 +42,9 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.pointer.PointerId
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.platform.InspectorValueInfo
@@ -47,26 +52,27 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.Velocity
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
+import androidx.core.widget.EdgeEffectCompat
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.layoutWithIntrinsicsPassthrough
-import io.rover.sdk.experiences.rich.compose.ui.vendor.foundation.EdgeEffectCompat.distanceCompat
-import io.rover.sdk.experiences.rich.compose.ui.vendor.foundation.EdgeEffectCompat.onAbsorbCompat
-import io.rover.sdk.experiences.rich.compose.ui.vendor.foundation.EdgeEffectCompat.onPullDistanceCompat
+import io.rover.sdk.experiences.rich.compose.vendor.compose.ui.EdgeEffectCompat.distanceCompat
+import io.rover.sdk.experiences.rich.compose.vendor.compose.ui.EdgeEffectCompat.onAbsorbCompat
+import io.rover.sdk.experiences.rich.compose.vendor.compose.ui.EdgeEffectCompat.onPullDistanceCompat
+import io.rover.sdk.experiences.rich.compose.vendor.compose.ui.EdgeEffectCompat.onReleaseWithOppositeDelta
+import io.rover.sdk.experiences.rich.compose.vendor.compose.ui.NoOpOverscrollEffect
 import kotlin.math.roundToInt
 
-//
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
-internal fun rememberOverscrollEffect(): OverscrollEffect {
+// ROVER: don't need actual/expect because all our vendored stuff is built into a single module
+//   and we don't need this forward declaration cleverness.
+internal /* actual */ fun rememberOverscrollEffect(): OverscrollEffect {
     val context = LocalContext.current
     val config = LocalOverscrollConfiguration.current
-    return remember(context, config) {
-        if (config != null) {
-            AndroidEdgeEffectOverscrollEffect(context, config)
-        } else {
-            NoOpOverscrollEffect
-        }
+    return if (config != null) {
+        remember(context, config) { AndroidEdgeEffectOverscrollEffect(context, config) }
+    } else {
+        NoOpOverscrollEffect
     }
 }
 
@@ -103,6 +109,8 @@ internal class AndroidEdgeEffectOverscrollEffect(
     context: Context,
     private val overscrollConfig: OverscrollConfiguration
 ) : OverscrollEffect {
+    private var pointerPosition: Offset? = null
+
     private val topEffect = EdgeEffectCompat.create(context, null)
     private val bottomEffect = EdgeEffectCompat.create(context, null)
     private val leftEffect = EdgeEffectCompat.create(context, null)
@@ -118,6 +126,7 @@ internal class AndroidEdgeEffectOverscrollEffect(
     private val rightEffectNegation = EdgeEffectCompat.create(context, null)
 
     init {
+        // ROVER: replaced private API 'fast' version with standard.
         allEffects.forEach { it.color = overscrollConfig.glowColor.toArgb() }
     }
 
@@ -128,39 +137,44 @@ internal class AndroidEdgeEffectOverscrollEffect(
 
     private var scrollCycleInProgress: Boolean = false
 
-    override fun consumePreScroll(
-        scrollDelta: Offset,
-        pointerPosition: Offset?,
-        source: NestedScrollSource
+    override fun applyToScroll(
+        delta: Offset,
+        source: NestedScrollSource,
+        performScroll: (Offset) -> Offset
     ): Offset {
+        // Early return
+        if (containerSize.isEmpty()) {
+            return performScroll(delta)
+        }
+
         if (!scrollCycleInProgress) {
             stopOverscrollAnimation()
             scrollCycleInProgress = true
         }
         val pointer = pointerPosition ?: containerSize.center
         val consumedPixelsY = when {
-            scrollDelta.y == 0f -> 0f
+            delta.y == 0f -> 0f
             topEffect.distanceCompat != 0f -> {
-                pullTop(scrollDelta, pointer).also {
+                pullTop(delta, pointer).also {
                     if (topEffect.distanceCompat == 0f) topEffect.onRelease()
                 }
             }
             bottomEffect.distanceCompat != 0f -> {
-                pullBottom(scrollDelta, pointer).also {
+                pullBottom(delta, pointer).also {
                     if (bottomEffect.distanceCompat == 0f) bottomEffect.onRelease()
                 }
             }
             else -> 0f
         }
         val consumedPixelsX = when {
-            scrollDelta.x == 0f -> 0f
+            delta.x == 0f -> 0f
             leftEffect.distanceCompat != 0f -> {
-                pullLeft(scrollDelta, pointer).also {
+                pullLeft(delta, pointer).also {
                     if (leftEffect.distanceCompat == 0f) leftEffect.onRelease()
                 }
             }
             rightEffect.distanceCompat != 0f -> {
-                pullRight(scrollDelta, pointer).also {
+                pullRight(delta, pointer).also {
                     if (rightEffect.distanceCompat == 0f) rightEffect.onRelease()
                 }
             }
@@ -168,35 +182,50 @@ internal class AndroidEdgeEffectOverscrollEffect(
         }
         val consumedOffset = Offset(consumedPixelsX, consumedPixelsY)
         if (consumedOffset != Offset.Zero) invalidateOverscroll()
-        return consumedOffset
-    }
 
-    override fun consumePostScroll(
-        initialDragDelta: Offset,
-        overscrollDelta: Offset,
-        pointerPosition: Offset?,
-        source: NestedScrollSource
-    ) {
+        val leftForDelta = delta - consumedOffset
+        val consumedByDelta = performScroll(leftForDelta)
+        val leftForOverscroll = leftForDelta - consumedByDelta
+
         var needsInvalidation = false
         if (source == NestedScrollSource.Drag) {
-            val pointer = pointerPosition ?: containerSize.center
-            if (overscrollDelta.x > 0) {
-                pullLeft(overscrollDelta, pointer)
-            } else if (overscrollDelta.x < 0) {
-                pullRight(overscrollDelta, pointer)
+            // Ignore small deltas (< 0.5) as this usually comes from floating point rounding issues
+            // and can cause scrolling to lock up (b/265363356)
+            val appliedHorizontalOverscroll = if (leftForOverscroll.x > 0.5f) {
+                pullLeft(leftForOverscroll, pointer)
+                true
+            } else if (leftForOverscroll.x < -0.5f) {
+                pullRight(leftForOverscroll, pointer)
+                true
+            } else {
+                false
             }
-            if (overscrollDelta.y > 0) {
-                pullTop(overscrollDelta, pointer)
-            } else if (overscrollDelta.y < 0) {
-                pullBottom(overscrollDelta, pointer)
+            val appliedVerticalOverscroll = if (leftForOverscroll.y > 0.5f) {
+                pullTop(leftForOverscroll, pointer)
+                true
+            } else if (leftForOverscroll.y < -0.5f) {
+                pullBottom(leftForOverscroll, pointer)
+                true
+            } else {
+                false
             }
-            needsInvalidation = overscrollDelta != Offset.Zero || needsInvalidation
+            needsInvalidation = appliedHorizontalOverscroll || appliedVerticalOverscroll
         }
-        needsInvalidation = releaseOppositeOverscroll(initialDragDelta) || needsInvalidation
+        needsInvalidation = releaseOppositeOverscroll(delta) || needsInvalidation
         if (needsInvalidation) invalidateOverscroll()
+
+        return consumedOffset + consumedByDelta
     }
 
-    override suspend fun consumePreFling(velocity: Velocity): Velocity {
+    override suspend fun applyToFling(
+        velocity: Velocity,
+        performFling: suspend (Velocity) -> Velocity
+    ) {
+        // Early return
+        if (containerSize.isEmpty()) {
+            performFling(velocity)
+            return
+        }
         val consumedX = if (velocity.x > 0f && leftEffect.distanceCompat != 0f) {
             leftEffect.onAbsorbCompat(velocity.x.roundToInt())
             velocity.x
@@ -217,44 +246,31 @@ internal class AndroidEdgeEffectOverscrollEffect(
         }
         val consumed = Velocity(consumedX, consumedY)
         if (consumed != Velocity.Zero) invalidateOverscroll()
-        return consumed
-    }
 
-    override suspend fun consumePostFling(velocity: Velocity) {
+        val remainingVelocity = velocity - consumed
+        val consumedByVelocity = performFling(remainingVelocity)
+        val leftForOverscroll = remainingVelocity - consumedByVelocity
+
         scrollCycleInProgress = false
-        if (velocity.x > 0) {
-            leftEffect.onAbsorbCompat(velocity.x.roundToInt())
-        } else if (velocity.x < 0) {
-            rightEffect.onAbsorbCompat(-velocity.x.roundToInt())
+        if (leftForOverscroll.x > 0) {
+            leftEffect.onAbsorbCompat(leftForOverscroll.x.roundToInt())
+        } else if (leftForOverscroll.x < 0) {
+            rightEffect.onAbsorbCompat(-leftForOverscroll.x.roundToInt())
         }
-        if (velocity.y > 0) {
-            topEffect.onAbsorbCompat(velocity.y.roundToInt())
-        } else if (velocity.y < 0) {
-            bottomEffect.onAbsorbCompat(-velocity.y.roundToInt())
+        if (leftForOverscroll.y > 0) {
+            topEffect.onAbsorbCompat(leftForOverscroll.y.roundToInt())
+        } else if (leftForOverscroll.y < 0) {
+            bottomEffect.onAbsorbCompat(-leftForOverscroll.y.roundToInt())
         }
-        if (velocity != Velocity.Zero) invalidateOverscroll()
+        if (leftForOverscroll != Velocity.Zero) invalidateOverscroll()
         animateToRelease()
     }
 
     private var containerSize = Size.Zero
 
-    private val isEnabledState = mutableStateOf(false)
-    override var isEnabled: Boolean = false
-        get() = isEnabledState.value
-        set(value) {
-            // Use field instead of isEnabledState to avoid a state read
-            val enabledChanged = field != value
-            isEnabledState.value = value
-            field = value
-
-            if (enabledChanged) {
-                scrollCycleInProgress = false
-                animateToRelease()
-            }
-        }
-
     override val isInProgress: Boolean
         get() {
+            // ROVER: replaced private API 'fast' version with standard.
             return allEffects.any { it.distanceCompat != 0f }
         }
 
@@ -300,8 +316,35 @@ internal class AndroidEdgeEffectOverscrollEffect(
         }
     }
 
+    private var pointerId: PointerId? = null
+
     override val effectModifier: Modifier = Modifier
         .then(StretchOverscrollNonClippingLayer)
+        .pointerInput(Unit) {
+            awaitEachGesture {
+                val down = awaitFirstDown(requireUnconsumed = false)
+                pointerId = down.id
+                pointerPosition = down.position
+                do {
+                    // ROVER: replaced private API 'fast' version with standard.
+                    val pressedChanges = awaitPointerEvent().changes.filter { it.pressed }
+                    // If the same ID we are already tracking is down, use that. Otherwise, use
+                    // the next down, to move the overscroll to the next pointer.
+
+                    // ROVER: replaced private API 'fast' version with standard.
+                    val change = pressedChanges
+                        .firstOrNull { it.id == pointerId } ?: pressedChanges.firstOrNull()
+                    if (change != null) {
+                        // Update the id if we are now tracking a new down
+                        pointerId = change.id
+                        pointerPosition = change.position
+                    }
+                } while (pressedChanges.isNotEmpty())
+                pointerId = null
+                // Explicitly not resetting the pointer position until the next down, so we
+                // don't change any existing effects
+            }
+        }
         .onSizeChanged(onNewSize)
         .then(
             DrawOverscrollModifier(
@@ -309,12 +352,14 @@ internal class AndroidEdgeEffectOverscrollEffect(
                 debugInspectorInfo {
                     name = "overscroll"
                     value = this@AndroidEdgeEffectOverscrollEffect
-                }
-            )
+                })
         )
 
     fun DrawScope.drawOverscroll() {
-        this.drawIntoCanvas { it ->
+        if (containerSize.isEmpty()) {
+            return
+        }
+        this.drawIntoCanvas {
             redrawSignal.value // <-- value read to redraw if needed
             val canvas = it.nativeCanvas
             var needsInvalidate = false
@@ -408,6 +453,7 @@ internal class AndroidEdgeEffectOverscrollEffect(
     // animate the edge effects to 0 (no overscroll). Usually needed when the finger is up.
     private fun animateToRelease() {
         var needsInvalidation = false
+        // ROVER: replaced private API 'fast' version with standard.
         allEffects.forEach {
             it.onRelease()
             needsInvalidation = it.isFinished || needsInvalidation
@@ -418,19 +464,19 @@ internal class AndroidEdgeEffectOverscrollEffect(
     private fun releaseOppositeOverscroll(delta: Offset): Boolean {
         var needsInvalidation = false
         if (!leftEffect.isFinished && delta.x < 0) {
-            leftEffect.onRelease()
+            leftEffect.onReleaseWithOppositeDelta(delta = delta.x)
             needsInvalidation = leftEffect.isFinished
         }
         if (!rightEffect.isFinished && delta.x > 0) {
-            rightEffect.onRelease()
+            rightEffect.onReleaseWithOppositeDelta(delta = delta.x)
             needsInvalidation = needsInvalidation || rightEffect.isFinished
         }
         if (!topEffect.isFinished && delta.y < 0) {
-            topEffect.onRelease()
+            topEffect.onReleaseWithOppositeDelta(delta = delta.y)
             needsInvalidation = needsInvalidation || topEffect.isFinished
         }
         if (!bottomEffect.isFinished && delta.y > 0) {
-            bottomEffect.onRelease()
+            bottomEffect.onReleaseWithOppositeDelta(delta = delta.y)
             needsInvalidation = needsInvalidation || bottomEffect.isFinished
         }
         return needsInvalidation
@@ -439,59 +485,63 @@ internal class AndroidEdgeEffectOverscrollEffect(
     private fun pullTop(scroll: Offset, displacement: Offset): Float {
         val displacementX: Float = displacement.x / containerSize.width
         val pullY = scroll.y / containerSize.height
-        return topEffect.onPullDistanceCompat(pullY, displacementX) * containerSize.height
+        val consumed = topEffect.onPullDistanceCompat(pullY, displacementX) * containerSize.height
+        // If overscroll is showing, assume we have consumed all the provided scroll, and return
+        // that amount directly to avoid floating point rounding issues (b/265363356)
+        return if (topEffect.distanceCompat != 0f) {
+            scroll.y
+        } else {
+            consumed
+        }
     }
 
     private fun pullBottom(scroll: Offset, displacement: Offset): Float {
         val displacementX: Float = displacement.x / containerSize.width
         val pullY = scroll.y / containerSize.height
-        return -bottomEffect.onPullDistanceCompat(
+        val consumed = -bottomEffect.onPullDistanceCompat(
             -pullY,
             1 - displacementX
         ) * containerSize.height
+        // If overscroll is showing, assume we have consumed all the provided scroll, and return
+        // that amount directly to avoid floating point rounding issues (b/265363356)
+        return if (bottomEffect.distanceCompat != 0f) {
+            scroll.y
+        } else {
+            consumed
+        }
     }
 
     private fun pullLeft(scroll: Offset, displacement: Offset): Float {
         val displacementY: Float = displacement.y / containerSize.height
         val pullX = scroll.x / containerSize.width
-        return leftEffect.onPullDistanceCompat(pullX, 1 - displacementY) * containerSize.width
+        val consumed = leftEffect.onPullDistanceCompat(
+            pullX,
+            1 - displacementY
+        ) * containerSize.width
+        // If overscroll is showing, assume we have consumed all the provided scroll, and return
+        // that amount directly to avoid floating point rounding issues (b/265363356)
+        return if (leftEffect.distanceCompat != 0f) {
+            scroll.x
+        } else {
+            consumed
+        }
     }
 
     private fun pullRight(scroll: Offset, displacement: Offset): Float {
         val displacementY: Float = displacement.y / containerSize.height
         val pullX = scroll.x / containerSize.width
-        return -rightEffect.onPullDistanceCompat(-pullX, displacementY) * containerSize.width
+        val consumed = -rightEffect.onPullDistanceCompat(
+            -pullX,
+            displacementY
+        ) * containerSize.width
+        // If overscroll is showing, assume we have consumed all the provided scroll, and return
+        // that amount directly to avoid floating point rounding issues (b/265363356)
+        return if (rightEffect.distanceCompat != 0f) {
+            scroll.x
+        } else {
+            consumed
+        }
     }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-private val NoOpOverscrollEffect = object : OverscrollEffect {
-
-    override fun consumePreScroll(
-        scrollDelta: Offset,
-        pointerPosition: Offset?,
-        source: NestedScrollSource
-    ): Offset = Offset.Zero
-
-    override fun consumePostScroll(
-        initialDragDelta: Offset,
-        overscrollDelta: Offset,
-        pointerPosition: Offset?,
-        source: NestedScrollSource
-    ) {
-    }
-
-    override suspend fun consumePreFling(velocity: Velocity): Velocity = Velocity.Zero
-
-    override suspend fun consumePostFling(velocity: Velocity) {}
-
-    override var isEnabled: Boolean = false
-
-    override val isInProgress: Boolean
-        get() = false
-
-    override val effectModifier: Modifier
-        get() = Modifier
 }
 
 /**
@@ -520,7 +570,8 @@ private val StretchOverscrollNonClippingLayer: Modifier =
     // we only need to fix the layer size when the stretch overscroll is active (Android 12+)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         Modifier
-            // ROVER: replaced .layout() with .layoutWithIntrinsicsPassthrough().
+            // ROVER: use our layoutWithIntrinsicsPassthrough() modifier in lieu of layout()
+            //  in order to permit packed intrinsics to pass through.
             .layoutWithIntrinsicsPassthrough { measurable, constraints ->
                 val placeable = measurable.measure(constraints)
                 val extraSizePx = (MaxSupportedElevation * 2).roundToPx()
@@ -537,6 +588,8 @@ private val StretchOverscrollNonClippingLayer: Modifier =
                     )
                 }
             }
+            // ROVER: use our layoutWithIntrinsicsPassthrough() modifier in lieu of layout()
+            //  in order to permit packed intrinsics to pass through.
             .layoutWithIntrinsicsPassthrough { measurable, constraints ->
                 val placeable = measurable.measure(constraints)
                 val extraSizePx = (MaxSupportedElevation * 2).roundToPx()
@@ -549,21 +602,3 @@ private val StretchOverscrollNonClippingLayer: Modifier =
     } else {
         Modifier
     }
-
-/**
- * In the scrollable containers we want to clip the main axis sides in order to not display the
- * content which is scrolled out. But once we apply clipToBounds() modifier on such containers it
- * causes unexpected behavior as we also clip the content on the cross axis sides. It is
- * unexpected as Compose components are not clipping by default. The most common case how it
- * could be reproduced is a horizontally scrolling list of Cards. Cards have the elevation by
- * default and such Cards will be drawn with clipped shadows on top and bottom. This was harder
- * to reproduce in the Views system as usually scrolling containers like RecyclerView didn't have
- * an opaque background which means the ripple was drawn on the surface on the first parent with
- * background. In Compose as we don't clip by default we draw shadows right in place.
- * We faced similar issue in Compose already with Androids Popups and Dialogs where we decided to
- * just predefine some constant with a maximum elevation size we are not going to clip. We are
- * going to reuse this technique here. This will improve how it works in most common cases. If the
- * user will need to have a larger unclipped area for some reason they can always add the needed
- * padding inside the scrollable area.
- */
-internal val MaxSupportedElevation = 30.dp

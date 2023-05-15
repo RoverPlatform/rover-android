@@ -173,7 +173,14 @@ class MainActivity : ComponentActivity() {
                             val intent = FragmentEmbedDemoActivity.createIntent(this@MainActivity)
                             startActivity(intent)
                         }) {
-                            Text(text = "Open Embedding Fragment Demo Activity")
+                            Text(text = "Open Embedding Fragment-based Demo Activity")
+                        }
+
+                        Button(onClick = {
+                            val intent = ComposeEmbedDemoActivity.createIntent(this@MainActivity)
+                            startActivity(intent)
+                        }) {
+                            Text(text = "Open Embedding Compose-based Demo Activity")
                         }
 
                         Text("Inbox (Notification Store) API demo:", fontWeight = FontWeight.Bold)

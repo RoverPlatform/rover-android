@@ -61,6 +61,7 @@ class EventQueueService(
     private val keyValueStorage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
 
     private val eventSubject = PublishSubject<Event>()
+    private val eventSnapshotSubject = PublishSubject<EventSnapshot>()
 
     // state:
     private val eventQueue: Deque<EventSnapshot> = LinkedList()
@@ -68,6 +69,8 @@ class EventQueueService(
     private var isFlushingEvents: Boolean = false
 
     override val trackedEvents: Publisher<Event> = eventSubject.observeOn(mainScheduler).share()
+
+    override val enqueuedEvents: Publisher<EventSnapshot> = eventSnapshotSubject.observeOn(mainScheduler).share()
 
     override fun addContextProvider(contextProvider: ContextProvider) {
         serialQueueExecutor.execute {
@@ -110,12 +113,17 @@ class EventQueueService(
                 log.w("Event queue is at capacity ($maxQueueSize) -- removing oldest event.")
                 eventQueue.removeFirst()
             }
-
             val snapshot = EventSnapshot.fromEvent(
                 event,
                 deviceContext ?: throw RuntimeException("enqueueEvent() occurred before Context set up?"),
-                namespace
+                namespace,
             )
+
+            // on main thread, send on eventSnapshotSubject
+            Handler(Looper.getMainLooper()).post {
+                eventSnapshotSubject.onNext(snapshot)
+            }
+
             eventQueue.add(snapshot)
             persistEvents()
         }

@@ -25,6 +25,8 @@ plugins {
 
 val roverSdkVersion: String by rootProject.extra
 val kotlinVersion: String by rootProject.extra
+val composeBomVersion: String by rootProject.extra
+val composeKotlinCompilerExtensionVersion: String by rootProject.extra
 
 android {
     compileSdk = 33
@@ -49,11 +51,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
 
     testOptions {
@@ -63,7 +65,7 @@ android {
         }
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.3.1"
+        kotlinCompilerExtensionVersion = composeKotlinCompilerExtensionVersion
     }
 
     buildFeatures {
@@ -95,17 +97,19 @@ dependencies {
     implementation("androidx.browser:browser:1.4.0")
     implementation("androidx.viewpager2:viewpager2:1.0.0")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    api("androidx.coordinatorlayout:coordinatorlayout:1.1.0")
     // endregion AndroidX
 
     // region Compose
-    implementation("androidx.compose.ui:ui:1.2.1")
-    implementation("androidx.compose.foundation:foundation:1.2.1")
-    implementation("androidx.compose.material:material:1.2.1")
+    implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.material:material")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    debugImplementation("androidx.compose.ui:ui-tooling:")
     implementation("androidx.activity:activity-compose:1.5.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1")
     implementation("androidx.navigation:navigation-compose:2.5.2")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.2.1")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.2.1")
     // endregion Compose
 
     // region Test
@@ -115,8 +119,8 @@ dependencies {
     // endregion Test
 
     // region Square
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.13.0")
-    implementation("com.squareup.moshi:moshi-adapters:1.13.0")
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.14.0")
+    implementation("com.squareup.moshi:moshi-adapters:1.14.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-moshi:2.6.3")
     // endregion Square

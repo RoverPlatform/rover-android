@@ -44,11 +44,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
 
     namespace = "io.rover.location"
@@ -64,8 +64,8 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
     implementation(project(":core"))
 
-    implementation("com.google.android.gms:play-services-nearby:18.3.0")
-    implementation("com.google.android.gms:play-services-location:20.0.0")
+    implementation("com.google.android.gms:play-services-nearby:18.5.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 }
 
 afterEvaluate {

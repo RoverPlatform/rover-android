@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-present, Rover Labs, Inc. All rights reserved.
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
  * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
  * copy, modify, and distribute this software in source code or binary form for use
  * in connection with the web services and APIs provided by Rover.
@@ -15,22 +15,26 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package io.rover.sdk.experiences.rich.compose.ui.vendor
+package io.rover.sdk.experiences
 
-import androidx.compose.runtime.Stable
+import android.net.Uri
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Shape
 
 /**
- * Clip the content to the bounds of a layer defined at this modifier.
- */
-@Stable
-internal fun Modifier.clipToBounds() = graphicsLayer(clip = true)
-
-/**
- * Clip the content to [shape].
+ * Display a Rover Experience.
  *
- * @param shape the content will be clipped to this [Shape].
+ * Note: the sizing behaviour is to expand to fill all space proposed to the Experience in
+ * the Constraints.  Use the Jetpack Compose size(), width(), or height() modifiers to limit
+ * the size.
+ *
+ * @param url The URL of the Experience to display.
+ * @param modifier A Jetpack Compose modifier to apply to the Experience.
  */
-@Stable
-internal fun Modifier.clip(shape: Shape) = graphicsLayer(shape = shape, clip = true)
+@Composable
+fun ExperienceComposable(
+    url: Uri,
+    modifier: Modifier = Modifier,
+) {
+    Experience(url = url, modifier = modifier)
+}

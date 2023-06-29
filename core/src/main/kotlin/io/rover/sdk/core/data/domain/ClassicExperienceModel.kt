@@ -124,7 +124,7 @@ interface Block {
          * so it will be run through the [Router] before it should be opened on Android as an
          * Intent.
          */
-        data class OpenUri(val uri: URI) : TapBehavior()
+        data class OpenUri(val uri: URI, val dismiss: Boolean) : TapBehavior()
 
         data class PresentWebsite(val url: URI) : TapBehavior()
 

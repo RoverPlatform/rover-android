@@ -26,11 +26,11 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
-import com.google.android.exoplayer2.ui.PlayerView
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
 import io.rover.sdk.experiences.rich.compose.model.values.AssetSource
 import io.rover.sdk.experiences.rich.compose.model.values.ResizingMode
 import io.rover.sdk.experiences.rich.compose.model.values.interpolatedSource
@@ -44,6 +44,7 @@ import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
  * @param measurePolicy Specify the sizing behaviour for this media player. Note that this measure
  * policy needs to support Rover's packed intrinsics.
  */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 @Composable
 internal fun MediaPlayer(
     source: AssetSource,
@@ -82,7 +83,7 @@ internal fun MediaPlayer(
         }
 
         val exoPlayer = remember {
-            SimpleExoPlayer.Builder(context).build().apply {
+            ExoPlayer.Builder(context).build().apply {
                 repeatMode = when (looping) {
                     true -> Player.REPEAT_MODE_ALL
                     false -> Player.REPEAT_MODE_OFF
@@ -98,7 +99,7 @@ internal fun MediaPlayer(
             }
         }
 
-        LayerBox(layerModifiers) {
+        LayerBox(layerModifiers, modifier) {
             Layout(
                 {
                     DisposableEffect(

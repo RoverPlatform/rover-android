@@ -27,6 +27,7 @@ val roverSdkVersion: String by rootProject.extra
 val kotlinVersion: String by rootProject.extra
 val composeBomVersion: String by rootProject.extra
 val composeKotlinCompilerExtensionVersion: String by rootProject.extra
+val media3Version: String = "1.0.2"
 
 android {
     compileSdk = 33
@@ -134,10 +135,10 @@ dependencies {
     implementation("io.coil-kt:coil-gif:2.1.0")
 
     // Exoplayer
-    implementation("com.google.android.exoplayer:exoplayer-core:2.18.1")
-    implementation("com.google.android.exoplayer:exoplayer-dash:2.18.1")
-    implementation("com.google.android.exoplayer:exoplayer-ui:2.18.1")
-    implementation("com.google.android.exoplayer:exoplayer-hls:2.18.1")
+    implementation("androidx.media3:media3-exoplayer:$media3Version")
+    implementation("androidx.media3:media3-exoplayer-dash:$media3Version")
+    implementation("androidx.media3:media3-ui:$media3Version")
+    implementation("androidx.media3:media3-exoplayer-hls:$media3Version")
 
     implementation("com.google.zxing:core:3.4.1")
 }

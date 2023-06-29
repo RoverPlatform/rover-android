@@ -154,7 +154,10 @@ internal class NavigationViewModel(
                     when (action.navigateTo) {
                         is NavigateToFromBlock.External -> {
                             externalNavigationEvents.onNext(
-                                ExperienceExternalNavigationEvent.OpenUri(action.navigateTo.uri)
+                                ExperienceExternalNavigationEvent.OpenUri(
+                                        action.navigateTo.uri,
+                                        action.navigateTo.dismiss
+                                )
                             )
                         }
                         is NavigateToFromBlock.PresentWebsiteAction -> {

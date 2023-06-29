@@ -115,10 +115,12 @@ internal fun ClassicExperience(
                                     Intent.ACTION_VIEW,
                                     event.uri.asAndroidUri()
                                 )
+                                
+                                if (event.dismiss) {
+                                    (containingContext as? Activity)?.finish()
+                                }
 
-                                containingContext.startActivity(
-                                    intent
-                                )
+                                containingContext.startActivity(intent)
                             } catch (e: ActivityNotFoundException) {
                                 log.v("No activity found to handle URI: ${event.uri}")
                             }

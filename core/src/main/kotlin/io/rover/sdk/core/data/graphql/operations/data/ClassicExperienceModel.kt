@@ -785,7 +785,8 @@ fun Block.TapBehavior.Companion.decodeJson(json: JSONObject): Block.TapBehavior 
     return when (val typeName = json.safeGetString("__typename")) {
         "NoneBlockTapBehavior" -> Block.TapBehavior.None
         "OpenURLBlockTapBehavior" -> Block.TapBehavior.OpenUri(
-            uri = json.safeGetUri("url")
+            uri = json.safeGetUri("url"),
+            dismiss = json.optBoolean("dismiss")
         )
         "GoToScreenBlockTapBehavior" -> Block.TapBehavior.GoToScreen(
             screenId = json.getString("screenID")

@@ -26,6 +26,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -81,7 +82,7 @@ private fun ClassicExperienceSettingsTheme(
 ) {
     Services.Inject { services ->
         val colors = if (darkTheme) {
-            lightColors(
+            darkColors(
                 primary = Color(services.experiencesClassic.appThemeDescription.darkColors.primary),
                 onPrimary = Color(services.experiencesClassic.appThemeDescription.darkColors.onPrimary)
             )

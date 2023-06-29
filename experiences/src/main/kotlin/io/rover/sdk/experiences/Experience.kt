@@ -360,7 +360,7 @@ internal class ExperienceFetchViewModel() : ViewModel() {
                             _state.emit(State.Failed(Exception("Experience fetch failed: ${experienceResponse.code()}")))
                         }
                     } catch (e: Exception) {
-                        log.w("Experience fetch error: $e, at ${e.stackTraceToString()}")
+                        log.w("Experience fetch error: $e, at ${e.stackTraceToString()} for URL: $url")
                         _state.emit(State.Failed(e))
                     }
                 }

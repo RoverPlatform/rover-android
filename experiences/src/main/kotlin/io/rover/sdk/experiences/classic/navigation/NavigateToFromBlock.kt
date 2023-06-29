@@ -31,6 +31,7 @@ internal sealed class NavigateToFromBlock(
      */
     class External(
         val uri: URI,
+        val dismiss: Boolean,
         block: Block
     ) : NavigateToFromBlock(block)
 

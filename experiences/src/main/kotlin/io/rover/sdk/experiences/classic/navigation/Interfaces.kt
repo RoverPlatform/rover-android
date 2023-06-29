@@ -116,7 +116,7 @@ sealed class ExperienceExternalNavigationEvent {
      *  to the internal Rover NavigationViewModel, whatever it happens to be in the
      *  surrounding app.
      */
-    data class OpenUri(val uri: URI) : ExperienceExternalNavigationEvent()
+    data class OpenUri(val uri: URI, val dismiss: Boolean) : ExperienceExternalNavigationEvent()
 
     data class PresentWebsite(val url: URI) : ExperienceExternalNavigationEvent()
 

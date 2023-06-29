@@ -172,7 +172,7 @@ internal class BlockViewModel(
 
         val navigateTo = when (tapBehavior) {
             is Block.TapBehavior.GoToScreen -> { NavigateToFromBlock.GoToScreenAction(tapBehavior.screenId, block) }
-            is Block.TapBehavior.OpenUri -> { NavigateToFromBlock.External(tapBehavior.uri, block) }
+            is Block.TapBehavior.OpenUri -> { NavigateToFromBlock.External(tapBehavior.uri, tapBehavior.dismiss, block) }
             is Block.TapBehavior.PresentWebsite -> { NavigateToFromBlock.PresentWebsiteAction(tapBehavior.url, block) }
             is Block.TapBehavior.None -> { NavigateToFromBlock.None(block) }
             is Block.TapBehavior.Custom -> { NavigateToFromBlock.Custom(block) }

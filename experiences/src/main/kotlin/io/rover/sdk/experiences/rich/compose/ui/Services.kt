@@ -19,7 +19,6 @@ package io.rover.sdk.experiences.rich.compose.ui
 
 import android.content.Context
 import android.os.Build
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
@@ -32,6 +31,7 @@ import io.rover.sdk.experiences.Authorizers
 import io.rover.sdk.experiences.RoverExperiencesClassic
 import io.rover.sdk.experiences.data.http.RoverExperiencesWebService
 import io.rover.sdk.experiences.rich.compose.data.ExperiencesHttpClient
+import io.rover.sdk.experiences.rich.compose.data.LargeImageInterceptor
 import io.rover.sdk.experiences.rich.compose.ui.fonts.FontLoader
 import io.rover.sdk.experiences.services.EventEmitter
 
@@ -83,6 +83,14 @@ internal data class Services(
                 } else {
                     add(GifDecoder.Factory())
                 }
+                //Prevent large images from crashing the app, see: https://github.com/coil-kt/coil/issues/1349
+                //and https://issuetracker.google.com/issues/244854452?pli=1
+                //Simply limiting based on screen width and height seems to cause issues,
+                //so we're using the number provided in the coil thread.
+                add(LargeImageInterceptor(
+                        maxWidth = 2500,
+                        maxHeight = 2500
+                ))
             }
             .okHttpClient {
                 httpClient.client

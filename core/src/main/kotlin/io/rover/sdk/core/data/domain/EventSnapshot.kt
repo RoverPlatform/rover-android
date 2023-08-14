@@ -59,7 +59,9 @@ data class EventSnapshot(
         }
     }
 
-    var debugAttributesDescription: String = this.attributes.encodeJson().toString(4)
+    val debugAttributesDescription: String
+        get() = this.attributes.encodeJson().toString(4)
 
-    var debugDeviceContextDescription: String = this.deviceContext.asJson(Rover.shared.resolve(DateFormattingInterface::class.java)!!).toString(4)
+    val debugDeviceContextDescription: String
+        get() = this.deviceContext.asJson(Rover.shared.resolve(DateFormattingInterface::class.java)!!).toString(4)
 }

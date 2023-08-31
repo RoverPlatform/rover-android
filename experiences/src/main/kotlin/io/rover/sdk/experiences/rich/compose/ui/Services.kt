@@ -88,8 +88,8 @@ internal data class Services(
                 //Simply limiting based on screen width and height seems to cause issues,
                 //so we're using the number provided in the coil thread.
                 add(LargeImageInterceptor(
-                        maxWidth = 2500,
-                        maxHeight = 2500
+                        maxWidth = 5000,
+                        maxHeight = 5000
                 ))
             }
             .okHttpClient {

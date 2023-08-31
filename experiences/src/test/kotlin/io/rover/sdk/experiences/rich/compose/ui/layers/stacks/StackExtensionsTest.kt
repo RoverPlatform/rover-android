@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-present, Rover Labs, Inc. All rights reserved.
+ * Copyright (c) 2023, Rover Labs, Inc. All rights reserved.
  * You are hereby granted a non-exclusive, worldwide, royalty-free license to use,
  * copy, modify, and distribute this software in source code or binary form for use
  * in connection with the web services and APIs provided by Rover.
@@ -15,9 +15,27 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package io.rover.sdk.experiences.rich.compose.vendor.accompanist.pager
+package io.rover.sdk.experiences.rich.compose.ui.layers.stacks
 
-internal fun Int.floorMod(other: Int): Int = when (other) {
-    0 -> this
-    else -> this - floorDiv(other) * other
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
+class StackExtensionsTest {
+    @Test
+    fun `summing with spacing`() {
+        val items = listOf(7, 3, 8)
+        val spacing = 10 * 2
+
+        val sum = items.sumOfWithLayoutSpacing(10)
+        assertEquals(7 + 3 + 8 + spacing, sum)
+    }
+
+    @Test
+    fun `summing with spacing with selector`() {
+        val items = listOf(7, 3, 8)
+        val spacing = 10 * 2
+
+        val sum = items.sumOfWithLayoutSpacing(10) { it}
+        assertEquals(7 + 3 + 8 + spacing, sum)
+    }
 }

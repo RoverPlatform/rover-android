@@ -39,7 +39,7 @@ internal object InfiniteHeightMeasurePolicy : MeasurePolicy {
         )
         val placeables = measurables.map { it.measure(childConstraints) }
 
-        return layout(placeables.maxOf { it.width }, placeables.maxOf { it.height }) {
+        return layout(placeables.maxOf { it.measuredWidth }, placeables.maxOf { it.measuredHeight }) {
             placeables.forEach {
                 it.placeRelative(0, 0)
             }
@@ -63,7 +63,7 @@ internal object InfiniteWidthMeasurePolicy : MeasurePolicy {
         )
         val placeables = measurables.map { it.measure(childConstraints) }
 
-        return layout(placeables.maxOf { it.width }, placeables.maxOf { it.height }) {
+        return layout(placeables.maxOf { it.measuredWidth }, placeables.maxOf { it.measuredHeight }) {
             placeables.forEach {
                 it.placeRelative(0, 0)
             }

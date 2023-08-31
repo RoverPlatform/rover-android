@@ -59,8 +59,8 @@ private fun Modifier.experiencesMask(mask: Node, isDarkMode: Boolean) = this
                     modifier.alpha(1.0f)
                 }
             }
-            this.then(modifier)
+            modifier
         } else {
-            this
+            Modifier
         },
     )

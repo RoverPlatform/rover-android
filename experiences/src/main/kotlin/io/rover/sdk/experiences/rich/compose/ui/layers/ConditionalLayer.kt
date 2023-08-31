@@ -18,20 +18,21 @@
 package io.rover.sdk.experiences.rich.compose.ui.layers
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import io.rover.sdk.experiences.rich.compose.model.nodes.Conditional
 import io.rover.sdk.experiences.rich.compose.model.values.isSatisfied
 import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.data.makeDataContext
 
 @Composable
-internal fun ConditionalLayer(node: Conditional) {
+internal fun ConditionalLayer(node: Conditional, modifier: Modifier = Modifier) {
     val dataContext = makeDataContext(
         userInfo = Environment.LocalUserInfo.current?.invoke() ?: emptyMap(),
         urlParameters = Environment.LocalUrlParameters.current,
-        data = Environment.LocalData.current
+        data = Environment.LocalData.current,
     )
 
     if (node.conditions.all { it.isSatisfied(dataContext) }) {
-        Children(children = node.children)
+        Children(children = node.children, modifier = modifier)
     }
 }

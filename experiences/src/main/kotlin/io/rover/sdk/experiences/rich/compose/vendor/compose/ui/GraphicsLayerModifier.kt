@@ -534,8 +534,12 @@ private class BlockGraphicsLayerModifier(
         constraints: Constraints
     ): MeasureResult {
         val placeable = measurable.measure(constraints)
-        return layout(placeable.width, placeable.height) {
-            placeable.placeWithLayer(0, 0, layerBlock = layerBlock)
+        // ROVER: changed the simple .placeWithLayer(0, 0) to use our centering-neutralization
+        // for larger children compensation method. See SimpleMeasurePolicy for details.
+        return layout(placeable.measuredWidth, placeable.measuredHeight) {
+            val widthDiff = (placeable.measuredWidth - placeable.width) / 2
+            val heightDiff = (placeable.measuredHeight - placeable.height) / 2
+            placeable.placeWithLayer(widthDiff, heightDiff, layerBlock = layerBlock)
         }
     }
 
@@ -630,8 +634,12 @@ private class SimpleGraphicsLayerModifier(
         constraints: Constraints
     ): MeasureResult {
         val placeable = measurable.measure(constraints)
-        return layout(placeable.width, placeable.height) {
-            placeable.placeWithLayer(0, 0, layerBlock = layerBlock)
+        // ROVER: changed the simple .placeWithLayer(0, 0) to use our centering-neutralization
+        // for larger children compensation method. See SimpleMeasurePolicy for details.
+        return layout(placeable.measuredWidth, placeable.measuredHeight) {
+            val widthDiff = (placeable.measuredWidth - placeable.width) / 2
+            val heightDiff = (placeable.measuredHeight - placeable.height) / 2
+            placeable.placeWithLayer(widthDiff, heightDiff, layerBlock = layerBlock)
         }
     }
 

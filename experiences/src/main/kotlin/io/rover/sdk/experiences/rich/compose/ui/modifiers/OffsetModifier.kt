@@ -58,9 +58,14 @@ private fun offsetModifierMeasurePolicy(offsetX: Int, offsetY: Int): MeasurePoli
                 measurable.measure(constraints)
             }
 
-            return layout(placeables.maxOf { it.width }, placeables.maxOf { it.height }) {
+            val width = placeables.maxOf { it.measuredWidth }
+            val height = placeables.maxOf { it.measuredHeight }
+
+            return layout(width, height) {
                 placeables.forEach { placeable ->
-                    placeable.place(0 + offsetX, 0 + offsetY)
+                    val widthDiff = (placeable.measuredWidth - placeable.width) / 2
+                    val heightDiff = (placeable.measuredHeight - placeable.height) / 2
+                    placeable.place(widthDiff + offsetX, heightDiff + offsetY)
                 }
             }
         }

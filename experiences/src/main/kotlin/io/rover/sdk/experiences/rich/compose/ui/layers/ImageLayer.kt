@@ -56,14 +56,15 @@ import io.rover.sdk.experiences.rich.compose.ui.utils.preview.InfiniteHeightMeas
 import kotlin.math.roundToInt
 
 @Composable
-internal fun ImageLayer(node: Image) {
+internal fun ImageLayer(node: Image, modifier: Modifier = Modifier) {
     ImageLayer(
         source = node.source,
         darkModeSource = node.darkModeSource,
         resizingMode = node.resizingMode,
         dimensions = node.dimensions,
         resolution = node.resolution,
-        layerModifiers = LayerModifiers(node)
+        layerModifiers = LayerModifiers(node),
+        modifier = modifier
     )
 }
 
@@ -97,7 +98,7 @@ internal fun ImageLayer(
     }
 
     interpolatedSource?.let { assetSource ->
-        LayerBox(layerModifiers = layerModifiers) {
+        ApplyLayerModifiers(layerModifiers = layerModifiers, modifier) { modifier ->
             when (resizingMode) {
                 ResizingMode.SCALE_TO_FILL -> {
                     Layout({
@@ -106,7 +107,7 @@ internal fun ImageLayer(
                             ContentScale.Crop,
                             dimensionsPx
                         )
-                    }, measurePolicy = ExpandMeasurePolicy(expandChildren = true))
+                    }, measurePolicy = ExpandMeasurePolicy(expandChildren = true), modifier = modifier)
                 }
                 ResizingMode.STRETCH -> {
                     Layout({
@@ -115,7 +116,7 @@ internal fun ImageLayer(
                             ContentScale.FillBounds,
                             dimensionsPx
                         )
-                    }, measurePolicy = ExpandMeasurePolicy(expandChildren = true))
+                    }, measurePolicy = ExpandMeasurePolicy(expandChildren = true), modifier = modifier)
                 }
                 // TODO: TILE needs to be handled separately in the future.
                 ResizingMode.SCALE_TO_FIT,
@@ -137,19 +138,18 @@ internal fun ImageLayer(
                     // iOS uses @1x, @2x, and @3x to represent screen density when dealing with images.
                     // 1x is the full density, 2x is half density, and 3x is a third of the density.
                     // So, if we have 2.5 as the Android pixel density, and the image has a 2x resolution, we divide 2.5 by 2.
-                    val desiredDensity = localDensityContext.density / resolution
-
                     Image(
                         assetSource,
-                        FixedScale(1f * desiredDensity),
+                        ContentScale.FillBounds,
                         dimensionsPx,
-                        modifier = modifier.then(StripPackedIntrinsics())
+                        modifier = modifier.then(FixedSizeModifier(resolution))
                     )
                 }
             }
         }
     }
 }
+
 
 @Composable
 private fun Image(
@@ -271,7 +271,10 @@ private class FitToSpace : LayoutModifier {
         )
 
         val l = layout(targetSize.width, targetSize.height) {
-            placeable.place(0, 0)
+            placeable.place(
+                (placeable.measuredWidth - placeable.width) / 2,
+                (placeable.measuredHeight - placeable.height) / 2,
+            )
         }
         Trace.endSection()
         return l
@@ -353,6 +356,86 @@ private class FitToSpace : LayoutModifier {
     override fun IntrinsicMeasureScope.maxIntrinsicHeight(
         measurable: IntrinsicMeasurable,
         width: Int
+    ): Int {
+        throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
+    }
+}
+
+
+private class FixedSizeModifier(
+    // The scaling factor that relates the image's pixel size to size on screen in Dp (points).
+    // Eg, 1x: one point is one image pixel, 2x: one point is two image pixels.
+    private val resolution: Float
+): LayoutModifier {
+    private val tag = "FixedSizeModifier"
+    override fun MeasureScope.measure(
+        measurable: Measurable,
+        constraints: Constraints,
+    ): MeasureResult {
+        Trace.beginSection("$tag::measure")
+        // this yields the pixel size of an Image if that is the measurable. perfect. 👍
+        val contentWidth = measurable.maxIntrinsicWidth(
+            Constraints.Infinity
+        )
+        val contentHeight = measurable.maxIntrinsicHeight(
+            Constraints.Infinity
+        )
+
+        val width = (contentWidth / resolution).dp.roundToPx()
+        val height = (contentHeight / resolution).dp.roundToPx()
+
+        val placeable = measurable.measure(
+            Constraints.fixed(width, height)
+        )
+
+        val l = layout(width, height) {
+            placeable.place(
+                (placeable.measuredWidth - placeable.width) / 2,
+                (placeable.measuredHeight - placeable.height) / 2,
+            )
+        }
+        Trace.endSection()
+        return l
+    }
+
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(
+        measurable: IntrinsicMeasurable,
+        height: Int,
+    ): Int {
+        return mapMaxIntrinsicWidthAsMeasure(height) { (_, _) ->
+            // measurable is always the image.
+            // intrinsics yield the pixel size of an Image. perfect. 👍
+            val contentWidth = measurable.maxIntrinsicWidth(
+                Constraints.Infinity,
+            )
+            val contentHeight = measurable.maxIntrinsicHeight(
+                Constraints.Infinity,
+            )
+
+            return@mapMaxIntrinsicWidthAsMeasure android.util.Size(
+                (contentWidth / resolution).dp.roundToPx(),
+                (contentHeight / resolution).dp.roundToPx(),
+            )
+        }
+    }
+
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(
+        measurable: IntrinsicMeasurable,
+        width: Int,
+    ): Int {
+        return mapMinIntrinsicAsFlex { IntRange(0, 0) }
+    }
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(
+        measurable: IntrinsicMeasurable,
+        height: Int,
+    ): Int {
+        return mapMinIntrinsicAsFlex { IntRange(0, 0) }
+    }
+
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(
+        measurable: IntrinsicMeasurable,
+        width: Int,
     ): Int {
         throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
     }

@@ -20,6 +20,7 @@ package io.rover.sdk.experiences.rich.compose.ui.layers
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
 import io.rover.sdk.experiences.rich.compose.model.nodes.*
 import io.rover.sdk.experiences.rich.compose.model.nodes.Collection
 import io.rover.sdk.experiences.rich.compose.ui.Environment
@@ -28,29 +29,29 @@ import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.VStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.ZStackLayer
 
 @Composable
-internal fun Layer(node: Node) {
+internal fun Layer(node: Node, modifier: Modifier) {
     val tag = "RoverExperiences.Layer"
 
     CompositionLocalProvider(Environment.LocalNode provides node) {
         when (node) {
-            is Collection -> CollectionLayer(node)
-            is Conditional -> ConditionalLayer(node)
-            is DataSource -> DataSourceLayer(node)
-            is Audio -> AudioLayer(node)
-            is Carousel -> CarouselLayer(node)
-            is Divider -> DividerLayer(node)
-            is HStack -> HStackLayer(node)
-            is VStack -> VStackLayer(node)
-            is ZStack -> ZStackLayer(node)
-            is Icon -> IconLayer(node)
-            is Image -> ImageLayer(node)
-            is PageControl -> PageControlLayer(node)
-            is Rectangle -> RectangleLayer(node)
-            is ScrollContainer -> ScrollContainerLayer(node)
-            is Spacer -> SpacerLayer(node)
-            is Text -> TextLayer(node)
-            is Video -> VideoLayer(node)
-            is WebView -> WebViewLayer(node)
+            is Collection -> CollectionLayer(node, modifier)
+            is Conditional -> ConditionalLayer(node, modifier)
+            is DataSource -> DataSourceLayer(node, modifier)
+            is Audio -> AudioLayer(node, modifier)
+            is Carousel -> CarouselLayer(node, modifier)
+            is Divider -> DividerLayer(node, modifier)
+            is HStack -> HStackLayer(node, modifier)
+            is VStack -> VStackLayer(node, modifier)
+            is ZStack -> ZStackLayer(node, modifier)
+            is Icon -> IconLayer(node, modifier)
+            is Image -> ImageLayer(node, modifier)
+            is PageControl -> PageControlLayer(node, modifier)
+            is Rectangle -> RectangleLayer(node, modifier)
+            is ScrollContainer -> ScrollContainerLayer(node, modifier)
+            is Spacer -> SpacerLayer(node, modifier)
+            is Text -> TextLayer(node, modifier)
+            is Video -> VideoLayer(node, modifier)
+            is WebView -> WebViewLayer(node, modifier)
             is Screen -> Log.e(tag, "Tried to Compose a ScreenLayer through ChildrenComposable. These should be handled by navigation.")
             is AppBar -> Log.v(tag, "Tried to Compose an AppBarLayer through ChildrenComposable. Ignoring.")
             else -> Log.e(tag, "Unable to find Composable for Node: ${node.javaClass.simpleName}")

@@ -25,7 +25,10 @@ their needed dependencies, and then making the below changes:
   `layoutWithIntrinsicsPassthrough()`.
 - Graph Modifier.opacity(). Should now use graphicsLayer modifier brought over above.
 - Modify BlockGraphicsLayerModifier (needed by clip() used by vendored Scroll as
-  well as needed by Experiences's MaskModifier) to pass through intrinsics.
+  well as needed by Experiences's MaskModifier) to pass through intrinsics. Also add the same
+  compensation to cancel centering done by Compose itself for larger children (see
+  SimpleMeasurePolicy for details.)
+- SimpleGraphicsLayerModifier needs the same treatment.
 - move them all into the `io.rover.sdk.experiences.rich.compose.ui.vendor.[ui/foundation]` package.
 - mark them anything previously `public` as `internal` to avoid leaking them to clients.
 - various changes to use vendored copy of any dependencies.

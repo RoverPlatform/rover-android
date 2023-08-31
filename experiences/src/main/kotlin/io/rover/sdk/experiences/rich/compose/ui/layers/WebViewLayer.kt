@@ -27,6 +27,7 @@ import android.view.View.LAYER_TYPE_HARDWARE
 import android.view.ViewGroup
 import android.webkit.WebViewClient
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
@@ -39,11 +40,12 @@ import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandMeasurePolicy
 
 @Composable
-internal fun WebViewLayer(node: io.rover.sdk.experiences.rich.compose.model.nodes.WebView) {
+internal fun WebViewLayer(node: io.rover.sdk.experiences.rich.compose.model.nodes.WebView, modifier: Modifier = Modifier) {
     WebViewLayer(
         source = node.source,
         isScrollEnabled = node.isScrollEnabled,
-        layerModifiers = LayerModifiers(node)
+        layerModifiers = LayerModifiers(node),
+        modifier = modifier
     )
 }
 
@@ -52,7 +54,8 @@ internal fun WebViewLayer(node: io.rover.sdk.experiences.rich.compose.model.node
 internal fun WebViewLayer(
     source: WebViewSource,
     isScrollEnabled: Boolean = true,
-    layerModifiers: LayerModifiers = LayerModifiers()
+    layerModifiers: LayerModifiers = LayerModifiers(),
+    modifier: Modifier = Modifier
 ) {
     val dataContext = makeDataContext(
         userInfo = Environment.LocalUserInfo.current?.invoke() ?: emptyMap(),
@@ -65,7 +68,7 @@ internal fun WebViewLayer(
     val interpolatedSource = source.interpolatedSource(interpolator)
 
     interpolatedSource?.let { webSource ->
-        LayerBox(layerModifiers) {
+        ApplyLayerModifiers(layerModifiers, modifier) { modifier ->
             Layout({
                 AndroidView(
                     factory = { context ->
@@ -111,7 +114,7 @@ internal fun WebViewLayer(
                     view.isVerticalScrollBarEnabled = isScrollEnabled
                     view.isHorizontalScrollBarEnabled = isScrollEnabled
                 }
-            }, measurePolicy = ExpandMeasurePolicy(expandChildren = false))
+            }, modifier = modifier, measurePolicy = ExpandMeasurePolicy(expandChildren = false))
         }
     }
 }

@@ -37,9 +37,9 @@ import io.rover.sdk.experiences.rich.compose.model.values.ColorReference
 import io.rover.sdk.experiences.rich.compose.model.values.Fill
 import io.rover.sdk.experiences.rich.compose.model.values.GradientReference
 import io.rover.sdk.experiences.rich.compose.model.values.GradientValue
-import io.rover.sdk.experiences.rich.compose.ui.layout.StripPackedIntrinsics
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
-import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandMeasurePolicy
+import io.rover.sdk.experiences.rich.compose.ui.modifiers.experiencesFrame
+import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandLayoutModifier
 import io.rover.sdk.experiences.rich.compose.ui.utils.preview.InfiniteHeightMeasurePolicy
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeBrush
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeColor
@@ -51,8 +51,10 @@ internal fun RectangleLayer(node: Rectangle, modifier: Modifier = Modifier) {
 
 @Composable
 internal fun RectangleLayer(modifier: Modifier = Modifier, fill: Fill, border: Border? = null, cornerRadius: Float = 0f, layerModifiers: LayerModifiers = LayerModifiers()) {
-    LayerBox(layerModifiers = layerModifiers, modifier = modifier) {
+    ApplyLayerModifiers(layerModifiers = layerModifiers, modifier = modifier) { modifier ->
         var size by remember { mutableStateOf(Size.Zero) }
+
+        // compose modifier order: first in the list measures first, goes down. last is innermost. (opposite to swiftui)
 
         val borderModifier = if (border != null) {
             Modifier.border(width = border.width.dp, color = border.color.getComposeColor(), RoundedCornerShape(cornerRadius.dp))
@@ -60,38 +62,39 @@ internal fun RectangleLayer(modifier: Modifier = Modifier, fill: Fill, border: B
             Modifier
         }
 
-        val rectangleModifier = when (fill) {
+        val fillModifier = when (fill) {
             is Fill.FlatFill -> {
-                modifier
-                    .then(borderModifier)
+                Modifier
                     .clip(RoundedCornerShape(cornerRadius.dp))
                     .background(fill.color.getComposeColor())
             }
             is Fill.GradientFill -> {
-                modifier
-                    .then(borderModifier)
+                Modifier
                     .clip(RoundedCornerShape(cornerRadius.dp))
                     .background(fill.gradient.getComposeBrush(size = size))
             }
         }
 
-        Layout(
-            measurePolicy = ExpandMeasurePolicy(true),
-            content = {
-                Box(
-                    modifier = rectangleModifier
-                        .then(StripPackedIntrinsics())
-                        .then(Modifier.onGloballyPositioned { coordinates -> size = coordinates.size.toSize() })
-                )
-            }
-        )
-    }
-}
+        // in order of who measures first: (so starting with outermost in SwiftUI terms)
+        //  0: provided modifier
+        //  1: border
+        //  2. fill
+        //  3. expansion
+        //  4. globally positioned size tracker thingy for gradients (in swiftui this would go first but after expansion we're in compose mode and expansion is forcing this oe big)
+        //  5: box
 
-@Composable
-private fun RectangleLayout(modifier: Modifier = Modifier) {
-    Layout({
-    }, measurePolicy = ExpandMeasurePolicy(expandChildren = false), modifier = modifier)
+        val rectangleModifier = modifier
+            .then(ExpandLayoutModifier(expandChildren = true))
+            // everything below this point (innermost) is in Jetpack Compose measurement behaviour,
+            // no packed intrinsics.  So having the fixed frame expand the Jetpack Compose border
+            // and fill modifier. FIll modifier particularly is problematic when packed intrinsics
+            // pass through, so having it on this side of Expand.
+            .then(borderModifier)
+            .then(fillModifier)
+            .then(Modifier.onGloballyPositioned { coordinates -> size = coordinates.size.toSize() })
+
+        Box(modifier = rectangleModifier)
+    }
 }
 
 @Preview
@@ -106,7 +109,7 @@ private fun RectangleBorderPreview() {
     RectangleLayer(
         fill = Fill.FlatFill(ColorReference.SystemColor("blue")),
         border = Border(ColorReference.SystemColor("green"), 2f),
-        cornerRadius = 20f
+        cornerRadius = 20f,
     )
 }
 
@@ -117,7 +120,7 @@ private fun RectangleLayerInInfinity() {
         measurePolicy = InfiniteHeightMeasurePolicy,
         content = {
             RectangleLayer(fill = Fill.FlatFill(ColorReference.SystemColor("blue")), cornerRadius = 20f)
-        }
+        },
     )
 }
 
@@ -135,11 +138,35 @@ private fun RectangleGradientPreview() {
                     from = listOf(1.0f, 0.0f),
                     stops = listOf(
                         GradientStop(0.0f, ColorValue(1.0f, 1.0f, 0.0f, 0.0f)),
-                        GradientStop(1.0f, ColorValue(1.0f, 0.0f, 0.0f, 1.0f))
-                    )
-                )
-            )
+                        GradientStop(1.0f, ColorValue(1.0f, 0.0f, 0.0f, 1.0f)),
+                    ),
+                ),
+            ),
         ),
-        cornerRadius = 20f
+        cornerRadius = 20f,
+    )
+}
+
+@Preview
+@Composable
+private fun RectangleWithAppliedFrameIntegrationTest() {
+    RectangleLayer(
+        fill = Fill.FlatFill(ColorReference.SystemColor("blue")),
+        cornerRadius = 20f,
+        modifier = Modifier.experiencesFrame(
+            Frame(width = 100f, height = 100f, alignment = Alignment.TOP_LEADING),
+        ),
+    )
+}
+
+@Preview
+@Composable
+private fun RectangleWithFrameModifierIntegrationTest() {
+    RectangleLayer(
+        fill = Fill.FlatFill(ColorReference.SystemColor("blue")),
+        cornerRadius = 20f,
+        layerModifiers = LayerModifiers(
+            frame = Frame(width = 100f, height = 100f, alignment = Alignment.TOP_LEADING),
+        ),
     )
 }

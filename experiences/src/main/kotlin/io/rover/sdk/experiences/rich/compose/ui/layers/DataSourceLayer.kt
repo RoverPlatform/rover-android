@@ -19,6 +19,7 @@ package io.rover.sdk.experiences.rich.compose.ui.layers
 
 import android.util.Log
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.experiences.data.URLRequest
 import io.rover.sdk.experiences.rich.compose.model.nodes.DataSource
@@ -41,7 +42,7 @@ import retrofit2.http.*
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
-internal fun DataSourceLayer(node: DataSource) {
+internal fun DataSourceLayer(node: DataSource, modifier: Modifier = Modifier) {
     val tag = "DataSourceLayer"
     val dataContext = makeDataContext(
         userInfo = Environment.LocalUserInfo.current?.invoke() ?: emptyMap(),
@@ -159,7 +160,7 @@ internal fun DataSourceLayer(node: DataSource) {
         }
         is State.Success -> {
             CompositionLocalProvider(Environment.LocalData provides currentState.data) {
-                Children(children = node.children)
+                Children(children = node.children, modifier = modifier)
             }
         }
     }

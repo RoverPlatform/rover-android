@@ -88,8 +88,11 @@ private class AspectRatioLayoutModifier(val aspectRatio: Float) : LayoutModifier
             )
         )
 
-        return layout(placeable.width, placeable.height) {
-            placeable.place(0, 0)
+        return layout(placeable.measuredWidth, placeable.measuredHeight) {
+            placeable.place(
+                (placeable.measuredWidth - placeable.width) / 2,
+                (placeable.measuredHeight - placeable.height)
+            )
         }
     }
 
@@ -125,7 +128,7 @@ private class AspectRatioLayoutModifier(val aspectRatio: Float) : LayoutModifier
                 return@mapMaxIntrinsicWidthAsMeasure Size(0, 0)
             }
 
-            val childSize = measurable.experiencesMeasure(
+            val childSize = measurable.fallbackMeasure(
                 Size(
                     (fraction * aspectRatio).roundToInt(),
                     fraction.roundToInt()

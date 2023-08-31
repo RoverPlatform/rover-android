@@ -35,7 +35,7 @@ dependencyResolutionManagement {
     }
 }
 
-include(":core", ":location", ":notifications", ":debug", ":ticketmaster", ":advertising", ":experiences")
+include(":core", ":location", ":notifications", ":debug", ":ticketmaster", ":advertising", ":experiences", ":seatgeek")
 rootProject.name = "Rover Android"
 include(":example-app")
 include(":testbench")

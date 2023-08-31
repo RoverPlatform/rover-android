@@ -18,6 +18,7 @@
 package io.rover.sdk.experiences.rich.compose.ui.layers
 
 import android.annotation.SuppressLint
+import android.util.Size
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -29,8 +30,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.LayoutModifier
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import io.rover.experiences.R
 import io.rover.sdk.core.Rover
@@ -40,7 +48,13 @@ import io.rover.sdk.experiences.rich.compose.model.values.*
 import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.Services
 import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.ZStackLayer
+import io.rover.sdk.experiences.rich.compose.ui.layout.experiencesHorizontalFlex
+import io.rover.sdk.experiences.rich.compose.ui.layout.experiencesVerticalFlex
+import io.rover.sdk.experiences.rich.compose.ui.layout.fallbackMeasure
+import io.rover.sdk.experiences.rich.compose.ui.layout.mapMaxIntrinsicWidthAsMeasure
+import io.rover.sdk.experiences.rich.compose.ui.layout.mapMinIntrinsicAsFlex
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.ActionModifier
+import io.rover.sdk.experiences.rich.compose.ui.modifiers.experiencesFrame
 import io.rover.sdk.experiences.rich.compose.ui.utils.rememberSystemBarController
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeColor
 import io.rover.sdk.experiences.services.ExperienceScreenViewed
@@ -109,12 +123,111 @@ internal fun ScreenLayer(node: Screen, appearance: Appearance) {
                 Surface(color = node.backgroundColor.getComposeColor()) {
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                         ZStackLayer {
-                            Children(children = node.children)
+                            // So, for historical reasons the Mac editor has the following
+                            // frame modifier on each of the screen layer's children:
+                            //   .frame(width: geometry.size.width, height: geometry.size.height, alignment: .center)
+                            //   (where geometry.size is just the fixed size of the screen).
+
+                            // This has the effect of inhibiting ZStack's "adopt size of largest
+                            // child" behaviour, which we need to emulate here, which is done
+                            // by FixedToProposedSize().
+                            Children(children = node.children, modifier = FixedToProposedSize())
                         }
                     }
                 }
             }
         }
+    }
+}
+
+
+/**
+ * This layout modifier adopts the size proposed to it by the parent.
+ *
+ * It will place its child centered in that space. It will not grow to handle an oversized child.
+ *
+ * This purpose of this modifier is to defeat ZStack's behaviour of adopting the size of
+ * any oversized children and proposing that size to any siblings.
+ *
+ * This is needed to emulate the behaviour of how Screens are set up in the iOS SDK/Mac editor,
+ * where (roughly) the following setup is used:
+ *
+ * ```swift
+ * GeometryReader { geometry in
+ *   ZStack {
+ *     allChildren
+ *        // this frame modifier is applied to each of the children. FixedToProposedSize is meant
+ *        // to emulate this.
+ *       .frame(width: geometry.size.width, height: geometry.size.height, alignment: .center)
+ *   }
+ * }
+ * ```
+ *
+ */
+private class FixedToProposedSize(): LayoutModifier {
+    override fun MeasureScope.measure(
+        measurable: Measurable,
+        constraints: Constraints
+    ): MeasureResult {
+        val placeable = measurable.measure(constraints)
+
+        // centering neutralization - if a measurable comes up with a measured size greater
+        // than the constraints it was measured with, then Compose "helpfully" attempts to center
+        // it. We don't want that behaviour, so these terms neutralize it.
+        val centeringCompX = (placeable.width - placeable.measuredWidth) / 2
+        val centeringCompY = (placeable.height - placeable.measuredHeight) / 2
+
+        // Note: I know it seems weird that we neutralize Compose's centering and go ahead
+        // and center it ourselves, but Compose's behaviour only centers if oversized. We want it
+        // *always* centered.
+
+        return layout(constraints.maxWidth, constraints.maxHeight) {
+            placeable.place(
+                x = ((constraints.maxWidth - placeable.measuredWidth) / 2) - centeringCompX,
+                y = ((constraints.maxHeight - placeable.measuredHeight) / 2) - centeringCompY
+            )
+        }
+    }
+
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(
+        measurable: IntrinsicMeasurable,
+        height: Int
+    ): Int {
+        return mapMaxIntrinsicWidthAsMeasure(height) { proposedSize ->
+            // child size, clamped to proposed size
+            val childSize = measurable.fallbackMeasure(proposedSize)
+            Size(
+                childSize.width.coerceAtMost(proposedSize.width),
+                childSize.height.coerceAtMost(proposedSize.height)
+            )
+        }
+    }
+
+    // and pass through flex:
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(
+        measurable: IntrinsicMeasurable,
+        height: Int
+    ): Int {
+        return mapMinIntrinsicAsFlex {
+            measurable.experiencesHorizontalFlex()
+        }
+    }
+
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(
+        measurable: IntrinsicMeasurable,
+        width: Int
+    ): Int {
+        return mapMinIntrinsicAsFlex {
+            measurable.experiencesVerticalFlex()
+        }
+    }
+
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(
+        measurable: IntrinsicMeasurable,
+        width: Int
+    ): Int {
+        throw IllegalStateException("maxIntrinsicHeight not supported on Experiences measurables")
     }
 }
 

@@ -34,25 +34,26 @@ import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeColor
 
 @Composable
-internal fun IconLayer(node: io.rover.sdk.experiences.rich.compose.model.nodes.Icon) {
+internal fun IconLayer(node: io.rover.sdk.experiences.rich.compose.model.nodes.Icon, modifier: Modifier = Modifier) {
     IconLayer(
         node = node,
         materialName = node.icon.materialName,
         tint = node.color,
-        iconSize = node.pointSize.dp
+        iconSize = node.pointSize.dp,
+        modifier = modifier
     )
 }
 
 @Composable
-private fun IconLayer(node: Node, materialName: String, tint: ColorReference, iconSize: Dp) {
+private fun IconLayer(node: Node, materialName: String, tint: ColorReference, iconSize: Dp, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val resourceId: Int = context.getMaterialIconID(materialName)
 
-    LayerBox(LayerModifiers(node)) {
+    ApplyLayerModifiers(LayerModifiers(node), modifier) { modifier ->
         Icon(
             painter = painterResource(id = resourceId),
             tint = tint.getComposeColor(Environment.LocalIsDarkTheme.current),
-            modifier = Modifier.then(StripPackedIntrinsics()).size(iconSize),
+            modifier = modifier.then(StripPackedIntrinsics()).size(iconSize),
             contentDescription = ""
         )
     }

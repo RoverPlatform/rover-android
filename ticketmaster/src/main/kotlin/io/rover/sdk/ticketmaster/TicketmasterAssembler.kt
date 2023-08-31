@@ -25,8 +25,6 @@ import io.rover.sdk.core.container.Assembler
 import io.rover.sdk.core.container.Container
 import io.rover.sdk.core.container.Resolver
 import io.rover.sdk.core.container.Scope
-import io.rover.sdk.core.data.sync.SyncCoordinatorInterface
-import io.rover.sdk.core.data.sync.SyncParticipant
 import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.core.platform.LocalStorage
 
@@ -44,27 +42,13 @@ class TicketmasterAssembler : Assembler {
             TicketmasterManager::class.java
         ) { resolver ->
             TicketmasterManager(
-                resolver.resolveSingletonOrFail(Application::class.java),
                 resolver.resolveSingletonOrFail(UserInfoInterface::class.java),
                 resolver.resolveSingletonOrFail(LocalStorage::class.java)
             )
         }
-
-        container.register(
-            Scope.Singleton,
-            SyncParticipant::class.java,
-            "ticketmaster"
-        ) { resolver -> resolver.resolveSingletonOrFail(TicketmasterManager::class.java) }
     }
 
     override fun afterAssembly(resolver: Resolver) {
-        resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java).registerParticipant(
-            resolver.resolveSingletonOrFail(
-                SyncParticipant::class.java,
-                "ticketmaster"
-            )
-        )
-
         val analyticEventFilter = IntentFilter().apply {
             TMScreenActionToRoverNames.forEach { addAction(it.key) }
         }

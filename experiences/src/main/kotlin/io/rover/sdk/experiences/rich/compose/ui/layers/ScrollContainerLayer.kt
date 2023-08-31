@@ -38,7 +38,7 @@ import io.rover.sdk.experiences.rich.compose.model.values.Fill
 import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.HStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.VStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.layout.*
-import io.rover.sdk.experiences.rich.compose.ui.layout.experiencesMeasure
+import io.rover.sdk.experiences.rich.compose.ui.layout.fallbackMeasure
 import io.rover.sdk.experiences.rich.compose.ui.layout.mapMaxIntrinsicWidthAsMeasure
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.utils.ifInfinity
@@ -47,14 +47,14 @@ import io.rover.sdk.experiences.rich.compose.vendor.compose.foundation.rememberS
 import io.rover.sdk.experiences.rich.compose.vendor.compose.foundation.verticalScroll
 
 @Composable
-internal fun ScrollContainerLayer(node: ScrollContainer) {
-    ScrollContainerLayer(axis = node.axis, layerModifiers = LayerModifiers(node)) {
-        Children(children = node.children)
+internal fun ScrollContainerLayer(node: ScrollContainer, modifier: Modifier = Modifier) {
+    ScrollContainerLayer(axis = node.axis, layerModifiers = LayerModifiers(node), modifier) {
+        Children(children = node.children, modifier = Modifier)
     }
 }
 
 @Composable
-internal fun ScrollContainerLayer(axis: Axis = Axis.VERTICAL, layerModifiers: LayerModifiers = LayerModifiers(), content: @Composable () -> Unit) {
+internal fun ScrollContainerLayer(axis: Axis = Axis.VERTICAL, layerModifiers: LayerModifiers = LayerModifiers(), modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     // These are all the responsibilities, in order:
     // 1. expanding box (that falls back to child size if proposed infinity constraints) + align scrollable at leading edge of axis if smaller
     // 2. scroll itself
@@ -62,7 +62,7 @@ internal fun ScrollContainerLayer(axis: Axis = Axis.VERTICAL, layerModifiers: La
     // 4. implicit stack
     // 5. content itself
 
-    LayerBox(layerModifiers) {
+    ApplyLayerModifiers(layerModifiers, modifier) { modifier ->
         Layout(
             {
                 when (axis) {
@@ -91,6 +91,7 @@ internal fun ScrollContainerLayer(axis: Axis = Axis.VERTICAL, layerModifiers: La
                     }
                 }
             },
+            modifier = modifier,
             measurePolicy = ScrollContainerMeasurePolicy(axis),
         )
     }
@@ -121,8 +122,8 @@ internal fun ScrollContainerMeasurePolicy(
                     ),
                 )
             }
-            val width = constraints.maxWidth.ifInfinity { placeables.maxOf { it.width } }
-            val height = constraints.maxHeight.ifInfinity { placeables.maxOf { it.height } }
+            val width = constraints.maxWidth.ifInfinity { placeables.maxOf { it.measuredWidth } }
+            val height = constraints.maxHeight.ifInfinity { placeables.maxOf { it.measuredHeight } }
 
             return layout(
                 // if the scroll container itself was given an infinity, fall back to the size
@@ -141,6 +142,13 @@ internal fun ScrollContainerMeasurePolicy(
             height: Int,
         ): Int {
             return mapMaxIntrinsicWidthAsMeasure(height) { (proposedWidth, proposedHeight) ->
+                if (proposedWidth != Constraints.Infinity && proposedHeight != Constraints.Infinity) {
+                    // if not a nested scroll container, then no fallback behaviour is needed to
+                    // compensate for a proposed infinity, so just expand to fill proposed size
+                    // as is default.
+                    return@mapMaxIntrinsicWidthAsMeasure Size(proposedWidth, proposedHeight)
+                }
+
                 val sizes = measurables.map {
                     // one difference here vs measure() above: the scrollable modifier
                     // will replace the maxWidth/Height dimension with infinity before
@@ -151,11 +159,13 @@ internal fun ScrollContainerMeasurePolicy(
 
                     // we do, however, have to use a custom version of Jetpack Compose's
                     // Scroll modifier in order to ensure safe pass-through of packed intrinsics.
-                    it.experiencesMeasure(
-                        Size(
-                            if (axis == Axis.HORIZONTAL) Constraints.Infinity else proposedWidth,
-                            if (axis == Axis.VERTICAL) Constraints.Infinity else proposedHeight,
-                        ),
+                    val size = Size(
+                        if (axis == Axis.HORIZONTAL) Constraints.Infinity else proposedWidth,
+                        if (axis == Axis.VERTICAL) Constraints.Infinity else proposedHeight,
+                    )
+
+                    it.fallbackMeasure(
+                        size,
                     )
                 }
 
@@ -221,12 +231,12 @@ private class FillSpaceModifier(private val axis: Axis) : LayoutModifier {
                 val placeable = measurable.measure(constraints)
 
                 val startPos = if (constraints.maxHeight != Constraints.Infinity) {
-                    maxOf((constraints.maxHeight / 2) - (placeable.height / 2), 0)
+                    maxOf((constraints.maxHeight / 2) - (placeable.measuredHeight / 2), 0)
                 } else {
                     0
                 }
 
-                return layout(placeable.width, constraints.maxHeight.ifInfinity { placeable.height }) {
+                return layout(placeable.measuredWidth, constraints.maxHeight.ifInfinity { placeable.measuredHeight }) {
                     placeable.place(0, startPos)
                 }
             }
@@ -235,12 +245,12 @@ private class FillSpaceModifier(private val axis: Axis) : LayoutModifier {
                 val placeable = measurable.measure(constraints)
 
                 val startPos = if (constraints.maxWidth != Constraints.Infinity) {
-                    maxOf((constraints.maxWidth / 2) - (placeable.width / 2), 0)
+                    maxOf((constraints.maxWidth / 2) - (placeable.measuredWidth / 2), 0)
                 } else {
                     0
                 }
 
-                return layout(constraints.maxWidth.ifInfinity { placeable.width }, placeable.height) {
+                return layout(constraints.maxWidth.ifInfinity { placeable.measuredWidth }, placeable.measuredHeight) {
                     placeable.place(startPos, 0)
                 }
             }
@@ -351,13 +361,13 @@ private class NestedScrollProtector(
         // the scroll container has been nested within a scroll container of same dimension.
 
         // in the event of nested scroll, instead of proposing infinity to child, instead
-        // use experiencesMeasure (which bypasses .scrollable) to determine the nominal
+        // use fallbackMeasure (which bypasses .scrollable) to determine the nominal
         // height of the child and we'll fall back to that.
         val childConstraints = when (axis) {
             Axis.HORIZONTAL -> {
                 constraints.copy(
                     maxWidth = constraints.maxWidth.ifInfinity {
-                        measurable.experiencesMeasure(
+                        measurable.fallbackMeasure(
                             Size(constraints.maxWidth, constraints.maxHeight),
                         ).width
                     },
@@ -366,7 +376,7 @@ private class NestedScrollProtector(
             Axis.VERTICAL -> {
                 constraints.copy(
                     maxHeight = constraints.maxHeight.ifInfinity {
-                        measurable.experiencesMeasure(
+                        measurable.fallbackMeasure(
                             Size(constraints.maxWidth, constraints.maxHeight),
                         ).height
                     },
@@ -377,7 +387,7 @@ private class NestedScrollProtector(
         val placeable =
             measurable.measure(childConstraints)
 
-        return layout(placeable.width, placeable.height) {
+        return layout(placeable.measuredWidth, placeable.measuredHeight) {
             placeable.place(0, 0)
         }
     }

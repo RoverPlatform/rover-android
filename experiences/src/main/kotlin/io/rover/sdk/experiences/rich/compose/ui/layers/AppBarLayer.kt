@@ -19,12 +19,13 @@ package io.rover.sdk.experiences.rich.compose.ui.layers
 
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import io.rover.sdk.experiences.rich.compose.model.nodes.AppBar
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 
 @Composable
-internal fun AppBarLayer(node: AppBar) {
-    LayerBox(LayerModifiers(node)) {
+internal fun AppBarLayer(node: AppBar, modifier: Modifier = Modifier) {
+    ApplyLayerModifiers(LayerModifiers(node), modifier) { modifier ->
         Text("AppBarLayer")
     }
 }

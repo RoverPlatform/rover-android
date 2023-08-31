@@ -22,7 +22,14 @@ import android.util.Size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.*
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
@@ -33,20 +40,27 @@ import io.rover.sdk.experiences.rich.compose.model.values.Axis
 import io.rover.sdk.experiences.rich.compose.model.values.ColorReference
 import io.rover.sdk.experiences.rich.compose.model.values.Fill
 import io.rover.sdk.experiences.rich.compose.ui.Environment
+import io.rover.sdk.experiences.rich.compose.ui.layers.ApplyLayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.layers.Children
-import io.rover.sdk.experiences.rich.compose.ui.layers.LayerBox
 import io.rover.sdk.experiences.rich.compose.ui.layers.RectangleLayer
-import io.rover.sdk.experiences.rich.compose.ui.layout.*
+import io.rover.sdk.experiences.rich.compose.ui.layout.annotateIntrinsicsCrash
+import io.rover.sdk.experiences.rich.compose.ui.layout.component1
+import io.rover.sdk.experiences.rich.compose.ui.layout.component2
+import io.rover.sdk.experiences.rich.compose.ui.layout.experiencesHorizontalFlex
+import io.rover.sdk.experiences.rich.compose.ui.layout.experiencesVerticalFlex
+import io.rover.sdk.experiences.rich.compose.ui.layout.fallbackMeasure
+import io.rover.sdk.experiences.rich.compose.ui.layout.mapMaxIntrinsicWidthAsMeasure
+import io.rover.sdk.experiences.rich.compose.ui.layout.mapMinIntrinsicAsFlex
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
-import io.rover.sdk.experiences.rich.compose.ui.utils.*
-import io.rover.sdk.experiences.rich.compose.ui.utils.groupByPriority
+import io.rover.sdk.experiences.rich.compose.ui.utils.LayoutInfo
+import io.rover.sdk.experiences.rich.compose.ui.utils.groupByHorizontalFlexibilityAndPriority
 import io.rover.sdk.experiences.rich.compose.ui.utils.ifInfinity
-import io.rover.sdk.experiences.rich.compose.ui.utils.sortByHorizontalFlexibility
+import io.rover.sdk.experiences.rich.compose.ui.utils.unlessInfinity
 
 @Composable
-internal fun HStackLayer(node: HStack) {
-    HStackLayer(spacing = node.spacing, alignment = node.alignment, layerModifiers = LayerModifiers(node)) {
-        Children(children = node.children)
+internal fun HStackLayer(node: HStack, modifier: Modifier = Modifier) {
+    HStackLayer(spacing = node.spacing, alignment = node.alignment, layerModifiers = LayerModifiers(node), modifier = modifier) {
+        Children(children = node.children, Modifier)
     }
 }
 
@@ -56,7 +70,7 @@ internal fun HStackLayer(
     spacing: Float = 10f,
     alignment: Alignment = Alignment.CENTER,
     layerModifiers: LayerModifiers = LayerModifiers(),
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val localDensityContext = LocalDensity.current
 
@@ -64,9 +78,9 @@ internal fun HStackLayer(
         spacing.dp.roundToPx()
     }
 
-    LayerBox(layerModifiers, modifier = modifier) {
+    ApplyLayerModifiers(layerModifiers, modifier = modifier) { modifier ->
         CompositionLocalProvider(Environment.LocalStackAxis provides Axis.HORIZONTAL) {
-            Layout(content, measurePolicy = hStackMeasurePolicy(spacingAsPx, alignment))
+            Layout(content, measurePolicy = hStackMeasurePolicy(spacingAsPx, alignment), modifier = modifier)
         }
     }
 }
@@ -82,7 +96,7 @@ internal fun hStackMeasurePolicy(spacingAsPx: Int, alignment: Alignment): Measur
 
         override fun MeasureScope.measure(
             measurables: List<Measurable>,
-            constraints: Constraints
+            constraints: Constraints,
         ): MeasureResult {
             if (measurables.isEmpty()) {
                 return layout(0, 0) { }
@@ -90,85 +104,54 @@ internal fun hStackMeasurePolicy(spacingAsPx: Int, alignment: Alignment): Measur
 
             Trace.beginSection("HStackLayer::measure")
 
-            var remainingWidth =
-                if (constraints.maxWidth == Constraints.Infinity) Constraints.Infinity else constraints.maxWidth - maxOf(
-                    (spacingAsPx * (measurables.count() - 1)),
-                    0
+            val groupedMeasurables = measurables.groupByHorizontalFlexibilityAndPriority()
+
+            val proposedSizeWithFallback = if (constraints.maxHeight == Constraints.Infinity) {
+                // cross dimension fallback is needed.
+                val (largestObservedNonInfinityHeight, _) = groupedMeasurables.measureOrderedHStackChildrenUsingIntrinsics(
+                    Size(constraints.maxWidth, constraints.maxHeight),
+                    spacingAsPx,
                 )
-            val proposedWidths = hashMapOf<Measurable, Int>()
-
-            val measurablesGroupedByPriority = measurables.groupByPriority()
-
-            val highestPriority = measurablesGroupedByPriority.keys.firstOrNull()
-            var largestObservedNonInfinityHeight: Int? = null
-
-            measurablesGroupedByPriority.forEach { (priority, groupedMeasurables) ->
-                val sortedByFlexibility = groupedMeasurables.sortByHorizontalFlexibility(
-                    constraints.maxHeight
-                )
-
-                sortedByFlexibility.forEachIndexed { index, measurable ->
-                    measurable.annotateIntrinsicsCrash {
-                        if (remainingWidth == Constraints.Infinity) {
-                            proposedWidths[measurable] = Constraints.Infinity
-                        } else {
-                            val remainingChildren = sortedByFlexibility.size - index
-                            val proposedSize = maxOf(remainingWidth / remainingChildren, 0)
-
-                            val childSize = measurable.experiencesMeasure(
-                                Size(
-                                    proposedSize,
-                                    constraints.maxHeight
-                                )
-                            )
-
-                            if (priority == highestPriority && childSize.height != Constraints.Infinity) {
-                                largestObservedNonInfinityHeight = maxOf(
-                                    largestObservedNonInfinityHeight ?: Int.MIN_VALUE,
-                                    childSize.height
-                                )
-                            }
-
-                            remainingWidth -= childSize.width
-                            proposedWidths[measurable] = childSize.width
-                        }
-                    }
-                }
+                Size(constraints.maxWidth, largestObservedNonInfinityHeight ?: Constraints.Infinity)
+            } else {
+                // no fallback needed.
+                Size(constraints.maxWidth, constraints.maxHeight)
             }
 
-            // fallback behaviour on the cross dimension
-            val maxHeightConstraint = constraints.maxHeight.ifInfinity {
-                largestObservedNonInfinityHeight ?: Constraints.Infinity
+            val measurableAndPlaceablePairs = groupedMeasurables.measureOrderedHStackChildren(
+                proposedSizeWithFallback,
+                spacingAsPx,
+            )
+
+            // reorder the placeables returned by measureOrderedHStackChildren to match the original order of the measurables:
+            val placeableLookup = measurableAndPlaceablePairs.associate {
+                it.first to it.second
+            }
+            val placeables = measurables.mapNotNull { measurable ->
+                // now get the placeable for this measurable, and yield it.
+                placeableLookup[measurable]
             }
 
-            val placeables = measurables.map { measurable ->
-                measurable.measure(
-                    constraints.copy(
-                        maxWidth = proposedWidths[measurable] ?: 0,
-                        maxHeight = maxHeightConstraint
-                    )
-                )
-            }
-
-            placeables.assertNoInfiniteSizes("HStack")
-
-            val maxHeight = placeables.maxOf { it.height }
-            val width = placeables.sumOfWithLayoutSpacing(spacingAsPx) { it.width }
+            val maxHeight = placeables.maxOf { it.measuredHeight }
+            val width = placeables.sumOfWithLayoutSpacing(spacingAsPx) { it.measuredWidth }
             val l = layout(width, maxHeight) {
                 var xPosition = 0
 
                 placeables.forEach { placeable ->
                     val yPosition = when (alignment) {
                         Alignment.TOP -> 0
-                        Alignment.BOTTOM -> maxHeight - placeable.height
+                        Alignment.BOTTOM -> maxHeight - placeable.measuredHeight
                         // TODO: This alignment type has its own issue: https://github.com/judoapp/judo-android-develop/issues/636
                         Alignment.FIRST_TEXT_BASELINE -> 0
                         // The default Alignment for HStack is CENTER.
-                        else -> maxOf(maxHeight / 2 - placeable.height / 2, 0)
+                        else -> maxOf(maxHeight / 2 - placeable.measuredHeight / 2, 0)
                     }
 
-                    placeable.placeRelative(x = xPosition, y = yPosition)
-                    xPosition += placeable.width + spacingAsPx
+                    placeable.placeRelative(
+                        x = (placeable.measuredWidth - placeable.width) / 2 + xPosition,
+                        y = (placeable.measuredHeight - placeable.height) / 2 + yPosition,
+                    )
+                    xPosition += placeable.measuredWidth + spacingAsPx
                 }
             }
             Trace.endSection()
@@ -177,7 +160,7 @@ internal fun hStackMeasurePolicy(spacingAsPx: Int, alignment: Alignment): Measur
 
         override fun IntrinsicMeasureScope.maxIntrinsicWidth(
             measurables: List<IntrinsicMeasurable>,
-            height: Int
+            height: Int,
         ): Int {
             Trace.beginSection("HStackLayer::intrinsicMeasure")
             try {
@@ -186,68 +169,35 @@ internal fun hStackMeasurePolicy(spacingAsPx: Int, alignment: Alignment): Measur
                         return@mapMaxIntrinsicWidthAsMeasure Size(0, 0)
                     }
 
-                    var remainingWidth =
-                        if (proposedWidth == Constraints.Infinity) Constraints.Infinity else proposedWidth - maxOf(
-                            (spacingAsPx * (measurables.count() - 1)),
-                            0
-                        )
-                    val proposedWidths = hashMapOf<IntrinsicMeasurable, Int>()
-
-                    val measurablesGroupedByPriority = measurables.groupByPriority()
-
-                    val highestPriority = measurablesGroupedByPriority.keys.firstOrNull()
-                    var largestObservedNonInfinityHeight: Int? = null
-
-                    measurablesGroupedByPriority.forEach { (priority, groupedMeasurables) ->
-                        val sortedByFlexibility = groupedMeasurables.sortByHorizontalFlexibility(
-                            proposedHeight
-                        )
-
-                        sortedByFlexibility.forEachIndexed { index, measurable ->
-                            measurable.annotateIntrinsicsCrash {
-                                if (remainingWidth == Constraints.Infinity) {
-                                    proposedWidths[measurable] = Constraints.Infinity
-                                } else {
-                                    val remainingChildren = sortedByFlexibility.size - index
-                                    val proposedSize = maxOf(remainingWidth / remainingChildren, 0)
-
-                                    val childSize = measurable.experiencesMeasure(
-                                        android.util.Size(
-                                            proposedSize,
-                                            proposedHeight
-                                        )
-                                    )
-
-                                    if (priority == highestPriority && childSize.height != Constraints.Infinity) {
-                                        largestObservedNonInfinityHeight = maxOf(
-                                            largestObservedNonInfinityHeight ?: Int.MIN_VALUE,
-                                            childSize.height
-                                        )
-                                    }
-
-                                    remainingWidth -= childSize.width
-                                    proposedWidths[measurable] = childSize.width
-                                }
-                            }
-                        }
-                    }
+                    val groupedMeasurables = measurables.groupByHorizontalFlexibilityAndPriority()
 
                     // fallback behaviour on the cross dimension
                     val maxHeightConstraint = proposedHeight.ifInfinity {
+                        val (largestObservedNonInfinityHeight, childSizes) = groupedMeasurables.measureOrderedHStackChildrenUsingIntrinsics(
+                            Size(proposedWidth, proposedHeight),
+                            spacingAsPx,
+                        )
+
                         largestObservedNonInfinityHeight ?: Constraints.Infinity
                     }
 
-                    val placeables = measurables.map { measurable ->
-                        measurable.experiencesMeasure(
-                            Size(
-                                proposedWidths[measurable] ?: 0,
-                                maxHeightConstraint
-                            )
-                        )
-                    }
+                    // now I have a fallback cross dim value (if needed, otherwise stick with the originally proposed value).
+                    //
+                    // Now run the stack algo again.
 
-                    val maxHeight = placeables.maxOf { it.height }
-                    val width = placeables.sumOfWithLayoutSpacing(spacingAsPx) { it.width }
+                    // TODO: optimization: this can be only done in the event of needing a fallback!
+                    val measureResults = groupedMeasurables.measureOrderedHStackChildrenUsingIntrinsics(
+                        Size(
+                            proposedWidth,
+                            maxHeightConstraint,
+                        ),
+                        spacingAsPx,
+                    )
+
+                    val finalChildSizes = measureResults.childSizes.values
+
+                    val maxHeight = finalChildSizes.maxOf { it.height }
+                    val width = finalChildSizes.sumOfWithLayoutSpacing(spacingAsPx) { it.width }
 
                     Size(width, maxHeight)
                 }
@@ -258,7 +208,7 @@ internal fun hStackMeasurePolicy(spacingAsPx: Int, alignment: Alignment): Measur
 
         override fun IntrinsicMeasureScope.minIntrinsicWidth(
             measurables: List<IntrinsicMeasurable>,
-            height: Int
+            height: Int,
         ): Int {
             Trace.beginSection("HStackLayer::intrinsicMeasure::horizontalFlex")
             return try {
@@ -268,7 +218,7 @@ internal fun hStackMeasurePolicy(spacingAsPx: Int, alignment: Alignment): Measur
                     // we'll add spacing since spacing is inflexible.
                     val spacing = maxOf(
                         (spacingAsPx * (measurables.count() - 1)),
-                        0
+                        0,
                     )
 
                     val lower = childRanges.sumOf { it.first } + spacing
@@ -282,7 +232,7 @@ internal fun hStackMeasurePolicy(spacingAsPx: Int, alignment: Alignment): Measur
 
         override fun IntrinsicMeasureScope.minIntrinsicHeight(
             measurables: List<IntrinsicMeasurable>,
-            width: Int
+            width: Int,
         ): Int {
             Trace.beginSection("HStackLayer::intrinsicMeasure::verticalFlex")
             return try {
@@ -301,7 +251,7 @@ internal fun hStackMeasurePolicy(spacingAsPx: Int, alignment: Alignment): Measur
 
         override fun IntrinsicMeasureScope.maxIntrinsicHeight(
             measurables: List<IntrinsicMeasurable>,
-            width: Int
+            width: Int,
         ): Int {
             throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
         }
@@ -328,17 +278,163 @@ private fun OfferedInfinityWidth() {
 private object InfiniteWidthMeasurePolicy : MeasurePolicy {
     override fun MeasureScope.measure(
         measurables: List<Measurable>,
-        constraints: Constraints
+        constraints: Constraints,
     ): MeasureResult {
         val childConstraints = constraints.copy(
-            maxWidth = Constraints.Infinity
+            maxWidth = Constraints.Infinity,
         )
         val placeables = measurables.map { it.measure(childConstraints) }
 
-        return layout(placeables.maxOf { it.width }, placeables.maxOf { it.height }) {
+        return layout(placeables.maxOf { it.measuredWidth }, placeables.maxOf { it.measuredHeight }) {
             placeables.forEach {
                 it.placeRelative(0, 0)
             }
         }
     }
+}
+
+private data class HStackChildIntrinsicMeasureResults(
+    val largestObservedNonInfinityHeight: Int?,
+    val childSizes: Map<IntrinsicMeasurable, Size>,
+)
+
+private fun <T : IntrinsicMeasurable> Collection<Collection<LayoutInfo<T>>>.measureOrderedHStackChildrenUsingIntrinsics(
+    proposedSize: Size,
+    spacingAsPx: Int,
+): HStackChildIntrinsicMeasureResults {
+    val totalChildren = this.sumOf { it.count() }
+    val totalSpacing = maxOf(
+        (spacingAsPx * (totalChildren - 1)),
+        0,
+    )
+    var remainingWidth =
+        if (proposedSize.width == Constraints.Infinity) {
+            Constraints.Infinity
+        } else {
+            proposedSize.width - totalSpacing
+        }
+
+    val childSizes = hashMapOf<IntrinsicMeasurable, Size>()
+
+    var largestObservedNonInfinityHeight: Int? = null
+
+    // this is a mutable set of all remaining children to be measured, in order to obtain
+    // their flex minimums.
+    val remainingFlexMinimumChildren = this.flatten().toMutableSet()
+
+    forEachIndexed { priorityGroupIndex, measurables ->
+        measurables.forEachIndexed { measurableIndex, layoutInfo ->
+            layoutInfo.measurable.annotateIntrinsicsCrash {
+                if (remainingWidth == Constraints.Infinity) {
+                    val childSize = layoutInfo.measurable.fallbackMeasure(
+                        Size(
+                            Constraints.Infinity,
+                            proposedSize.height,
+                        ),
+                    )
+                    childSizes[layoutInfo.measurable] = childSize
+                    if (priorityGroupIndex == 0) {
+                        // in the highest priority group, so track the largest observed height
+                        // for infinity behaviour.
+                        if (childSize.height != Constraints.Infinity) {
+                            largestObservedNonInfinityHeight = maxOf(
+                                largestObservedNonInfinityHeight ?: Int.MIN_VALUE,
+                                childSize.height,
+                            )
+                        }
+                    }
+                } else {
+                    remainingFlexMinimumChildren.removeIf { it.measurable == layoutInfo.measurable }
+                    val remainingMinimum = remainingFlexMinimumChildren.map { it.flexRange.first }.filter { it != Constraints.Infinity}.sum()
+
+                    val remainingChildren = measurables.size - measurableIndex
+                    val proposeToChild = maxOf((remainingWidth - remainingMinimum) / remainingChildren, 0)
+
+                    val childSize = layoutInfo.measurable.fallbackMeasure(
+                        Size(
+                            proposeToChild,
+                            proposedSize.height,
+                        ),
+                    )
+
+                    if (priorityGroupIndex == 0) {
+                        // in the highest priority group, so track the largest observed height
+                        // for infinity behaviour.
+                        if (childSize.height != Constraints.Infinity) {
+                            largestObservedNonInfinityHeight = maxOf(
+                                largestObservedNonInfinityHeight ?: Int.MIN_VALUE,
+                                childSize.height,
+                            )
+                        }
+                    }
+
+                    remainingWidth -= childSize.width
+
+                    childSizes[layoutInfo.measurable] = childSize
+                }
+            }
+        }
+    }
+
+    return HStackChildIntrinsicMeasureResults(
+        largestObservedNonInfinityHeight,
+        childSizes,
+    )
+}
+
+private fun Collection<Collection<LayoutInfo<Measurable>>>.measureOrderedHStackChildren(
+    proposedSize: Size,
+    spacingAsPx: Int,
+): List<Pair<Measurable, Placeable>> {
+    val totalChildren = this.sumOf { it.count() }
+    val totalSpacing = maxOf(
+        (spacingAsPx * (totalChildren - 1)),
+        0,
+    )
+    var remainingWidth =
+        if (proposedSize.width == Constraints.Infinity) {
+            Constraints.Infinity
+        } else {
+            proposedSize.width - totalSpacing
+        }
+
+    // this is a mutable set of all remaining children to be measured, in order to obtain
+    // their flex minimums.
+    val remainingFlexMinimumChildren = this.flatten().toMutableSet()
+
+    val measurableAndPlaceables = flatMap { measurables ->
+        measurables.mapIndexed { index, layoutInfo ->
+            layoutInfo.measurable.annotateIntrinsicsCrash {
+                if (remainingWidth == Constraints.Infinity) {
+                    Pair(
+                        layoutInfo.measurable,
+                        layoutInfo.measurable.measure(
+                            Constraints(
+                                maxWidth = Constraints.Infinity,
+                                maxHeight = proposedSize.height,
+                            ),
+                        ),
+                    )
+                } else {
+                    val remainingChildren: Int = measurables.size - index
+                    remainingFlexMinimumChildren.removeIf { it.measurable == layoutInfo.measurable }
+                    val remainingMinimum = remainingFlexMinimumChildren.map { it.flexRange.first }.filter { it != Constraints.Infinity}.sum()
+                    val proposeToChild = maxOf((remainingWidth - remainingMinimum) / remainingChildren, 0)
+
+                    val placeable = layoutInfo.measurable.measure(
+                        Constraints(
+                            maxWidth = proposeToChild,
+                            maxHeight = proposedSize.height,
+                        ),
+                    )
+
+                    remainingWidth -= placeable.measuredWidth
+
+                    Pair(layoutInfo.measurable, placeable)
+                }
+            }
+        }
+    }
+
+    return measurableAndPlaceables
 }

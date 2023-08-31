@@ -24,28 +24,20 @@ import io.rover.sdk.experiences.rich.compose.ui.modifiers.*
 import io.rover.sdk.experiences.rich.compose.ui.utils.SimpleMeasurePolicy
 
 /**
- * LayerBox is responsible for two tasks:
- *
- * - Applying the Experiences modifiers, which are themselves implemented as full composables.
- * - Nesting each layer composable within a box that disables the default Jetpack Compose
- * intrinsic measurements.
- *
- * Note that LayerBox must be used *within* each of the layer composables, and not without.
- *
- * Also note that LayerBox should be the outermost composable on a given layer. This is to be
- * sure that layout priority is surfaced correctly on the IntrinsicMeasurable offered up to
- * any containing stacks.
- *
- * This is because the Layer Box must be excluded in the event of one of those composables yielding
- * empty (such as in the event of interpolation failure), or certain other composables that do
- * not participate in layout (data source, collection, conditional, etc.) being able to exclude it.
- *
- * (In SwiftUI this approach was not needed, because modifiers when applied to EmptyView have no
- * effect.)
+ * ApplyLayerModifiers handles the responsibility of applying the various Rover Experiences
+ * modifiers to the composable content of a Layer.
  */
 @Composable
-internal fun LayerBox(layerModifiers: LayerModifiers, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    // the list of modifiers is given below, to track the order thereof until they are all
+internal fun ApplyLayerModifiers(layerModifiers: LayerModifiers, modifier: Modifier, content: @Composable (Modifier) -> Unit) {
+    val disableModifiers = false
+
+    if (disableModifiers) {
+        content(modifier)
+        return
+    }
+    // Compose modifier order: first in the list measures first, goes down. last is innermost. (opposite to swiftui)
+
+    // the list of modifiers is given below (in SwiftUI order, innermost first), to track the order thereof until they are all
     // implemented:
 
     // aspect ratio modifier
@@ -64,62 +56,69 @@ internal fun LayerBox(layerModifiers: LayerModifiers, modifier: Modifier = Modif
     // offset modifier
     // TODO: safe area modifier
 
-    // TODO: find a way to flatten out this nasty pyramid.
-    // Disable name_shadowing warning, because naming each modifier lambda parameter is clunky.
-    @Suppress("NAME_SHADOWING")
+    // We arrange these as this "pyramid" of nested composables, because some of the Experiences modifiers
+    // need a full composable to implement, and cannot just be done as a Jetpack Compose modifier.
+
+    val outermostModifier = Modifier.setLayerModifierData(
+        layerModifiers.layoutPriority ?: 0,
+        debugNode = layerModifiers.debugNode,
+    ).then(modifier)
+
+    // this outer SimpleMeasurementPolicy Layout is still required, corrects several layout issues.
+    // it's likely there are several downstream bugs within the various modifiers in the Pyramid
+    // below that this is working around.
     Layout(
-        {
+        measurePolicy = SimpleMeasurePolicy(),
+        modifier = outermostModifier,
+        content = {
+            // TODO: find a way to flatten out this nasty pyramid.
+            // Disable name_shadowing warning, because naming each modifier lambda parameter is clunky.
+            @Suppress("NAME_SHADOWING")
             OffsetModifier(
                 offset = layerModifiers.offset,
-                modifier = Modifier
+                modifier = Modifier,
             ) { modifier ->
                 ActionModifier(
                     action = layerModifiers.action,
-                    modifier = modifier
+                    modifier = modifier,
                 ) { modifier ->
                     AccessibilityModifier(
                         accessibility = layerModifiers.accessibility,
-                        modifier = modifier
+                        modifier = modifier,
                     ) { modifier ->
                         MaskModifier(
                             mask = layerModifiers.mask,
-                            modifier = modifier
+                            modifier = modifier,
                         ) { modifier ->
                             OverlayModifier(
                                 overlay = layerModifiers.overlay,
-                                modifier = modifier
+                                modifier = modifier,
                             ) { modifier ->
                                 BackgroundModifier(
                                     background = layerModifiers.background,
-                                    modifier = modifier
+                                    modifier = modifier,
                                 ) { modifier ->
                                     OpacityModifier(
                                         opacity = layerModifiers.opacity,
-                                        modifier = modifier
+                                        modifier = modifier,
                                     ) { modifier ->
                                         FrameModifier(
                                             frame = layerModifiers.frame,
-                                            modifier = modifier
+                                            modifier = modifier,
                                         ) { modifier ->
                                             PaddingModifier(
                                                 padding = layerModifiers.padding,
-                                                modifier = modifier
+                                                modifier = modifier,
                                             ) { modifier ->
                                                 ExperiencesShadowModifier(
                                                     shadow = layerModifiers.shadow,
-                                                    modifier = modifier
+                                                    modifier = modifier,
                                                 ) { modifier ->
                                                     AspectRatioModifier(
                                                         aspectRatio = layerModifiers.aspectRatio,
-                                                        modifier = modifier
+                                                        modifier = modifier,
                                                     ) { modifier ->
-                                                        Layout(
-                                                            {
-                                                                content()
-                                                            },
-                                                            modifier = modifier,
-                                                            measurePolicy = SimpleMeasurePolicy(traceName = layerModifiers.debugNode?.let { "${it.description}::measure" })
-                                                        )
+                                                        content(modifier)
                                                     }
                                                 }
                                             }
@@ -132,10 +131,5 @@ internal fun LayerBox(layerModifiers: LayerModifiers, modifier: Modifier = Modif
                 }
             }
         },
-        modifier = modifier.setLayerModifierData(
-            layerModifiers.layoutPriority ?: 0,
-            debugNode = layerModifiers.debugNode
-        ),
-        measurePolicy = SimpleMeasurePolicy()
     )
 }

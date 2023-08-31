@@ -30,7 +30,7 @@ import io.rover.sdk.experiences.rich.compose.ui.layout.mapMinIntrinsicAsFlex
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 
 @Composable
-internal fun AudioLayer(node: Audio) {
+internal fun AudioLayer(node: Audio, modifier: Modifier) {
     val playerHeight = 88.dp
 
     MediaPlayer(
@@ -39,13 +39,13 @@ internal fun AudioLayer(node: Audio) {
         autoPlay = node.autoPlay,
         showControls = true,
         timeoutControls = false,
-        modifier = Modifier,
+        modifier = modifier,
         layerModifiers = LayerModifiers(node),
         measurePolicy = AudioMeasurePolicy(playerHeight)
     )
 }
 
-class AudioMeasurePolicy(
+internal class AudioMeasurePolicy(
     private val playerHeight: Dp
 ) : MeasurePolicy {
 

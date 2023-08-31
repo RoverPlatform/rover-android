@@ -34,12 +34,6 @@ class PresentExperienceRoute(
     private val experienceIntent: (Context, Uri) -> Intent
 ) : Route {
     override fun resolveUri(uri: URI?): Intent? {
-        val mainDomain = associatedDomains.firstOrNull()
-        if (mainDomain == null) {
-            log.e("No associated domains configured for Rover Experiences.")
-            return null
-        }
-
         if (uri == null) {
             return null
         }
@@ -61,9 +55,16 @@ class PresentExperienceRoute(
                 return null
             }
 
+            // legacy presentExperiences deep links are mapped onto the first Rover domain you have configured.
+            val roverDomain = associatedDomains.firstOrNull { it.lowercase().endsWith(".rover.io") }
+            if (roverDomain == null) {
+                log.e("No associated domains configured for Rover Experiences.")
+                return null
+            }
+
             // construct new URI:
             val newUriBuilder = Uri.Builder()
-                .authority(mainDomain)
+                .authority(roverDomain)
                 .scheme("https")
                 .appendPath("v1")
                 .appendPath("experiences")

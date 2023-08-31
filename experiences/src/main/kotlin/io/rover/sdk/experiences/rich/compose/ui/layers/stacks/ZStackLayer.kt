@@ -20,23 +20,33 @@ package io.rover.sdk.experiences.rich.compose.ui.layers.stacks
 import android.graphics.Point
 import android.os.Trace
 import android.util.Size
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.*
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import io.rover.sdk.experiences.rich.compose.model.nodes.ZStack
 import io.rover.sdk.experiences.rich.compose.model.values.Alignment
+import io.rover.sdk.experiences.rich.compose.ui.layers.ApplyLayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.layers.Children
-import io.rover.sdk.experiences.rich.compose.ui.layers.LayerBox
 import io.rover.sdk.experiences.rich.compose.ui.layout.*
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.layerModifierData
+import io.rover.sdk.experiences.rich.compose.ui.modifiers.setLayerModifierData
 import io.rover.sdk.experiences.rich.compose.ui.utils.ifInfinity
+import io.rover.sdk.experiences.rich.compose.ui.utils.preview.FixedSizeModifier
 
 @Composable
-internal fun ZStackLayer(node: ZStack) {
-    ZStackLayer(node.alignment, layerModifiers = LayerModifiers(node)) {
-        Children(children = node.children)
+internal fun ZStackLayer(node: ZStack, modifier: Modifier = Modifier) {
+    ZStackLayer(node.alignment, layerModifiers = LayerModifiers(node), modifier = modifier) {
+        Children(children = node.children, modifier = Modifier)
     }
 }
 
@@ -45,10 +55,10 @@ internal fun ZStackLayer(
     alignment: Alignment = Alignment.CENTER,
     layerModifiers: LayerModifiers = LayerModifiers(),
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
-    LayerBox(layerModifiers, modifier = modifier) {
-        Layout(content, measurePolicy = zStackMeasurePolicy(alignment))
+    ApplyLayerModifiers(layerModifiers, modifier = modifier) { modifier ->
+        Layout(content, measurePolicy = zStackMeasurePolicy(alignment), modifier = modifier)
     }
 }
 
@@ -57,7 +67,7 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
 
         override fun MeasureScope.measure(
             measurables: List<Measurable>,
-            constraints: Constraints
+            constraints: Constraints,
         ): MeasureResult {
             if (measurables.isEmpty()) {
                 return layout(0, 0) { }
@@ -68,14 +78,14 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
             data class ZStackChild(
                 val measurable: Measurable,
                 val zIndex: Int,
-                val priority: Int
+                val priority: Int,
             )
 
             val children = measurables.mapIndexed { index, measurable ->
                 ZStackChild(
                     measurable = measurable,
                     zIndex = index,
-                    priority = measurable.layerModifierData?.layoutPriority ?: 0
+                    priority = measurable.layerModifierData?.layoutPriority ?: 0,
                 )
             }
 
@@ -89,38 +99,34 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
 
             data class PlaceableChild(
                 val placeable: Placeable,
-                val zIndex: Int
+                val zIndex: Int,
             )
 
             Trace.beginSection("ZStack::measure::fallback")
             // ZStack needs to know what to propose to all the high-priority children
             // in the event of the ZStack itself being proposed an Infinity.
-            val measureSize = if (constraints.maxWidth == Constraints.Infinity || constraints.maxHeight == Constraints.Infinity) {
-                // fallback size. dimensions for which a fallback could not be determined is left
-                // at Infinity.  need maximum non-infinity value.
-
-                val childSizes = maxPriorityChildren.map {
-                    it.measurable.experiencesMeasure(
-                        Size(
-                            constraints.maxWidth,
-                            constraints.maxHeight
-                        )
-                    )
-                }
-
-                val fallbackWidth = childSizes.map { it.width }.filter { it != Constraints.Infinity }.maxOrNull() ?: constraints.maxWidth
-                val fallbackHeight = childSizes.map { it.height }.filter { it != Constraints.Infinity }.maxOrNull() ?: constraints.maxHeight
-
-                Size(
-                    constraints.maxWidth.ifInfinity { fallbackWidth },
-                    constraints.maxHeight.ifInfinity { fallbackHeight }
-                )
-            } else {
-                Size(
-                    constraints.maxWidth,
-                    constraints.maxHeight
+            // Additionally to allow high priority children to force the ZStack
+            // to be a larger size (and thus proposing that larger size to all the other
+            // children.)
+            val childSizes = maxPriorityChildren.map {
+                it.measurable.fallbackMeasure(
+                    Size(
+                        constraints.maxWidth,
+                        constraints.maxHeight,
+                    ),
                 )
             }
+
+            // identify the largest (non-infinity, infinity size returned by child means fallback
+            // couldn't be calculated for it) child size for each dimension, and we'll
+            // use that to propose to children in lieu of infinity.
+            val fallbackWidth = childSizes.map { it.width }.filter { it != Constraints.Infinity }.maxOrNull() ?: constraints.maxWidth
+            val fallbackHeight = childSizes.map { it.height }.filter { it != Constraints.Infinity }.maxOrNull() ?: constraints.maxHeight
+
+            val measureSize = Size(
+                maxOf(constraints.maxWidth.ifInfinity { fallbackWidth }, fallbackWidth),
+                maxOf(constraints.maxHeight.ifInfinity { fallbackHeight }, fallbackHeight),
+            )
 
             Trace.endSection()
 
@@ -129,31 +135,31 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
                     minWidth = 0,
                     maxWidth = measureSize.width,
                     minHeight = 0,
-                    maxHeight = measureSize.height
+                    maxHeight = measureSize.height,
                 )
                 PlaceableChild(
                     child.measurable.measure(
-                        childConstraints
+                        childConstraints,
                     ),
-                    child.zIndex
+                    child.zIndex,
                 )
             }
 
-            val width = maxPriorityPlaceables.maxOf { it.placeable.width }
-            val height = maxPriorityPlaceables.maxOf { it.placeable.height }
+            val width = maxPriorityPlaceables.maxOf { it.placeable.measuredWidth }
+            val height = maxPriorityPlaceables.maxOf { it.placeable.measuredHeight }
 
             val lowPriorityPlaceables = lowPriorityMeasurables.map { child ->
                 val childConstraints = constraints.copy(
                     minWidth = 0,
                     maxWidth = width,
                     minHeight = 0,
-                    maxHeight = height
+                    maxHeight = height,
                 )
                 PlaceableChild(
                     child.measurable.measure(
-                        childConstraints
+                        childConstraints,
                     ),
-                    child.zIndex
+                    child.zIndex,
                 )
             }
 
@@ -161,10 +167,10 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
                 val placeableChildren = maxPriorityPlaceables + lowPriorityPlaceables
                 placeableChildren.forEach { child ->
                     val placeable = child.placeable
-                    val centerWidth = { maxOf(width / 2 - placeable.width / 2, 0) }
-                    val centerHeight = { maxOf(height / 2 - placeable.height / 2, 0) }
-                    val right = { width - placeable.width }
-                    val bottom = { height - placeable.height }
+                    val centerWidth = { width / 2 - placeable.measuredWidth / 2 }
+                    val centerHeight = { height / 2 - placeable.measuredHeight / 2 }
+                    val right = { width - placeable.measuredWidth }
+                    val bottom = { height - placeable.measuredHeight }
 
                     val position: Point = when (alignment) {
                         Alignment.TOP -> Point(centerWidth(), 0)
@@ -177,14 +183,18 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
                         Alignment.BOTTOM_TRAILING -> Point(right(), bottom())
                         Alignment.FIRST_TEXT_BASELINE -> Point(
                             0,
-                            0
+                            0,
                         ) // TODO: This alignment type has its own issue: https://github.com/judoapp/judo-android-develop/issues/636
                         else -> Point(
                             centerWidth(),
-                            centerHeight()
+                            centerHeight(),
                         )
                     }
-                    placeable.place(position.x, position.y, zIndex = child.zIndex * -1f)
+                    placeable.place(
+                        (placeable.measuredWidth - placeable.width) / 2 + position.x,
+                        (placeable.measuredHeight - placeable.height) / 2 + position.y,
+                        zIndex = child.zIndex * -1f,
+                    )
                 }
             }
             Trace.endSection()
@@ -193,7 +203,7 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
 
         override fun IntrinsicMeasureScope.maxIntrinsicWidth(
             measurables: List<IntrinsicMeasurable>,
-            height: Int
+            height: Int,
         ): Int {
             Trace.beginSection("ZStack::intrinsicMeasure")
             return try {
@@ -205,14 +215,14 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
                     data class ZStackChild(
                         val measurable: IntrinsicMeasurable,
                         val zIndex: Int,
-                        val priority: Int
+                        val priority: Int,
                     )
 
                     val children = measurables.mapIndexed { index, measurable ->
                         ZStackChild(
                             measurable = measurable,
                             zIndex = index,
-                            priority = measurable.layerModifierData?.layoutPriority ?: 0
+                            priority = measurable.layerModifierData?.layoutPriority ?: 0,
                         )
                     }
 
@@ -226,55 +236,49 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
 
                     data class PlaceableChild(
                         val size: Size,
-                        val zIndex: Int
+                        val zIndex: Int,
                     )
 
                     Trace.beginSection("ZStack::intrinsicMeasure::fallback")
                     // ZStack needs to know what to propose to all the high-priority children
                     // in the event of the ZStack itself being proposed an Infinity.
-                    val measureSize = if (proposedWidth == Constraints.Infinity || proposedHeight == Constraints.Infinity) {
-                        // fallback size. dimensions for which a fallback could not be determined is left
-                        // at Infinity.  need maximum non-infinity value.
-
-                        val childSizes = maxPriorityChildren.map {
-                            it.measurable.experiencesMeasure(
-                                Size(
-                                    proposedWidth,
-                                    proposedHeight
-                                )
-                            )
-                        }
-
-                        val fallbackWidth = childSizes.map { it.width }.filter { it != Constraints.Infinity }.maxOrNull() ?: proposedWidth
-                        val fallbackHeight = childSizes.map { it.height }.filter { it != Constraints.Infinity }.maxOrNull() ?: proposedHeight
-
-                        Size(
-                            proposedWidth.ifInfinity { fallbackWidth },
-                            proposedHeight.ifInfinity { fallbackHeight }
-                        )
-                    } else {
-                        Size(
-                            proposedWidth,
-                            proposedHeight
+                    // Additionally to allow high priority children to force the ZStack
+                    // to be a larger size (and thus proposing that larger size to all the other
+                    // children.)
+                    val childSizes = maxPriorityChildren.map {
+                        it.measurable.fallbackMeasure(
+                            Size(
+                                proposedWidth,
+                                proposedHeight,
+                            ),
                         )
                     }
+
+                    val fallbackWidth = childSizes.map { it.width }.filter { it != Constraints.Infinity }.maxOrNull() ?: proposedWidth
+                    val fallbackHeight = childSizes.map { it.height }.filter { it != Constraints.Infinity }.maxOrNull() ?: proposedHeight
+
+                    val measureSize = Size(
+                        maxOf(proposedWidth.ifInfinity { fallbackWidth }, proposedWidth),
+                        maxOf(proposedHeight.ifInfinity { fallbackHeight }, proposedHeight),
+                    )
+
                     Trace.endSection()
 
                     val maxPriorityPlaceables = maxPriorityChildren.map { child ->
                         PlaceableChild(
-                            child.measurable.experiencesMeasure(
+                            child.measurable.fallbackMeasure(
                                 Size(
                                     measureSize.width,
-                                    measureSize.height
-                                )
+                                    measureSize.height,
+                                ),
                             ),
-                            child.zIndex
+                            child.zIndex,
                         )
                     }
 
                     Size(
                         maxPriorityPlaceables.maxOf { it.size.width },
-                        maxPriorityPlaceables.maxOf { it.size.height }
+                        maxPriorityPlaceables.maxOf { it.size.height },
                     )
                 }
             } finally {
@@ -284,7 +288,7 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
 
         override fun IntrinsicMeasureScope.minIntrinsicHeight(
             measurables: List<IntrinsicMeasurable>,
-            width: Int
+            width: Int,
         ): Int {
             return try {
                 Trace.beginSection("ZStackLayer::intrinsicMeasure::verticalFlex")
@@ -297,7 +301,7 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
                     data class ZStackChild(
                         val measurable: IntrinsicMeasurable,
                         val zIndex: Int,
-                        val priority: Int
+                        val priority: Int,
                     )
 
                     // TODO: all this may produce a lot of garbage for the hotpath. Optimize,
@@ -306,7 +310,7 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
                         ZStackChild(
                             measurable = measurable,
                             zIndex = index,
-                            priority = measurable.layerModifierData?.layoutPriority ?: 0
+                            priority = measurable.layerModifierData?.layoutPriority ?: 0,
                         )
                     }
 
@@ -329,7 +333,7 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
 
         override fun IntrinsicMeasureScope.minIntrinsicWidth(
             measurables: List<IntrinsicMeasurable>,
-            height: Int
+            height: Int,
         ): Int {
             return try {
                 Trace.beginSection("ZStackLayer::intrinsicMeasure::horizontalFlex")
@@ -342,7 +346,7 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
                     data class ZStackChild(
                         val measurable: IntrinsicMeasurable,
                         val zIndex: Int,
-                        val priority: Int
+                        val priority: Int,
                     )
 
                     // TODO: all this may produce a lot of garbage for the hotpath. Optimize,
@@ -351,7 +355,7 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
                         ZStackChild(
                             measurable = measurable,
                             zIndex = index,
-                            priority = measurable.layerModifierData?.layoutPriority ?: 0
+                            priority = measurable.layerModifierData?.layoutPriority ?: 0,
                         )
                     }
 
@@ -374,9 +378,145 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
 
         override fun IntrinsicMeasureScope.maxIntrinsicHeight(
             measurables: List<IntrinsicMeasurable>,
-            width: Int
+            width: Int,
         ): Int {
             throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
         }
+    }
+}
+
+@Composable
+private fun TestBox(
+    modifier: Modifier = Modifier,
+    size: Dp = 25.dp,
+) {
+    Box(
+        modifier = modifier.then(FixedSizeModifier(size, size))
+            .background(Color.Red)
+            .requiredSize(size),
+    )
+}
+
+/**
+ * This is a larger box, meant to demonstrate an oversized child.
+ */
+@Composable
+private fun BackgroundBox(
+    modifier: Modifier = Modifier,
+    size: Dp = 100.dp,
+) {
+    Box(
+        modifier = modifier.then(FixedSizeModifier(size, size))
+            .background(Color.Blue)
+            .requiredSize(size),
+    )
+}
+
+@Preview
+@Composable
+private fun CenterAlign() {
+    ZStackLayer(alignment = Alignment.CENTER) {
+        TestBox()
+        BackgroundBox()
+    }
+}
+
+@Preview
+@Composable
+private fun TopAlign() {
+    ZStackLayer(alignment = Alignment.TOP) {
+        TestBox()
+        BackgroundBox()
+    }
+}
+
+@Preview
+@Composable
+private fun BottomAlign() {
+    ZStackLayer(alignment = Alignment.BOTTOM) {
+        TestBox()
+        BackgroundBox()
+    }
+}
+
+@Preview
+@Composable
+private fun LeadingAlign() {
+    ZStackLayer(alignment = Alignment.LEADING) {
+        TestBox()
+        BackgroundBox()
+    }
+}
+
+@Preview
+@Composable
+private fun TrailingAlign() {
+    ZStackLayer(alignment = Alignment.TRAILING) {
+        TestBox()
+        BackgroundBox()
+    }
+}
+
+@Preview
+@Composable
+private fun TopTrailingAlign() {
+    ZStackLayer(alignment = Alignment.TOP_TRAILING) {
+        TestBox()
+        BackgroundBox()
+    }
+}
+
+@Preview
+@Composable
+private fun BottomTrailingAlign() {
+    ZStackLayer(alignment = Alignment.BOTTOM_TRAILING) {
+        TestBox()
+        BackgroundBox()
+    }
+}
+
+@Preview
+@Composable
+private fun TopLeadingAlign() {
+    ZStackLayer(alignment = Alignment.TOP_LEADING) {
+        TestBox()
+        BackgroundBox()
+    }
+}
+
+@Preview
+@Composable
+private fun BottomLeadingAlign() {
+    ZStackLayer(alignment = Alignment.BOTTOM_LEADING) {
+        TestBox()
+        BackgroundBox()
+    }
+}
+
+// And, when the 'background' child is larger:
+
+@Preview
+@Composable
+private fun OverdrawCenterAlign() {
+    // to show the content overdrawn from the zstack, we have to make the preview area larger.
+    // hence the Modifier.size().
+    ZStackLayer(alignment = Alignment.CENTER, modifier = Modifier.size(200.dp)) {
+        TestBox()
+        // layout priority -1 so the Zstack won't take this child into account when sizing, causing
+        // it to overdraw.
+        BackgroundBox(modifier = Modifier.setLayerModifierData(-1, null))
+    }
+}
+
+@Preview
+@Composable
+private fun OverdrawTrailingAlign() {
+    // to show the content overdrawn from the zstack, we have to make the preview area larger.
+    // hence the Modifier.size().
+    ZStackLayer(alignment = Alignment.TRAILING, modifier = Modifier.size(200.dp)) {
+        TestBox()
+        // layout priority -1 so the Zstack won't take this child into account when sizing, causing
+        // it to overdraw.
+        BackgroundBox(modifier = Modifier.setLayerModifierData(-1, null))
     }
 }

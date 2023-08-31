@@ -33,6 +33,7 @@ import io.rover.sdk.experiences.rich.compose.model.values.Fill
 import io.rover.sdk.experiences.rich.compose.model.values.Overlay
 import io.rover.sdk.experiences.rich.compose.ui.layers.Layer
 import io.rover.sdk.experiences.rich.compose.ui.layers.TextLayer
+import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.ZStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.layout.PackedHeight
 import io.rover.sdk.experiences.rich.compose.ui.utils.SimpleMeasurePolicy
 
@@ -46,21 +47,21 @@ internal fun BackgroundModifier(
         Layout({
             content(Modifier)
             Layout({
-                Layer(background.node)
+                Layer(background.node, modifier = Modifier)
             }, measurePolicy = SimpleMeasurePolicy(), modifier = Modifier.layoutId("backgroundOrOverlay"))
         }, measurePolicy = OverlayBackgroundMeasurePolicy(overlay = false, alignment = background.alignment), modifier = modifier)
 
         // Original code that uses a synthesized ZStack, a bit more accurate when Composables
         // yield empty. See notes on [OverlayBackgroundMeasurePolicy].
         // TODO: consider switching back to increase accuracy.
-        // Layout({
-        //            ZStackLayer(background.alignment) {
-        //                content(Modifier)
-        //                Layout({
-        //                    Layer(background.node)
-        //                }, measurePolicy = SimpleMeasurePolicy(), modifier = Modifier.experiencesParentModifierData(-1, background.node))
-        //            }
-        //        }, measurePolicy = SimpleMeasurePolicy(), modifier = modifier)
+//         Layout({
+//                    ZStackLayer(background.alignment) {
+//                        content(Modifier)
+//                        Layout({
+//                            Layer(background.node, modifier = Modifier)
+//                        }, measurePolicy = SimpleMeasurePolicy(), modifier = Modifier.setLayerModifierData(-1, background.node))
+//                    }
+//                }, measurePolicy = SimpleMeasurePolicy(), modifier = modifier)
     } else {
         content(modifier)
     }
@@ -76,7 +77,7 @@ internal fun OverlayModifier(
         Layout({
             content(Modifier)
             Layout({
-                Layer(overlay.node)
+                Layer(overlay.node, modifier = Modifier)
             }, measurePolicy = SimpleMeasurePolicy(), modifier = Modifier.layoutId("backgroundOrOverlay"))
         }, measurePolicy = OverlayBackgroundMeasurePolicy(overlay = true, alignment = overlay.alignment), modifier = modifier)
     } else {
@@ -102,7 +103,7 @@ internal fun OverlayModifier(
  *
  * This approach is likely to be temporary, because this approach may be imperfect because
  * empty content (in case of content that disappears itself due to an interpolation error).
- * Once stack/intrinsics issues are solved we should return to
+ * Once stack/intrinsics issues are solved we can revisit this and switch back to ZStack.
  */
 internal class OverlayBackgroundMeasurePolicy(
     val overlay: Boolean = false,
@@ -129,21 +130,25 @@ internal class OverlayBackgroundMeasurePolicy(
 
         val backgroundOrOverlayPlaceable = backgroundOrOverlayMeasurable?.measure(
             Constraints(
-                maxWidth = contentPlaceable.width,
-                maxHeight = contentPlaceable.height
+                maxWidth = contentPlaceable.measuredWidth,
+                maxHeight = contentPlaceable.measuredHeight
             )
         )
 
-        return layout(contentPlaceable.width, contentPlaceable.height) {
-            contentPlaceable.place(0, 0, zIndex = if (overlay) 0f else 1f)
+        return layout(contentPlaceable.measuredWidth, contentPlaceable.measuredHeight) {
+            contentPlaceable.place(
+                (contentPlaceable.measuredWidth - contentPlaceable.width) / 2,
+                (contentPlaceable.measuredHeight - contentPlaceable.height) / 2,
+                zIndex = if (overlay) 0f else 1f
+            )
             backgroundOrOverlayPlaceable?.let { placeable ->
-                val width = contentPlaceable.width
-                val height = contentPlaceable.height
+                val width = contentPlaceable.measuredWidth
+                val height = contentPlaceable.measuredHeight
 
-                val centerWidth = { maxOf(width / 2 - placeable.width / 2, 0) }
-                val centerHeight = { maxOf(height / 2 - placeable.height / 2, 0) }
-                val right = { width - placeable.width }
-                val bottom = { height - placeable.height }
+                val centerWidth = { width / 2 - placeable.measuredWidth / 2 }
+                val centerHeight = { height / 2 - placeable.measuredHeight / 2 }
+                val right = { width - placeable.measuredWidth }
+                val bottom = { height - placeable.measuredHeight }
 
                 val position: Point = when (alignment) {
                     Alignment.TOP -> Point(centerWidth(), 0)
@@ -160,7 +165,11 @@ internal class OverlayBackgroundMeasurePolicy(
                     )
                 }
 
-                placeable.place(position.x, position.y, zIndex = if (overlay) 1f else 0f)
+                placeable.place(
+                    (placeable.measuredWidth - placeable.width) / 2 + position.x,
+                    (placeable.measuredHeight - placeable.height) / 2 + position.y,
+                    zIndex = if (overlay) 1f else 0f
+                )
             }
         }
     }

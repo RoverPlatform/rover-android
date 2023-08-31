@@ -18,6 +18,7 @@
 package io.rover.sdk.experiences.rich.compose.ui.utils
 
 import android.os.Trace
+import android.util.Log
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.unit.Constraints
 import io.rover.sdk.experiences.rich.compose.ui.layout.*
@@ -49,9 +50,19 @@ internal fun SimpleMeasurePolicy(
                 measurable.measure(constraints)
             }
 
-            val l = layout(placeables.maxOf { it.width }, placeables.maxOf { it.height }) {
+            val width = placeables.maxOf { it.measuredWidth }
+            val height = placeables.maxOf { it.measuredHeight }
+
+            val l = layout(width, height) {
                 placeables.forEach { placeable ->
-                    placeable.place(0, 0)
+                    // In the case of a child which is larger than its parent (that is,
+                    // the layout item using this measurement policy), Compose will automatically
+                    // center the child.  This is not what we want, so we have to neutralize
+                    // the centering (If you're curious, see upstream Compose's
+                    // AndroidOverscroll.kt for an example of them doing the same).
+                    val widthDiff = (placeable.measuredWidth - placeable.width) / 2
+                    val heightDiff = (placeable.measuredHeight - placeable.height) / 2
+                    placeable.place(widthDiff, heightDiff)
                 }
             }
 

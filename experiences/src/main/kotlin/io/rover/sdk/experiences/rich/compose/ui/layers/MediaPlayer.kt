@@ -99,7 +99,7 @@ internal fun MediaPlayer(
             }
         }
 
-        LayerBox(layerModifiers, modifier) {
+        ApplyLayerModifiers(layerModifiers, modifier) { modifier ->
             Layout(
                 {
                     DisposableEffect(

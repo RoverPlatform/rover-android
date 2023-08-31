@@ -68,6 +68,10 @@ internal fun ActionModifier(
         dataContext
     )
 
+    if (action == null) {
+        return content(modifier = modifier)
+    }
+
     Services.Inject { services ->
         val node = Environment.LocalNode.current
         val screen = Environment.LocalScreen.current

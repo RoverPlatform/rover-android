@@ -22,14 +22,5 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 object FeatureFlags {
-    /**
-     * Whether to perform flexibility sorting within the intrinsics version of the measurement
-     * code path.
-     */
-    var flexibilitySortInStackIntrinsics by mutableStateOf(true)
 
-    /**
-     * Whether to perform flexibility sorting using the new method vs the old method.
-     */
-    var fastFlexibilitySort by mutableStateOf(true)
 }

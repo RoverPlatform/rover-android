@@ -62,11 +62,11 @@ internal class ExpandLayoutModifier(
     /**
      * If the child is smaller than the available space, center it.
      */
-    private val centerSmallChild: Boolean = false
+    private val centerSmallChild: Boolean = false,
 ) : LayoutModifier {
     override fun MeasureScope.measure(
         measurable: Measurable,
-        constraints: Constraints
+        constraints: Constraints,
     ): MeasureResult {
         val maxWidth = when (axis) {
             Axis.VERTICAL -> otherAxisSize.roundToPx()
@@ -80,22 +80,22 @@ internal class ExpandLayoutModifier(
         val maxConstraints = if (expandChildren) {
             Constraints.fixed(
                 if (maxWidth == Constraints.Infinity) infinityDefault.roundToPx() else maxWidth,
-                if (maxHeight == Constraints.Infinity) infinityDefault.roundToPx() else maxHeight
+                if (maxHeight == Constraints.Infinity) infinityDefault.roundToPx() else maxHeight,
             )
         } else {
             Constraints(
                 maxWidth = if (maxWidth == Constraints.Infinity) infinityDefault.roundToPx() else maxWidth,
-                maxHeight = if (maxHeight == Constraints.Infinity) infinityDefault.roundToPx() else maxHeight
+                maxHeight = if (maxHeight == Constraints.Infinity) infinityDefault.roundToPx() else maxHeight,
             )
         }
         val placeable = measurable.measure(
-            maxConstraints
+            maxConstraints,
         )
         return layout(maxConstraints.maxWidth, maxConstraints.maxHeight) {
-            if(centerSmallChild) {
+            if (centerSmallChild) {
                 placeable.place(
-                    (maxConstraints.maxWidth - placeable.width) / 2,
-                    (maxConstraints.maxHeight - placeable.height) / 2
+                    (maxConstraints.maxWidth - placeable.measuredWidth) / 2,
+                    (maxConstraints.maxHeight - placeable.measuredHeight) / 2,
                 )
             } else {
                 placeable.place(0, 0)
@@ -105,7 +105,7 @@ internal class ExpandLayoutModifier(
 
     override fun IntrinsicMeasureScope.maxIntrinsicWidth(
         measurable: IntrinsicMeasurable,
-        height: Int
+        height: Int,
     ): Int {
         return this.mapMaxIntrinsicWidthAsMeasure(height) { (proposedWidth, proposedHeight) ->
             Size(
@@ -118,14 +118,14 @@ internal class ExpandLayoutModifier(
                         infinityDefault.roundToPx()
                     }
                     Axis.HORIZONTAL -> otherAxisSize.roundToPx()
-                }
+                },
             )
         }
     }
 
     override fun IntrinsicMeasureScope.minIntrinsicWidth(
         measurable: IntrinsicMeasurable,
-        height: Int
+        height: Int,
     ): Int {
         return mapMinIntrinsicAsFlex {
             // flexible or inflexible depending on axis
@@ -138,7 +138,7 @@ internal class ExpandLayoutModifier(
 
     override fun IntrinsicMeasureScope.minIntrinsicHeight(
         measurable: IntrinsicMeasurable,
-        width: Int
+        width: Int,
     ): Int {
         return mapMinIntrinsicAsFlex {
             // flexible or inflexible depending on axis
@@ -151,7 +151,7 @@ internal class ExpandLayoutModifier(
 
     override fun IntrinsicMeasureScope.maxIntrinsicHeight(
         measurable: IntrinsicMeasurable,
-        width: Int
+        width: Int,
     ): Int {
         throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
     }
@@ -175,13 +175,13 @@ internal fun ExpandMeasurePolicy(
     /**
      * If an infinity is proposed along a dimension, instead clamp to this size. Default 10 dp.
      */
-    infinityDefault: Dp = 10.dp
+    infinityDefault: Dp = 10.dp,
 ): MeasurePolicy {
     return object : MeasurePolicy {
 
         override fun MeasureScope.measure(
             measurables: List<Measurable>,
-            constraints: Constraints
+            constraints: Constraints,
         ): MeasureResult {
             val maxWidth = when (axis) {
                 Axis.VERTICAL -> 0
@@ -195,28 +195,38 @@ internal fun ExpandMeasurePolicy(
             val maxConstraints = if (expandChildren) {
                 Constraints.fixed(
                     if (maxWidth == Constraints.Infinity) infinityDefault.roundToPx() else maxWidth,
-                    if (maxHeight == Constraints.Infinity) infinityDefault.roundToPx() else maxHeight
+                    if (maxHeight == Constraints.Infinity) infinityDefault.roundToPx() else maxHeight,
                 )
             } else {
                 Constraints(
                     maxWidth = if (maxWidth == Constraints.Infinity) infinityDefault.roundToPx() else maxWidth,
-                    maxHeight = if (maxHeight == Constraints.Infinity) infinityDefault.roundToPx() else maxHeight
+                    maxHeight = if (maxHeight == Constraints.Infinity) infinityDefault.roundToPx() else maxHeight,
                 )
             }
 
             return layout(maxConstraints.maxWidth, maxConstraints.maxHeight) {
                 measurables.forEach { measurable ->
                     val placeable = measurable.measure(
-                        maxConstraints
+                        maxConstraints,
                     )
-                    placeable.place(0, 0)
+
+                    // placeable should be centered. even if it's smaller than max constraints.
+
+                    // TODO: Compose's default behaviour is only to center if the placeable is larger
+                    // than the constraints/parent view.
+
+                    placeable.place(
+//                        0, 0
+                        (placeable.measuredWidth - placeable.width) / 2,
+                        (placeable.measuredHeight - placeable.height) / 2,
+                    )
                 }
             }
         }
 
         override fun IntrinsicMeasureScope.maxIntrinsicWidth(
             measurables: List<IntrinsicMeasurable>,
-            height: Int
+            height: Int,
         ): Int {
             return this.mapMaxIntrinsicWidthAsMeasure(height) { (proposedWidth, proposedHeight) ->
                 Size(
@@ -229,14 +239,14 @@ internal fun ExpandMeasurePolicy(
                             infinityDefault.roundToPx()
                         }
                         Axis.HORIZONTAL -> 0
-                    }
+                    },
                 )
             }
         }
 
         override fun IntrinsicMeasureScope.minIntrinsicWidth(
             measurables: List<IntrinsicMeasurable>,
-            height: Int
+            height: Int,
         ): Int {
             return mapMinIntrinsicAsFlex {
                 // flexible or inflexible depending on axis
@@ -249,7 +259,7 @@ internal fun ExpandMeasurePolicy(
 
         override fun IntrinsicMeasureScope.minIntrinsicHeight(
             measurables: List<IntrinsicMeasurable>,
-            width: Int
+            width: Int,
         ): Int {
             return mapMinIntrinsicAsFlex {
                 // flexible or inflexible depending on axis
@@ -262,7 +272,7 @@ internal fun ExpandMeasurePolicy(
 
         override fun IntrinsicMeasureScope.maxIntrinsicHeight(
             measurables: List<IntrinsicMeasurable>,
-            width: Int
+            width: Int,
         ): Int {
             throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
         }

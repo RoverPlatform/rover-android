@@ -46,7 +46,7 @@ import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeColor
 
 @Composable
-internal fun TextLayer(node: Text) {
+internal fun TextLayer(node: Text, modifier: Modifier = Modifier) {
     TextLayer(
         text = node.text,
         transform = node.transform,
@@ -55,6 +55,7 @@ internal fun TextLayer(node: Text) {
         textAlignment = node.textAlignment,
         lineLimit = node.lineLimit,
         font = node.font,
+        modifier = modifier,
         layerModifiers = LayerModifiers(node)
     )
 }
@@ -84,7 +85,7 @@ internal fun TextLayer(
     )
     val interpolatedText = interpolator.interpolate(localizedText)
     interpolatedText?.let {
-        LayerBox(layerModifiers = layerModifiers, modifier = modifier) {
+        ApplyLayerModifiers(layerModifiers = layerModifiers, modifier = modifier) { modifier ->
             Layout({
                 InnerTextLayer(
                     interpolatedText = it,
@@ -93,9 +94,9 @@ internal fun TextLayer(
                     shadow = shadow,
                     textAlignment = textAlignment,
                     lineLimit = lineLimit,
-                    font = font
+                    font = font,
                 )
-            }, measurePolicy = textLayerMeasurePolicy())
+            }, modifier = modifier, measurePolicy = textLayerMeasurePolicy())
         }
     }
 }
@@ -283,12 +284,13 @@ internal fun textLayerMeasurePolicy(): MeasurePolicy {
             constraints: Constraints
         ): MeasureResult {
             Trace.beginSection("TextLayerMeasurePolicy::measure")
+
             val placeables = measurables.map { measurable ->
                 // Allows text to overflow vertically when needed (such as inside a small frame).
                 measurable.measure(constraints.copy(maxHeight = Constraints.Infinity))
             }
 
-            val l = layout(placeables.maxOf { it.width }, placeables.maxOf { it.height }) {
+            val l = layout(placeables.maxOf { it.measuredWidth }, placeables.maxOf { it.measuredHeight }) {
                 placeables.forEach { placeable ->
                     placeable.place(0, 0)
                 }
@@ -320,9 +322,12 @@ internal fun textLayerMeasurePolicy(): MeasurePolicy {
 
                     // calculate width first, since that will determine the height.
                     // For the wrapping behaviour, text will clamp to proposed Width.
+
                     val textWidth = minOf(
                         proposedWidth,
-                        // in case we are proposed greatestFiniteValue, clamp it to maximum safe constraint value.
+                        // in case we are proposed greatestFiniteValue, clamp it to maximum safe
+                        // constraint value since native Jetpack Composables aren't aware of our
+                        // use of greatestFiniteValue as an upper bound (a SwiftUI concept),
                         textMeasurable.maxIntrinsicWidth(minOf(proposedHeight, maxConstraintVal))
                     )
 
@@ -340,8 +345,22 @@ internal fun textLayerMeasurePolicy(): MeasurePolicy {
             height: Int
         ): Int {
             return mapMinIntrinsicAsFlex {
-                // so for width, text is infinite flexible.
-                IntRange(0, Constraints.Infinity)
+                // Text is "mostly" flexible.
+
+                // It needs to score higher than completely flexible things like rectangles.
+
+                // However, it also should not contribute to minimum flex space set
+                // aside by (H)Stack against higher priority children.
+
+                // So we'll opt for a low bound of 1, which won't visually contribute to
+                // minimum space.
+                IntRange(1, Constraints.Infinity)
+
+                // Commented remnants of actually determining text's minimum size, but it appears
+                // unneeded.
+                //                val textMeasurable =
+                //                    measurables.firstOrNull() ?: return@mapMinIntrinsicAsFlex IntRange(0, Constraints.Infinity)
+                //                val minWidth = textMeasurable.minIntrinsicWidth(Constraints.Infinity)
             }
         }
 
@@ -363,7 +382,7 @@ internal fun textLayerMeasurePolicy(): MeasurePolicy {
                 // flexibility exactly accurately.
                 //
                 // However, as long the general point is "inflexible", in the vast majority of cases
-                // the scoring doesn't need to be that oaccurate, just as long as the general idea
+                // the scoring doesn't need to be that accurate, just as long as the general idea
                 // of flexible layers vs inflexible layers gets captured enough that stacks even
                 // further up can generally rank order their children correctly.
                 //

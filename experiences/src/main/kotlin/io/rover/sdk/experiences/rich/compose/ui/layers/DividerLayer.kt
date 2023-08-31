@@ -44,10 +44,11 @@ import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandLayoutModifier
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeColor
 
 @Composable
-internal fun DividerLayer(node: io.rover.sdk.experiences.rich.compose.model.nodes.Divider) {
+internal fun DividerLayer(node: io.rover.sdk.experiences.rich.compose.model.nodes.Divider, modifier: Modifier = Modifier) {
     DividerLayer(
         color = node.backgroundColor.getComposeColor(Environment.LocalIsDarkTheme.current),
-        layerModifiers = LayerModifiers(node)
+        layerModifiers = LayerModifiers(node),
+        modifier = modifier
     )
 }
 
@@ -55,12 +56,13 @@ internal fun DividerLayer(node: io.rover.sdk.experiences.rich.compose.model.node
 private fun DividerLayer(
     axis: Axis = Environment.LocalStackAxis.current ?: Axis.HORIZONTAL,
     color: Color = ColorReference.SystemColor("separator").getComposeColor(Environment.LocalIsDarkTheme.current),
-    layerModifiers: LayerModifiers = LayerModifiers()
+    layerModifiers: LayerModifiers = LayerModifiers(),
+    modifier: Modifier = Modifier
 ) {
-    LayerBox(layerModifiers) {
+    ApplyLayerModifiers(layerModifiers, modifier) { modifier ->
         Divider(
             color = color,
-            modifier = ExpandLayoutModifier(true, axis.rotate(), otherAxisSize = 1.dp)
+            modifier = modifier.then(ExpandLayoutModifier(true, axis.rotate(), otherAxisSize = 1.dp))
         )
     }
 }

@@ -33,19 +33,19 @@ import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandMeasurePolicy
 import io.rover.sdk.experiences.rich.compose.ui.utils.preview.InfiniteHeightMeasurePolicy
 
 @Composable
-internal fun SpacerLayer(node: Spacer) {
-    SpacerLayer(modifier = Modifier, LayerModifiers(node))
+internal fun SpacerLayer(node: Spacer, modifier: Modifier = Modifier) {
+    SpacerLayer(modifier = modifier, LayerModifiers(node))
 }
 
 @Composable
 internal fun SpacerLayer(modifier: Modifier = Modifier, layerModifiers: LayerModifiers = LayerModifiers()) {
-    LayerBox(layerModifiers.copy(layoutPriority = layerModifiers.layoutPriority ?: -1), modifier = modifier) {
+    ApplyLayerModifiers(layerModifiers.copy(layoutPriority = layerModifiers.layoutPriority ?: -1), modifier = modifier) { modifier ->
         val stackAxis = Environment.LocalStackAxis.current ?: Axis.VERTICAL
         // note: Experiences spacer differs a bit from SwiftUI's default Spacer. Infinity default
         // size is 0 instead of 10.
         Layout(
             {},
-            modifier = Modifier,
+            modifier = modifier,
             measurePolicy = ExpandMeasurePolicy(expandChildren = false, axis = stackAxis, infinityDefault = 0.dp)
         )
     }

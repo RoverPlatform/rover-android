@@ -17,6 +17,7 @@
 
 package io.rover.sdk.experiences.rich.compose.ui.layers
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -29,32 +30,33 @@ import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.ViewID
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandLayoutModifier
+import io.rover.sdk.experiences.rich.compose.ui.utils.floorMod
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeColor
 import io.rover.sdk.experiences.rich.compose.vendor.accompanist.pager.*
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-internal fun PageControlLayer(node: PageControl) {
+internal fun PageControlLayer(node: PageControl, modifier: Modifier = Modifier) {
     val collectionIndex = Environment.LocalCollectionIndex.current
     val viewID = node.carouselID?.let { ViewID(it, collectionIndex) }
 
     Environment.LocalCarouselStates[viewID]?.let { carouselState ->
-        LayerBox(layerModifiers = LayerModifiers(node)) {
+        ApplyLayerModifiers(layerModifiers = LayerModifiers(node), modifier) { modifier ->
             HorizontalPagerIndicator(
                 pagerState = carouselState.pagerState,
                 pageCount = carouselState.collectionSize,
                 activeColor = node.activeColor(),
                 inactiveColor = node.inactiveColor(),
                 pageIndexMapping = { (it - carouselState.startIndex).floorMod(carouselState.collectionSize) },
-                modifier = Modifier
+                modifier = modifier
                     .then(
                         ExpandLayoutModifier(
                             false,
                             Axis.HORIZONTAL,
                             otherAxisSize = 20.dp,
-                            centerSmallChild = true
-                        )
-                    )
+                            centerSmallChild = true,
+                        ),
+                    ),
             )
         }
     }

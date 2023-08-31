@@ -33,7 +33,7 @@ import io.rover.sdk.experiences.rich.compose.ui.layers.RectangleLayer
 import io.rover.sdk.experiences.rich.compose.ui.layers.TextLayer
 import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.VStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.layout.*
-import io.rover.sdk.experiences.rich.compose.ui.layout.experiencesMeasure
+import io.rover.sdk.experiences.rich.compose.ui.layout.fallbackMeasure
 import io.rover.sdk.experiences.rich.compose.ui.layout.mapMaxIntrinsicWidthAsMeasure
 import io.rover.sdk.experiences.rich.compose.ui.utils.unlessInfinity
 
@@ -41,12 +41,12 @@ import io.rover.sdk.experiences.rich.compose.ui.utils.unlessInfinity
 internal fun PaddingModifier(
     padding: Padding?,
     modifier: Modifier,
-    content: @Composable (modifier: Modifier) -> Unit
+    content: @Composable (modifier: Modifier) -> Unit,
 ) {
     if (padding != null) {
         content(
             modifier
-                .experiencesPadding(padding)
+                .experiencesPadding(padding),
         )
     } else {
         content(modifier)
@@ -62,55 +62,54 @@ private class ExperiencesPadding(val padding: Padding) : LayoutModifier {
 
     override fun MeasureScope.measure(
         measurable: Measurable,
-        constraints: Constraints
+        constraints: Constraints,
     ): MeasureResult {
         val placeable = measurable.measure(
             Constraints(
                 maxWidth = maxOf(constraints.maxWidth.unlessInfinity { it - horizontalPaddingValues.roundToPx() }, 0),
-
-                maxHeight = maxOf(constraints.maxHeight.unlessInfinity { it - verticalPaddingValues.roundToPx() }, 0)
-
-            )
+                maxHeight = maxOf(constraints.maxHeight.unlessInfinity { it - verticalPaddingValues.roundToPx() }, 0),
+            ),
         )
 
         return layout(
-            // TODO: hey minOf() to constraints seems totes wrong here? that looks like it would make the padded layer
-            // shrink to max size allowed by constraints, but that is wrong. fix this later.
-            width = minOf(constraints.maxWidth, placeable.width + horizontalPaddingValues.roundToPx()),
-            height = minOf(constraints.maxHeight, placeable.height + verticalPaddingValues.roundToPx())
+            width = placeable.measuredWidth + horizontalPaddingValues.roundToPx(),
+            height = placeable.measuredHeight + verticalPaddingValues.roundToPx(),
         ) {
-            placeable.placeRelative(padding.leading.dp.roundToPx(), padding.top.dp.roundToPx())
+            placeable.placeRelative(
+                (placeable.measuredWidth - placeable.width) / 2 + padding.leading.dp.roundToPx(),
+                (placeable.measuredHeight - placeable.height) / 2 + padding.top.dp.roundToPx(),
+            )
         }
     }
 
     override fun IntrinsicMeasureScope.maxIntrinsicWidth(
         measurable: IntrinsicMeasurable,
-        height: Int
+        height: Int,
     ): Int {
         return mapMaxIntrinsicWidthAsMeasure(height) { (proposedWidth, proposedHeight) ->
-            val childSize = measurable.experiencesMeasure(
+            val childSize = measurable.fallbackMeasure(
                 Size(
                     maxOf(proposedWidth.unlessInfinity { it - horizontalPaddingValues.roundToPx() }, 0),
-                    maxOf(proposedHeight.unlessInfinity { it - verticalPaddingValues.roundToPx() }, 0)
-                )
+                    maxOf(proposedHeight.unlessInfinity { it - verticalPaddingValues.roundToPx() }, 0),
+                ),
             )
 
             Size(
-                childSize.width + horizontalPaddingValues.roundToPx(),
-                childSize.height + verticalPaddingValues.roundToPx()
+                childSize.width.unlessInfinity { it + horizontalPaddingValues.roundToPx() } ,
+                childSize.height.unlessInfinity { it + verticalPaddingValues.roundToPx() } ,
             )
         }
     }
 
     override fun IntrinsicMeasureScope.minIntrinsicWidth(
         measurable: IntrinsicMeasurable,
-        height: Int
+        height: Int,
     ): Int {
         return mapMinIntrinsicAsFlex {
-            // basically padding should be added to minimum and maximum flex. be careful of infinities when adding to maximum.
+            // basically padding should be added to maximum flex. be careful of infinities when adding to maximum.
             val childFlex = measurable.experiencesHorizontalFlex()
 
-            val lower = childFlex.first + horizontalPaddingValues.roundToPx()
+            val lower = childFlex.first
             val upper = childFlex.last.unlessInfinity { it + horizontalPaddingValues.roundToPx() }
 
             IntRange(lower, upper)
@@ -119,13 +118,13 @@ private class ExperiencesPadding(val padding: Padding) : LayoutModifier {
 
     override fun IntrinsicMeasureScope.minIntrinsicHeight(
         measurable: IntrinsicMeasurable,
-        width: Int
+        width: Int,
     ): Int {
         return mapMinIntrinsicAsFlex {
-            // basically padding should be added to minimum and maximum flex. be careful of infinities when adding to maximum.
+            // basically padding should be added to maximum flex. be careful of infinities when adding to maximum.
             val childFlex = measurable.experiencesVerticalFlex()
 
-            val lower = childFlex.first + verticalPaddingValues.roundToPx()
+            val lower = childFlex.first
             val upper = childFlex.last.unlessInfinity { it + verticalPaddingValues.roundToPx() }
 
             IntRange(lower, upper)
@@ -134,7 +133,7 @@ private class ExperiencesPadding(val padding: Padding) : LayoutModifier {
 
     override fun IntrinsicMeasureScope.maxIntrinsicHeight(
         measurable: IntrinsicMeasurable,
-        width: Int
+        width: Int,
     ): Int {
         throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
     }
@@ -156,7 +155,7 @@ private fun TestFitConstraints() {
     // is the padding. Remember padding is applied before frame.
     PaddingModifier(padding = Padding(20f), modifier = Modifier.requiredSize(20.dp)) { modifier ->
         Box(
-            modifier = modifier.background(Color.Blue)
+            modifier = modifier.background(Color.Blue),
         )
     }
 }
@@ -169,8 +168,8 @@ private fun IntegrationTestFitFrameConstraints() {
         fill = Fill.FlatFill(ColorReference.SystemColor("blue")),
         layerModifiers = LayerModifiers(
             padding = Padding(20f),
-            frame = Frame(width = 20f, height = 20f, alignment = Alignment.CENTER)
-        )
+            frame = Frame(width = 20f, height = 20f, alignment = Alignment.CENTER),
+        ),
     )
 }
 
@@ -178,15 +177,31 @@ private fun IntegrationTestFitFrameConstraints() {
 @Composable
 private fun PaddingInStack() {
     VStackLayer(
-        spacing = 0f
+        spacing = 0f,
     ) {
         TextLayer(
             text = "Rover rocks",
             layerModifiers = LayerModifiers(
                 padding = Padding(
-                    20f
-                )
-            )
+                    20f,
+                ),
+            ),
         )
     }
+}
+
+@Preview
+@Composable
+private fun PaddingProposeSize() {
+    ManipulateProposal { modifier ->
+        TextLayer(text = "Hello", modifier = modifier.experiencesPadding(Padding(20f)))
+    }
+}
+
+@Preview
+@Composable
+private fun PaddingAsLayerModifier() {
+    TextLayer(text = "Hello", layerModifiers = LayerModifiers(
+        padding = Padding(20f),
+    ))
 }

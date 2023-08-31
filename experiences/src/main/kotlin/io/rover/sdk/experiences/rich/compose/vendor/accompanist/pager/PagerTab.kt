@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+@file:Suppress("DEPRECATION")
 package io.rover.sdk.experiences.rich.compose.vendor.accompanist.pager
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material.ScrollableTabRow
 import androidx.compose.material.TabPosition
 import androidx.compose.material.TabRow
@@ -26,20 +28,35 @@ import androidx.compose.ui.unit.lerp
 
 /**
  * This indicator syncs up a [TabRow] or [ScrollableTabRow] tab indicator with a
- * [HorizontalPager] or [VerticalPager]. See the sample for a full demonstration.
- *
- * @sample com.google.accompanist.sample.pager.PagerWithTabs
+ * [androidx.compose.foundation.pager.HorizontalPager] or
+ * [androidx.compose.foundation.pager.VerticalPager].
  */
-@ExperimentalPagerApi
+@OptIn(ExperimentalFoundationApi::class)
 fun Modifier.pagerTabIndicatorOffset(
-    pagerState: PagerState,
-    tabPositions: List<TabPosition>
+    pagerState: androidx.compose.foundation.pager.PagerState,
+    tabPositions: List<TabPosition>,
+    pageIndexMapping: (Int) -> Int = { it },
+): Modifier {
+    val stateBridge = object : PagerStateBridge {
+        override val currentPage: Int
+            get() = pagerState.currentPage
+        override val currentPageOffset: Float
+            get() = pagerState.currentPageOffsetFraction
+    }
+
+    return pagerTabIndicatorOffset(stateBridge, tabPositions, pageIndexMapping)
+}
+
+private fun Modifier.pagerTabIndicatorOffset(
+    pagerState: PagerStateBridge,
+    tabPositions: List<TabPosition>,
+    pageIndexMapping: (Int) -> Int = { it },
 ): Modifier = layout { measurable, constraints ->
     if (tabPositions.isEmpty()) {
         // If there are no pages, nothing to show
         layout(constraints.maxWidth, 0) {}
     } else {
-        val currentPage = minOf(tabPositions.lastIndex, pagerState.currentPage)
+        val currentPage = minOf(tabPositions.lastIndex, pageIndexMapping(pagerState.currentPage))
         val currentTab = tabPositions[currentPage]
         val previousTab = tabPositions.getOrNull(currentPage - 1)
         val nextTab = tabPositions.getOrNull(currentPage + 1)
@@ -67,10 +84,15 @@ fun Modifier.pagerTabIndicatorOffset(
             )
         )
         layout(constraints.maxWidth, maxOf(placeable.height, constraints.minHeight)) {
-            placeable.place(
+            placeable.placeRelative(
                 indicatorOffset,
                 maxOf(constraints.minHeight - placeable.height, 0)
             )
         }
     }
+}
+
+internal interface PagerStateBridge {
+    val currentPage: Int
+    val currentPageOffset: Float
 }

@@ -18,6 +18,8 @@
 package io.rover.sdk.experiences.rich.compose.ui
 
 import android.net.Uri
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
 import io.rover.sdk.experiences.data.URLRequest
@@ -27,8 +29,6 @@ import io.rover.sdk.experiences.rich.compose.model.values.Axis
 import io.rover.sdk.experiences.rich.compose.model.values.DocumentFont
 import io.rover.sdk.experiences.rich.compose.model.values.ExperienceModel
 import io.rover.sdk.experiences.rich.compose.ui.fonts.FontLoader
-import io.rover.sdk.experiences.rich.compose.vendor.accompanist.pager.ExperimentalPagerApi
-import io.rover.sdk.experiences.rich.compose.vendor.accompanist.pager.PagerState
 
 /**
  * This object contains all the Composition Local properties used within the Compose hierarchy.
@@ -138,7 +138,7 @@ internal data class ViewID(
     val collectionIndex: Int
 )
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 internal data class CarouselState(
     val pagerState: PagerState,
     val startIndex: Int,

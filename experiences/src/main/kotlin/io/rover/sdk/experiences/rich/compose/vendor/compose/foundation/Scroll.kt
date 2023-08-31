@@ -361,7 +361,13 @@ private data class ScrollingLayoutModifier(
         // chained RemeasurementModifiers that try to perform scrolling based on the new
         // measurements inside onRemeasured are able to scroll to the new max based on the newly-
         // measured size.
-        scrollerState.maxValue = side
+        // ROVER: Scroll modifier can cause unnecessary remeasurement in certain conditions,
+        //   causing poor performance. Ensure that mutableStateOf() is only mutated if
+        //   actually necessary.
+        if (scrollerState.maxValue != side) {
+            scrollerState.maxValue = side
+        }
+
         scrollerState.viewportSize = if (isVertical) height else width
         return layout(width, height) {
             val scroll = scrollerState.value.coerceIn(0, side)

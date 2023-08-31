@@ -19,13 +19,14 @@ package io.rover.sdk.experiences.rich.compose.ui.layers
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
 import io.rover.sdk.experiences.rich.compose.model.nodes.Collection
 import io.rover.sdk.experiences.rich.compose.model.nodes.getItems
 import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.data.makeDataContext
 
 @Composable
-internal fun CollectionLayer(node: Collection) {
+internal fun CollectionLayer(node: Collection, modifier: Modifier = Modifier) {
     val dataContext = makeDataContext(
         userInfo = Environment.LocalUserInfo.current?.invoke() ?: emptyMap(),
         urlParameters = Environment.LocalUrlParameters.current,
@@ -37,7 +38,7 @@ internal fun CollectionLayer(node: Collection) {
             Environment.LocalData provides item,
             Environment.LocalCollectionIndex provides index
         ) {
-            Children(node.children)
+            Children(node.children, modifier)
         }
     }
 }

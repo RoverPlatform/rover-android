@@ -27,9 +27,9 @@ import io.rover.sdk.experiences.rich.compose.ui.modifiers.layerModifierData
 fun Collection<Placeable>.assertNoInfiniteSizes(contextName: String) {
     // unfortunately even when assertions (-ea) is off, there's some calculation that goes on here.
     forEach { placeable ->
-        assert(placeable.height != Constraints.Infinity && placeable.width != Constraints.Infinity) {
+        assert(placeable.measuredHeight != Constraints.Infinity && placeable.measuredWidth != Constraints.Infinity) {
             val naughtyLayer = placeable.layerModifierData?.debugNode
-            "Child illegally claimed an infinity dimension in a $contextName (measured size (${placeable.width}, ${placeable.height})): ${naughtyLayer?.prettyPrint() ?: "unknown layer"}"
+            "Child illegally claimed an infinity dimension in a $contextName (measured size (${placeable.measuredWidth}, ${placeable.measuredHeight})): ${naughtyLayer?.prettyPrint() ?: "unknown layer"}"
         }
     }
 }

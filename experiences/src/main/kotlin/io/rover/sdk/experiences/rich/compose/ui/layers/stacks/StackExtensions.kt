@@ -23,18 +23,19 @@ import androidx.compose.ui.unit.Constraints
  * Basic copy of the [sumOf] implementation but adding layout spacing to the return if needed.
  * Used in all StackLayers.
  */
-inline fun <T> Iterable<T>.sumOfWithLayoutSpacing(spacingAsPx: Int, selector: (T) -> Int): Int {
+internal inline fun <T> Iterable<T>.sumOfWithLayoutSpacing(spacingAsPx: Int, selector: (T) -> Int): Int {
     var sum: Int = 0
     for (element in this) {
-        if (element == Constraints.Infinity) {
+        val addend = selector(element)
+        if (addend == Constraints.Infinity) {
             return Constraints.Infinity
         }
-        sum += selector(element)
+        sum += addend
     }
     return sum + maxOf(spacingAsPx * (this.count() - 1), 0)
 }
 
-fun Iterable<Int>.sumOfWithLayoutSpacing(spacingAsPx: Int): Int {
+internal fun Iterable<Int>.sumOfWithLayoutSpacing(spacingAsPx: Int): Int {
     var sum: Int = 0
     for (element in this) {
         if (element == Constraints.Infinity) {

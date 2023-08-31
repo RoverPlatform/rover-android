@@ -20,9 +20,6 @@ package io.rover.sdk.experiences.rich.compose.ui.modifiers
 import io.rover.sdk.experiences.rich.compose.model.nodes.Node
 import io.rover.sdk.experiences.rich.compose.model.values.*
 
-// TODO: rename to LayerModifiers
-
-
 /**
  * This value type captures the value for all the Experience modifiers (not to be confused with
  * Compose modifiers) that can be applied to a layer.
@@ -46,7 +43,7 @@ internal data class LayerModifiers(
      *
      * For diagnostic use only.
      */
-    val debugNode: Node? = null
+    val debugNode: Node? = null,
 ) {
     constructor(node: Node) : this(
         action = node.action,
@@ -61,6 +58,8 @@ internal data class LayerModifiers(
         overlay = node.overlay,
         background = node.background,
         accessibility = node.accessibility,
-        debugNode = node
+        debugNode = node,
     )
+
+    var debugDescription: String = debugNode?.description ?: "Unknown layer"
 }

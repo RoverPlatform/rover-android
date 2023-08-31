@@ -25,25 +25,35 @@ import io.rover.sdk.experiences.rich.compose.ui.modifiers.layerModifierData
 import io.rover.sdk.experiences.rich.compose.ui.utils.ifInfinity
 
 /**
- * Implements Rover Experiences'/SwiftUI's measure() interface contract on top of Jetpack Compose's intrinsics
- * system.
+ * Implements Rover Experiences'/SwiftUI's an duplicate measure() interface contract on top of
+ * Jetpack Compose's intrinsics system. This is done to support the extra measurement pass
+ * required by the the "fallback" behaviour seen with stacks and scroll containers.
  *
- * We abuse Jetpack Compose's intrinsic measurable interface to implement a full
- * Rover Experiences/SwiftUI layout pass, and we do so by packing the size's width and height fields into single
- * int values for both the input parameter and the return value. with 32 and 31 (the sign bit is
- * used as a flag to indicate a packed value) bits for each field, there is sufficient space for
- * each dimension.
+ * This is done by packing proposed width and height into a single int,
+ * hijacking one of the intrinsic methods (`maxIntrinsicWidth` was arbitrarily selected), passing
+ * the packed int to it, and then having it return another packed value with the measured width
+ * and height.
  *
- * This is done because:
+ * Intrinsics have been abused in this way because:
  *
- * a) Compose does not normally allow multiple measurement passes;
+ * a) Compose does not normally allow multiple measurement passes, and need this in order to
+ *    escape Compose's single-pass measurement requirement, not for careless, but to enable just one
+ *    extra layout pass needed for the "fallback" behavior seen with stacks and scroll containers.
  * b) Compose does not allow extending the (Intrinsic)Measurable interface with custom methods;
- * c) It is incorrect and also expensive to implement Rover Experiences/SwiftUI layout with the 4 intrinsics
- *    interface methods that give a range for width, height, and do so only with a cross dimension.
+ * c) It is incorrect and also expensive to implement Rover Experiences/SwiftUI layout by attempting
+ *    to use Compose's four intrinsics methods with their intended behaviour. Sufficient information
+ *    is just not available from those.
+ *
+ * Additionally, other than not doing any placement logic, the other difference with the main
+ * measure() pass is that fallbackMeasure() may return Infinity for one either dimensions. This
+ * is not normally legal in SwiftUI, but here it signifies that the measurement wasn't computable.
+ * This is done to enable workarounds where doing intrinsics measures of certain content (packed
+ * or otherwise) seems to cause unexpected behaviour). See
+ * [FeatureFlags.disableFallbackSizingInScrollIntrinsics].
  *
  * This means we only need one of the four intrinsic methods for measurement.
  */
-internal fun IntrinsicMeasurable.experiencesMeasure(proposedSize: Size): Size {
+internal fun IntrinsicMeasurable.fallbackMeasure(proposedSize: Size): Size {
     val packedHeightParam = PackedHeight(proposedSize).packedValue
 
     return this.annotateIntrinsicsCrash {
@@ -336,8 +346,11 @@ internal class StripPackedIntrinsics : LayoutModifier {
     ): MeasureResult {
         // same behaviour as SimpleLayout.
         val placeable = measurable.measure(constraints)
-        return layout(placeable.width, placeable.height) {
-            placeable.place(0, 0)
+        return layout(placeable.measuredWidth, placeable.measuredHeight) {
+            placeable.place(
+                (placeable.measuredWidth - placeable.width) / 2,
+                (placeable.measuredHeight - placeable.height) / 2
+            )
         }
     }
 

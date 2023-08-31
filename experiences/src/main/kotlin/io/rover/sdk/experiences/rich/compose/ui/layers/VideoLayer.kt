@@ -26,7 +26,7 @@ import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandMeasurePolicy
 
 @Composable
-internal fun VideoLayer(node: Video) {
+internal fun VideoLayer(node: Video, modifier: Modifier = Modifier) {
     MediaPlayer(
         source = node.source,
         looping = node.looping,
@@ -36,7 +36,7 @@ internal fun VideoLayer(node: Video) {
         removeAudio = node.removeAudio,
         posterImageURL = node.posterImageName,
         timeoutControls = true,
-        modifier = Modifier.background(Color.Black),
+        modifier = modifier.background(Color.Black),
         layerModifiers = LayerModifiers(node),
         // video layers always expand:
         measurePolicy = ExpandMeasurePolicy(false)

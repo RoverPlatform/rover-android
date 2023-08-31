@@ -18,13 +18,14 @@
 package io.rover.sdk.experiences.rich.compose.ui.layers
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import io.rover.sdk.experiences.rich.compose.model.nodes.Node
 
 @Composable
-internal fun Children(children: List<Node>) {
+internal fun Children(children: List<Node>, modifier: Modifier) {
     val tag = "Rover.ChildrenComposable"
 
     children.forEach { node ->
-        Layer(node)
+        Layer(node, modifier)
     }
 }

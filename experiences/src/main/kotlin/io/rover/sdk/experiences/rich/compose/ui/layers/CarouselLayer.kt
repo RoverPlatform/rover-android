@@ -17,8 +17,11 @@
 
 package io.rover.sdk.experiences.rich.compose.ui.layers
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,11 +38,11 @@ import io.rover.sdk.experiences.rich.compose.ui.data.DataContext
 import io.rover.sdk.experiences.rich.compose.ui.data.makeDataContext
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandMeasurePolicy
-import io.rover.sdk.experiences.rich.compose.vendor.accompanist.pager.*
+import io.rover.sdk.experiences.rich.compose.ui.utils.floorMod
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-internal fun CarouselLayer(node: Carousel) {
+internal fun CarouselLayer(node: Carousel, modifier: Modifier = Modifier) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val collectionIndex = Environment.LocalCollectionIndex.current
@@ -56,7 +59,7 @@ internal fun CarouselLayer(node: Carousel) {
     val pagerCount = if (node.isLoopEnabled) Int.MAX_VALUE else collection.size
     val pagerState = rememberPagerState(initialPage = startIndex)
 
-    DisposableEffect(lifecycleOwner) {
+    DisposableEffect(collection.size, lifecycleOwner) {
         Environment.LocalCarouselStates[viewID] =
             CarouselState(
                 pagerState = pagerState,
@@ -68,11 +71,11 @@ internal fun CarouselLayer(node: Carousel) {
             Environment.LocalCarouselStates.remove(viewID)
         }
     }
-    LayerBox(layerModifiers = LayerModifiers(node)) {
+    ApplyLayerModifiers(layerModifiers = LayerModifiers(node), modifier = modifier) { modifier ->
         Layout(
             {
                 HorizontalPager(
-                    count = pagerCount,
+                    pageCount = pagerCount,
                     state = pagerState
                 ) { index ->
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
@@ -81,6 +84,7 @@ internal fun CarouselLayer(node: Carousel) {
                     }
                 }
             },
+            modifier = modifier,
             measurePolicy = ExpandMeasurePolicy(false)
         )
     }
@@ -90,10 +94,10 @@ internal fun CarouselLayer(node: Carousel) {
 private fun CarouselPage(carouselItem: CarouselItem) {
     if (carouselItem.item != null) {
         CompositionLocalProvider(Environment.LocalData provides carouselItem.item) {
-            Children(listOf(carouselItem.node))
+            Children(listOf(carouselItem.node), modifier = Modifier)
         }
     } else {
-        Children(listOf(carouselItem.node))
+        Children(listOf(carouselItem.node), modifier = Modifier)
     }
 }
 

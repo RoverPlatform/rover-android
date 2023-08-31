@@ -24,7 +24,7 @@ import androidx.compose.ui.layout.ParentDataModifier
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.unit.Density
 import io.rover.sdk.experiences.rich.compose.model.nodes.Node
-import io.rover.sdk.experiences.rich.compose.ui.layers.LayerBox
+import io.rover.sdk.experiences.rich.compose.ui.layers.ApplyLayerModifiers
 
 /**
  * Information on Rover Experiences' internal modifiers. I.e. Rover modifiers that don't use Compose native modifiers.
@@ -71,7 +71,7 @@ internal val Placeable.layerModifierData: LayerModifierData?
  * that information available to be read back via measurables (intrinsic or otherwise).
  *
  * Must be placed on the outermost layout node that occurs in a composable for
- * any given Experiences layer composable. That generally means [LayerBox].
+ * any given Experiences layer composable. That generally means [ApplyLayerModifiers].
  *
  * Used for layout priorities, metadata for shadows (so a shadow modifier can detect
  * the shape of the content within in order to confirm to it).

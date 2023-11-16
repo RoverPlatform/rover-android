@@ -1,8 +1,16 @@
-# Rover μReactive Streams
+# Rover μReactive Extensions (Deprecated)
 
-A small library within our SDK for handling asynchronous streams in the
-style of Reactive Streams, in order to avoid a big, complicated
-dependency like RxJava.
+A simple implementation of Rx in Kotlin that conforms to 
+the Reactive Streams standard Publisher interface
+(https://www.reactive-streams.org/) in Android/Java-land.
 
-In future, we may be able further simplify the pattern by using Kotlin
-continuations/coroutines to allow for imperative style stream code.
+This was done in order to avoid a big, complicated transitive dependency like RxJava.
+
+## Migration Path
+
+This approach has been made redundant by the emergence of Kotlin
+Coroutines and Flow.
+
+Migrating to Flow can be done incrementally thanks to the  
+`kotlinx-coroutines-reactive` library, which can bridge Publishers
+into Flows and vice versa.

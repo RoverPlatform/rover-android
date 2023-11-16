@@ -42,6 +42,7 @@ import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.core.permissions.PermissionsNotifierInterface
 import io.rover.sdk.core.platform.DateFormattingInterface
 import io.rover.sdk.core.platform.LocalStorage
+import io.rover.sdk.core.privacy.PrivacyService
 import io.rover.sdk.core.streams.Scheduler
 import io.rover.sdk.location.events.contextproviders.LocationContextProvider
 import io.rover.sdk.location.sync.BeaconSyncDecoder
@@ -223,7 +224,8 @@ class LocationAssembler(
             "location"
         ) { resolver ->
             LocationContextProvider(
-                resolver.resolveSingletonOrFail(GoogleBackgroundLocationServiceInterface::class.java)
+                resolver.resolveSingletonOrFail(GoogleBackgroundLocationServiceInterface::class.java),
+                resolver.resolveSingletonOrFail(PrivacyService::class.java),
             )
         }
 
@@ -243,6 +245,7 @@ class LocationAssembler(
                 GoogleBackgroundLocationServiceInterface::class.java
             ) { resolver ->
                 GoogleBackgroundLocationService(
+                    resolver.resolveSingletonOrFail(PrivacyService::class.java),
                     resolver.resolveSingletonOrFail(
                         FusedLocationProviderClient::class.java
                     ),
@@ -275,6 +278,7 @@ class LocationAssembler(
             ) { resolver ->
                 GoogleGeofenceService(
                     resolver.resolveSingletonOrFail(Context::class.java),
+                    resolver.resolveSingletonOrFail(PrivacyService::class.java),
                     resolver.resolveSingletonOrFail(LocalStorage::class.java),
                     resolver.resolveSingletonOrFail(GeofencingClient::class.java),
                     resolver.resolveSingletonOrFail(Scheduler::class.java, "main"),
@@ -308,6 +312,7 @@ class LocationAssembler(
             ) { resolver ->
                 GoogleBeaconTrackerService(
                     resolver.resolveSingletonOrFail(Context::class.java),
+                    resolver.resolveSingletonOrFail(PrivacyService::class.java),
                     resolver.resolveSingletonOrFail(MessagesClient::class.java),
                     resolver.resolveSingletonOrFail(BeaconsRepository::class.java),
                     resolver.resolveSingletonOrFail(Scheduler::class.java, "main"),
@@ -359,6 +364,10 @@ class LocationAssembler(
                 resolver.resolveSingletonOrFail(ContextProvider::class.java, "location")
             )
         }
+
+        resolver.resolveSingletonOrFail(PrivacyService::class.java).registerTrackingEnabledChangedListener(
+            resolver.resolveSingletonOrFail(GoogleBackgroundLocationServiceInterface::class.java)
+        )
     }
 }
 

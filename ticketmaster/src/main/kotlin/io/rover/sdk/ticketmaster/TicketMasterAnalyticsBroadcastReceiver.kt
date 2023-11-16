@@ -23,9 +23,12 @@ import android.content.Intent
 import io.rover.sdk.core.Rover
 import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.core.events.domain.Event
+import io.rover.sdk.core.privacy.PrivacyService
 
 class TicketMasterAnalyticsBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
+        val privacyService = Rover.shared.resolve(PrivacyService::class.java) ?: return
+        if(privacyService.trackingMode != PrivacyService.TrackingMode.Default) return
         intent?.action?.let { action ->
             TMScreenActionToRoverNames[action]?.let { screenName ->
                 trackTicketMasterScreenViewedEvent(intent, screenName)

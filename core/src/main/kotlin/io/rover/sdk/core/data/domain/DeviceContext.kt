@@ -23,6 +23,7 @@ import java.util.Date
  * A Rover context: describes the device and general situation when an [Event] is generated.
  */
 data class DeviceContext(
+    val trackingMode: String?,
     val appBuild: String?,
     val appIdentifier: String?,
     val appVersion: String?,
@@ -118,7 +119,7 @@ data class DeviceContext(
                 null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null,
-                null, null, null, null, null, null, false, null, hashMapOf(), null, listOf(), null
+                null, null, null, null, null, null, false, null, null, hashMapOf(), null, listOf(), null
             )
         }
     }

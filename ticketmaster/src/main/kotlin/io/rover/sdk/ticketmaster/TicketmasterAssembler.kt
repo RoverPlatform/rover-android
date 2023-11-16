@@ -27,6 +27,7 @@ import io.rover.sdk.core.container.Resolver
 import io.rover.sdk.core.container.Scope
 import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.core.platform.LocalStorage
+import io.rover.sdk.core.privacy.PrivacyService
 
 class TicketmasterAssembler : Assembler {
     override fun assemble(container: Container) {
@@ -43,7 +44,8 @@ class TicketmasterAssembler : Assembler {
         ) { resolver ->
             TicketmasterManager(
                 resolver.resolveSingletonOrFail(UserInfoInterface::class.java),
-                resolver.resolveSingletonOrFail(LocalStorage::class.java)
+                resolver.resolveSingletonOrFail(LocalStorage::class.java),
+                resolver.resolveSingletonOrFail(PrivacyService::class.java)
             )
         }
     }
@@ -55,6 +57,10 @@ class TicketmasterAssembler : Assembler {
 
         LocalBroadcastManager.getInstance(resolver.resolveSingletonOrFail(Application::class.java).applicationContext)
             .registerReceiver(TicketMasterAnalyticsBroadcastReceiver(), analyticEventFilter)
+
+        resolver.resolveSingletonOrFail(PrivacyService::class.java).registerTrackingEnabledChangedListener(
+            resolver.resolveSingletonOrFail(TicketmasterManager::class.java)
+        )
     }
 }
 

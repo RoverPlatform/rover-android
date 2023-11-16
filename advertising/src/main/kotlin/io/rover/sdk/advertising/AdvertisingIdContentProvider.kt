@@ -23,14 +23,19 @@ import io.rover.sdk.core.data.domain.DeviceContext
 import io.rover.sdk.core.events.ContextProvider
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.LocalStorage
+import io.rover.sdk.core.privacy.PrivacyService
 import io.rover.sdk.core.streams.Publishers
 import io.rover.sdk.core.streams.Scheduler
 import io.rover.sdk.core.streams.subscribe
 import io.rover.sdk.core.streams.subscribeOn
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class AdvertisingIdContentProvider(
-    applicationContext: Context,
-    ioScheduler: Scheduler,
+    private val applicationContext: Context,
+    private val privacyService: PrivacyService,
+    private val ioScheduler: Scheduler,
     localStorage: LocalStorage
 ) : ContextProvider {
     private val keyValueStorage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
@@ -41,7 +46,7 @@ class AdvertisingIdContentProvider(
             field = token
         }
 
-    init {
+    private fun acquireAdvertisingId() {
         Publishers.defer {
             advertisingId = try {
                 AdvertisingIdClient.getAdvertisingIdInfo(applicationContext).id
@@ -55,9 +60,26 @@ class AdvertisingIdContentProvider(
         }.subscribeOn(ioScheduler).subscribe { }
     }
 
+    init {
+        CoroutineScope(Dispatchers.Main).launch {
+            privacyService.trackingModeFlow.collect { trackingEnabled ->
+                if (trackingEnabled != PrivacyService.TrackingMode.Default) {
+                    advertisingId = null
+                    log.i("Tracking disabled, advertising id cleared.")
+                } else {
+                    log.i("Tracking enabled, acquiring advertising id.")
+                    acquireAdvertisingId()
+                }
+            }
+        }
+    }
+
     override fun captureContext(deviceContext: DeviceContext): DeviceContext {
+        if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
+            return deviceContext
+        }
         return deviceContext.copy(
-            advertisingIdentifier = this.advertisingId
+            advertisingIdentifier = this.advertisingId,
         )
     }
 

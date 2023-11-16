@@ -26,7 +26,6 @@ import io.rover.sdk.core.container.Container
 import io.rover.sdk.core.container.Resolver
 import io.rover.sdk.core.container.Scope
 import io.rover.sdk.core.events.EventQueueServiceInterface
-import io.rover.sdk.core.platform.DeviceIdentificationInterface
 import io.rover.sdk.core.routing.Router
 import io.rover.sdk.debug.routes.DebugRoute
 
@@ -43,11 +42,10 @@ class DebugAssembler : Assembler {
     override fun assemble(container: Container) {
         container.register(
             Scope.Singleton,
-            DebugPreferences::class.java
+            DebugPreferences::class.java,
         ) { resolver ->
             DebugPreferences(
                 resolver.resolveSingletonOrFail(Context::class.java),
-                resolver.resolveSingletonOrFail(DeviceIdentificationInterface::class.java)
             )
         }
     }
@@ -56,16 +54,16 @@ class DebugAssembler : Assembler {
         resolver.resolveSingletonOrFail(Router::class.java).apply {
             registerRoute(
                 DebugRoute(
-                    resolver.resolveSingletonOrFail(Context::class.java)
-                )
+                    resolver.resolveSingletonOrFail(Context::class.java),
+                ),
             )
         }
 
         resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java)
             .addContextProvider(
                 TestDeviceContextProvider(
-                    resolver.resolveSingletonOrFail(DebugPreferences::class.java)
-                )
+                    resolver.resolveSingletonOrFail(DebugPreferences::class.java),
+                ),
             )
     }
 }

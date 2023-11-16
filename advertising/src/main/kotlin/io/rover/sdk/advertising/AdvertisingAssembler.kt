@@ -25,6 +25,7 @@ import io.rover.sdk.core.container.Scope
 import io.rover.sdk.core.events.ContextProvider
 import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.core.platform.LocalStorage
+import io.rover.sdk.core.privacy.PrivacyService
 import io.rover.sdk.core.streams.Scheduler
 
 /**
@@ -40,6 +41,7 @@ class AdvertisingAssembler : Assembler {
         ) { resolver ->
             AdvertisingIdContentProvider(
                 resolver.resolveSingletonOrFail(Context::class.java),
+                resolver.resolveSingletonOrFail(PrivacyService::class.java),
                 resolver.resolveSingletonOrFail(Scheduler::class.java, "io"),
                 resolver.resolveSingletonOrFail(LocalStorage::class.java)
             )

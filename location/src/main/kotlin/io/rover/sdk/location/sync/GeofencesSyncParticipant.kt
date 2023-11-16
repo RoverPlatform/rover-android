@@ -58,15 +58,20 @@ class GeofencesRepository(
      *
      * Be sure to close the [ClosableSequence] when you are finished iterating through it.
      */
-    fun allGeofences(): Publisher<ClosableSequence<Geofence>> = syncCoordinator
-        .updates
-        .observeOn(ioScheduler)
-        .map {
-            // for now, we don't check the result because we just want an *attempt* to have completely
-            // occurred.  In future we may keep state for tracking if at least one sync has happened
-            // successfully over the install lifetime of the app, but for now, this will do.
-            geofencesSqlStorage.queryAllGeofences()
-        }
+    fun allGeofences(): Publisher<ClosableSequence<Geofence>> =
+        Publishers.concat(
+            Publishers.defer { Publishers.just(geofencesSqlStorage.queryAllGeofences()) },
+            syncCoordinator
+                .updates
+                .observeOn(ioScheduler)
+                .map {
+                    // for now, we don't check the result because we just want an *attempt* to have completely
+                    // occurred.  In future we may keep state for tracking if at least one sync has happened
+                    // successfully over the install lifetime of the app, but for now, this will do.
+                    geofencesSqlStorage.queryAllGeofences()
+                }
+        )
+
 
     fun geofenceByIdentifier(identifier: String): Publisher<Geofence?> {
         return Publishers.defer {

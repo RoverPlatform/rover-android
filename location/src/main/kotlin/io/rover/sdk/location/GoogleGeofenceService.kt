@@ -37,6 +37,7 @@ import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.permissions.PermissionsNotifierInterface
 import io.rover.sdk.core.platform.LocalStorage
 import io.rover.sdk.core.platform.whenNotNull
+import io.rover.sdk.core.privacy.PrivacyService
 import io.rover.sdk.core.streams.PublishSubject
 import io.rover.sdk.core.streams.Publishers
 import io.rover.sdk.core.streams.Scheduler
@@ -47,7 +48,9 @@ import io.rover.sdk.core.streams.observeOn
 import io.rover.sdk.core.streams.share
 import io.rover.sdk.core.streams.subscribe
 import io.rover.sdk.location.domain.asLocation
+import io.rover.sdk.location.sync.ClosableSequence
 import io.rover.sdk.location.sync.GeofencesRepository
+import kotlinx.coroutines.reactive.asPublisher
 import org.json.JSONArray
 import org.reactivestreams.Publisher
 
@@ -61,6 +64,7 @@ import org.reactivestreams.Publisher
  */
 class GoogleGeofenceService(
     private val applicationContext: Context,
+    privacyService: PrivacyService,
     private val localStorage: LocalStorage,
     private val geofencingClient: GeofencingClient,
     mainScheduler: Scheduler,
@@ -78,6 +82,7 @@ class GoogleGeofenceService(
         .observeOn(mainScheduler)
         .share()
 
+    @Deprecated("Use enclosingGeofences instead.")
     override val currentGeofences: List<io.rover.sdk.location.domain.Geofence>
         get() = enclosingGeofences
 
@@ -176,6 +181,8 @@ class GoogleGeofenceService(
             activeFences!!.intersect(targetFenceIds)
         }
 
+        // TODO: if tracking disabled, instead just clear all these geofences
+
         val toAdd = targetFenceIds - alreadyInGoogle
 
         val fencesByIdentifier = updatedFencesList.associateBy { it.identifier }
@@ -215,6 +222,15 @@ class GoogleGeofenceService(
         activeFences = targetFenceIds
     }
 
+    @SuppressLint("MissingPermission")
+    private fun stopMonitoring() {
+        log.v("Stopping monitoring of geofences.")
+        geofencingClient.removeGeofences(
+            pendingIntentForReceiverService()
+        )
+        activeFences = emptySet()
+    }
+
     /**
      * A Pending Intent for activating the receiver service, [GeofenceBroadcastReceiver].
      */
@@ -248,20 +264,55 @@ class GoogleGeofenceService(
         }
 
     init {
+        // wait for all pre-requisites to become available before starting to monitor for geofences.
         Publishers.combineLatest(
             // observeOn(mainScheduler) used on each because combineLatest() is not thread safe.
+
+            // This publisher doesn't yield until permission is granted, so we don't need
+            // to actually check its value further down the chain.
             permissionsNotifier.notifyForPermission(Manifest.permission.ACCESS_FINE_LOCATION).observeOn(mainScheduler).doOnNext { log.v("Permission obtained.") },
             geofencesRepository.allGeofences().observeOn(mainScheduler).doOnNext { log.v("Full geofences list obtained from sync.") },
-            googleBackgroundLocationService.locationUpdates.observeOn(mainScheduler).doOnNext { log.v("Location update obtained so that distant geofences can be filtered out.") }
-        ) { permission, fences, location ->
-            Triple(permission, fences, location)
-        }.observeOn(ioScheduler).map { (_, fences, location) ->
-            log.v("Determining $geofenceMonitorLimit closest geofences for monitoring.")
-            fences.iterator().use { it.asSequence().sortedBy { it.center.asLocation().distanceTo(location) }.take(geofenceMonitorLimit).toList() }
+            googleBackgroundLocationService.locationUpdates.observeOn(mainScheduler).doOnNext { log.v("Location update obtained so that distant geofences can be filtered out.") },
+            privacyService.trackingModeFlow.asPublisher().doOnNext() { log.v("Informed of tracking mode: $it") },
+
+        ) { _, fences, location, trackingMode ->
+            if (trackingMode == PrivacyService.TrackingMode.Default) {
+                Command.Enable(fences, location)
+            } else {
+                Command.Disable
+            }
+        }.observeOn(ioScheduler).map { command: Command ->
+            when (command) {
+                is Command.Enable -> {
+                    val (fences, location) = command
+                    log.v("Determining $geofenceMonitorLimit closest geofences for monitoring.")
+                    fences.iterator().use { it.asSequence().sortedBy { it.center.asLocation().distanceTo(location) }.take(geofenceMonitorLimit).toList() }
+                }
+                is Command.Disable -> {
+                    log.v("Geofences are now disabled, monitoring for 0 geofences.")
+                    emptyList()
+                }
+            }
         }.observeOn(mainScheduler).subscribe { fences ->
-            log.v("Got location permission, geofences, and current location.  Ready to start monitoring for ${fences.count()} geofence(s).")
-            startMonitoringGeofences(fences)
+            if (fences.isEmpty()) {
+                stopMonitoring()
+            } else {
+                log.v("Got location permission, privacy setting, geofences, and current location.  Ready to start monitoring for ${fences.count()} geofence(s).")
+                startMonitoringGeofences(fences)
+            }
         }
+    }
+
+    /**
+     * Describes how the the geofence service should configure itself.
+     */
+    private sealed class Command {
+        data class Enable(
+            val fences: ClosableSequence<io.rover.sdk.location.domain.Geofence>,
+            val location: Location,
+        ) : Command()
+
+        object Disable : Command()
     }
 
     companion object {

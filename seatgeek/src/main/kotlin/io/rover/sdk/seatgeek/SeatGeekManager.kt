@@ -22,13 +22,15 @@ import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.LocalStorage
 import io.rover.sdk.core.platform.whenNotNull
+import io.rover.sdk.core.privacy.PrivacyService
 import org.json.JSONException
 import org.json.JSONObject
 
 class SeatGeekManager(
     private val userInfo: UserInfoInterface,
-    localStorage: LocalStorage
-) : SeatGeekAuthorizer {
+    localStorage: LocalStorage,
+    private val privacyService: PrivacyService,
+) : SeatGeekAuthorizer, PrivacyService.TrackingEnabledChangedListener {
     private val storage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
 
     companion object {
@@ -38,6 +40,9 @@ class SeatGeekManager(
     }
 
     override fun setSeatGeekId(crmID: String) {
+        if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
+            return
+        }
         seatGeekID = crmID
         updateUserInfoWithMemberAttributes()
         log.i("SeatGeek signed in with '$crmID'.")
@@ -92,5 +97,11 @@ class SeatGeekManager(
         val propertiesMap = mutableMapOf<String, String>()
         seatGeekID.whenNotNull { propertiesMap.put(SEATGEEK_ID_KEY, it)}
         return propertiesMap
+    }
+
+    override fun onTrackingModeChanged(trackingMode: PrivacyService.TrackingMode) {
+        if (trackingMode != PrivacyService.TrackingMode.Default) {
+            clearCredentials()
+        }
     }
 }

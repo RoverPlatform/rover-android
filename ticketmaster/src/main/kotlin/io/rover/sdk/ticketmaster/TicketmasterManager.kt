@@ -17,20 +17,21 @@
 
 package io.rover.sdk.ticketmaster
 
-import android.content.Context
 import io.rover.sdk.core.data.graphql.putProp
 import io.rover.sdk.core.data.graphql.safeOptString
 import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.LocalStorage
 import io.rover.sdk.core.platform.whenNotNull
+import io.rover.sdk.core.privacy.PrivacyService
 import org.json.JSONException
 import org.json.JSONObject
 
 class TicketmasterManager(
     private val userInfo: UserInfoInterface,
-    localStorage: LocalStorage
-) : TicketmasterAuthorizer {
+    localStorage: LocalStorage,
+    private val privacyService: PrivacyService
+) : TicketmasterAuthorizer, PrivacyService.TrackingEnabledChangedListener {
     private val storage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
 
     companion object {
@@ -39,6 +40,7 @@ class TicketmasterManager(
     }
 
     override fun setTicketmasterId(id: String) {
+        if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) return
         member = Member(
             ticketmasterID = id,
             email = null,
@@ -100,6 +102,12 @@ class TicketmasterManager(
             email.whenNotNull { propertiesMap.put(Member::email.name, it) }
             firstName.whenNotNull { propertiesMap.put(Member::firstName.name, it) }
             return propertiesMap
+        }
+    }
+
+    override fun onTrackingModeChanged(trackingMode: PrivacyService.TrackingMode) {
+        if (trackingMode != PrivacyService.TrackingMode.Default) {
+            clearCredentials()
         }
     }
 }

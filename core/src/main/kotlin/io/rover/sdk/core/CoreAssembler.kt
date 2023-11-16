@@ -76,6 +76,7 @@ import io.rover.sdk.core.platform.IoMultiplexingExecutor
 import io.rover.sdk.core.platform.LocalStorage
 import io.rover.sdk.core.platform.SharedPreferencesLocalStorage
 import io.rover.sdk.core.platform.whenNotNull
+import io.rover.sdk.core.privacy.PrivacyService
 import io.rover.sdk.core.routing.LinkOpenInterface
 import io.rover.sdk.core.routing.Router
 import io.rover.sdk.core.routing.RouterService
@@ -177,6 +178,12 @@ class CoreAssembler @JvmOverloads constructor(
 
         container.register(Scope.Singleton, Application::class.java) { _ ->
             application
+        }
+
+        container.register(Scope.Singleton, PrivacyService::class.java) { resolver ->
+            PrivacyService(
+                resolver.resolveSingletonOrFail(LocalStorage::class.java)
+            )
         }
 
         if (openAppIntent != null || application.packageManager.getLaunchIntentForPackage(application.packageName) != null) {
@@ -303,8 +310,8 @@ class CoreAssembler @JvmOverloads constructor(
             ScreenContextProvider(application.resources)
         }
 
-        container.register(Scope.Singleton, ContextProvider::class.java, "telephony") { _ ->
-            TelephonyContextProvider(application)
+        container.register(Scope.Singleton, ContextProvider::class.java, "telephony") { resolver ->
+            TelephonyContextProvider(application, resolver.resolveSingletonOrFail(PrivacyService::class.java))
         }
 
         container.register(Scope.Singleton, ContextProvider::class.java, "device") { _ ->
@@ -315,8 +322,11 @@ class CoreAssembler @JvmOverloads constructor(
             TimeZoneContextProvider()
         }
 
-        container.register(Scope.Singleton, ContextProvider::class.java, "locationAuthorization") { _ ->
-            LocationServicesContextProvider(application)
+        container.register(Scope.Singleton, ContextProvider::class.java, "locationAuthorization") { resolver ->
+            LocationServicesContextProvider(
+                application,
+                resolver.resolveSingletonOrFail(PrivacyService::class.java)
+            )
         }
 
         container.register(Scope.Singleton, ContextProvider::class.java, "attributes") { resolver ->
@@ -485,20 +495,21 @@ class CoreAssembler @JvmOverloads constructor(
         val eventQueue = resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java)
 
         listOf(
-                resolver.resolveSingletonOrFail(ContextProvider::class.java, "device"),
-                resolver.resolveSingletonOrFail(ContextProvider::class.java, "locale"),
-                resolver.resolveSingletonOrFail(ContextProvider::class.java, "darkMode"),
-                resolver.resolveSingletonOrFail(ContextProvider::class.java, "reachability"),
-                resolver.resolveSingletonOrFail(ContextProvider::class.java, "screen"),
-                resolver.resolveSingletonOrFail(ContextProvider::class.java, "telephony"),
-                resolver.resolveSingletonOrFail(ContextProvider::class.java, "timeZone"),
-                resolver.resolveSingletonOrFail(ContextProvider::class.java, "attributes"),
-                resolver.resolveSingletonOrFail(ContextProvider::class.java, "application"),
-                resolver.resolveSingletonOrFail(ContextProvider::class.java, "deviceIdentifier"),
-                resolver.resolveSingletonOrFail(ContextProvider::class.java, "sdkVersion"),
-                resolver.resolveSingletonOrFail(ContextProvider::class.java, "locationAuthorization"),
-                resolver.resolveSingletonOrFail(ContextProvider::class.java, "conversions"),
-                resolver.resolveSingletonOrFail(ContextProvider::class.java, "lastSeen")
+            resolver.resolveSingletonOrFail(PrivacyService::class.java),
+            resolver.resolveSingletonOrFail(ContextProvider::class.java, "device"),
+            resolver.resolveSingletonOrFail(ContextProvider::class.java, "locale"),
+            resolver.resolveSingletonOrFail(ContextProvider::class.java, "darkMode"),
+            resolver.resolveSingletonOrFail(ContextProvider::class.java, "reachability"),
+            resolver.resolveSingletonOrFail(ContextProvider::class.java, "screen"),
+            resolver.resolveSingletonOrFail(ContextProvider::class.java, "telephony"),
+            resolver.resolveSingletonOrFail(ContextProvider::class.java, "timeZone"),
+            resolver.resolveSingletonOrFail(ContextProvider::class.java, "attributes"),
+            resolver.resolveSingletonOrFail(ContextProvider::class.java, "application"),
+            resolver.resolveSingletonOrFail(ContextProvider::class.java, "deviceIdentifier"),
+            resolver.resolveSingletonOrFail(ContextProvider::class.java, "sdkVersion"),
+            resolver.resolveSingletonOrFail(ContextProvider::class.java, "locationAuthorization"),
+            resolver.resolveSingletonOrFail(ContextProvider::class.java, "conversions"),
+            resolver.resolveSingletonOrFail(ContextProvider::class.java, "lastSeen"),
         ).forEach { eventQueue.addContextProvider(it) }
 
         resolver.resolveSingletonOrFail(VersionTrackerInterface::class.java).trackAppVersion()
@@ -528,6 +539,8 @@ class CoreAssembler @JvmOverloads constructor(
         resolver.resolveSingletonOrFail(ConversionsManager::class.java).apply {
             this.migrateLegacyTags()
         }
+
+        resolver.resolveSingletonOrFail(PrivacyService::class.java).refreshAllListeners()
     }
 }
 
@@ -568,3 +581,12 @@ val Rover.userInfoManager: UserInfoInterface
 private fun missingDependencyError(name: String): Throwable {
     throw RuntimeException("Dependency not registered: $name.  Did you include CoreAssembler() in the assembler list?")
 }
+
+val Rover.privacyService: PrivacyService
+    get() = this.resolve(PrivacyService::class.java) ?: throw missingDependencyError("PrivacyService")
+
+var Rover.trackingMode: PrivacyService.TrackingMode
+    get() = privacyService.trackingMode
+    set(value) {
+        privacyService.trackingMode = value
+    }

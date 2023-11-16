@@ -38,6 +38,7 @@ import org.json.JSONObject
 internal fun DeviceContext.asJson(dateFormatting: DateFormattingInterface): JSONObject {
     return JSONObject().apply {
         val props = listOf(
+            DeviceContext::trackingMode,
             DeviceContext::appBuild,
             DeviceContext::appIdentifier,
             DeviceContext::deviceIdentifier,
@@ -87,6 +88,7 @@ internal fun DeviceContext.asJson(dateFormatting: DateFormattingInterface): JSON
  */
 internal fun DeviceContext.Companion.decodeJson(json: JSONObject, dateFormatting: DateFormattingInterface): DeviceContext {
     return DeviceContext(
+        trackingMode = json.safeOptString("trackingMode"),
         appBuild = json.safeOptString("appBuild"),
         appIdentifier = json.safeOptString("appIdentifier"),
         appVersion = json.safeOptString("appVersion"),

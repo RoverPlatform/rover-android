@@ -54,12 +54,19 @@ class BeaconsRepository(
     private val beaconsSqlStorage: BeaconsSqlStorage,
     private val ioScheduler: Scheduler
 ) {
-    fun allBeacons(): Publisher<ClosableSequence<Beacon>> = syncCoordinator
-        .updates
-        .observeOn(ioScheduler)
-        .map {
-            beaconsSqlStorage.queryAllBeacons()
-        }
+    fun allBeacons(): Publisher<ClosableSequence<Beacon>> =
+        Publishers.concat(
+            Publishers.defer {
+                Publishers.just(beaconsSqlStorage.queryAllBeacons())
+            },
+            syncCoordinator
+                .updates
+                .observeOn(ioScheduler)
+                .map {
+                    beaconsSqlStorage.queryAllBeacons()
+                }
+        )
+
 
     /**
      * Look up a [Beacon] by its iBeacon UUID, major, and minor.  Yields it if it exists.

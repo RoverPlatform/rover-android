@@ -42,6 +42,7 @@ import io.rover.sdk.core.Rover
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.permissions.PermissionsNotifierInterface
 import io.rover.sdk.core.platform.whenNotNull
+import io.rover.sdk.core.privacy.PrivacyService
 import io.rover.sdk.core.streams.Publishers
 import io.rover.sdk.core.streams.Scheduler
 import io.rover.sdk.core.streams.doOnNext
@@ -51,6 +52,7 @@ import io.rover.sdk.core.streams.observeOn
 import io.rover.sdk.core.streams.subscribe
 import io.rover.sdk.location.domain.Beacon
 import io.rover.sdk.location.sync.BeaconsRepository
+import kotlinx.coroutines.reactive.asPublisher
 import java.util.UUID
 
 /**
@@ -61,12 +63,13 @@ import java.util.UUID
  */
 class GoogleBeaconTrackerService(
     private val applicationContext: Context,
+    private val privacyService: PrivacyService,
     private val nearbyMessagesClient: MessagesClient,
     private val beaconsRepository: BeaconsRepository,
     mainScheduler: Scheduler,
     ioScheduler: Scheduler,
     private val locationReportingService: LocationReportingServiceInterface,
-    permissionsNotifier: PermissionsNotifierInterface
+    permissionsNotifier: PermissionsNotifierInterface,
 ) : GoogleBeaconTrackerServiceInterface {
     override fun newGoogleBeaconMessage(intent: Intent) {
         nearbyMessagesClient.handleIntent(
@@ -82,7 +85,7 @@ class GoogleBeaconTrackerService(
                     log.v("A beacon lost: $message")
                     emitEventForPossibleBeacon(message, false)
                 }
-            }
+            },
         )
     }
 
@@ -90,13 +93,17 @@ class GoogleBeaconTrackerService(
      * If the message matches a given [Beacon] in the database, and emits events as needed.
      */
     private fun emitEventForPossibleBeacon(message: Message, enter: Boolean) {
+        if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
+            return
+        }
+
         return when (message.type) {
             Message.MESSAGE_TYPE_I_BEACON_ID -> {
                 val ibeacon = IBeaconId.from(message)
                 beaconsRepository.beaconByUuidMajorAndMinor(
                     ibeacon.proximityUuid,
                     ibeacon.major,
-                    ibeacon.minor
+                    ibeacon.minor,
                 ).subscribe { beacon ->
                     beacon.whenNotNull {
                         if (enter) {
@@ -119,11 +126,12 @@ class GoogleBeaconTrackerService(
 
     @SuppressLint("MissingPermission")
     private fun startMonitoringBeacons(uuids: Set<UUID>) {
+        log.i("Subscribing to beacon tracking updates.")
         val messagesClient = Nearby.getMessagesClient(
             applicationContext,
             MessagesOptions.Builder()
                 .setPermissions(NearbyPermissions.BLE)
-                .build()
+                .build(),
         )
 
         val messageFilters = uuids.map { uuid ->
@@ -143,13 +151,29 @@ class GoogleBeaconTrackerService(
                 applicationContext,
                 0,
                 Intent(applicationContext, BeaconBroadcastReceiver::class.java),
-                PendingIntent.FLAG_UPDATE_CURRENT or if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { FLAG_IMMUTABLE } else { 0 }
+                PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE,
             ),
-            subscribeOptions
+            subscribeOptions,
         ).addOnFailureListener {
             log.w("Unable to configure Rover beacon tracking because: $it")
         }.addOnCompleteListener {
             log.w("Successfully registered for beacon tracking updates.")
+        }
+    }
+
+    private fun stopMonitoringBeacons() {
+        log.i("Unsubscribing from beacon tracking updates.")
+        nearbyMessagesClient.unsubscribe(
+            PendingIntent.getBroadcast(
+                applicationContext,
+                0,
+                Intent(applicationContext, BeaconBroadcastReceiver::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE,
+            ),
+        ).addOnFailureListener {
+            log.w("Unable to unsubscribe from beacon tracking updates because: $it")
+        }.addOnCompleteListener {
+            log.i("Successfully unsubscribed from beacon tracking updates.")
         }
     }
 
@@ -184,17 +208,39 @@ class GoogleBeaconTrackerService(
         Publishers.combineLatest(
             // observeOn(mainScheduler) used on each because combineLatest() is not thread safe.
             permissionGranted.doOnNext { log.v("Permission obtained. $it") },
-            beaconsRepository.allBeacons().observeOn(mainScheduler).doOnNext { log.v("Full beacons list obtained from sync.") }
-        ) { permission, beacons ->
-            Pair(permission, beacons)
-        }.observeOn(ioScheduler).map { (_, beacons) ->
-            val fetchedBeacons = beacons.iterator().use { it.asSequence().toList() }
-            fetchedBeacons.aggregateToUniqueUuids().apply {
-                log.v("Starting up beacon tracking for ${fetchedBeacons.count()} beacon(s), aggregated to ${count()} filter(s).")
+            beaconsRepository.allBeacons().observeOn(mainScheduler).doOnNext { log.v("Full beacons list obtained from sync.") },
+            privacyService.trackingModeFlow.asPublisher().doOnNext { log.v("Informed of tracking mode: ${it.wireFormat}") },
+        ) { _, beacons, trackingEnabled ->
+            Pair(beacons, trackingEnabled)
+        }.observeOn(ioScheduler)
+            .map { (beacons, trackingMode) ->
+                if (trackingMode == PrivacyService.TrackingMode.Default) {
+                    val fetchedBeacons = beacons.iterator().use { it.asSequence().toList() }
+                    val beaconSet = fetchedBeacons.aggregateToUniqueUuids().apply {
+                        log.v("Starting up beacon tracking for ${fetchedBeacons.count()} beacon(s), aggregated to ${count()} filter(s).")
+                    }
+                    Command.Enable(beaconSet)
+                } else {
+                    Command.Disable
+                }
+            }.observeOn(mainScheduler).subscribe { command ->
+                when (command) {
+                    is Command.Enable -> {
+                        startMonitoringBeacons(command.uuids)
+                    }
+                    is Command.Disable -> {
+                        stopMonitoringBeacons()
+                    }
+                }
             }
-        }.observeOn(mainScheduler).subscribe { beaconUuids ->
-            startMonitoringBeacons(beaconUuids)
-        }
+    }
+
+    private sealed class Command {
+        data class Enable(
+            val uuids: Set<UUID>,
+        ) : Command()
+
+        object Disable : Command()
     }
 }
 
@@ -209,9 +255,11 @@ class BeaconBroadcastReceiver : BroadcastReceiver() {
         if (beaconTrackerService == null) {
             log.e("Received a beacon result from Google, but GoogleBeaconTrackerServiceInterface is not registered in the Rover container. Ensure LocationAssembler() is in Rover.initialize(). Ignoring.")
             return
-        } else beaconTrackerService.newGoogleBeaconMessage(
-            intent
-        )
+        } else {
+            beaconTrackerService.newGoogleBeaconMessage(
+                intent,
+            )
+        }
     }
 }
 

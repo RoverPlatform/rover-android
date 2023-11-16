@@ -21,11 +21,12 @@ import android.content.Intent
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.LocationResult
 import io.rover.sdk.core.data.domain.Location
+import io.rover.sdk.core.privacy.PrivacyService
 import io.rover.sdk.location.domain.Beacon
 import io.rover.sdk.location.domain.Geofence
 import org.reactivestreams.Publisher
 
-interface GoogleBackgroundLocationServiceInterface {
+interface GoogleBackgroundLocationServiceInterface: PrivacyService.TrackingEnabledChangedListener {
     /**
      * The Google Location Services have yielded a new [LocationResult] to us.
      */

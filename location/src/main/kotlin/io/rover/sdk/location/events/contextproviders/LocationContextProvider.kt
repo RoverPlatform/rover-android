@@ -20,12 +20,14 @@ package io.rover.sdk.location.events.contextproviders
 import io.rover.sdk.core.data.domain.DeviceContext
 import io.rover.sdk.core.data.domain.Location
 import io.rover.sdk.core.events.ContextProvider
+import io.rover.sdk.core.privacy.PrivacyService
 import io.rover.sdk.core.streams.subscribe
 import io.rover.sdk.location.GoogleBackgroundLocationServiceInterface
 
 class LocationContextProvider(
-    googleBackgroundLocationService: GoogleBackgroundLocationServiceInterface
-) : ContextProvider {
+        googleBackgroundLocationService: GoogleBackgroundLocationServiceInterface,
+        privacyService: PrivacyService
+) : ContextProvider, PrivacyService.TrackingEnabledChangedListener {
     override fun captureContext(deviceContext: DeviceContext): DeviceContext {
         return deviceContext.copy(
             location = currentLocation
@@ -37,6 +39,14 @@ class LocationContextProvider(
     init {
         googleBackgroundLocationService.locationUpdates.subscribe { location ->
             currentLocation = location
+        }
+
+        privacyService.registerTrackingEnabledChangedListener(this)
+    }
+
+    override fun onTrackingModeChanged(trackingMode: PrivacyService.TrackingMode) {
+        if (trackingMode == PrivacyService.TrackingMode.Anonymized) {
+            currentLocation = null
         }
     }
 }

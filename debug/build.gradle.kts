@@ -23,6 +23,8 @@ plugins {
 
 val roverSdkVersion: String by rootProject.extra
 val kotlinVersion: String by rootProject.extra
+val composeBomVersion: String by rootProject.extra
+val composeKotlinCompilerExtensionVersion: String by rootProject.extra
 
 android {
     compileSdk = 33
@@ -51,6 +53,14 @@ android {
         jvmTarget = "11"
     }
 
+    buildFeatures { // Enables Jetpack Compose for this module
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = composeKotlinCompilerExtensionVersion
+    }
+
     namespace = "io.rover.debug"
 }
 
@@ -61,6 +71,12 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
     implementation(project(":core"))
+
+    implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.material:material")
+    implementation("androidx.activity:activity-compose:1.5.1")
 }
 
 afterEvaluate {

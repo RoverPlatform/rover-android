@@ -24,12 +24,14 @@ import android.telephony.TelephonyManager
 import androidx.core.app.ActivityCompat
 import io.rover.sdk.core.data.domain.DeviceContext
 import io.rover.sdk.core.events.ContextProvider
+import io.rover.sdk.core.privacy.PrivacyService
 
 /**
  * Captures and adds the mobile carrier and data connection details to a [DeviceContext].
  */
 class TelephonyContextProvider(
-    private val applicationContext: android.content.Context
+    private val applicationContext: android.content.Context,
+    private val privacyService: PrivacyService
 ) : ContextProvider {
     private val telephonyManager = applicationContext.applicationContext.getSystemService(android.content.Context.TELEPHONY_SERVICE) as TelephonyManager
 
@@ -62,6 +64,10 @@ class TelephonyContextProvider(
 
     @SuppressLint("MissingPermission")
     override fun captureContext(deviceContext: DeviceContext): DeviceContext {
+        if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
+            return deviceContext
+        }
+
         val targetSdkVersion = applicationContext.applicationInfo.targetSdkVersion
 
         val networkTypeName = if (ActivityCompat.checkSelfPermission(applicationContext, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED || targetSdkVersion < 30) {

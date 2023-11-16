@@ -29,13 +29,18 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import io.rover.sdk.experiences.rich.compose.model.nodes.Carousel
 import io.rover.sdk.experiences.rich.compose.model.nodes.Collection
+import io.rover.sdk.experiences.rich.compose.model.nodes.Conditional
 import io.rover.sdk.experiences.rich.compose.model.nodes.Node
 import io.rover.sdk.experiences.rich.compose.model.nodes.getItems
+import io.rover.sdk.experiences.rich.compose.model.values.isSatisfied
 import io.rover.sdk.experiences.rich.compose.ui.CarouselState
 import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.ViewID
 import io.rover.sdk.experiences.rich.compose.ui.data.DataContext
+import io.rover.sdk.experiences.rich.compose.ui.data.data
 import io.rover.sdk.experiences.rich.compose.ui.data.makeDataContext
+import io.rover.sdk.experiences.rich.compose.ui.data.urlParameters
+import io.rover.sdk.experiences.rich.compose.ui.data.userInfo
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandMeasurePolicy
 import io.rover.sdk.experiences.rich.compose.ui.utils.floorMod
@@ -107,20 +112,40 @@ private data class CarouselItem(
 )
 
 private fun carouselPages(carousel: Carousel, dataContext: DataContext): List<CarouselItem> {
-    val nodes = carousel.children.flatMap { node ->
-        when (node) {
+    fun generatePages(node: Node, dataContext: DataContext): List<CarouselItem> {
+        return when (node) {
             is Collection -> {
                 node.getItems(dataContext).flatMap { item ->
-                    node.children.map { childNode ->
-                        CarouselItem(childNode, item)
+                    node.children.flatMap { childNode ->
+                        val childDataContext = makeDataContext(
+                                userInfo = dataContext.userInfo,
+                                urlParameters = dataContext.urlParameters,
+                                data = item
+                        )
+
+                        generatePages(childNode, childDataContext)
                     }
                 }
             }
+            is Conditional -> {
+                if (!node.conditions.all { it.isSatisfied(dataContext) }) {
+                    return emptyList()
+                }
+
+                node.children.flatMap { childNode ->
+                    generatePages(childNode, dataContext)
+                }
+            }
+            is Carousel -> {
+                node.children.flatMap { childNode ->
+                    generatePages(childNode, dataContext)
+                }
+            }
             else -> {
-                listOf(CarouselItem(node))
+                listOf(CarouselItem(node, dataContext.data))
             }
         }
     }
 
-    return nodes.toList()
+    return generatePages(carousel, dataContext)
 }

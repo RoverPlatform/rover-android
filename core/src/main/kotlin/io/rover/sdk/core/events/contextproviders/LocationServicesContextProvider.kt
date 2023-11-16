@@ -26,8 +26,12 @@ import android.provider.Settings.Secure.LOCATION_MODE_OFF
 import androidx.core.content.ContextCompat
 import io.rover.sdk.core.data.domain.DeviceContext
 import io.rover.sdk.core.events.ContextProvider
+import io.rover.sdk.core.privacy.PrivacyService
 
-class LocationServicesContextProvider(val applicationContext: android.content.Context) : ContextProvider {
+class LocationServicesContextProvider(
+    private val applicationContext: android.content.Context,
+    private val privacyService: PrivacyService
+) : ContextProvider {
     companion object {
         private const val BACKGROUND_LOCATION_PERMISSION_CODE = "android.permission.ACCESS_BACKGROUND_LOCATION"
         private const val Q_VERSION_CODE = 29
@@ -38,6 +42,10 @@ class LocationServicesContextProvider(val applicationContext: android.content.Co
     }
 
     override fun captureContext(deviceContext: DeviceContext): DeviceContext {
+        if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
+           return deviceContext.copy(locationAuthorization = DENIED, isLocationServicesEnabled = false)
+        }
+
         val mode = Settings.Secure.getInt(applicationContext.contentResolver, LOCATION_MODE, LOCATION_MODE_OFF)
         val locationServicesEnabled = mode != LOCATION_MODE_OFF
 

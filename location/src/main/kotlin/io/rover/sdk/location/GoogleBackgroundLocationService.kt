@@ -41,6 +41,7 @@ import io.rover.sdk.core.permissions.PermissionsNotifierInterface
 import io.rover.sdk.core.platform.DateFormattingInterface
 import io.rover.sdk.core.platform.LocalStorage
 import io.rover.sdk.core.platform.whenNotNull
+import io.rover.sdk.core.privacy.PrivacyService
 import io.rover.sdk.core.streams.PublishSubject
 import io.rover.sdk.core.streams.Publishers
 import io.rover.sdk.core.streams.Scheduler
@@ -57,12 +58,17 @@ import java.util.Date
 /**
  * Subscribes to Location Updates from FusedLocationManager and emits location reporting events.
  *
+ * Despite the name, this object is responsible for both background location monitoring
+ * and foreground location monitoring. Moreover, background location monitoring is no longer
+ * supported as of Android 12.
+ *
  * This will allow you to see up to date location data for your users in the Rover Audience app if
  * [trackLocation] is enabled.
  *
  * Google documentation: https://developer.android.com/training/location/receive-location-updates.html
  */
 class GoogleBackgroundLocationService(
+    private val privacyService: PrivacyService,
     private val fusedLocationProviderClient: FusedLocationProviderClient,
     private val applicationContext: Context,
     private val permissionsNotifier: PermissionsNotifierInterface,
@@ -72,12 +78,13 @@ class GoogleBackgroundLocationService(
     mainScheduler: Scheduler,
     private val trackLocation: Boolean = false,
     localStorage: LocalStorage,
-    private val dateFormatting: DateFormattingInterface
-) : GoogleBackgroundLocationServiceInterface {
+    private val dateFormatting: DateFormattingInterface,
+) : GoogleBackgroundLocationServiceInterface, PrivacyService.TrackingEnabledChangedListener {
 
     private val keyValueStorage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
 
     override fun newGoogleLocationResult(locationResult: LocationResult) {
+        if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) return
         log.v("Received location result: $locationResult")
         subject.onNext(locationResult)
     }
@@ -157,8 +164,16 @@ class GoogleBackgroundLocationService(
 
     override val locationUpdates = Publishers.concat(Publishers.just(currentLocation).filterNulls(), locationChanges).shareAndReplay(1)
 
+    private val googleForegroundCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            newGoogleLocationResult(locationResult)
+        }
+    }
+
     init {
-        startMonitoring()
+        if (privacyService.trackingMode == PrivacyService.TrackingMode.Default) {
+            startMonitoring()
+        }
 
         locationChanges
             .subscribe { location ->
@@ -174,6 +189,7 @@ class GoogleBackgroundLocationService(
 
     @SuppressLint("MissingPermission")
     private fun startMonitoring() {
+        log.i("Starting location monitoring.")
         permissionsNotifier.notifyForAnyOfPermission(
             setOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
         ).subscribe {
@@ -189,11 +205,7 @@ class GoogleBackgroundLocationService(
             fusedLocationProviderClient
                 .requestLocationUpdates(
                     locationRequest,
-                    object : LocationCallback() {
-                        override fun onLocationResult(locationResult: LocationResult) {
-                            newGoogleLocationResult(locationResult)
-                        }
-                    },
+                    googleForegroundCallback,
                     Looper.getMainLooper()
                 )
 
@@ -223,6 +235,20 @@ class GoogleBackgroundLocationService(
             }
         }
     }
+
+    private fun stopMonitoring() {
+        log.i("Stopping location monitoring.")
+        fusedLocationProviderClient.removeLocationUpdates(googleForegroundCallback)
+    }
+
+    override fun onTrackingModeChanged(trackingMode: PrivacyService.TrackingMode) {
+        if (trackingMode == PrivacyService.TrackingMode.Default) {
+            startMonitoring()
+        } else {
+            stopMonitoring()
+            currentLocation = null
+        }
+    }
 }
 
 class LocationBroadcastReceiver : BroadcastReceiver() {
@@ -238,6 +264,12 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
                 log.e("Received a location result from Google, but Rover is not initialized.  Ignoring.")
                 return
             }
+            val privacyService = rover.resolve(PrivacyService::class.java)
+            if (privacyService == null) {
+                log.e("Received a location result from Google, but the Rover PrivacyService is missing. Ensure that LocationAssembler is added to Rover.initialize(). Ignoring.")
+                return
+            }
+            if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) return
             val backgroundLocationService = rover.resolve(GoogleBackgroundLocationServiceInterface::class.java)
             if (backgroundLocationService == null) {
                 log.e("Received a location result from Google, but the Rover GoogleBackgroundLocationServiceInterface is missing. Ensure that LocationAssembler is added to Rover.initialize(). Ignoring.")

@@ -18,6 +18,7 @@
 package io.rover.sdk.experiences.services
 
 import android.app.Activity
+import android.net.Uri
 import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.core.events.domain.Event
 import kotlinx.coroutines.*
@@ -74,6 +75,7 @@ internal interface ExperienceEvent {
 internal data class ExperienceScreenViewed(
     val experienceName: String?,
     val experienceId: String?,
+    val experienceURL: Uri?,
     val screenName: String?,
     val screenId: String,
     val screenTags: List<String>,
@@ -89,7 +91,8 @@ internal data class ExperienceScreenViewed(
         val experienceAttributes = mapOf(
             "name" to experienceName,
             "id" to experienceId,
-            "campaignID" to campaignId
+            "campaignID" to campaignId,
+            "url" to experienceURL?.toString()
         ).filterNullValues()
 
         val screenAttributes = mapOf(

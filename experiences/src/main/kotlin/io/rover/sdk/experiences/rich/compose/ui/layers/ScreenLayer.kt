@@ -77,6 +77,7 @@ internal fun ScreenLayer(node: Screen, appearance: Appearance) {
     val urlParameters = Environment.LocalUrlParameters.current
     val experienceId = Environment.LocalExperienceId.current
     val experienceName = Environment.LocalExperienceName.current
+    val experienceSourceUrl = Environment.LocalExperienceSourceUrl.current
 
     val backgroundColor = remember { node.androidStatusBarBackgroundColor.getComposeColor(isDarkTheme) }
 
@@ -94,6 +95,7 @@ internal fun ScreenLayer(node: Screen, appearance: Appearance) {
                 ExperienceScreenViewed(
                     experienceName,
                     experienceId,
+                    experienceSourceUrl,
                     node.name,
                     node.id,
                     node.metadata?.tags?.toList() ?: emptyList(),

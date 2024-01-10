@@ -78,6 +78,7 @@ internal fun ActionModifier(
         val urlParameters = Environment.LocalUrlParameters.current
         val experienceId = Environment.LocalExperienceId.current
         val experienceName = Environment.LocalExperienceName.current
+        val experienceUrl = Environment.LocalExperienceUrl.current
         val localData = Environment.LocalData.current
         val localActivity = LocalContext.current as? Activity
 
@@ -97,6 +98,7 @@ internal fun ActionModifier(
                 "experience" to experience.experienceAttributes(
                     id = experienceId,
                     name = experienceName,
+                    sourceUrl = experienceUrl,
                     campaignId = campaignId
                 ),
                 "screen" to screen.screenAttributes(),
@@ -259,12 +261,14 @@ private fun ActionModifierButton(
 private fun ExperienceModel.experienceAttributes(
     id: String?,
     name: String?,
+    sourceUrl: Uri?,
     campaignId: String?
 ): Map<String, String> {
     val optionalMap: Map<String, String?> =
         mapOf(
             "id" to id,
             "name" to name,
+            "url" to sourceUrl?.toString(),
             "campaignID" to campaignId
         )
 

@@ -19,6 +19,7 @@
 
 package io.rover.sdk.core.data.graphql.operations.data
 
+import android.net.Uri
 import io.rover.sdk.core.data.domain.Background
 import io.rover.sdk.core.data.domain.BackgroundContentMode
 import io.rover.sdk.core.data.domain.BackgroundScale
@@ -71,7 +72,18 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 
-fun ClassicExperienceModel.Companion.decodeJson(json: JSONObject): ClassicExperienceModel {
+fun ClassicExperienceModel.Companion.decodeJson(json: JSONObject, sourceUrl: Uri? = null): ClassicExperienceModel {
+    var url: Uri? = null
+
+    if (sourceUrl != null) {
+        url = sourceUrl
+    } else {
+        val sourceUrlString = json.optString("sourceUrl")
+        if (sourceUrlString.isNotEmpty()) {
+            url = Uri.parse(sourceUrlString)
+        }
+    }
+
     return ClassicExperienceModel(
         id = json.safeGetString("id"),
         homeScreenId = json.safeGetString("homeScreenID"),
@@ -80,7 +92,8 @@ fun ClassicExperienceModel.Companion.decodeJson(json: JSONObject): ClassicExperi
         },
         keys = json.getJSONObject("keys").toStringHash(),
         tags = json.getJSONArray("tags").getStringIterable().toList(),
-        name = json.safeGetString("name")
+        name = json.safeGetString("name"),
+        sourceUrl = url
     )
 }
 
@@ -92,6 +105,9 @@ fun ClassicExperienceModel.encodeJson(): JSONObject {
         putProp(this@encodeJson, ClassicExperienceModel::keys) { JSONObject(it) }
         putProp(this@encodeJson, ClassicExperienceModel::tags, "tags") { JSONArray(it) }
         putProp(this@encodeJson, ClassicExperienceModel::name, "name") { it }
+        if (this@encodeJson.sourceUrl != null) {
+            putProp(this@encodeJson, ClassicExperienceModel::sourceUrl, "sourceUrl") { it }
+        }
     }
 }
 
@@ -481,8 +497,8 @@ fun Duration.encodeJson(): JSONObject {
 
 fun Conversion.encodeJson(): JSONObject {
     return JSONObject().apply {
-        putProp(this@encodeJson, Conversion::tag, "key")
-        putProp(this@encodeJson, Conversion::expires, "expires") { it.encodeJson().toString() }
+        putProp(this@encodeJson, Conversion::tag, "tag")
+        putProp(this@encodeJson, Conversion::expires, "expires") { it.encodeJson() }
     }
 }
 
@@ -673,7 +689,7 @@ fun ButtonBlock.encodeJson(): JSONObject {
 
 fun ButtonBlock.Companion.decodeJson(json: JSONObject): ButtonBlock {
     return ButtonBlock(
-        tapBehavior = Block.TapBehavior.decodeJson(json.optJSONObject("tapBehavior")),
+        tapBehavior = Block.TapBehavior.decodeJson(json.getJSONObject("tapBehavior")),
         background = Background.decodeJson(json.getJSONObject("background")),
         border = Border.decodeJson(json.getJSONObject("border")),
         id = json.safeGetString("id"),

@@ -17,17 +17,15 @@
 
 package io.rover.sdk.experiences.data.events
 
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.rover.sdk.experiences.services.ClassicEventEmitter
 
 internal class AppOpenedTracker(private val classicEventEmitter: ClassicEventEmitter) {
     init {
-        ProcessLifecycleOwner.get().lifecycle.addObserver(object : LifecycleObserver {
-            @OnLifecycleEvent(Lifecycle.Event.ON_START)
-            fun onStart() { trackAppOpenedEvent() }
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) { trackAppOpenedEvent() }
         })
     }
 

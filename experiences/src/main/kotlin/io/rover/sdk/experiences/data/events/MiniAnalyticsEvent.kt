@@ -192,9 +192,9 @@ sealed class MiniAnalyticsEvent {
         internal companion object {
             fun decodeJson(jsonObject: JSONObject, duration: Int = 0): ExperienceViewed {
                 return ExperienceViewed(
-                    experience = ClassicExperienceModel.decodeJson(jsonObject.getJSONObject(ScreenDismissed::experience.name)),
+                    experience = ClassicExperienceModel.decodeJson(jsonObject.getJSONObject(ExperienceViewed::experience.name)),
                     duration = duration,
-                    campaignId = jsonObject.safeOptString(ScreenDismissed::campaignId.name)
+                    campaignId = jsonObject.safeOptString(ExperienceViewed::campaignId.name)
                 )
             }
         }
@@ -219,10 +219,10 @@ sealed class MiniAnalyticsEvent {
         internal companion object {
             fun decodeJson(jsonObject: JSONObject, duration: Int = 0): ScreenViewed {
                 return ScreenViewed(
-                    experience = ClassicExperienceModel.decodeJson(jsonObject.getJSONObject(BlockTapped::experience.name)),
-                    screen = Screen.decodeJson(jsonObject.getJSONObject(BlockTapped::screen.name)),
+                    experience = ClassicExperienceModel.decodeJson(jsonObject.getJSONObject(ScreenViewed::experience.name)),
+                    screen = Screen.decodeJson(jsonObject.getJSONObject(ScreenViewed::screen.name)),
                     duration = duration,
-                    campaignId = jsonObject.safeOptString(BlockTapped::campaignId.name)
+                    campaignId = jsonObject.safeOptString(ScreenViewed::campaignId.name)
                 )
             }
         }

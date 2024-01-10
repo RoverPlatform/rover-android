@@ -17,6 +17,7 @@
 
 package io.rover.sdk.core.data.domain
 
+import android.net.Uri
 import android.util.DisplayMetrics
 import android.view.Gravity
 import io.rover.sdk.core.data.domain.BackgroundScale.X3
@@ -34,7 +35,8 @@ data class ClassicExperienceModel(
     val screens: List<Screen>,
     val keys: Map<String, String>,
     val tags: List<String>,
-    val name: String
+    val name: String,
+    val sourceUrl: Uri?
 ) {
     companion object
 }

@@ -17,9 +17,10 @@
 
 package io.rover.sdk.core.data.sync
 
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.LifecycleOwner
 import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.core.logging.log
 
@@ -31,15 +32,13 @@ class SyncByApplicationLifecycle(
     private val eventQueueService: EventQueueServiceInterface,
     private val processLifecycle: Lifecycle
 ) {
-    private var observer: LifecycleObserver = object : LifecycleObserver {
-        @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-        fun appResume() {
+    private var observer: LifecycleObserver = object : DefaultLifecycleObserver {
+        override fun onResume(owner: LifecycleOwner) {
             log.v("App foregrounded, triggering sync.")
             syncCoordinator.triggerSync()
         }
 
-        @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-        fun appPause() {
+        override fun onPause(owner: LifecycleOwner) {
             log.v("App backgrounded, triggering event flush.")
             eventQueueService.flushNow()
         }

@@ -17,9 +17,10 @@
 
 package io.rover.sdk.core.tracking
 
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.LifecycleOwner
 import io.rover.sdk.core.Rover
 import io.rover.sdk.core.events.AppLastSeenInterface
 import io.rover.sdk.core.logging.log
@@ -36,9 +37,8 @@ class ApplicationSessionEmitter(
 
     fun start() {
         lifecycle.addObserver(
-            object : LifecycleObserver {
-                @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-                fun appResume() {
+            object : DefaultLifecycleObserver {
+                override fun onResume(owner: LifecycleOwner) {
                     tracker.enterSession(
                         "ApplicationSession",
                         "App Opened",
@@ -49,8 +49,7 @@ class ApplicationSessionEmitter(
                             .markAppLastSeen()
                 }
 
-                @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-                fun appPause() {
+                override fun onPause(owner: LifecycleOwner) {
                     tracker.leaveSession(
                         "ApplicationSession",
                         "App Closed",

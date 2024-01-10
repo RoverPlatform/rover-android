@@ -258,6 +258,9 @@ internal class ExperienceFetchViewModel() : ViewModel() {
 
                             // now parse those as a query string into a map, misusing android's Uri class to do so:
                             val defaultUrlParamValuesMap = defaultUrlParamValues?.let { paramsString ->
+                                if (paramsString.isBlank()) {
+                                    return@let null
+                                }
                                 val dummyUri = Uri.parse("https://DUMMY?$paramsString")
 
                                 dummyUri.queryParameterNames.mapNotNull { key ->
@@ -281,9 +284,7 @@ internal class ExperienceFetchViewModel() : ViewModel() {
                                     // classic experience
                                     val jsonObject = JSONObject(data.toString())
 
-                                    val exp = ClassicExperienceModel.decodeJson(
-                                        jsonObject
-                                    )
+                                    val exp = ClassicExperienceModel.decodeJson(jsonObject, url)
 
                                     // decode data to classic experience model.
                                     _state.emit(
@@ -335,6 +336,7 @@ internal class ExperienceFetchViewModel() : ViewModel() {
                                     )
 
                                     experience.buildTreeAndRelationships()
+                                    experience.sourceUrl = sourceUrl(url, urlParams)
 
                                     _state.emit(
                                         State.Success(
@@ -356,7 +358,7 @@ internal class ExperienceFetchViewModel() : ViewModel() {
                                 }
                             }
                         } else {
-                            log.w("Experience fetch failed: ${experienceResponse.code()}")
+                            log.w("Experience fetch failed from URL ${documentJsonUrl}: ${experienceResponse.code()}")
                             _state.emit(State.Failed(Exception("Experience fetch failed: ${experienceResponse.code()}")))
                         }
                     } catch (e: Exception) {
@@ -369,6 +371,18 @@ internal class ExperienceFetchViewModel() : ViewModel() {
 
     fun request(url: Uri) {
         commands.value = Command.LoadExperience(url)
+    }
+
+    private fun sourceUrl(url: Uri, params: Map<String, String>): Uri {
+        if (params.isEmpty()) {
+            return url
+        }
+
+        val builder = url.buildUpon().clearQuery()
+        params.forEach { (key, value) ->
+            builder.appendQueryParameter(key, value)
+        }
+        return builder.build()
     }
 }
 
@@ -422,6 +436,7 @@ private fun NetworkExperience(
             // default URL params provided by the experience model are used in lieu of values
             // coming from URI or server:
             Environment.LocalUrlParameters provides experience.urlParameters + urlParams,
+            Environment.LocalExperienceSourceUrl provides experience.sourceUrl,
             Environment.LocalUserInfo provides { readUserInfo() },
             Environment.LocalTypefaceMapping provides typeFaceMapping,
             Environment.LocalExperienceId provides experienceId,

@@ -17,6 +17,7 @@
 
 package io.rover.sdk.experiences.rich.compose.model.values
 
+import android.net.Uri
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import io.rover.sdk.experiences.rich.compose.model.nodes.Node
@@ -45,6 +46,9 @@ data class ExperienceModel internal constructor(
     @Transient
     internal var urlParameters: Map<String, String> = emptyMap()
 
+    @Transient
+    internal var sourceUrl: Uri? = null
+
     /**
      * Populates the [Node.children] children array.
      * This should be called right after an Experience is deserialized.
@@ -62,8 +66,8 @@ data class ExperienceModel internal constructor(
             }
         }
 
-        userInfo = userInfoList.zipWithNext().toMap()
-        urlParameters = urlParametersList.zipWithNext().toMap()
+        userInfo = userInfoList.chunked(2).associate { it[0] to it[1] }
+        urlParameters = urlParametersList.chunked(2).associate { it[0] to it[1] }
 
         nodes.forEach { node ->
             node.setRelationships(

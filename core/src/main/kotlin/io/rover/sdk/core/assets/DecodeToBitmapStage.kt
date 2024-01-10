@@ -29,7 +29,7 @@ import java.net.URL
  * used by Rover, specifically, GIF, JPEG and PNG.
  */
 class DecodeToBitmapStage(
-    private val priorStage: SynchronousPipelineStage<URL, BufferedInputStream>
+    private val priorStage: SynchronousPipelineStage<URL, BufferedInputStream>,
 ) : SynchronousPipelineStage<URL, Bitmap> {
     override fun request(input: URL): PipelineStageResult<Bitmap> {
         val stream = priorStage.request(input)
@@ -41,15 +41,22 @@ class DecodeToBitmapStage(
         // another worker.
         return when (stream) {
             is PipelineStageResult.Successful -> {
-                val result = PipelineStageResult.Successful(
-                    BitmapFactory.decodeStream(
-                        stream.output
+                try {
+                    val bitmap: Bitmap? = BitmapFactory.decodeStream(
+                        stream.output,
                     )
-                )
-                // TODO do I need to close the stream myself, or will decodeStream() do it?
-                stream.output.close()
-                result
+                    return bitmap?.let { bitmap ->
+                        PipelineStageResult.Successful(
+                            bitmap,
+                        )
+                    } ?: PipelineStageResult.Failed(
+                        RuntimeException("Failed to decode bitmap."),
+                    )
+                } finally {
+                    stream.output.close()
+                }
             }
+
             is PipelineStageResult.Failed -> PipelineStageResult.Failed(stream.reason)
         }
     }

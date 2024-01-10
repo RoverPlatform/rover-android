@@ -18,9 +18,10 @@
 package io.rover.sdk.notifications
 
 import android.app.Application
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.LifecycleOwner
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.DateFormattingInterface
 import io.rover.sdk.core.platform.LocalStorage
@@ -86,9 +87,8 @@ class InfluenceTrackerService(
         // * but NOT opened from a notification or a navigation event within the app.
 
         lifecycle.addObserver(
-            object : LifecycleObserver {
-                @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-                fun onResume() {
+            object : DefaultLifecycleObserver {
+                override fun onResume(owner: LifecycleOwner) {
                     if (!notificationJustOpened) {
                         // app was switched to but not by opening a notification.
 

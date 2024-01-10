@@ -21,9 +21,9 @@ import android.os.Parcelable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.LifecycleOwner
 import io.rover.sdk.core.data.domain.ClassicExperienceModel
 import io.rover.sdk.core.data.domain.Row
 import io.rover.sdk.core.data.domain.Screen
@@ -224,9 +224,8 @@ internal class NavigationViewModel(
 
         // handle visibility changes for session tracking:
 
-        activityLifecycle.addObserver(object : LifecycleObserver {
-            @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-            fun presented() {
+        activityLifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onResume(owner: LifecycleOwner) {
                 trackEnterExperience(classicExperience, campaignId)
 
                 // if an experience screen is already active (which can happen if the containing
@@ -239,8 +238,7 @@ internal class NavigationViewModel(
                 }
             }
 
-            @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-            fun dismissed() {
+            override fun onPause(owner: LifecycleOwner) {
                 trackLeaveScreen()
                 trackLeaveExperience(classicExperience, campaignId)
             }

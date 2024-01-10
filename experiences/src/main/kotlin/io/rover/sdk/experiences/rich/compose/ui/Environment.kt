@@ -72,6 +72,11 @@ internal object Environment {
     val LocalExperienceName = compositionLocalOf<String?> { null }
 
     /**
+     * The remote URL (if applicable) that this experience was loaded from including url parameters.
+     */
+    val LocalExperienceSourceUrl = compositionLocalOf<Uri?> { null }
+
+    /**
      * The node object from the experience model that this layer is being rendered from.
      *
      * It serves to punch through a few layers to aid in certain cases where heuristics

@@ -17,9 +17,10 @@
 
 package io.rover.sdk.notifications.ui
 
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.LifecycleOwner
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.streams.PublishSubject
 import io.rover.sdk.core.streams.Publishers
@@ -141,14 +142,12 @@ class InboxListViewModel(
     }
 
     init {
-        activityLifecycle.addObserver(object : LifecycleObserver {
-            @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-            fun presented() {
+        activityLifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onResume(owner: LifecycleOwner) {
                 trackEnterNotificationCenter()
             }
 
-            @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-            fun dismissed() {
+            override fun onPause(owner: LifecycleOwner) {
                 trackLeaveNotificationCenter()
             }
         })

@@ -57,7 +57,8 @@ private fun experienceAttributes(classicExperience: ClassicExperienceModel, camp
     "id" to classicExperience.id,
     "name" to classicExperience.name,
     "keys" to classicExperience.keys,
-    "tags" to classicExperience.tags
+    "tags" to classicExperience.tags,
+    "url" to classicExperience.sourceUrl.toString(),
 ) + if (campaignId != null) hashMapOf("campaignID" to campaignId) else hashMapOf()
 
 private fun screenAttributes(screen: Screen) = mapOf(

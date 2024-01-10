@@ -18,10 +18,10 @@
 package io.rover.sdk.experiences.classic.concerns
 
 import android.view.View
+import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.OnLifecycleEvent
 import org.reactivestreams.Subscription
 import kotlin.reflect.KProperty
 
@@ -90,14 +90,12 @@ internal class ViewModelBinding<VM : Any>(
     val subscription: Subscription? = null
 
     private fun setupViewLifecycleObserver(view: View?) {
-        ((view?.context) as? LifecycleOwner)?.lifecycle?.addObserver(object : LifecycleObserver {
-            @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-            fun paused() {
+        ((view?.context) as? LifecycleOwner)?.lifecycle?.addObserver(object : DefaultLifecycleObserver {
+            override fun onPause(owner: LifecycleOwner) {
                 viewState = viewState.setForeground(false)
             }
 
-            @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-            fun resumed() {
+            override fun onResume(owner: LifecycleOwner) {
                 viewState = viewState.setForeground(true)
             }
         })

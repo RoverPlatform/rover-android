@@ -17,10 +17,9 @@
 
 package io.rover.sdk.experiences.rich.compose.ui.graphics
 
-import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.navigation.NavBackStackEntry
 
@@ -28,14 +27,13 @@ private object Duration {
     const val NAVIGATION = 300
 }
 
-@OptIn(ExperimentalAnimationApi::class)
-internal fun AnimatedContentScope<NavBackStackEntry>.enterTransition(): EnterTransition = slideIntoContainer(AnimatedContentScope.SlideDirection.Left, tween(Duration.NAVIGATION))
+internal fun AnimatedContentTransitionScope<NavBackStackEntry>.enterTransition(): EnterTransition =   slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left, tween(Duration.NAVIGATION))
 
-@OptIn(ExperimentalAnimationApi::class)
-internal fun AnimatedContentScope<NavBackStackEntry>.exitTransition(): ExitTransition = slideOutOfContainer(AnimatedContentScope.SlideDirection.Left, tween(Duration.NAVIGATION))
 
-@OptIn(ExperimentalAnimationApi::class)
-internal fun AnimatedContentScope<NavBackStackEntry>.popEnterTransition(): EnterTransition = slideIntoContainer(AnimatedContentScope.SlideDirection.Right, tween(Duration.NAVIGATION))
+internal fun AnimatedContentTransitionScope<NavBackStackEntry>.exitTransition(): ExitTransition = slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Left, tween(Duration.NAVIGATION))
 
-@OptIn(ExperimentalAnimationApi::class)
-internal fun AnimatedContentScope<NavBackStackEntry>.popExitTransition(): ExitTransition = slideOutOfContainer(AnimatedContentScope.SlideDirection.Right, tween(Duration.NAVIGATION))
+
+internal fun AnimatedContentTransitionScope<NavBackStackEntry>.popEnterTransition(): EnterTransition = slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right, tween(Duration.NAVIGATION))
+
+
+internal fun AnimatedContentTransitionScope<NavBackStackEntry>.popExitTransition(): ExitTransition = slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right, tween(Duration.NAVIGATION))

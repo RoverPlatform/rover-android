@@ -18,6 +18,7 @@
 package io.rover.sdk.experiences.classic.blocks.poll.image
 
 import android.graphics.Bitmap
+import android.net.Uri
 import io.rover.sdk.core.data.domain.Block
 import io.rover.sdk.core.data.domain.ClassicExperienceModel
 import io.rover.sdk.core.data.domain.Image
@@ -63,6 +64,7 @@ internal class ImagePollViewModel(
     private val block: Block,
     private val screen: Screen,
     private val classicExperience: ClassicExperienceModel,
+    private val experienceUrl: Uri?,
     private val campaignId: String?
 ) : ImagePollViewModelInterface {
 
@@ -138,7 +140,7 @@ internal class ImagePollViewModel(
         selectedPollOption?.let { selectedPollOption ->
             val option = Option(selectedPollOption.id, selectedPollOption.text.rawValue, selectedPollOption.image?.url?.toString())
             val poll = Poll(id, imagePoll.question.rawValue)
-            val pollAnsweredEvent = MiniAnalyticsEvent.PollAnswered(classicExperience, screen, block, option, poll, campaignId)
+            val pollAnsweredEvent = MiniAnalyticsEvent.PollAnswered(classicExperience, experienceUrl, screen, block, option, poll, campaignId)
 
             classicEventEmitter.trackEvent(pollAnsweredEvent)
         }

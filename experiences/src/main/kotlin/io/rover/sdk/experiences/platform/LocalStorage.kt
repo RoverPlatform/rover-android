@@ -31,7 +31,7 @@ internal interface KeyValueStorage {
     operator fun get(key: String): String?
 
     /**
-     * Get the current value of the given key, or null if unset.
+     * Get the current value of the given key, or 0 if unset.
      */
     fun getInt(key: String): Int
 

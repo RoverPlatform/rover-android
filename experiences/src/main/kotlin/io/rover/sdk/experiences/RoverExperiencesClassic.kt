@@ -19,6 +19,7 @@ package io.rover.sdk.experiences
 
 import android.app.Application
 import android.content.Context
+import android.net.Uri
 import android.os.Parcelable
 import android.util.DisplayMetrics
 import androidx.lifecycle.Lifecycle
@@ -208,6 +209,7 @@ internal class ViewModels(
     // TODO: rename to experienceViewModel()
     fun experienceNavigationViewModel(
         classicExperience: ClassicExperienceModel,
+        experienceUrl: Uri?,
         campaignId: String?,
         initialScreenId: String?,
         activityLifecycle: Lifecycle,
@@ -215,10 +217,11 @@ internal class ViewModels(
     ): NavigationViewModel {
         return NavigationViewModel(
             classicExperience,
+            experienceUrl = experienceUrl,
             classicEventEmitter = classicEventEmitter,
             campaignId = campaignId,
             sessionTracker = sessionTracker,
-            resolveScreenViewModel = { screen -> screenViewModel(screen, classicExperience, campaignId) },
+            resolveScreenViewModel = { screen -> screenViewModel(screen, classicExperience, experienceUrl, campaignId) },
             initialScreenId = initialScreenId,
             activityLifecycle = activityLifecycle,
             icicle = icicle
@@ -228,12 +231,13 @@ internal class ViewModels(
     private fun screenViewModel(
         screen: Screen,
         classicExperience: ClassicExperienceModel,
+        experienceUrl: Uri?,
         campaignId: String?
     ): ScreenViewModel {
         return ScreenViewModel(
             screen,
             backgroundViewModel(screen.background),
-            resolveRowViewModel = { row -> rowViewModel(row, screen, classicExperience, campaignId) }
+            resolveRowViewModel = { row -> rowViewModel(row, screen, classicExperience, experienceUrl, campaignId) }
         )
     }
 
@@ -252,12 +256,13 @@ internal class ViewModels(
         row: Row,
         screen: Screen,
         classicExperience: ClassicExperienceModel,
+        experienceUrl: Uri?,
         campaignId: String?
     ): RowViewModel {
         return RowViewModel(
             row = row,
             blockViewModelResolver = { block ->
-                blockContentsViewModel(block, screen, classicExperience, campaignId)
+                blockContentsViewModel(block, screen, classicExperience, experienceUrl, campaignId)
             },
             backgroundViewModel = this.backgroundViewModel(row.background)
         )
@@ -267,6 +272,7 @@ internal class ViewModels(
         block: Block,
         screen: Screen,
         classicExperience: ClassicExperienceModel,
+        experienceUrl: Uri?,
         campaignId: String?
     ): CompositeBlockViewModelInterface {
         when (block) {
@@ -323,7 +329,7 @@ internal class ViewModels(
                 )
             }
             is TextPollBlock -> {
-                val textPollViewModel = textPollViewModel(block.textPoll, block, screen, classicExperience, "${classicExperience.id}:${block.id}", campaignId)
+                val textPollViewModel = textPollViewModel(block.textPoll, block, screen, classicExperience, experienceUrl, "${classicExperience.id}:${block.id}", campaignId)
                 return TextPollBlockViewModel(
                     textPollViewModel = textPollViewModel,
                     blockViewModel = blockViewModel(block, setOf(), textPollViewModel),
@@ -332,7 +338,7 @@ internal class ViewModels(
                 )
             }
             is ImagePollBlock -> {
-                val imagePollViewModel = imagePollViewModel(block.imagePoll, block, screen, classicExperience, "${classicExperience.id}:${block.id}", campaignId)
+                val imagePollViewModel = imagePollViewModel(block.imagePoll, block, screen, classicExperience, "${classicExperience.id}:${block.id}", experienceUrl, campaignId)
                 return ImagePollBlockViewModel(
                     imagePollViewModel = imagePollViewModel,
                     blockViewModel = blockViewModel(block, setOf(), imagePollViewModel),
@@ -346,7 +352,7 @@ internal class ViewModels(
         }
     }
 
-    private fun imagePollViewModel(imagePoll: ImagePoll, block: Block, screen: Screen, classicExperience: ClassicExperienceModel, id: String, campaignId: String?): ImagePollViewModel {
+    private fun imagePollViewModel(imagePoll: ImagePoll, block: Block, screen: Screen, classicExperience: ClassicExperienceModel, id: String, experienceUrl: Uri?, campaignId: String?): ImagePollViewModel {
         return ImagePollViewModel(
             id = id,
             imagePoll = imagePoll,
@@ -359,6 +365,7 @@ internal class ViewModels(
             block = block,
             screen = screen,
             classicExperience = classicExperience,
+            experienceUrl = experienceUrl,
             campaignId = campaignId
         )
     }
@@ -368,6 +375,7 @@ internal class ViewModels(
         block: Block,
         screen: Screen,
         classicExperience: ClassicExperienceModel,
+        experienceUrl: Uri?,
         id: String,
         campaignId: String?
     ): TextPollViewModel {
@@ -381,6 +389,7 @@ internal class ViewModels(
             block,
             screen,
             classicExperience,
+            experienceUrl,
             campaignId
         )
     }

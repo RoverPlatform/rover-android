@@ -18,9 +18,8 @@
 package io.rover.sdk.experiences.rich.compose.ui
 
 import android.net.Uri
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.navigation.NavHostController
 import io.rover.sdk.experiences.data.URLRequest
 import io.rover.sdk.experiences.rich.compose.model.nodes.Node
@@ -112,6 +111,21 @@ internal object Environment {
     val LocalCarouselStates = mutableStateMapOf<ViewID, CarouselState>()
 
     /**
+     * The state of the nearest parent carousel.
+     */
+    val LocalCarouselState = compositionLocalOf<CarouselState?> { null }
+
+    /**
+     * This local is true when view is within a carousel page that is currently hidden.
+     */
+    val LocalCarouselInHiddenPage = compositionLocalOf<Boolean> { false }
+
+    /**
+     * The index of the page number in the carousel, if applicable.
+     */
+    val LocalCarouselPageNumber = compositionLocalOf<Int?> { null }
+
+    /**
      * The anonymous function to be called when a [io.rover.sdk.experiences.rich.compose.model.values.Action.PerformSegue] action is activated.
      * Set by [RenderExperience], this lets any child easily access the overarching Experience navigation graph (through [NavHostController]).
      */
@@ -141,15 +155,13 @@ internal object Environment {
 internal data class ViewID(
     val nodeID: String,
     val collectionIndex: Int
-)
+) {
+    override fun toString(): String {
+        return "$nodeID-$collectionIndex"
+    }
+}
 
-@OptIn(ExperimentalFoundationApi::class)
-internal data class CarouselState(
-    val pagerState: PagerState,
-    val startIndex: Int,
-    val collectionSize: Int,
-    val isLoopEnabled: Boolean
-)
+
 
 /**
  * The shape of the custom action handler callback.

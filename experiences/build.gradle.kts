@@ -30,7 +30,7 @@ val composeKotlinCompilerExtensionVersion: String by rootProject.extra
 val media3Version: String = "1.0.2"
 
 android {
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 26
@@ -107,10 +107,12 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material:material")
     implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
     debugImplementation("androidx.compose.ui:ui-tooling:")
     implementation("androidx.activity:activity-compose:1.5.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1")
-    implementation("androidx.navigation:navigation-compose:2.5.2")
+    implementation("androidx.navigation:navigation-compose:2.7.6")
+
     // endregion Compose
 
     // region Test

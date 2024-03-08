@@ -466,10 +466,10 @@ internal class ImagePollOptionView(context: Context?) : RelativeLayout(context) 
         )
     }
 
-    override fun draw(canvas: Canvas?) {
+    override fun draw(canvas: Canvas) {
         roundRect?.let { roundRect ->
             roundRect.rectF.let {
-                canvas?.clipPath(
+                canvas.clipPath(
                     Path().apply {
                         addRoundRect(it, roundRect.borderRadius, roundRect.borderRadius, Path.Direction.CW)
                     }
@@ -520,7 +520,7 @@ class VotingIndicatorBar(context: Context?) : View(context) {
         canvas.drawRoundRect(barRect, calculatedCornerRadius, calculatedCornerRadius, fillPaint)
     }
 
-    override fun draw(canvas: Canvas?) {
+    override fun draw(canvas: Canvas) {
         canvas?.clipPath(
             Path().apply {
                 addRoundRect(overlayRect, calculatedCornerRadius, calculatedCornerRadius, Path.Direction.CW)

@@ -22,6 +22,7 @@ import io.rover.sdk.core.Rover
 import io.rover.sdk.core.data.domain.Block
 import io.rover.sdk.core.streams.subscribe
 import io.rover.sdk.experiences.data.events.MiniAnalyticsEvent
+import io.rover.sdk.experiences.services.ButtonTapped
 import io.rover.sdk.experiences.services.CustomActionActivated
 import io.rover.sdk.experiences.services.EventEmitter
 import io.rover.sdk.experiences.services.ExperienceScreenViewed
@@ -47,6 +48,7 @@ fun Rover.registerScreenViewedCallback(callback: (ScreenViewDetails) -> Unit) {
                     ScreenViewDetails(
                         experienceName = event.experience.name,
                         experienceId = event.experience.id,
+                        experienceUrl = event.experienceUrl?.toString(),
                         screenName = event.screen.name,
                         screenId = event.screen.id,
                         screenTags = event.screen.tags,
@@ -77,6 +79,7 @@ fun Rover.registerScreenViewedCallback(callback: (ScreenViewDetails) -> Unit) {
                             ScreenViewDetails(
                                 experienceName = experienceEvent.experienceName,
                                 experienceId = experienceEvent.experienceId,
+                                experienceUrl = experienceEvent.experienceUrl?.toString(),
                                 screenName = experienceEvent.screenName,
                                 screenId = experienceEvent.screenId,
                                 screenTags = experienceEvent.screenTags,
@@ -85,6 +88,72 @@ fun Rover.registerScreenViewedCallback(callback: (ScreenViewDetails) -> Unit) {
                                 urlParameters = experienceEvent.urlParameters,
                                 campaignId = experienceEvent.campaignId
                             )
+                        )
+                    }
+                }
+            }
+        }.launchIn(CoroutineScope(Dispatchers.IO))
+}
+
+fun Rover.registerButtonTappedCallback(callback: (ButtonTappedDetails) -> Unit) {
+    // classic button taps:
+    resolveSingletonOrFail(RoverExperiencesClassic::class.java).classicEventEmitter.trackedEvents.subscribe { event ->
+        when(event) {
+            is MiniAnalyticsEvent.BlockTapped -> {
+                callback(
+                    ButtonTappedDetails(
+                        experienceName = event.experience.name,
+                        experienceId = event.experience.id,
+                        experienceUrl = event.experienceUrl?.toString(),
+                        screenName = event.screen.name,
+                        screenId = event.screen.id,
+                        screenTags = event.screen.tags,
+                        screenProperties = event.screen.keys,
+                        campaignId = event.campaignId,
+
+                        // data context and URL params not supported by classic experiences.
+                        data = null,
+                        urlParameters = emptyMap(),
+
+                        nodeName = event.block.name,
+                        nodeId = event.block.id,
+                        nodeTags = event.block.tags,
+                        nodeProperties = event.block.keys,
+                    ),
+                )
+            }
+            else -> {
+                // ignore
+            }
+        }
+    }
+
+    // new experience button taps:
+    val eventEmitter = resolveSingletonOrFail(EventEmitter::class.java)
+
+    eventEmitter
+        .events
+        .onEach { experienceEvent ->
+            when (experienceEvent) {
+                is ButtonTapped -> {
+                    CoroutineScope(Dispatchers.Main).launch {
+                        callback(
+                            ButtonTappedDetails(
+                                experienceName = experienceEvent.experienceName,
+                                experienceId = experienceEvent.experienceId,
+                                experienceUrl = experienceEvent.experienceUrl?.toString(),
+                                screenName = experienceEvent.screenName,
+                                screenId = experienceEvent.screenId,
+                                screenTags = experienceEvent.screenTags,
+                                screenProperties = experienceEvent.screenProperties,
+                                data = experienceEvent.data,
+                                urlParameters = experienceEvent.urlParameters,
+                                campaignId = experienceEvent.campaignId,
+                                nodeName = experienceEvent.nodeName,
+                                nodeId = experienceEvent.nodeId,
+                                nodeTags = experienceEvent.nodeTags,
+                                nodeProperties = experienceEvent.nodeProperties,
+                            ),
                         )
                     }
                 }
@@ -107,6 +176,7 @@ fun Rover.registerCustomActionCallback(callback: (CustomActionActivation) -> Uni
                         CustomActionActivation(
                             experienceName = event.experience.name,
                             experienceId = event.experience.id,
+                            experienceUrl = event.experienceUrl?.toString(),
                             screenName = event.screen.name,
                             screenId = event.screen.id,
                             screenTags = event.screen.tags,
@@ -146,6 +216,7 @@ fun Rover.registerCustomActionCallback(callback: (CustomActionActivation) -> Uni
                             CustomActionActivation(
                                 experienceName = event.experienceName,
                                 experienceId = event.experienceId,
+                                experienceUrl = event.experienceUrl?.toString(),
                                 screenName = event.screenName,
                                 screenId = event.screenId,
                                 screenTags = event.screenTags,
@@ -169,6 +240,7 @@ fun Rover.registerCustomActionCallback(callback: (CustomActionActivation) -> Uni
 data class ScreenViewDetails(
     val experienceName: String?,
     val experienceId: String?,
+    val experienceUrl: String?,
     val screenName: String?,
     val screenId: String,
     val screenTags: List<String>,
@@ -181,6 +253,7 @@ data class ScreenViewDetails(
 data class CustomActionActivation(
     val experienceName: String?,
     val experienceId: String?,
+    val experienceUrl: String?,
     val screenName: String?,
     val screenId: String,
     val screenTags: List<String>,
@@ -193,4 +266,21 @@ data class CustomActionActivation(
     val nodeTags: List<String>,
     val nodeProperties: Map<String, String>,
     val activity: Activity?
+)
+
+data class ButtonTappedDetails(
+    val experienceName: String?,
+    val experienceId: String?,
+    val experienceUrl: String?,
+    val screenName: String?,
+    val screenId: String,
+    val screenTags: List<String>,
+    val screenProperties: Map<String, String>,
+    val data: Any?,
+    val urlParameters: Map<String, String>,
+    val campaignId: String?,
+    val nodeName: String?,
+    val nodeId: String,
+    val nodeTags: List<String>,
+    val nodeProperties: Map<String, String>
 )

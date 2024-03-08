@@ -22,11 +22,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import io.rover.sdk.experiences.rich.compose.model.nodes.Video
+import io.rover.sdk.experiences.rich.compose.ui.Environment
+import io.rover.sdk.experiences.rich.compose.ui.ViewID
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandMeasurePolicy
 
 @Composable
 internal fun VideoLayer(node: Video, modifier: Modifier = Modifier) {
+    val collectionIndex = Environment.LocalCollectionIndex.current
+    val viewID = ViewID(node.id, collectionIndex)
+
     MediaPlayer(
         source = node.source,
         looping = node.looping,
@@ -36,6 +41,7 @@ internal fun VideoLayer(node: Video, modifier: Modifier = Modifier) {
         removeAudio = node.removeAudio,
         posterImageURL = node.posterImageName,
         timeoutControls = true,
+        viewID = viewID,
         modifier = modifier.background(Color.Black),
         layerModifiers = LayerModifiers(node),
         // video layers always expand:

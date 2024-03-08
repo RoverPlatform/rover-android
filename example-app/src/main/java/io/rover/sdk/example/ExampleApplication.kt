@@ -31,6 +31,7 @@ import io.rover.sdk.example.ui.theme.LightColorPalette
 import io.rover.sdk.experiences.AppThemeDescription
 import io.rover.sdk.experiences.ExperiencesAssembler
 import io.rover.sdk.experiences.authorize
+import io.rover.sdk.experiences.registerButtonTappedCallback
 import io.rover.sdk.experiences.registerCustomActionCallback
 import io.rover.sdk.experiences.registerScreenViewedCallback
 import io.rover.sdk.location.LocationAssembler
@@ -115,6 +116,17 @@ class ExampleApplication : Application() {
             Log.e("RoverExampleApplication", "Rover experience screen viewed: $screenName")
 
             // MyAnalyticsSDK.trackScreen(screenName)
+        }
+
+        // You can wire up a callback to be informed of button (action) taps in Experiences, for
+        // example for tracking events
+        Rover.shared.registerButtonTappedCallback { buttonTappedEvent ->
+            Log.e(
+                "RoverExampleApplication",
+                "Button tapped: ${buttonTappedEvent.nodeId}"
+            )
+
+            // MyAnalyticsSDK.trackEvent("Button Tapped", mapOf("screenId" to buttonTappedEvent.nodeId, "tags" to buttonTappedEvent.nodeTags))
         }
 
         // You can wire up a callback to handle custom actions being activated in Experiences:

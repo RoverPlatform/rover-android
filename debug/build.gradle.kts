@@ -27,7 +27,7 @@ val composeBomVersion: String by rootProject.extra
 val composeKotlinCompilerExtensionVersion: String by rootProject.extra
 
 android {
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 26

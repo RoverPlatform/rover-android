@@ -17,6 +17,7 @@
 
 package io.rover.sdk.experiences.classic.navigation
 
+import android.net.Uri
 import android.os.Parcelable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +49,7 @@ import org.reactivestreams.Publisher
 internal class NavigationViewModel(
     private val classicExperience: ClassicExperienceModel,
     private val campaignId: String?,
+    private val experienceUrl: Uri?,
     private val classicEventEmitter: ClassicEventEmitter,
     private val sessionTracker: SessionTracker,
     private val resolveScreenViewModel: (screen: Screen) -> ScreenViewModelInterface,
@@ -133,6 +135,7 @@ internal class NavigationViewModel(
                     classicEventEmitter.trackEvent(
                         MiniAnalyticsEvent.BlockTapped(
                             classicExperience,
+                            experienceUrl,
                             action.sourceScreenViewModel.screen,
                             action.navigateTo.block,
                             action.row,
@@ -307,15 +310,15 @@ internal class NavigationViewModel(
     private fun trackEnterExperience(classicExperience: ClassicExperienceModel, campaignId: String?) {
         sessionTracker.enterSession(
             ExperienceSessionKey(classicExperience.id, campaignId),
-            MiniAnalyticsEvent.ExperiencePresented(classicExperience, campaignId),
-            MiniAnalyticsEvent.ExperienceViewed(classicExperience, campaignId)
+            MiniAnalyticsEvent.ExperiencePresented(classicExperience, experienceUrl, campaignId),
+            MiniAnalyticsEvent.ExperienceViewed(classicExperience, experienceUrl, campaignId)
         )
     }
 
     private fun trackLeaveExperience(classicExperience: ClassicExperienceModel, campaignId: String?) {
         sessionTracker.leaveSession(
             ExperienceSessionKey(classicExperience.id, campaignId),
-            MiniAnalyticsEvent.ExperienceDismissed(classicExperience, campaignId)
+            MiniAnalyticsEvent.ExperienceDismissed(classicExperience, experienceUrl, campaignId)
         )
     }
 
@@ -331,7 +334,7 @@ internal class NavigationViewModel(
             val screenViewModel = activeScreenViewModel()
             sessionTracker.leaveSession(
                 ExperienceScreenSessionKey(classicExperience.id, currentScreenId),
-                MiniAnalyticsEvent.ScreenDismissed(classicExperience, screenViewModel.screen, campaignId)
+                MiniAnalyticsEvent.ScreenDismissed(classicExperience, experienceUrl, screenViewModel.screen, campaignId)
             )
         }
     }
@@ -343,8 +346,8 @@ internal class NavigationViewModel(
     private fun trackEnterScreen(screenViewModel: ScreenViewModelInterface) {
         sessionTracker.enterSession(
             ExperienceScreenSessionKey(classicExperience.id, screenViewModel.screenId),
-            MiniAnalyticsEvent.ScreenPresented(classicExperience, screenViewModel.screen, campaignId),
-            MiniAnalyticsEvent.ScreenViewed(classicExperience, screenViewModel.screen, campaignId)
+            MiniAnalyticsEvent.ScreenPresented(classicExperience, experienceUrl, screenViewModel.screen, campaignId),
+            MiniAnalyticsEvent.ScreenViewed(classicExperience, experienceUrl, screenViewModel.screen, campaignId)
         )
     }
 

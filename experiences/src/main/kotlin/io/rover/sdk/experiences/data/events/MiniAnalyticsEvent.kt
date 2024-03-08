@@ -17,6 +17,7 @@
 
 package io.rover.sdk.experiences.data.events
 
+import android.net.Uri
 import io.rover.sdk.core.data.domain.Block
 import io.rover.sdk.core.data.domain.ClassicExperienceModel
 import io.rover.sdk.core.data.domain.Row
@@ -32,6 +33,7 @@ sealed class MiniAnalyticsEvent {
 
     data class BlockTapped(
         val experience: ClassicExperienceModel,
+        val experienceUrl: Uri?,
         val screen: Screen,
         val block: Block,
         val row: Row,
@@ -45,6 +47,7 @@ sealed class MiniAnalyticsEvent {
                 putProp(this@BlockTapped, BlockTapped::block) { block.encodeJson() }
                 putProp(this@BlockTapped, BlockTapped::row) { row.encodeJson() }
                 putProp(this@BlockTapped, BlockTapped::campaignId) { campaignId }
+                putProp(this@BlockTapped, BlockTapped::experienceUrl) { experienceUrl?.toString() }
             }
         }
 
@@ -55,7 +58,8 @@ sealed class MiniAnalyticsEvent {
                     screen = Screen.decodeJson(jsonObject.getJSONObject(BlockTapped::screen.name)),
                     block = Block.decodeJson(jsonObject.getJSONObject(BlockTapped::block.name)),
                     row = Row.decodeJSON(jsonObject.getJSONObject(BlockTapped::row.name)),
-                    campaignId = jsonObject.safeOptString(BlockTapped::campaignId.name)
+                    campaignId = jsonObject.safeOptString(BlockTapped::campaignId.name),
+                    experienceUrl = jsonObject.safeOptString(BlockTapped::experienceUrl.name)?.let { Uri.parse(it) },
                 )
             }
         }
@@ -75,6 +79,7 @@ sealed class MiniAnalyticsEvent {
 
     data class PollAnswered(
         val experience: ClassicExperienceModel,
+        val experienceUrl: Uri?,
         val screen: Screen,
         val block: Block,
         val option: Option,
@@ -90,12 +95,14 @@ sealed class MiniAnalyticsEvent {
                 putProp(this@PollAnswered, PollAnswered::option) { option.encodeJson() }
                 putProp(this@PollAnswered, PollAnswered::poll) { poll.encodeJson() }
                 putProp(this@PollAnswered, PollAnswered::campaignId) { campaignId }
+                putProp(this@PollAnswered, PollAnswered::experienceUrl) { experienceUrl?.toString() }
             }
         }
     }
 
     data class ExperienceDismissed(
         val experience: ClassicExperienceModel,
+        val experienceUrl: Uri?,
         val campaignId: String?
     ) : MiniAnalyticsEvent() {
         override fun encodeJson(): JSONObject {
@@ -106,6 +113,7 @@ sealed class MiniAnalyticsEvent {
                     ExperienceDismissed::experience
                 ) { experience.encodeJson() }
                 putProp(this@ExperienceDismissed, ExperienceDismissed::campaignId) { campaignId }
+                putProp(this@ExperienceDismissed, ExperienceDismissed::experienceUrl) { experienceUrl?.toString() }
             }
         }
 
@@ -113,7 +121,8 @@ sealed class MiniAnalyticsEvent {
             fun decodeJson(jsonObject: JSONObject): ExperienceDismissed {
                 return ExperienceDismissed(
                     experience = ClassicExperienceModel.decodeJson(jsonObject.getJSONObject(ExperienceDismissed::experience.name)),
-                    campaignId = jsonObject.safeOptString(ExperienceDismissed::campaignId.name)
+                    campaignId = jsonObject.safeOptString(ExperienceDismissed::campaignId.name),
+                    experienceUrl = jsonObject.safeOptString(ExperienceDismissed::experienceUrl.name)?.let { Uri.parse(it) },
                 )
             }
         }
@@ -121,6 +130,7 @@ sealed class MiniAnalyticsEvent {
 
     data class ScreenDismissed(
         val experience: ClassicExperienceModel,
+        val experienceUrl: Uri?,
         val screen: Screen,
         val campaignId: String?
     ) : MiniAnalyticsEvent() {
@@ -133,6 +143,7 @@ sealed class MiniAnalyticsEvent {
                 ) { experience.encodeJson() }
                 putProp(this@ScreenDismissed, ScreenDismissed::screen) { screen.encodeJson() }
                 putProp(this@ScreenDismissed, ScreenDismissed::campaignId) { campaignId }
+                putProp(this@ScreenDismissed, ScreenDismissed::experienceUrl) { experienceUrl?.toString() }
             }
         }
 
@@ -141,7 +152,8 @@ sealed class MiniAnalyticsEvent {
                 return ScreenDismissed(
                     experience = ClassicExperienceModel.decodeJson(jsonObject.getJSONObject(ScreenDismissed::experience.name)),
                     screen = Screen.decodeJson(jsonObject.getJSONObject(ScreenDismissed::screen.name)),
-                    campaignId = jsonObject.safeOptString(ScreenDismissed::campaignId.name)
+                    campaignId = jsonObject.safeOptString(ScreenDismissed::campaignId.name),
+                    experienceUrl = jsonObject.safeOptString(ScreenDismissed::experienceUrl.name)?.let { Uri.parse(it) },
                 )
             }
         }
@@ -149,6 +161,7 @@ sealed class MiniAnalyticsEvent {
 
     data class ExperiencePresented(
         val experience: ClassicExperienceModel,
+        val experienceUrl: Uri?,
         val campaignId: String?
     ) : MiniAnalyticsEvent() {
         override fun encodeJson(): JSONObject {
@@ -159,6 +172,7 @@ sealed class MiniAnalyticsEvent {
                     ExperiencePresented::experience
                 ) { experience.encodeJson() }
                 putProp(this@ExperiencePresented, ExperiencePresented::campaignId) { campaignId }
+                putProp(this@ExperiencePresented, ExperiencePresented::experienceUrl) { experienceUrl.toString() }
             }
         }
 
@@ -166,7 +180,8 @@ sealed class MiniAnalyticsEvent {
             fun decodeJson(jsonObject: JSONObject): ExperiencePresented {
                 return ExperiencePresented(
                     experience = ClassicExperienceModel.decodeJson(jsonObject.getJSONObject(ExperiencePresented::experience.name)),
-                    campaignId = jsonObject.safeOptString(ExperiencePresented::campaignId.name)
+                    campaignId = jsonObject.safeOptString(ExperiencePresented::campaignId.name),
+                    experienceUrl = jsonObject.safeOptString(ExperiencePresented::experienceUrl.name)?.let { Uri.parse(it) },
                 )
             }
         }
@@ -174,6 +189,7 @@ sealed class MiniAnalyticsEvent {
 
     data class ExperienceViewed(
         val experience: ClassicExperienceModel,
+        val experienceUrl: Uri?,
         val campaignId: String?,
         val duration: Int = 0
     ) : MiniAnalyticsEvent() {
@@ -186,6 +202,7 @@ sealed class MiniAnalyticsEvent {
                 ) { experience.encodeJson() }
                 putProp(this@ExperienceViewed, ExperienceViewed::campaignId) { campaignId }
                 putProp(this@ExperienceViewed, ExperienceViewed::duration) { duration }
+                putProp(this@ExperienceViewed, ExperienceViewed::experienceUrl) { experienceUrl?.toString() }
             }
         }
 
@@ -194,7 +211,8 @@ sealed class MiniAnalyticsEvent {
                 return ExperienceViewed(
                     experience = ClassicExperienceModel.decodeJson(jsonObject.getJSONObject(ExperienceViewed::experience.name)),
                     duration = duration,
-                    campaignId = jsonObject.safeOptString(ExperienceViewed::campaignId.name)
+                    campaignId = jsonObject.safeOptString(ExperienceViewed::campaignId.name),
+                    experienceUrl = jsonObject.safeOptString(ExperienceViewed::experienceUrl.name)?.let { Uri.parse(it) },
                 )
             }
         }
@@ -202,6 +220,7 @@ sealed class MiniAnalyticsEvent {
 
     data class ScreenViewed(
         val experience: ClassicExperienceModel,
+        val experienceUrl: Uri?,
         val screen: Screen,
         val campaignId: String?,
         val duration: Int = 0
@@ -213,6 +232,7 @@ sealed class MiniAnalyticsEvent {
                 putProp(this@ScreenViewed, ScreenViewed::screen) { screen.encodeJson() }
                 putProp(this@ScreenViewed, ScreenViewed::campaignId) { campaignId }
                 putProp(this@ScreenViewed, ScreenViewed::duration) { duration }
+                putProp(this@ScreenViewed, ScreenViewed::experienceUrl) { experienceUrl?.toString() }
             }
         }
 
@@ -222,7 +242,8 @@ sealed class MiniAnalyticsEvent {
                     experience = ClassicExperienceModel.decodeJson(jsonObject.getJSONObject(ScreenViewed::experience.name)),
                     screen = Screen.decodeJson(jsonObject.getJSONObject(ScreenViewed::screen.name)),
                     duration = duration,
-                    campaignId = jsonObject.safeOptString(ScreenViewed::campaignId.name)
+                    campaignId = jsonObject.safeOptString(ScreenViewed::campaignId.name),
+                    experienceUrl = jsonObject.safeOptString(ScreenViewed::experienceUrl.name)?.let { Uri.parse(it) },
                 )
             }
         }
@@ -230,6 +251,7 @@ sealed class MiniAnalyticsEvent {
 
     data class ScreenPresented(
         val experience: ClassicExperienceModel,
+        val experienceUrl: Uri?,
         val screen: Screen,
         val campaignId: String?
     ) : MiniAnalyticsEvent() {
@@ -242,6 +264,7 @@ sealed class MiniAnalyticsEvent {
                 ) { experience.encodeJson() }
                 putProp(this@ScreenPresented, ScreenPresented::screen) { screen.encodeJson() }
                 putProp(this@ScreenPresented, ScreenPresented::campaignId) { campaignId }
+                putProp(this@ScreenPresented, ScreenPresented::experienceUrl) { experienceUrl?.toString() }
             }
         }
 
@@ -250,7 +273,8 @@ sealed class MiniAnalyticsEvent {
                 return ScreenPresented(
                     experience = ClassicExperienceModel.decodeJson(jsonObject.getJSONObject(ScreenPresented::experience.name)),
                     screen = Screen.decodeJson(jsonObject.getJSONObject(ScreenPresented::screen.name)),
-                    campaignId = jsonObject.safeOptString(ScreenPresented::campaignId.name)
+                    campaignId = jsonObject.safeOptString(ScreenPresented::campaignId.name),
+                    experienceUrl = jsonObject.safeOptString(ScreenPresented::experienceUrl.name)?.let { Uri.parse(it) },
                 )
             }
         }

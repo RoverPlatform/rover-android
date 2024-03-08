@@ -18,18 +18,25 @@
 package io.rover.sdk.experiences.rich.compose.ui.layers
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.dp
 import io.rover.sdk.experiences.rich.compose.model.nodes.PageControl
+import io.rover.sdk.experiences.rich.compose.model.values.Alignment
 import io.rover.sdk.experiences.rich.compose.model.values.Axis
 import io.rover.sdk.experiences.rich.compose.model.values.PageControlStyle
 import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.ViewID
+import io.rover.sdk.experiences.rich.compose.ui.layout.StripPackedIntrinsics
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandLayoutModifier
+import io.rover.sdk.experiences.rich.compose.ui.utils.SimpleMeasurePolicy
 import io.rover.sdk.experiences.rich.compose.ui.utils.floorMod
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeColor
 import io.rover.sdk.experiences.rich.compose.vendor.accompanist.pager.*
@@ -37,27 +44,69 @@ import io.rover.sdk.experiences.rich.compose.vendor.accompanist.pager.*
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun PageControlLayer(node: PageControl, modifier: Modifier = Modifier) {
+    // This ViewID is used to look up the carousel state in the environment, ensuring
+    // that if this page control & carousel are repeated within a collection, we'll
+    // obtain the correct instance of the carousel's state.
     val collectionIndex = Environment.LocalCollectionIndex.current
     val viewID = node.carouselID?.let { ViewID(it, collectionIndex) }
 
     Environment.LocalCarouselStates[viewID]?.let { carouselState ->
         ApplyLayerModifiers(layerModifiers = LayerModifiers(node), modifier) { modifier ->
-            HorizontalPagerIndicator(
-                pagerState = carouselState.pagerState,
-                pageCount = carouselState.collectionSize,
-                activeColor = node.activeColor(),
-                inactiveColor = node.inactiveColor(),
-                pageIndexMapping = { (it - carouselState.startIndex).floorMod(carouselState.collectionSize) },
-                modifier = modifier
-                    .then(
-                        ExpandLayoutModifier(
-                            false,
-                            Axis.HORIZONTAL,
-                            otherAxisSize = 20.dp,
-                            centerSmallChild = true,
-                        ),
-                    ),
-            )
+
+            if (carouselState.carousel.isStoryStyleEnabled) {
+                // use story style
+                Row(horizontalArrangement = Arrangement.spacedBy(3.dp), modifier = StripPackedIntrinsics().padding(14.dp)) {
+                    for (i in 0 until carouselState.collectionSize) {
+                        Box(contentAlignment = androidx.compose.ui.Alignment.CenterStart, modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()) {
+                            // backing area of the progress bar
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(3.dp)
+                                    .background(node.inactiveColor(), RoundedCornerShape(3.dp))
+                            )
+
+                            val currentPage = (carouselState.pagerState.currentPage - carouselState.startIndex).floorMod(carouselState.collectionSize)
+
+                            val barProgress = if (i == currentPage) {
+                                carouselState.progressFor(currentPage) ?: 0f
+                            } else if (i < (currentPage)) {
+                                1.0f
+                            } else {
+                                0.0f
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .height(3.dp)
+                                    .fillMaxWidth(barProgress)
+                                    .background(node.activeColor(), RoundedCornerShape(3.dp))
+                            )
+                        }
+                    }
+                }
+            } else {
+                // for the standard indicator, we'll use and style the standard Pager Indicator
+                // from our vendored accompanist.
+                HorizontalPagerIndicator(
+                        pagerState = carouselState.pagerState,
+                        pageCount = carouselState.collectionSize,
+                        activeColor = node.activeColor(),
+                        inactiveColor = node.inactiveColor(),
+                        pageIndexMapping = { (it - carouselState.startIndex).floorMod(carouselState.collectionSize) },
+                        modifier = modifier
+                                .then(
+                                        ExpandLayoutModifier(
+                                                false,
+                                                Axis.HORIZONTAL,
+                                                otherAxisSize = 20.dp,
+                                                centerSmallChild = true,
+                                        ),
+                                ),
+                )
+            }
         }
     }
 }

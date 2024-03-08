@@ -75,14 +75,14 @@ internal interface ExperienceEvent {
 internal data class ExperienceScreenViewed(
     val experienceName: String?,
     val experienceId: String?,
-    val experienceURL: Uri?,
+    val experienceUrl: Uri?,
     val screenName: String?,
     val screenId: String,
     val screenTags: List<String>,
     val screenProperties: Map<String, String>,
     val data: Any?,
     val urlParameters: Map<String, String>,
-    val campaignId: String?
+    val campaignId: String?,
 ) : ExperienceEvent {
     /**
      * Create the [Event] type used for the event queue.
@@ -92,22 +92,22 @@ internal data class ExperienceScreenViewed(
             "name" to experienceName,
             "id" to experienceId,
             "campaignID" to campaignId,
-            "url" to experienceURL?.toString()
+            "url" to experienceUrl?.toString(),
         ).filterNullValues()
 
         val screenAttributes = mapOf(
             "name" to screenName,
-            "id" to screenId
+            "id" to screenId,
         ).filterNullValues()
 
         val attributes: Map<String, Any> = mapOf(
             "experience" to experienceAttributes,
-            "screen" to screenAttributes
+            "screen" to screenAttributes,
         ).filterNullValues()
 
         return Event(
             name = "Experience Screen Viewed",
-            attributes = attributes
+            attributes = attributes,
         )
     }
 }
@@ -115,6 +115,7 @@ internal data class ExperienceScreenViewed(
 internal data class CustomActionActivated(
     val experienceName: String?,
     val experienceId: String?,
+    val experienceUrl: Uri?,
     val screenName: String?,
     val screenId: String,
     val screenTags: List<String>,
@@ -128,9 +129,57 @@ internal data class CustomActionActivated(
     val nodeTags: List<String>,
     val nodeProperties: Map<String, String>,
 
-    val activity: Activity?
+    val activity: Activity?,
 ) : ExperienceEvent {
     override fun toEventQueueFormat(): Event? = null
+}
+
+internal data class ButtonTapped(
+    val experienceName: String?,
+    val experienceId: String?,
+    val experienceUrl: Uri?,
+    val screenName: String?,
+    val screenId: String,
+    val screenTags: List<String>,
+    val screenProperties: Map<String, String>,
+    val data: Any?,
+    val urlParameters: Map<String, String>,
+    val campaignId: String?,
+
+    val nodeName: String?,
+    val nodeId: String,
+    val nodeTags: List<String>,
+    val nodeProperties: Map<String, String>,
+) : ExperienceEvent {
+    override fun toEventQueueFormat(): Event {
+        val experienceAttributes = mapOf(
+            "name" to experienceName,
+            "id" to experienceId,
+            "campaignID" to campaignId,
+            "url" to experienceUrl?.toString(),
+        ).filterNullValues()
+
+        val screenAttributes = mapOf(
+            "name" to screenName,
+            "id" to screenId,
+        ).filterNullValues()
+
+        val nodeAttributes = mapOf(
+            "name" to nodeName,
+            "id" to nodeId,
+        ).filterNullValues()
+
+        val attributes: Map<String, Any> = mapOf(
+            "experience" to experienceAttributes,
+            "screen" to screenAttributes,
+            "node" to nodeAttributes,
+        ).filterNullValues()
+
+        return Event(
+            name = "Experience Button Tapped",
+            attributes = attributes,
+        )
+    }
 }
 
 private fun <K, V> Map<K, V?>.filterNullValues(): Map<K, V> {

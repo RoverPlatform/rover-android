@@ -243,8 +243,8 @@ internal class TextOptionView(context: Context?) : RelativeLayout(context) {
 
     private var clipPath: Path? = null
 
-    override fun draw(canvas: Canvas?) {
-        clipPath?.let { canvas?.clipPath(it) }
+    override fun draw(canvas: Canvas) {
+        clipPath?.let { canvas.clipPath(it) }
         super.draw(canvas)
     }
 

@@ -63,6 +63,7 @@ internal fun ClassicExperience(
         val viewModel = remember {
             services.experiencesClassic.viewModels.experienceNavigationViewModel(
                 classicExperience,
+                url,
                 urlParams["campaignID"],
                 urlParams["screenID"],
                 lifecycle

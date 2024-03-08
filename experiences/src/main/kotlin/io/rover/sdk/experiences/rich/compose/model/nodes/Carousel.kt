@@ -39,7 +39,9 @@ internal data class Carousel(
     override val action: Action? = null,
     override var children: List<Node> = emptyList(),
     override val childIDs: List<String> = emptyList(),
-    val isLoopEnabled: Boolean
+    val isLoopEnabled: Boolean,
+    val isStoryStyleEnabled: Boolean = false,
+    val storyAutoAdvanceDuration: Int = 7
 ) : Node {
     override val typeName = NodeType.CAROUSEL.code
 }

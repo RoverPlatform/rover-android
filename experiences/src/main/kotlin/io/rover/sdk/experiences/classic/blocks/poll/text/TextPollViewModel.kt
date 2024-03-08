@@ -17,6 +17,7 @@
 
 package io.rover.sdk.experiences.classic.blocks.poll.text
 
+import android.net.Uri
 import io.rover.sdk.core.data.domain.Block
 import io.rover.sdk.core.data.domain.ClassicExperienceModel
 import io.rover.sdk.core.data.domain.Screen
@@ -45,6 +46,7 @@ internal class TextPollViewModel(
     private val block: Block,
     private val screen: Screen,
     private val classicExperience: ClassicExperienceModel,
+    private val experienceUrl: Uri?,
     private val campaignId: String?
 ) : TextPollViewModelInterface {
 
@@ -79,7 +81,7 @@ internal class TextPollViewModel(
         selectedPollOption?.let { selectedPollOption ->
             val option = Option(selectedPollOption.id, selectedPollOption.text.rawValue)
             val poll = Poll(id, textPoll.question.rawValue)
-            val pollAnsweredEvent = MiniAnalyticsEvent.PollAnswered(classicExperience, screen, block, option, poll, campaignId)
+            val pollAnsweredEvent = MiniAnalyticsEvent.PollAnswered(classicExperience, experienceUrl, screen, block, option, poll, campaignId)
 
             classicEventEmitter.trackEvent(pollAnsweredEvent)
         }

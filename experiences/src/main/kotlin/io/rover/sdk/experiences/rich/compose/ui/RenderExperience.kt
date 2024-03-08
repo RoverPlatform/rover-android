@@ -20,10 +20,16 @@ package io.rover.sdk.experiences.rich.compose.ui
 import android.app.Activity
 import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import io.rover.sdk.experiences.rich.compose.model.nodes.Screen
 import io.rover.sdk.experiences.rich.compose.model.values.ExperienceModel
 import io.rover.sdk.experiences.rich.compose.ui.graphics.enterTransition
@@ -32,9 +38,6 @@ import io.rover.sdk.experiences.rich.compose.ui.graphics.popEnterTransition
 import io.rover.sdk.experiences.rich.compose.ui.graphics.popExitTransition
 import io.rover.sdk.experiences.rich.compose.ui.layers.ScreenLayer
 import io.rover.sdk.experiences.rich.compose.ui.utils.getDarkModeValue
-import io.rover.sdk.experiences.rich.compose.vendor.accompanist.navigation_animation.AnimatedNavHost
-import io.rover.sdk.experiences.rich.compose.vendor.accompanist.navigation_animation.composable
-import io.rover.sdk.experiences.rich.compose.vendor.accompanist.navigation_animation.rememberAnimatedNavController
 
 /**
  * This presents an [ExperienceModel].
@@ -59,7 +62,7 @@ internal fun RenderExperience(
     // This [ScreenLayer] begins the chain for creating every children [io.rover.sdk.experiences.rich.compose.model.nodes.Node] in the tree.
     var screenNode by remember { mutableStateOf<Screen?>(null) }
     var screens by remember { mutableStateOf<List<Screen>>(emptyList()) }
-    val navController = rememberAnimatedNavController()
+    val navController = rememberNavController()
     val context = LocalContext.current
 
     // We need to hold Environment.LocalData information for passing it into child screens.
@@ -103,12 +106,13 @@ internal fun RenderExperience(
             ) {
                 // Every screen needs to be created as a potential route here.
                 // The first one is chosen by its id, so it's the only one to be composed at this point.
-                AnimatedNavHost(
+                NavHost(
                     navController,
                     startDestination = initialScreen.id,
                     modifier = modifier
                 ) {
                     screens.forEach { screen ->
+
                         composable(
                             route = screen.id,
                             enterTransition = { enterTransition() },

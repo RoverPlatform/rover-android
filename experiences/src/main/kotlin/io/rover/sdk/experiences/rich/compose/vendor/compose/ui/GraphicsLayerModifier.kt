@@ -16,9 +16,7 @@
 
 package io.rover.sdk.experiences.rich.compose.vendor.compose.ui
 
-//import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
@@ -92,7 +90,7 @@ import androidx.compose.ui.unit.Constraints
     level = DeprecationLevel.HIDDEN
 )
 @Stable
-internal fun Modifier.graphicsLayer(
+fun Modifier.graphicsLayer(
     scaleX: Float = 1f,
     scaleY: Float = 1f,
     alpha: Float = 1f,
@@ -174,7 +172,7 @@ internal fun Modifier.graphicsLayer(
     level = DeprecationLevel.HIDDEN
 )
 @Stable
-internal fun Modifier.graphicsLayer(
+fun Modifier.graphicsLayer(
     scaleX: Float = 1f,
     scaleY: Float = 1f,
     alpha: Float = 1f,
@@ -252,7 +250,6 @@ internal fun Modifier.graphicsLayer(
  * @param ambientShadowColor see [GraphicsLayerScope.ambientShadowColor]
  * @param spotShadowColor see [GraphicsLayerScope.spotShadowColor]
  */
-@OptIn(ExperimentalComposeUiApi::class)
 @Deprecated(
     "Replace with graphicsLayer that consumes a compositing strategy",
     replaceWith = ReplaceWith(
@@ -264,7 +261,7 @@ internal fun Modifier.graphicsLayer(
     level = DeprecationLevel.HIDDEN
 )
 @Stable
-internal fun Modifier.graphicsLayer(
+fun Modifier.graphicsLayer(
     scaleX: Float = 1f,
     scaleY: Float = 1f,
     alpha: Float = 1f,
@@ -354,9 +351,8 @@ internal fun Modifier.graphicsLayer(
  * @param spotShadowColor see [GraphicsLayerScope.spotShadowColor]
  * @param compositingStrategy see [GraphicsLayerScope.compositingStrategy]
  */
-@OptIn(ExperimentalComposeUiApi::class)
 @Stable
-internal fun Modifier.graphicsLayer(
+fun Modifier.graphicsLayer(
     scaleX: Float = 1f,
     scaleY: Float = 1f,
     alpha: Float = 1f,
@@ -374,7 +370,7 @@ internal fun Modifier.graphicsLayer(
     ambientShadowColor: Color = DefaultShadowColor,
     spotShadowColor: Color = DefaultShadowColor,
     compositingStrategy: CompositingStrategy = CompositingStrategy.Auto
-) = this then GraphicsLayerModifierNodeElement(
+) = this then GraphicsLayerElement(
     scaleX,
     scaleY,
     alpha,
@@ -394,8 +390,7 @@ internal fun Modifier.graphicsLayer(
     compositingStrategy
 )
 
-@ExperimentalComposeUiApi
-private data class GraphicsLayerModifierNodeElement(
+private data class GraphicsLayerElement(
     val scaleX: Float,
     val scaleY: Float,
     val alpha: Float,
@@ -436,7 +431,7 @@ private data class GraphicsLayerModifierNodeElement(
         )
     }
 
-    override fun update(node: SimpleGraphicsLayerModifier): SimpleGraphicsLayerModifier {
+    override fun update(node: SimpleGraphicsLayerModifier) {
         node.scaleX = scaleX
         node.scaleY = scaleY
         node.alpha = alpha
@@ -455,8 +450,6 @@ private data class GraphicsLayerModifierNodeElement(
         node.spotShadowColor = spotShadowColor
         node.compositingStrategy = compositingStrategy
         node.invalidateLayerBlock()
-
-        return node
     }
 
     override fun InspectorInfo.inspectableProperties() {
@@ -497,25 +490,74 @@ private data class GraphicsLayerModifierNodeElement(
  * @param block block on [GraphicsLayerScope] where you define the layer properties.
  */
 @Stable
-internal fun Modifier.graphicsLayer(block: GraphicsLayerScope.() -> Unit): Modifier =
+fun Modifier.graphicsLayer(block: GraphicsLayerScope.() -> Unit): Modifier =
     this then BlockGraphicsLayerElement(block)
+
+// ROVER: remove CompositingStrategy, use the one from Compose.
+//
+///**
+// * Determines when to render the contents of a layer into an offscreen buffer before
+// * being drawn to the destination.
+// */
+//@Immutable
+//@kotlin.jvm.JvmInline
+//value class CompositingStrategy internal constructor(
+//    @Suppress("unused") private val value: Int
+//) {
+//
+//    companion object {
+//
+//        /**
+//         * Rendering to an offscreen buffer will be determined automatically by the rest of the
+//         * graphicsLayer parameters. This is the default behavior.
+//         * For example, whenever an alpha value less than 1.0f is provided on [Modifier.graphicsLayer],
+//         * a compositing layer is created automatically to first render the contents fully opaque,
+//         * then draw this offscreen buffer to the destination with the corresponding alpha. This is
+//         * necessary for correctness otherwise alpha applied to individual drawing instructions that
+//         * overlap will have a different result than expected. Additionally usage of [RenderEffect]
+//         * on the graphicsLayer will also render into an intermediate offscreen buffer before
+//         * being drawn into the destination.
+//         */
+//        val Auto = CompositingStrategy(0)
+//
+//        /**
+//         * Rendering of content will always be rendered into an offscreen buffer first then drawn to
+//         * the destination regardless of the other parameters configured on the graphics
+//         * layer. This is useful for leveraging different blending algorithms for masking content.
+//         * For example, the contents can be drawn into this graphics layer and masked out by drawing
+//         * additional shapes with [BlendMode.Clear]
+//         */
+//        val Offscreen = CompositingStrategy(1)
+//
+//        /**
+//         * Modulates alpha for each of the drawing instructions recorded within the graphicsLayer.
+//         * This avoids usage of an offscreen buffer for purposes of alpha rendering.
+//         * [ModulateAlpha] is more efficient than [Auto] in performance in scenarios where an alpha
+//         * value less than 1.0f is provided. Otherwise the performance is similar to that of [Auto].
+//         * However, this can provide different results than [Auto] if there is overlapping content
+//         * within the layer and alpha is applied. This should only be used if the contents of the layer
+//         * are known well in advance and are expected to not be overlapping.
+//         */
+//        val ModulateAlpha = CompositingStrategy(2)
+//    }
+//}
 
 /**
  * A [Modifier.Element] that adds a draw layer such that tooling can identify an element
  * in the drawn image.
  */
 @Stable
-internal fun Modifier.toolingGraphicsLayer() =
+fun Modifier.toolingGraphicsLayer() =
     if (isDebugInspectorInfoEnabled) this.then(Modifier.graphicsLayer()) else this
 
-@OptIn(ExperimentalComposeUiApi::class)
 private data class BlockGraphicsLayerElement(
     val block: GraphicsLayerScope.() -> Unit
 ) : ModifierNodeElement<BlockGraphicsLayerModifier>() {
     override fun create() = BlockGraphicsLayerModifier(block)
 
-    override fun update(node: BlockGraphicsLayerModifier) = node.apply {
-        layerBlock = block
+    override fun update(node: BlockGraphicsLayerModifier) {
+        node.layerBlock = block
+        node.invalidateLayerBlock()
     }
 
     override fun InspectorInfo.inspectableProperties() {
@@ -524,10 +566,24 @@ private data class BlockGraphicsLayerElement(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 private class BlockGraphicsLayerModifier(
     var layerBlock: GraphicsLayerScope.() -> Unit,
 ) : LayoutModifierNode, Modifier.Node() {
+
+    /**
+     * We can skip remeasuring as we only need to rerun the placement block. we request it
+     * manually in the update block.
+     */
+    override val shouldAutoInvalidate: Boolean get() = false
+
+    fun invalidateLayerBlock() {
+        // ROVER: Coordinator is private API, so just commenting out invalidation, hopefully
+        // it will work.
+//        requireCoordinator(Nodes.Layout).wrapped?.updateLayerBlock(
+//            layerBlock,
+//            forceUpdateLayerParameters = true
+//        )
+    }
 
     override fun MeasureScope.measure(
         measurable: Measurable,
@@ -546,6 +602,7 @@ private class BlockGraphicsLayerModifier(
     override fun toString(): String =
         "BlockGraphicsLayerModifier(" +
                 "block=$layerBlock)"
+
 
     // ROVER: add pass-through intrinsics implementation, to safely support Packed Intrinsics
     //  measurement of children.
@@ -579,7 +636,6 @@ private class BlockGraphicsLayerModifier(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 private class SimpleGraphicsLayerModifier(
     var scaleX: Float,
     var scaleY: Float,
@@ -599,6 +655,12 @@ private class SimpleGraphicsLayerModifier(
     var spotShadowColor: Color,
     var compositingStrategy: CompositingStrategy = CompositingStrategy.Auto
 ) : LayoutModifierNode, Modifier.Node() {
+
+    /**
+     * We can skip remeasuring as we only need to rerun the placement block. we request it
+     * manually in the update block.
+     */
+    override val shouldAutoInvalidate: Boolean get() = false
 
     private var layerBlock: GraphicsLayerScope.() -> Unit = {
         scaleX = this@SimpleGraphicsLayerModifier.scaleX
@@ -621,11 +683,11 @@ private class SimpleGraphicsLayerModifier(
     }
 
     fun invalidateLayerBlock() {
-        // ROVER: Coordinator is public API, so just commenting out invalidation, hopefully
+        // ROVER: Coordinator is private API, so just commenting out invalidation, hopefully
         // it will work.
 //        requireCoordinator(Nodes.Layout).wrapped?.updateLayerBlock(
 //            this.layerBlock,
-//            forceLayerInvalidated = true
+//            forceUpdateLayerParameters = true
 //        )
     }
 
@@ -662,6 +724,7 @@ private class SimpleGraphicsLayerModifier(
                 "ambientShadowColor=$ambientShadowColor, " +
                 "spotShadowColor=$spotShadowColor, " +
                 "compositingStrategy=$compositingStrategy)"
+
 
     // ROVER: add pass-through intrinsics implementation, to safely support Packed Intrinsics
     //  measurement of children.

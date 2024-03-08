@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.rover.sdk.experiences.rich.compose.model.nodes.Audio
+import io.rover.sdk.experiences.rich.compose.ui.Environment
+import io.rover.sdk.experiences.rich.compose.ui.ViewID
 import io.rover.sdk.experiences.rich.compose.ui.layout.mapMaxIntrinsicWidthAsMeasure
 import io.rover.sdk.experiences.rich.compose.ui.layout.mapMinIntrinsicAsFlex
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
@@ -33,12 +35,16 @@ import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 internal fun AudioLayer(node: Audio, modifier: Modifier) {
     val playerHeight = 88.dp
 
+    val collectionIndex = Environment.LocalCollectionIndex.current
+    val viewID = ViewID(node.id, collectionIndex)
+
     MediaPlayer(
         source = node.source,
         looping = node.looping,
         autoPlay = node.autoPlay,
         showControls = true,
         timeoutControls = false,
+        viewID = viewID,
         modifier = modifier,
         layerModifiers = LayerModifiers(node),
         measurePolicy = AudioMeasurePolicy(playerHeight)

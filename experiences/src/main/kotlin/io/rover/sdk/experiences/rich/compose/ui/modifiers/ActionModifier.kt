@@ -48,6 +48,7 @@ import io.rover.sdk.experiences.rich.compose.ui.Services
 import io.rover.sdk.experiences.rich.compose.ui.data.Interpolator
 import io.rover.sdk.experiences.rich.compose.ui.data.makeDataContext
 import io.rover.sdk.experiences.rich.compose.ui.utils.SimpleMeasurePolicy
+import io.rover.sdk.experiences.services.ButtonTapped
 import io.rover.sdk.experiences.services.CustomActionActivated
 
 @SuppressLint("ModifierParameter")
@@ -94,22 +95,23 @@ internal fun ActionModifier(
             val conversionTrackerService = Rover.shared.resolve(ConversionsTrackerService::class.java)
             conversionTrackerService?.trackConversions(action.conversionTags)
 
-            val attributes: Attributes = mapOf(
-                "experience" to experience.experienceAttributes(
-                    id = experienceId,
-                    name = experienceName,
-                    sourceUrl = experienceUrl,
-                    campaignId = campaignId
+            services.eventEmitter.emit(
+                ButtonTapped(
+                    experienceName = experienceName,
+                    experienceId = experienceId,
+                    experienceUrl = experienceUrl,
+                    screenName = screen.name,
+                    screenId = screen.id,
+                    screenTags = screen.metadata?.tags?.toList() ?: emptyList(),
+                    screenProperties = screen.metadata?.propertiesMap ?: emptyMap(),
+                    data = localData,
+                    urlParameters = urlParameters,
+                    campaignId = campaignId,
+                    nodeName = node.name,
+                    nodeId = node.id,
+                    nodeTags = node.metadata?.tags?.toList() ?: emptyList(),
+                    nodeProperties = node.metadata?.propertiesMap ?: emptyMap(),
                 ),
-                "screen" to screen.screenAttributes(),
-                "node" to node.nodeAttributes()
-            )
-            services.rover.eventQueue.trackEvent(
-                Event(
-                    "Experience Button Tapped",
-                    attributes = attributes
-                ),
-                EventQueueService.ROVER_NAMESPACE
             )
         }
 
@@ -213,6 +215,7 @@ internal fun ActionModifier(
                             CustomActionActivated(
                                 experienceName = experienceName,
                                 experienceId = experienceId,
+                                experienceUrl = experienceUrl,
                                 screenName = screen.name,
                                 screenId = screen.id,
                                 screenTags = screen.metadata?.tags?.toList() ?: emptyList(),
@@ -256,41 +259,4 @@ private fun ActionModifierButton(
             indication = rememberRipple()
         )
     )
-}
-
-private fun ExperienceModel.experienceAttributes(
-    id: String?,
-    name: String?,
-    sourceUrl: Uri?,
-    campaignId: String?
-): Map<String, String> {
-    val optionalMap: Map<String, String?> =
-        mapOf(
-            "id" to id,
-            "name" to name,
-            "url" to sourceUrl?.toString(),
-            "campaignID" to campaignId
-        )
-
-    return optionalMap.filterValues { it != null }.mapValues { it.value!! }
-}
-
-private fun Screen.screenAttributes(): Map<String, String> {
-    val optionalMap: Map<String, String?> =
-        mapOf(
-            "id" to id,
-            "name" to name
-        )
-
-    return optionalMap.filterValues { it != null }.mapValues { it.value!! }
-}
-
-private fun Node.nodeAttributes(): Map<String, String> {
-    val optionalMap: Map<String, String?> =
-        mapOf(
-            "id" to id,
-            "name" to name
-        )
-
-    return optionalMap.filterValues { it != null }.mapValues { it.value!! }
 }

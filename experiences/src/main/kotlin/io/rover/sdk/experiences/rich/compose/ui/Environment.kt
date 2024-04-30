@@ -56,6 +56,11 @@ internal object Environment {
     val LocalUserInfo = compositionLocalOf<(() -> Map<String, Any>)?> { null }
 
     /**
+     * The device context for the current device.
+     */
+    val LocalDeviceContext = compositionLocalOf<Map<String, Any>> { emptyMap() }
+
+    /**
      * The remote URL (if applicable) that this experience was loaded from.
      */
     val LocalExperienceUrl = compositionLocalOf<Uri?> { null }

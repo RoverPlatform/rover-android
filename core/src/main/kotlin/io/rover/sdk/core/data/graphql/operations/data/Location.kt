@@ -54,14 +54,11 @@ fun Location.encodeJson(dateFormatting: DateFormattingInterface): JSONObject {
 fun Location.Address.encodeJson(): JSONObject {
     return JSONObject().apply {
         listOf(
-            Location.Address::street,
             Location.Address::city,
             Location.Address::state,
-            Location.Address::postalCode,
             Location.Address::country,
             Location.Address::isoCountryCode,
-            Location.Address::subAdministrativeArea,
-            Location.Address::subLocality
+            Location.Address::subAdministrativeArea
         ).forEach { putProp(this@encodeJson, it) }
     }
 }
@@ -86,13 +83,10 @@ fun Location.Companion.decodeJson(
 
 fun Location.Address.Companion.decodeJson(json: JSONObject): Location.Address {
     return Location.Address(
-        street = json.safeOptString("street"),
         city = json.safeOptString("city"),
         state = json.safeOptString("state"),
-        postalCode = json.safeOptString("postalCode"),
         country = json.safeOptString("country"),
         isoCountryCode = json.safeOptString("isoCountryCode"),
-        subAdministrativeArea = json.safeOptString("subAdministrativeArea"),
-        subLocality = json.safeOptString("subLocality")
+        subAdministrativeArea = json.safeOptString("subAdministrativeArea")
     )
 }

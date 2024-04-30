@@ -24,6 +24,10 @@ plugins {
 val roverSdkVersion: String by rootProject.extra
 val kotlinVersion: String by rootProject.extra
 
+kotlin {
+    jvmToolchain(11)
+}
+
 android {
     compileSdk = 34
 

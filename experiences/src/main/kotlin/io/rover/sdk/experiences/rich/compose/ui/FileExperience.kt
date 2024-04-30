@@ -26,10 +26,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.rover.sdk.core.Rover
+import io.rover.sdk.core.data.domain.DeviceContext
 import io.rover.sdk.experiences.data.URLRequest
 import io.rover.sdk.experiences.rich.compose.model.fromZipStream
 import io.rover.sdk.experiences.rich.compose.model.values.ExperienceModel
 import io.rover.sdk.experiences.rich.compose.ui.fonts.FontLoader
+import io.rover.sdk.experiences.services.ContextProviderService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.ByteArrayInputStream
@@ -49,6 +52,10 @@ fun FileExperience(
 ) {
     val viewModel = viewModel<LoadExperienceViewModel>()
     val context = LocalContext.current
+
+    val deviceContext = remember {
+        Rover.shared.resolve(ContextProviderService::class.java)?.context ?: DeviceContext.blank()
+    }
 
     Services.Inject { services ->
         if (viewModel.experience == null) {
@@ -71,6 +78,7 @@ fun FileExperience(
                 CompositionLocalProvider(
                     Environment.LocalTypefaceMapping provides viewModel.typefaceMapping,
                     Environment.LocalUserInfo provides userInfo,
+                    Environment.LocalDeviceContext provides deviceContext.toMap(),
 
                     // Experience files have design-time/default values for url params,
                     // authorizers, and user info:

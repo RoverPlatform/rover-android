@@ -22,11 +22,13 @@ typealias DataContext = Map<String, Any?>
 internal fun makeDataContext(
     userInfo: Map<String, Any>,
     urlParameters: Map<String, String>,
+    deviceContext: Map<String, Any>,
     data: Any? = null
 ): DataContext {
     return hashMapOf<String, Any?>(
         Pair(Keyword.USER.value, userInfo),
         Pair(Keyword.URL.value, urlParameters),
+        Pair(Keyword.DEVICE.value, deviceContext),
         Pair(Keyword.DATA.value, data)
     )
 }
@@ -82,3 +84,7 @@ internal val DataContext.data: Any?
 internal val DataContext.userInfo: Map<String, Any>
     @Suppress("UNCHECKED_CAST")
     get() = (this["user"] as? Map<String, Any>) ?: emptyMap()
+
+internal val DataContext.device: Map<String, Any>
+    @Suppress("UNCHECKED_CAST")
+    get() = (this["device"] as? Map<String, Any>) ?: emptyMap()

@@ -33,19 +33,38 @@ data class Location(
     data class Coordinate(
         val latitude: Double,
         val longitude: Double
-    )
+    ) {
+        fun toMap(): Map<String, Any> {
+            // NB. this format differs from what we sent as JSON in the event queue
+            // (see Location.encodeJson): there, coordinate is encoded as an array/tuple
+            // [lat, long]. Here, for better ergonomics for using the coordinates in an
+            // experiences, it is encoded here as an object instead.
+            return mapOf(
+                    "latitude" to latitude,
+                    "longitude" to longitude)
+        }
+    }
 
     data class Address(
-        val street: String?,
         val city: String?,
         val state: String?,
-        val postalCode: String?,
         val country: String?,
         val isoCountryCode: String?,
-        val subAdministrativeArea: String?,
-        val subLocality: String?
+        val subAdministrativeArea: String?
     ) {
         companion object
+
+        fun toMap(): Map<String, Any> {
+            return mapOf(
+                "city" to city,
+                "state" to state,
+                "country" to country,
+                "isoCountryCode" to isoCountryCode,
+                "subAdministrativeArea" to subAdministrativeArea,
+            )
+                    .filterValues { it != null }
+                    .mapValues { it.value as Any }
+        }
     }
 
     fun isSignificantDisplacement(location: Location): Boolean {
@@ -67,5 +86,18 @@ data class Location(
          * The minimum displacement distance in meters considered significant displacement.
          */
         const val MINIMUM_DISPLACEMENT_DISTANCE = 500f
+    }
+
+    fun toMap(): Map<String, Any> {
+        return mapOf(
+            "coordinate" to coordinate.toMap(),
+            "altitude" to altitude,
+            "verticalAccuracy" to verticalAccuracy,
+            "horizontalAccuracy" to horizontalAccuracy,
+            "timestamp" to timestamp.time,
+            "address" to address?.toMap()
+        )
+                .filterValues { it != null }
+                .mapValues { it.value as Any }
     }
 }

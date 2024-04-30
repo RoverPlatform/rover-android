@@ -21,7 +21,6 @@
     (marshmallow) and greater will grant them immediately at install time and will not prompt the
     user for them at runtime.  On older versions they will be asked for at install time in the Play
     Store (or equivalent app store). -->
-    <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 

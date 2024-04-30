@@ -20,6 +20,7 @@ package io.rover.sdk.location.events.contextproviders
 import io.rover.sdk.core.data.domain.DeviceContext
 import io.rover.sdk.core.data.domain.Location
 import io.rover.sdk.core.events.ContextProvider
+import io.rover.sdk.core.platform.round
 import io.rover.sdk.core.privacy.PrivacyService
 import io.rover.sdk.core.streams.subscribe
 import io.rover.sdk.location.GoogleBackgroundLocationServiceInterface
@@ -29,8 +30,17 @@ class LocationContextProvider(
         privacyService: PrivacyService
 ) : ContextProvider, PrivacyService.TrackingEnabledChangedListener {
     override fun captureContext(deviceContext: DeviceContext): DeviceContext {
+        val roundedLocation = currentLocation?.let { location ->
+            return@let location.copy(
+                    coordinate = Location.Coordinate(
+                            latitude = location.coordinate.latitude.round(2),
+                            longitude = location.coordinate.longitude.round(2)
+                    )
+            )
+        }
+
         return deviceContext.copy(
-            location = currentLocation
+            location = roundedLocation
         )
     }
 

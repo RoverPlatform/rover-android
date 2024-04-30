@@ -17,11 +17,17 @@
 
 package io.rover.sdk.experiences.rich.compose.ui.layers
 
+import android.graphics.Matrix
+import android.graphics.drawable.BitmapDrawable
 import android.os.Trace
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -54,6 +60,15 @@ import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandMeasurePolicy
 import io.rover.sdk.experiences.rich.compose.ui.utils.preview.InfiniteHeightMeasurePolicy
 import kotlin.math.roundToInt
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageShader
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.asImageBitmap
+import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandLayoutModifier
+
 
 @Composable
 internal fun ImageLayer(node: Image, modifier: Modifier = Modifier) {
@@ -82,6 +97,7 @@ internal fun ImageLayer(
     val dataContext = makeDataContext(
         userInfo = Environment.LocalUserInfo.current?.invoke() ?: emptyMap(),
         urlParameters = Environment.LocalUrlParameters.current,
+        deviceContext = Environment.LocalDeviceContext.current,
         data = Environment.LocalData.current
     )
     val interpolator = Interpolator(
@@ -118,9 +134,7 @@ internal fun ImageLayer(
                         )
                     }, measurePolicy = ExpandMeasurePolicy(expandChildren = true), modifier = modifier)
                 }
-                // TODO: TILE needs to be handled separately in the future.
-                ResizingMode.SCALE_TO_FIT,
-                ResizingMode.TILE -> {
+                ResizingMode.SCALE_TO_FIT -> {
                     Image(
                         assetSource,
                         ContentScale.Fit,
@@ -132,6 +146,13 @@ internal fun ImageLayer(
                         // A custom layout modifier, FitToSpace, is used in order constrain the image
                         // to its aspect ratio as determined with intrinsics.
                         modifier = modifier.then(FitToSpace())
+                    )
+                }
+                ResizingMode.TILE -> {
+                    TiledImage(
+                            assetSource,
+                            resolution,
+                            modifier = modifier.then(ExpandLayoutModifier(expandChildren = true))
                     )
                 }
                 ResizingMode.ORIGINAL -> {
@@ -206,6 +227,71 @@ private fun Image(
             contentScale = contentScale,
             modifier = modifier
         )
+    }
+}
+
+/**
+ * Similar to SwiftUI's tile resizing mode.  This will repeat the image at its original size, as
+ * many times as necessary to fill the available space.
+ */
+@Composable
+private fun TiledImage(
+        source: AssetSource,
+        resolution: Float,
+        modifier: Modifier = Modifier
+) {
+    val imageBitmap = remember {
+        mutableStateOf<ImageBitmap?>(null)
+    }
+
+    val assetPath: String = when (source) {
+        is AssetSource.FromFile -> {
+            Environment.LocalAssetContext.current.uriForFileSource(
+                    LocalContext.current,
+                    AssetContext.AssetType.IMAGE,
+                    source
+            ).toString()
+        }
+        is AssetSource.FromURL -> {
+            source.url
+        }
+    }
+
+    val services = Environment.LocalServices.current ?: run {
+        Log.e("ImageLayer.Image", "Services not injected")
+        return
+    }
+
+    services.imageLoader.let { loader ->
+        val imageBitmapRef = imageBitmap.value
+        if (imageBitmapRef != null) {
+            val brush = remember(imageBitmap.value) {
+                val scaleMatrix = Matrix()
+                scaleMatrix.setScale(1 / resolution, 1 / resolution)
+
+                val imageShader = ImageShader(imageBitmapRef, TileMode.Repeated, TileMode.Repeated)
+                imageShader.setLocalMatrix(scaleMatrix)
+                ShaderBrush(imageShader)
+            }
+
+            Box(modifier
+                    .fillMaxSize()
+                    .background(brush)) { }
+        } else {
+            val context = LocalContext.current
+            LaunchedEffect(key1 = source) {
+                val request = ImageRequest.Builder(context)
+                        .data(assetPath)
+                        .target { result ->
+                            imageBitmap.value = (result as BitmapDrawable).bitmap.asImageBitmap()
+                        }
+                        .build()
+
+                loader.enqueue(request)
+            }
+
+            Box(modifier.fillMaxSize()) { }
+        }
     }
 }
 

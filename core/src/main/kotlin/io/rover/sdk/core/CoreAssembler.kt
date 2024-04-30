@@ -20,7 +20,6 @@
 package io.rover.sdk.core
 
 import android.app.Application
-import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -52,7 +51,6 @@ import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.core.events.UserInfo
 import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.core.events.contextproviders.ApplicationContextProvider
-import io.rover.sdk.core.events.contextproviders.BluetoothContextProvider
 import io.rover.sdk.core.events.contextproviders.ConversionsContextProvider
 import io.rover.sdk.core.events.contextproviders.DarkModeContextProvider
 import io.rover.sdk.core.events.contextproviders.DeviceContextProvider
@@ -365,12 +363,6 @@ class CoreAssembler @JvmOverloads constructor(
             resolver.resolve(ContextProvider::class.java, "lastSeen") as AppLastSeenInterface
         }
 
-        BluetoothAdapter.getDefaultAdapter().whenNotNull { bluetoothAdapter ->
-            container.register(Scope.Singleton, BluetoothAdapter::class.java) { _ ->
-                bluetoothAdapter
-            }
-        }
-
         container.register(Scope.Singleton, EventQueueServiceInterface::class.java) { resolver ->
             EventQueueService(
                 resolver.resolveSingletonOrFail(GraphQlApiServiceInterface::class.java),
@@ -517,10 +509,6 @@ class CoreAssembler @JvmOverloads constructor(
         resolver.resolveSingletonOrFail(ApplicationSessionEmitter::class.java).start()
 
         resolver.resolveSingletonOrFail(SyncByApplicationLifecycle::class.java).start()
-
-        resolver.resolve(BluetoothAdapter::class.java).whenNotNull { bluetoothAdapter ->
-            eventQueue.addContextProvider(BluetoothContextProvider(bluetoothAdapter))
-        }
 
         resolver.resolveSingletonOrFail(Router::class.java).apply {
             registerRoute(

@@ -418,7 +418,13 @@ private fun Collection<Collection<LayoutInfo<Measurable>>>.measureOrderedHStackC
                 } else {
                     val remainingChildren: Int = measurables.size - index
                     remainingFlexMinimumChildren.removeIf { it.measurable == layoutInfo.measurable }
-                    val remainingMinimum = remainingFlexMinimumChildren.map { it.flexRange.first }.filter { it != Constraints.Infinity}.sum()
+
+                    // obtain the minimums that must be set aside for lower priority children.
+                    val remainingMinimum = remainingFlexMinimumChildren
+                            // filter for only the lower priority children
+                            .filter { it.priority < layoutInfo.priority }
+                            // take the minimum bound of flex range (excluding infinity)
+                            .map { it.flexRange.first }.filter { it != Constraints.Infinity}.sum()
                     val proposeToChild = maxOf((remainingWidth - remainingMinimum) / remainingChildren, 0)
 
                     val placeable = layoutInfo.measurable.measure(

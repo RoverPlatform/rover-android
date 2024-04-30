@@ -15,20 +15,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package io.rover.advertising;
+package io.rover.sdk.core.platform
 
-import org.junit.Test;
+import kotlin.math.pow
 
-import static org.junit.Assert.*;
-
-/**
- * Example local unit test, which will execute on the development machine (host).
- *
- * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
- */
-public class ExampleUnitTest {
-    @Test
-    public void addition_isCorrect() {
-        assertEquals(4, 2 + 2);
-    }
+fun Double.round(decimals: Int): Double {
+    val multiplier = 10.0.pow(decimals)
+    return kotlin.math.round(this * multiplier) / multiplier
 }

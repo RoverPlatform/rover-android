@@ -36,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rover.experiences.R
 import io.rover.sdk.core.Rover
 import io.rover.sdk.core.data.domain.ClassicExperienceModel
+import io.rover.sdk.core.data.domain.DeviceContext
 import io.rover.sdk.core.data.graphql.operations.data.decodeJson
 import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.core.logging.log
@@ -46,6 +47,7 @@ import io.rover.sdk.experiences.rich.compose.data.JsonParser
 import io.rover.sdk.experiences.rich.compose.model.values.ExperienceModel
 import io.rover.sdk.experiences.rich.compose.ui.*
 import io.rover.sdk.experiences.rich.compose.ui.fonts.FontLoader
+import io.rover.sdk.experiences.services.ContextProviderService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -184,7 +186,7 @@ internal fun Experience(
     }
 }
 
-internal class ExperienceFetchViewModel() : ViewModel() {
+internal class ExperienceFetchViewModel : ViewModel() {
 
     internal sealed class State {
         object Init : State()
@@ -386,7 +388,7 @@ internal class ExperienceFetchViewModel() : ViewModel() {
     }
 }
 
-internal sealed class LoadedExperience() {
+internal sealed class LoadedExperience {
     data class Classic(
         val experience: ClassicExperienceModel,
         val urlParams: Map<String, String>
@@ -430,6 +432,10 @@ private fun NetworkExperience(
             UserInfoInterface::class.java
         )?.currentUserInfo ?: emptyMap()
 
+        val deviceContext = remember {
+            Rover.shared.resolve(ContextProviderService::class.java)?.context ?: DeviceContext.blank()
+        }
+
         CompositionLocalProvider(
             Environment.LocalAssetContext provides assetContext,
             Environment.LocalExperienceUrl provides url,
@@ -438,6 +444,7 @@ private fun NetworkExperience(
             Environment.LocalUrlParameters provides experience.urlParameters + urlParams,
             Environment.LocalExperienceSourceUrl provides experience.sourceUrl,
             Environment.LocalUserInfo provides { readUserInfo() },
+            Environment.LocalDeviceContext provides deviceContext.toMap(),
             Environment.LocalTypefaceMapping provides typeFaceMapping,
             Environment.LocalExperienceId provides experienceId,
             Environment.LocalExperienceName provides experienceName,

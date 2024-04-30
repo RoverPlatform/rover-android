@@ -20,5 +20,6 @@ package io.rover.sdk.experiences.rich.compose.ui.data
 internal enum class Keyword(val value: String) {
     USER("user"),
     DATA("data"),
-    URL("url")
+    URL("url"),
+    DEVICE("device")
 }

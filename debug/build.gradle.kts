@@ -26,6 +26,10 @@ val kotlinVersion: String by rootProject.extra
 val composeBomVersion: String by rootProject.extra
 val composeKotlinCompilerExtensionVersion: String by rootProject.extra
 
+kotlin {
+    jvmToolchain(11)
+}
+
 android {
     compileSdk = 34
 

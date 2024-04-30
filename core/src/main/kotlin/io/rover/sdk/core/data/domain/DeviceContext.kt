@@ -78,11 +78,6 @@ data class DeviceContext(
 
     val timeZone: String?,
 
-    /**
-     * Is a bluetooth radio present and enabled?
-     */
-    val isBluetoothEnabled: Boolean?,
-
     val isTestDevice: Boolean?,
 
     /**
@@ -98,11 +93,6 @@ data class DeviceContext(
     val userInfo: Attributes,
 
     /**
-     * A platform specific advertising identifier.
-     */
-    val advertisingIdentifier: String?,
-
-    /**
      * A list of conversion tags
      */
     val conversions: List<String>,
@@ -114,14 +104,48 @@ data class DeviceContext(
     val lastSeen: String?
 ) {
     companion object {
-        internal fun blank(): DeviceContext {
+        fun blank(): DeviceContext {
             return DeviceContext(
                 null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null,
-                null, null, null, null, null, null, false, null, null, hashMapOf(), null, listOf(), null
+                null, null, null, null, null, null, false, null, hashMapOf(), listOf(), null
             )
         }
+    }
+
+    fun toMap(): Map<String, Any> {
+        return mapOf(
+                "trackingMode" to trackingMode,
+                "appBuild" to appBuild,
+                "appIdentifier" to appIdentifier,
+                "appVersion" to appVersion,
+                "carrierName" to carrierName,
+                "deviceManufacturer" to deviceManufacturer,
+                "deviceModel" to deviceModel,
+                "deviceIdentifier" to deviceIdentifier,
+                "deviceName" to deviceName,
+                "isCellularEnabled" to isCellularEnabled,
+                "isLocationServicesEnabled" to isLocationServicesEnabled,
+                "isWifiEnabled" to isWifiEnabled,
+                "locationAuthorization" to locationAuthorization,
+                "localeLanguage" to localeLanguage,
+                "localeRegion" to localeRegion,
+                "localeScript" to localeScript,
+                "isDarkModeEnabled" to isDarkModeEnabled,
+                "notificationAuthorization" to notificationAuthorization?.wireFormat,
+                "operatingSystemName" to operatingSystemName,
+                "operatingSystemVersion" to operatingSystemVersion,
+                "radio" to radio,
+                "screenWidth" to screenWidth,
+                "screenHeight" to screenHeight,
+                "sdkVersion" to sdkVersion,
+                "timeZone" to timeZone,
+                "lastSeen" to lastSeen,
+                "location" to location?.toMap(),
+        )
+                .filterValues { it != null }
+                .mapValues { it.value as Any }
     }
 
     enum class NotificationAuthorization(

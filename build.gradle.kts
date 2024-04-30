@@ -18,7 +18,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 // The version number for the build SDK modules and testbench app.
-val roverSdkVersion by extra("4.5.0")
+val roverSdkVersion by extra("4.6.0")
 
 // Definitions of several core shared dependencies:
 val kotlinVersion by extra("1.8.20") // NB: when changing this one check the two duplicates of this number below
@@ -32,7 +32,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.android.tools.build:gradle:7.4.2")
+        classpath("com.android.tools.build:gradle:8.2.2")
         // Kotlin version duplicated here because of goofy kts scoping rules.
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.20")
         classpath("com.google.gms:google-services:4.3.15")

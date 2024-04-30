@@ -35,7 +35,12 @@ dependencyResolutionManagement {
     }
 }
 
-include(":core", ":location", ":notifications", ":debug", ":ticketmaster", ":advertising", ":experiences", ":seatgeek")
+include(":core", ":location", ":notifications", ":debug", ":ticketmaster", ":experiences", ":seatgeek")
 rootProject.name = "Rover Android"
 include(":example-app")
 include(":testbench")
+
+// automatic JDK fetching:
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version("0.5.0")
+}

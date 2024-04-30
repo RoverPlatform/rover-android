@@ -29,6 +29,10 @@ val composeBomVersion: String by rootProject.extra
 val composeKotlinCompilerExtensionVersion: String by rootProject.extra
 val media3Version: String = "1.0.2"
 
+kotlin {
+    jvmToolchain(11)
+}
+
 android {
     compileSdk = 34
 

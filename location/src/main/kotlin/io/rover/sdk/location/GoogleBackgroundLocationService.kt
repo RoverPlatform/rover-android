@@ -131,14 +131,11 @@ class GoogleBackgroundLocationService(
 
             val address = androidGeocoderAddress.whenNotNull { address ->
                 Location.Address(
-                    street = "${address.subThoroughfare} ${address.thoroughfare}",
                     city = address.locality,
                     state = address.adminArea,
                     country = address.countryName,
-                    postalCode = address.postalCode,
                     isoCountryCode = address.countryCode,
-                    subAdministrativeArea = address.subAdminArea,
-                    subLocality = address.subLocality
+                    subAdministrativeArea = address.subAdminArea
                 )
             }
 

@@ -15,22 +15,32 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package io.rover.sdk.core.events.contextproviders
+package io.rover.sdk.experiences.services
 
-import android.bluetooth.BluetoothAdapter
 import io.rover.sdk.core.data.domain.DeviceContext
 import io.rover.sdk.core.events.ContextProvider
 
-class BluetoothContextProvider(
-    bluetoothAdapter: BluetoothAdapter
-) : ContextProvider {
-    // cache the value at startup, since the context providers get used for each event.  It's fine
-    // if we transmit the old value until the app gets restarted if the bluetooth state changes.
-    private val bluetoothEnabled = bluetoothAdapter.isEnabled
+interface ContextProviderService {
+    val context: DeviceContext
 
-    override fun captureContext(deviceContext: DeviceContext): DeviceContext {
-        return deviceContext.copy(
-            isBluetoothEnabled = bluetoothEnabled
-        )
+    /**
+     * Install the given context provider, so that the experience can use the given context
+     * provider to populate some of the fields in a [DeviceContext].
+     */
+    fun addContextProvider(contextProvider: ContextProvider)
+}
+
+class ModularContextProvider: ContextProviderService {
+    private val contextProviders: MutableList<ContextProvider> = mutableListOf()
+
+    override val context: DeviceContext
+        get() {
+            return contextProviders.fold(DeviceContext.blank()) { current, provider ->
+                provider.captureContext(current)
+            }
+        }
+
+    override fun addContextProvider(contextProvider: ContextProvider) {
+        contextProviders.add(contextProvider)
     }
 }

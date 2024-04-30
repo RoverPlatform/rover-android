@@ -62,10 +62,8 @@ internal fun DeviceContext.asJson(dateFormatting: DateFormattingInterface): JSON
             DeviceContext::screenWidth,
             DeviceContext::screenHeight,
             DeviceContext::timeZone,
-            DeviceContext::isBluetoothEnabled,
             DeviceContext::sdkVersion,
             DeviceContext::isTestDevice,
-            DeviceContext::advertisingIdentifier,
             DeviceContext::lastSeen
         )
 
@@ -117,13 +115,11 @@ internal fun DeviceContext.Companion.decodeJson(json: JSONObject, dateFormatting
         screenHeight = json.safeOptInt("screenHeight"),
         sdkVersion = json.safeOptString("sdkVersion"),
         timeZone = json.safeOptString("timeZone"),
-        isBluetoothEnabled = json.safeOptBoolean("isBluetoothEnabled"),
         userInfo = json.getJSONObject("userInfo").toAttributesHash(),
         isTestDevice = json.safeOptBoolean("isTestDevice"),
         location = json.optJSONObject("location").whenNotNull { locationJson ->
             Location.decodeJson(locationJson, dateFormatting)
         },
-        advertisingIdentifier = json.safeOptString("advertisingIdentifier"),
         conversions = json.optJSONArray("conversions")?.getStringIterable()?.toList() ?: emptyList(),
         lastSeen = json.safeOptString("lastSeen")
     )

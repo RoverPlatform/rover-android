@@ -54,6 +54,7 @@ import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.ViewID
 import io.rover.sdk.experiences.rich.compose.ui.data.DataContext
 import io.rover.sdk.experiences.rich.compose.ui.data.data
+import io.rover.sdk.experiences.rich.compose.ui.data.device
 import io.rover.sdk.experiences.rich.compose.ui.data.makeDataContext
 import io.rover.sdk.experiences.rich.compose.ui.data.urlParameters
 import io.rover.sdk.experiences.rich.compose.ui.data.userInfo
@@ -80,6 +81,7 @@ internal fun CarouselLayer(node: Carousel, modifier: Modifier = Modifier) {
         userInfo = Environment.LocalUserInfo.current?.invoke() ?: emptyMap(),
         urlParameters = Environment.LocalUrlParameters.current,
         data = Environment.LocalData.current,
+        deviceContext = Environment.LocalDeviceContext.current
     )
 
     val collection = carouselPages(node, dataContext)
@@ -260,6 +262,7 @@ private fun carouselPages(carousel: Carousel, dataContext: DataContext): List<Ca
                         val childDataContext = makeDataContext(
                             userInfo = dataContext.userInfo,
                             urlParameters = dataContext.urlParameters,
+                            deviceContext = dataContext.device,
                             data = item,
                         )
 

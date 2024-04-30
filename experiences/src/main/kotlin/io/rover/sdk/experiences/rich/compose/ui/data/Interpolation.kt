@@ -18,7 +18,6 @@
 package io.rover.sdk.experiences.rich.compose.ui.data
 
 import android.util.Log
-import java.lang.NumberFormatException
 import java.math.RoundingMode
 import java.text.NumberFormat
 import java.time.LocalDateTime
@@ -358,9 +357,9 @@ internal class Interpolator(
         val keyPath: List<String> = keyPathOrStringLiteral.split(".")
 
         // The first element, if it exists, needs to be one of the specific DataContext keywords
-        // for us to process it (i.e. one of "user", "url" or "data".
-        if (keyPath.isNotEmpty() && Keyword.values().any { it.value == keyPath[0] }) {
-            return when (val result: Any? = dataContext.fromKeyPath(keyPath)) {
+        // for us to process it (i.e. one of "user", "url", "device" or "data".
+        return if (keyPath.isNotEmpty() && Keyword.values().any { it.value == keyPath[0] }) {
+            when (val result: Any? = dataContext.fromKeyPath(keyPath)) {
                 is String -> result.toString()
                 // When not part of a numberFormat expression, we want to default to integers with 0 decimals.
                 is Int -> formatInteger(result)
@@ -370,7 +369,7 @@ internal class Interpolator(
             }
         } else {
             // It's a string literal.
-            return keyPathOrStringLiteral
+            keyPathOrStringLiteral
         }
     }
 

@@ -32,13 +32,18 @@ import io.rover.sdk.core.container.Container
 import io.rover.sdk.core.container.Resolver
 import io.rover.sdk.core.container.Scope
 import io.rover.sdk.core.data.graphql.GraphQlApiServiceInterface
+import io.rover.sdk.core.events.ContextProvider
 import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.core.logging.log
+import io.rover.sdk.core.platform.whenNotNull
+import io.rover.sdk.core.privacy.PrivacyService
 import io.rover.sdk.core.routing.Router
 import io.rover.sdk.core.tracking.ConversionsTrackerService
 import io.rover.sdk.experiences.data.URLRequest
 import io.rover.sdk.experiences.services.ClassicEventEmitter
+import io.rover.sdk.experiences.services.ContextProviderService
 import io.rover.sdk.experiences.services.EventEmitter
+import io.rover.sdk.experiences.services.ModularContextProvider
 import startListening
 
 /**
@@ -93,8 +98,15 @@ class ExperiencesAssembler(
         container.register(
             Scope.Singleton,
             Authorizers::class.java
-        ) { resolver ->
+        ) { _ ->
             Authorizers()
+        }
+
+        container.register(
+            Scope.Singleton,
+            ContextProviderService::class.java
+        ) { _ ->
+            ModularContextProvider()
         }
     }
 
@@ -111,6 +123,34 @@ class ExperiencesAssembler(
                     experienceIntent = experienceIntent
                 )
             )
+        }
+
+        // Add the context providers to the context provider service, for use with string interpolation
+        val contextProvider = resolver.resolveSingletonOrFail(ContextProviderService::class.java)
+        listOf(
+                resolver.resolveSingletonOrFail(PrivacyService::class.java),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "device"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "locale"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "darkMode"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "reachability"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "screen"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "telephony"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "timeZone"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "attributes"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "application"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "deviceIdentifier"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "sdkVersion"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "locationAuthorization"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "conversions"),
+                resolver.resolveSingletonOrFail(ContextProvider::class.java, "lastSeen"),
+        ).forEach { contextProvider.addContextProvider(it) }
+
+        resolver.resolve(ContextProvider::class.java, "location").whenNotNull { locationContextProvider ->
+            contextProvider.addContextProvider(locationContextProvider)
+        }
+
+        resolver.resolve(ContextProvider::class.java, "notification").whenNotNull { notificationContextProvider ->
+            contextProvider.addContextProvider(notificationContextProvider)
         }
 
         /**
@@ -140,7 +180,7 @@ fun Rover.authorize(pattern: String, callback: (URLRequest) -> Unit) {
     this.resolveSingletonOrFail(Authorizers::class.java).registerAuthorizer(pattern, callback)
 }
 
-@Deprecated("If possible, migrate to using Rover.shared.registerScreenViewedCallback { }")
+@Deprecated("If possible, migrate to using Rover.shared.registerScreenViewedCallback { }", ReplaceWith("Rover.shared.registerScreenViewedCallback"))
 val Rover.classicEventEmitter: ClassicEventEmitter
     get() = resolveSingletonOrFail(RoverExperiencesClassic::class.java).classicEventEmitter
 

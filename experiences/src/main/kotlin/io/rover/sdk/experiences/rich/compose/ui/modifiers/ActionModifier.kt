@@ -62,6 +62,7 @@ internal fun ActionModifier(
     val dataContext = makeDataContext(
         userInfo = Environment.LocalUserInfo.current?.invoke() ?: emptyMap(),
         urlParameters = Environment.LocalUrlParameters.current,
+        deviceContext = Environment.LocalDeviceContext.current,
         data = Environment.LocalData.current
     )
 

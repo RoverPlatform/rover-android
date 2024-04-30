@@ -26,6 +26,10 @@ plugins {
 val composeBomVersion: String by rootProject.extra
 val composeKotlinCompilerExtensionVersion: String by rootProject.extra
 
+kotlin {
+    jvmToolchain(11)
+}
+
 android {
     compileSdk = 34
 
@@ -92,7 +96,6 @@ dependencies {
     implementation(project(":location"))
     implementation("io.rover:sdk:3.8.0")
     implementation(project(":experiences"))
-//    implementation project(":advertising")
     implementation(project(":ticketmaster"))
 
     // For Firebase push:

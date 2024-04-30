@@ -18,6 +18,7 @@
 package io.rover.sdk.experiences.rich.compose.model.nodes
 
 import com.squareup.moshi.JsonClass
+import io.rover.sdk.core.data.domain.DeviceContext
 import io.rover.sdk.experiences.rich.compose.model.values.*
 import io.rover.sdk.experiences.rich.compose.ui.data.*
 import io.rover.sdk.experiences.rich.compose.ui.data.fromKeyPath
@@ -60,6 +61,7 @@ internal fun Collection.getItems(dataContext: DataContext): List<Any?> {
             val itemContext = makeDataContext(
                 userInfo = dataContext.userInfo,
                 urlParameters = dataContext.urlParameters,
+                deviceContext = dataContext.device,
                 data = data
             )
             condition.isSatisfied(itemContext)
@@ -67,7 +69,7 @@ internal fun Collection.getItems(dataContext: DataContext): List<Any?> {
     }
 
     if (sortDescriptors.isNotEmpty()) {
-        items = this.sort(dataContext.userInfo, dataContext.urlParameters, items)
+        items = this.sort(dataContext.userInfo, dataContext.urlParameters, dataContext.device, items)
     }
 
     return limit?.let {
@@ -80,6 +82,7 @@ internal fun Collection.getItems(dataContext: DataContext): List<Any?> {
 internal fun Collection.sort(
     userInfo: Map<String, Any>,
     urlParams: Map<String, String>,
+    deviceContext: Map<String, Any>,
     items: List<Any?>
 ): List<Any?> {
     val result = items.toMutableList()
@@ -88,11 +91,13 @@ internal fun Collection.sort(
             val v1 = makeDataContext(
                 userInfo,
                 urlParams,
+                deviceContext,
                 a
             ).fromKeyPath(sortDescriptor.keyPath)
             val v2 = makeDataContext(
                 userInfo,
                 urlParams,
+                deviceContext,
                 b
             ).fromKeyPath(sortDescriptor.keyPath)
 

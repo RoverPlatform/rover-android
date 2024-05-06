@@ -22,7 +22,6 @@ import android.util.Size
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.unit.Constraints
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.layerModifierData
-import io.rover.sdk.experiences.rich.compose.ui.utils.ifInfinity
 
 /**
  * Implements Rover Experiences'/SwiftUI's an duplicate measure() interface contract on top of
@@ -43,13 +42,6 @@ import io.rover.sdk.experiences.rich.compose.ui.utils.ifInfinity
  * c) It is incorrect and also expensive to implement Rover Experiences/SwiftUI layout by attempting
  *    to use Compose's four intrinsics methods with their intended behaviour. Sufficient information
  *    is just not available from those.
- *
- * Additionally, other than not doing any placement logic, the other difference with the main
- * measure() pass is that fallbackMeasure() may return Infinity for one either dimensions. This
- * is not normally legal in SwiftUI, but here it signifies that the measurement wasn't computable.
- * This is done to enable workarounds where doing intrinsics measures of certain content (packed
- * or otherwise) seems to cause unexpected behaviour). See
- * [FeatureFlags.disableFallbackSizingInScrollIntrinsics].
  *
  * This means we only need one of the four intrinsic methods for measurement.
  */
@@ -399,7 +391,7 @@ internal class StripPackedIntrinsics : LayoutModifier {
         measurable: IntrinsicMeasurable,
         width: Int
     ): Int {
-        throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
+        throw IllegalStateException("Only call the Rover overloaded packed intrinsics methods on Rover measurables, maxIntrinsicHeight is not used")
     }
 }
 

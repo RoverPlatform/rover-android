@@ -57,7 +57,7 @@ import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.VStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.ZStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.layout.*
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
-import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandMeasurePolicy
+import io.rover.sdk.experiences.rich.compose.ui.layout.ExpandMeasurePolicy
 import io.rover.sdk.experiences.rich.compose.ui.utils.preview.InfiniteHeightMeasurePolicy
 import kotlin.math.roundToInt
 import androidx.compose.runtime.LaunchedEffect
@@ -67,7 +67,7 @@ import androidx.compose.ui.graphics.ImageShader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.asImageBitmap
-import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandLayoutModifier
+import io.rover.sdk.experiences.rich.compose.ui.layout.ExpandLayoutModifier
 
 
 @Composable
@@ -443,7 +443,7 @@ private class FitToSpace : LayoutModifier {
         measurable: IntrinsicMeasurable,
         width: Int
     ): Int {
-        throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
+        throw IllegalStateException("Only call the Rover overloaded packed intrinsics methods on Rover measurables, maxIntrinsicHeight is not used")
     }
 }
 
@@ -523,7 +523,7 @@ private class FixedSizeModifier(
         measurable: IntrinsicMeasurable,
         width: Int,
     ): Int {
-        throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
+        throw IllegalStateException("Only call the Rover overloaded packed intrinsics methods on Rover measurables, maxIntrinsicHeight is not used")
     }
 }
 

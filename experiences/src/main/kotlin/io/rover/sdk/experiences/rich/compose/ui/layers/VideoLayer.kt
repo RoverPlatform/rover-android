@@ -25,7 +25,7 @@ import io.rover.sdk.experiences.rich.compose.model.nodes.Video
 import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.ViewID
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
-import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandMeasurePolicy
+import io.rover.sdk.experiences.rich.compose.ui.layout.ExpandMeasurePolicy
 
 @Composable
 internal fun VideoLayer(node: Video, modifier: Modifier = Modifier) {

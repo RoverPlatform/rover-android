@@ -25,7 +25,6 @@ import androidx.compose.ui.layout.*
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import io.rover.sdk.experiences.rich.compose.model.nodes.Rectangle
-import io.rover.sdk.experiences.rich.compose.model.values.*
 import io.rover.sdk.experiences.rich.compose.model.values.Alignment
 import io.rover.sdk.experiences.rich.compose.model.values.Background
 import io.rover.sdk.experiences.rich.compose.model.values.ColorReference
@@ -33,9 +32,8 @@ import io.rover.sdk.experiences.rich.compose.model.values.Fill
 import io.rover.sdk.experiences.rich.compose.model.values.Overlay
 import io.rover.sdk.experiences.rich.compose.ui.layers.Layer
 import io.rover.sdk.experiences.rich.compose.ui.layers.TextLayer
-import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.ZStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.layout.PackedHeight
-import io.rover.sdk.experiences.rich.compose.ui.utils.SimpleMeasurePolicy
+import io.rover.sdk.experiences.rich.compose.ui.layout.SimpleMeasurePolicy
 
 @Composable
 internal fun BackgroundModifier(

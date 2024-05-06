@@ -59,7 +59,7 @@ import io.rover.sdk.experiences.rich.compose.ui.data.makeDataContext
 import io.rover.sdk.experiences.rich.compose.ui.data.urlParameters
 import io.rover.sdk.experiences.rich.compose.ui.data.userInfo
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
-import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandMeasurePolicy
+import io.rover.sdk.experiences.rich.compose.ui.layout.ExpandMeasurePolicy
 import io.rover.sdk.experiences.rich.compose.ui.utils.floorMod
 import io.rover.sdk.experiences.rich.compose.vendor.compose.ui.clip
 import kotlinx.coroutines.delay

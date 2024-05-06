@@ -40,7 +40,7 @@ import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.HStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.VStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
-import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandLayoutModifier
+import io.rover.sdk.experiences.rich.compose.ui.layout.ExpandLayoutModifier
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeColor
 
 @Composable

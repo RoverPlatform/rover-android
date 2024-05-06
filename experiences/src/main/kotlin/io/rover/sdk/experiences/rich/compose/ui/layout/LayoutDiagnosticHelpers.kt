@@ -17,10 +17,20 @@
 
 package io.rover.sdk.experiences.rich.compose.ui.layout
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.unit.Constraints
+import io.rover.sdk.experiences.rich.compose.ui.modifiers.layerModifierData
+import io.rover.sdk.experiences.rich.compose.ui.utils.prettyPrint
 
-object FeatureFlags {
-
+/**
+ * No measurables should measure themselves at an infinity size.
+ */
+fun Collection<Placeable>.assertNoInfiniteSizes(contextName: String) {
+    // unfortunately even when assertions (-ea) is off, there's some calculation that goes on here.
+    forEach { placeable ->
+        assert(placeable.measuredHeight != Constraints.Infinity && placeable.measuredWidth != Constraints.Infinity) {
+            val naughtyLayer = placeable.layerModifierData?.debugNode
+            "Child illegally claimed an infinity dimension in a $contextName (measured size (${placeable.measuredWidth}, ${placeable.measuredHeight})): ${naughtyLayer?.prettyPrint() ?: "unknown layer"}"
+        }
+    }
 }

@@ -387,12 +387,12 @@ internal fun textLayerMeasurePolicy(): MeasurePolicy {
                 // of flexible layers vs inflexible layers gets captured enough that stacks even
                 // further up can generally rank order their children correctly.
                 //
-                // Avoiding passing a cross dim (or even a full width/height) proposal to these
+                // Avoiding passing a cross axis (or even a full width/height) proposal to these
                 // flex intrinsic methods allows for keeping flex sorting as cheap & simple as
                 // possible. Sorting is very hot path. Speed is more important than accuracy.
                 //
                 // Handling proposal data involves adding a lot of slow complexity to the sorting
-                // code path, particularly thorugh the stacks which would now need to run virtually
+                // code path, particularly through the stacks which would now need to run virtually
                 // the full 3-pass (1 flex pass and then two measure passes) stack algorithm.
             }
         }
@@ -401,7 +401,7 @@ internal fun textLayerMeasurePolicy(): MeasurePolicy {
             measurables: List<IntrinsicMeasurable>,
             width: Int
         ): Int {
-            throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
+            throw IllegalStateException("Only call the Rover overloaded packed intrinsics methods on Rover measurables, maxIntrinsicHeight is not used")
         }
     }
 }

@@ -111,6 +111,6 @@ internal class AudioMeasurePolicy(
         measurables: List<IntrinsicMeasurable>,
         width: Int
     ): Int {
-        throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
+        throw IllegalStateException("Only call the Rover overloaded packed intrinsics methods on Rover measurables, maxIntrinsicHeight is not used")
     }
 }

@@ -19,12 +19,12 @@ package io.rover.sdk.experiences.rich.compose.ui.layout
 
 import androidx.compose.ui.layout.IntrinsicMeasurable
 import androidx.compose.ui.unit.Constraints
+import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.groupByHorizontalFlexibilityAndPriority
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifierData
-import io.rover.sdk.experiences.rich.compose.ui.utils.groupByHorizontalFlexibilityAndPriority
 import junit.framework.TestCase.assertEquals
 import org.junit.Test
 
-class StackHelpersTest {
+class LayoutHelpersTest {
     @Test
     fun `groups same flexibility measurables by priority`() {
         // these all have same flex.

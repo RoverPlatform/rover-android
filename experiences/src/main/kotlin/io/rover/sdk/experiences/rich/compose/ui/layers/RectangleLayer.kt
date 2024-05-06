@@ -39,7 +39,7 @@ import io.rover.sdk.experiences.rich.compose.model.values.GradientReference
 import io.rover.sdk.experiences.rich.compose.model.values.GradientValue
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.experiencesFrame
-import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandLayoutModifier
+import io.rover.sdk.experiences.rich.compose.ui.layout.ExpandLayoutModifier
 import io.rover.sdk.experiences.rich.compose.ui.utils.preview.InfiniteHeightMeasurePolicy
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeBrush
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeColor

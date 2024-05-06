@@ -15,7 +15,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package io.rover.sdk.experiences.rich.compose.ui.utils
+package io.rover.sdk.experiences.rich.compose.ui.layout
 
 import android.util.Size
 import androidx.compose.ui.layout.*
@@ -23,10 +23,6 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.rover.sdk.experiences.rich.compose.model.values.Axis
-import io.rover.sdk.experiences.rich.compose.ui.layout.component1
-import io.rover.sdk.experiences.rich.compose.ui.layout.component2
-import io.rover.sdk.experiences.rich.compose.ui.layout.mapMaxIntrinsicWidthAsMeasure
-import io.rover.sdk.experiences.rich.compose.ui.layout.mapMinIntrinsicAsFlex
 
 /**
  * This measurement policy expands to proposed space, participating in the Rover packed
@@ -153,7 +149,7 @@ internal class ExpandLayoutModifier(
         measurable: IntrinsicMeasurable,
         width: Int,
     ): Int {
-        throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
+        throw IllegalStateException("Only call the Rover overloaded packed intrinsics methods on Rover measurables, maxIntrinsicHeight is not used")
     }
 }
 
@@ -274,7 +270,7 @@ internal fun ExpandMeasurePolicy(
             measurables: List<IntrinsicMeasurable>,
             width: Int,
         ): Int {
-            throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
+            throw IllegalStateException("Only call the Rover overloaded packed intrinsics methods on Rover measurables, maxIntrinsicHeight is not used")
         }
     }
 }

@@ -40,7 +40,7 @@ import io.rover.sdk.experiences.rich.compose.ui.layout.*
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.layerModifierData
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.setLayerModifierData
-import io.rover.sdk.experiences.rich.compose.ui.utils.ifInfinity
+import io.rover.sdk.experiences.rich.compose.ui.layout.ifInfinity
 import io.rover.sdk.experiences.rich.compose.ui.utils.preview.FixedSizeModifier
 
 @Composable
@@ -380,7 +380,7 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
             measurables: List<IntrinsicMeasurable>,
             width: Int,
         ): Int {
-            throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
+            throw IllegalStateException("Only call the Rover overloaded packed intrinsics methods on Rover measurables, maxIntrinsicHeight is not used")
         }
     }
 }

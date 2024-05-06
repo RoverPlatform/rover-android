@@ -21,7 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.*
-import io.rover.sdk.experiences.rich.compose.ui.utils.SimpleMeasurePolicy
+import io.rover.sdk.experiences.rich.compose.ui.layout.SimpleMeasurePolicy
 
 /**
  * ApplyLayerModifiers handles the responsibility of applying the various Rover Experiences

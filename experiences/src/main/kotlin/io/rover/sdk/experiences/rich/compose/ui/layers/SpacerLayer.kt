@@ -29,7 +29,7 @@ import io.rover.sdk.experiences.rich.compose.model.values.Fill
 import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.HStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
-import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandMeasurePolicy
+import io.rover.sdk.experiences.rich.compose.ui.layout.ExpandMeasurePolicy
 import io.rover.sdk.experiences.rich.compose.ui.utils.preview.InfiniteHeightMeasurePolicy
 
 @Composable

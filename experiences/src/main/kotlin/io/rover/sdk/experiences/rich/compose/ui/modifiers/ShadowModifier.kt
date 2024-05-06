@@ -32,7 +32,7 @@ import io.rover.sdk.experiences.rich.compose.model.nodes.Rectangle
 import io.rover.sdk.experiences.rich.compose.model.values.Alignment
 import io.rover.sdk.experiences.rich.compose.model.values.Shadow
 import io.rover.sdk.experiences.rich.compose.ui.Environment
-import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandMeasurePolicy
+import io.rover.sdk.experiences.rich.compose.ui.layout.ExpandMeasurePolicy
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeColor
 
 @Composable

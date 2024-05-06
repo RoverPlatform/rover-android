@@ -48,20 +48,13 @@ import io.rover.sdk.experiences.rich.compose.ui.layers.RectangleLayer
 import io.rover.sdk.experiences.rich.compose.ui.layers.SpacerLayer
 import io.rover.sdk.experiences.rich.compose.ui.layers.TextLayer
 import io.rover.sdk.experiences.rich.compose.ui.layout.annotateIntrinsicsCrash
-import io.rover.sdk.experiences.rich.compose.ui.layout.component1
-import io.rover.sdk.experiences.rich.compose.ui.layout.component2
-import io.rover.sdk.experiences.rich.compose.ui.layout.experiencesHorizontalFlex
-import io.rover.sdk.experiences.rich.compose.ui.layout.experiencesVerticalFlex
 import io.rover.sdk.experiences.rich.compose.ui.layout.fallbackMeasure
 import io.rover.sdk.experiences.rich.compose.ui.layout.mapMaxIntrinsicWidthAsMeasure
 import io.rover.sdk.experiences.rich.compose.ui.layout.mapMinIntrinsicAsFlex
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.experiencesFrame
-import io.rover.sdk.experiences.rich.compose.ui.utils.LayoutInfo
-import io.rover.sdk.experiences.rich.compose.ui.utils.groupByVerticalFlexibilityAndPriority
-import io.rover.sdk.experiences.rich.compose.ui.utils.ifInfinity
+import io.rover.sdk.experiences.rich.compose.ui.layout.ifInfinity
 import io.rover.sdk.experiences.rich.compose.ui.utils.preview.InfiniteHeightMeasurePolicy
-import io.rover.sdk.experiences.rich.compose.ui.utils.unlessInfinity
 
 @Composable
 internal fun VStackLayer(node: VStack, modifier: Modifier = Modifier) {
@@ -121,25 +114,20 @@ internal fun vStackMeasurePolicy(spacingAsPx: Int, alignment: Alignment): Measur
 
             val groupedMeasurables = measurables.groupByVerticalFlexibilityAndPriority()
 
-            val proposedSizeWithFallback = if (constraints.maxWidth == Constraints.Infinity) {
-                // cross dimension fallback is needed.
-                val (largestObservedNonInfinityWidth, _) = groupedMeasurables.measureOrderedVStackChildrenUsingIntrinsics(
-                    Size(constraints.maxWidth, constraints.maxHeight),
-                    spacingAsPx,
-                )
-                Size(
-                    largestObservedNonInfinityWidth ?: Constraints.Infinity,
-                    constraints.maxHeight,
-                )
-            } else {
-                // no fallback needed
-                Size(constraints.maxWidth, constraints.maxHeight)
-            }
+            val proposedSize = Size(constraints.maxWidth, constraints.maxHeight)
+
+            val proposedSizeWithFallback = computeCrossAxisFallbackIfNeeded(
+                proposedSize,
+                groupedMeasurables,
+                spacingAsPx,
+            )
 
             val measurableAndPlaceablePairs = groupedMeasurables.measureOrderedVStackChildren(
                 proposedSizeWithFallback,
                 spacingAsPx,
             )
+
+            // Placement step:
 
             // reorder the placeables returned by measureOrderedHStackChildren to match the original order of the measurables:
             val placeableLookup = measurableAndPlaceablePairs.associate {
@@ -182,37 +170,25 @@ internal fun vStackMeasurePolicy(spacingAsPx: Int, alignment: Alignment): Measur
             Trace.beginSection("VStackLayer::intrinsicMeasure")
 
             try {
-                return mapMaxIntrinsicWidthAsMeasure(height) { (proposedWidth, proposedHeight) ->
+                return mapMaxIntrinsicWidthAsMeasure(height) { proposedSize ->
                     if (measurables.isEmpty()) {
                         return@mapMaxIntrinsicWidthAsMeasure Size(0, 0)
                     }
 
                     val groupedMeasurables = measurables.groupByVerticalFlexibilityAndPriority()
 
-                    // fallback behaviour on the cross dimension
-                    val maxWidthConstraint = proposedWidth.ifInfinity {
-                        val (largestObservedNonInfinityWidth, childSizes) = groupedMeasurables.measureOrderedVStackChildrenUsingIntrinsics(
-                            Size(proposedWidth, proposedHeight),
-                            spacingAsPx,
-                        )
+                    val proposedSizeWithFallback = computeCrossAxisFallbackIfNeeded(
+                        proposedSize,
+                        groupedMeasurables,
+                        spacingAsPx
+                    )
 
-                        largestObservedNonInfinityWidth ?: Constraints.Infinity
-                    }
-
-                    // now I have a fallback cross dim value (if needed, otherwise stick with the originally proposed value).
-                    //
-                    // Now run the stack algo again.
-
-                    // TODO: optimization: this can be only done in the event of needing a fallback!
                     val measureResults = groupedMeasurables.measureOrderedVStackChildrenUsingIntrinsics(
-                        Size(
-                            maxWidthConstraint,
-                            proposedHeight,
-                        ),
+                        proposedSizeWithFallback,
                         spacingAsPx,
                     )
 
-                    val finalChildSizes = measureResults.childSizes.values
+                    val finalChildSizes = measureResults.values
 
                     val maxWidth = finalChildSizes.maxOf { it.width }
                     val height = finalChildSizes.sumOfWithLayoutSpacing(spacingAsPx) { it.height }
@@ -231,12 +207,7 @@ internal fun vStackMeasurePolicy(spacingAsPx: Int, alignment: Alignment): Measur
             Trace.beginSection("VStackLayer::intrinsicMeasure::horizontalFlex")
             return try {
                 mapMinIntrinsicAsFlex {
-                    val childRanges = measurables.map { it.experiencesHorizontalFlex() }
-
-                    val lower = childRanges.maxOfOrNull { it.first } ?: 0
-                    val upper = childRanges.maxOfOrNull { it.last } ?: 0
-
-                    IntRange(lower, upper)
+                    crossAxisFlex(Axis.VERTICAL, measurables)
                 }
             } finally {
                 Trace.endSection()
@@ -250,17 +221,7 @@ internal fun vStackMeasurePolicy(spacingAsPx: Int, alignment: Alignment): Measur
             Trace.beginSection("VStackLayer::intrinsicMeasure::verticalFlex")
             return try {
                 mapMinIntrinsicAsFlex {
-                    val childRanges = measurables.map { it.experiencesVerticalFlex() }
-
-                    // we'll add spacing since spacing is inflexible.
-                    val spacing = maxOf(
-                        (spacingAsPx * (measurables.count() - 1)),
-                        0,
-                    )
-
-                    val lower = childRanges.sumOf { it.first } + spacing
-                    val higher = childRanges.maxOfOrNull { it.last }?.let { max -> max.unlessInfinity { it + spacing } } ?: 0
-                    IntRange(lower, higher)
+                    primaryAxisFlex(Axis.VERTICAL, measurables, spacingAsPx)
                 }
             } finally {
                 Trace.endSection()
@@ -271,20 +232,15 @@ internal fun vStackMeasurePolicy(spacingAsPx: Int, alignment: Alignment): Measur
             measurables: List<IntrinsicMeasurable>,
             width: Int,
         ): Int {
-            throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
+            throw IllegalStateException("Only call the Rover overloaded packed intrinsics methods on Rover measurables, maxIntrinsicHeight is not used")
         }
     }
 }
 
-private data class VStackChildIntrinsicMeasureResults(
-    val largestObservedNonInfinityWidth: Int?,
-    val childSizes: Map<IntrinsicMeasurable, Size>,
-)
-
-private fun <T: IntrinsicMeasurable> Collection<Collection<LayoutInfo<T>>>.measureOrderedVStackChildrenUsingIntrinsics(
+private fun <T: IntrinsicMeasurable> Collection<Collection<MeasurableWithSortInfo<T>>>.measureOrderedVStackChildrenUsingIntrinsics(
     proposedSize: Size,
     spacingAsPx: Int,
-): VStackChildIntrinsicMeasureResults {
+): Map<IntrinsicMeasurable, Size> {
     val totalChildren = this.sumOf { it.count() }
     val totalSpacing = maxOf(
         (spacingAsPx * (totalChildren - 1)),
@@ -298,8 +254,6 @@ private fun <T: IntrinsicMeasurable> Collection<Collection<LayoutInfo<T>>>.measu
         }
 
     val childSizes = hashMapOf<IntrinsicMeasurable, Size>()
-
-    var largestObservedNonInfinityWidth: Int? = null
 
     // this is a mutable set of all remaining children to be measured, in order to obtain
     // their flex minimums.
@@ -316,21 +270,6 @@ private fun <T: IntrinsicMeasurable> Collection<Collection<LayoutInfo<T>>>.measu
                         ),
                     )
                     childSizes[layoutInfo.measurable] = childSize
-                    if (priorityGroupIndex == 0) {
-                        // in the highest priority group, so track the largest observed height
-                        // for infinity behaviour.
-                        if (childSize.width != Constraints.Infinity) {
-                            largestObservedNonInfinityWidth = maxOf(
-                                largestObservedNonInfinityWidth ?: Int.MIN_VALUE,
-                                childSize.width,
-                            )
-                        }
-                    }
-                    // what to do in both branches if child height is infinity? if width is infinity?
-
-                    // for height (stack axis) -> just return infinity
-
-                    // for width -> just return infinity.
                 } else {
                     remainingFlexMinimumChildren.removeIf { it.measurable == layoutInfo.measurable }
                     val remainingMinimum = remainingFlexMinimumChildren.map { it.flexRange.first }.filter { it != Constraints.Infinity}.sum()
@@ -345,17 +284,6 @@ private fun <T: IntrinsicMeasurable> Collection<Collection<LayoutInfo<T>>>.measu
                         ),
                     )
 
-                    if (priorityGroupIndex == 0) {
-                        // in the highest priority group, so track the largest observed height
-                        // for infinity behaviour.
-                        if (childSize.width != Constraints.Infinity) {
-                            largestObservedNonInfinityWidth = maxOf(
-                                largestObservedNonInfinityWidth ?: Int.MIN_VALUE,
-                                childSize.width,
-                            )
-                        }
-                    }
-
                     remainingHeight -= childSize.height
 
                     childSizes[layoutInfo.measurable] = childSize
@@ -364,13 +292,10 @@ private fun <T: IntrinsicMeasurable> Collection<Collection<LayoutInfo<T>>>.measu
         }
     }
 
-    return VStackChildIntrinsicMeasureResults(
-        largestObservedNonInfinityWidth,
-        childSizes,
-    )
+    return childSizes
 }
 
-private fun Collection<Collection<LayoutInfo<Measurable>>>.measureOrderedVStackChildren(
+private fun Collection<Collection<MeasurableWithSortInfo<Measurable>>>.measureOrderedVStackChildren(
     proposedSize: Size,
     spacingAsPx: Int,
 ): List<Pair<Measurable, Placeable>> {
@@ -433,6 +358,35 @@ private fun Collection<Collection<LayoutInfo<Measurable>>>.measureOrderedVStackC
     }
 
     return measurableAndPlaceables
+}
+
+/**
+ * Stacks, when when proposed infinity on their cross axis, must do an extra measurement
+ * pass to determine the largest observed size that appears on that child.
+ */
+private fun <T: IntrinsicMeasurable> computeCrossAxisFallbackIfNeeded(
+    proposedSize: Size,
+    groupedMeasurables: List<List<MeasurableWithSortInfo<T>>>,
+    spacingAsPx: Int
+): Size {
+    return Size(
+        // fallback behaviour on the cross axis
+        proposedSize.width.ifInfinity {
+            val sizes = groupedMeasurables.measureOrderedVStackChildrenUsingIntrinsics(
+                    Size(proposedSize.width, proposedSize.height),
+                    spacingAsPx,
+            )
+            sizes.values.maxOfOrNull { it.width } ?: Constraints.Infinity
+        },
+        proposedSize.height
+
+        // note: we can't use flex value here in lieu of doing a full intrinsics measure
+        // pass, because flex minimums don't take into account the proposed cross axis. ie.,
+        // vertical flex does not accept a proposed width value.
+        // That would mean that this fallback calculation here would be wrong for child
+        // measurables where one dimension is a function of the other (image fit resize
+        // mode, aspect ratio modifier, etc.)
+    )
 }
 
 @Composable

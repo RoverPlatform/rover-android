@@ -15,13 +15,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package io.rover.sdk.experiences.rich.compose.ui.utils
+package io.rover.sdk.experiences.rich.compose.ui.layout
 
 import android.os.Trace
-import android.util.Log
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.unit.Constraints
-import io.rover.sdk.experiences.rich.compose.ui.layout.*
 
 /**
  * This measurement policy is the smallest possible measurement policy, that assumes the size
@@ -125,7 +123,7 @@ internal fun SimpleMeasurePolicy(
             measurables: List<IntrinsicMeasurable>,
             width: Int
         ): Int {
-            throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
+            throw IllegalStateException("Only call the Rover overloaded packed intrinsics methods on Rover measurables, maxIntrinsicHeight is not used")
         }
     }
 }

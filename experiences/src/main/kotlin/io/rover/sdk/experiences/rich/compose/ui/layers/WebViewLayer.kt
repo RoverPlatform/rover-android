@@ -37,7 +37,7 @@ import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.data.Interpolator
 import io.rover.sdk.experiences.rich.compose.ui.data.makeDataContext
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
-import io.rover.sdk.experiences.rich.compose.ui.utils.ExpandMeasurePolicy
+import io.rover.sdk.experiences.rich.compose.ui.layout.ExpandMeasurePolicy
 
 @Composable
 internal fun WebViewLayer(node: io.rover.sdk.experiences.rich.compose.model.nodes.WebView, modifier: Modifier = Modifier) {

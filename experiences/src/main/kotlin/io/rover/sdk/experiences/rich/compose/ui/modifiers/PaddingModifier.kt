@@ -35,7 +35,7 @@ import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.VStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.layout.*
 import io.rover.sdk.experiences.rich.compose.ui.layout.fallbackMeasure
 import io.rover.sdk.experiences.rich.compose.ui.layout.mapMaxIntrinsicWidthAsMeasure
-import io.rover.sdk.experiences.rich.compose.ui.utils.unlessInfinity
+import io.rover.sdk.experiences.rich.compose.ui.layout.unlessInfinity
 
 @Composable
 internal fun PaddingModifier(
@@ -135,7 +135,7 @@ private class ExperiencesPadding(val padding: Padding) : LayoutModifier {
         measurable: IntrinsicMeasurable,
         width: Int,
     ): Int {
-        throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
+        throw IllegalStateException("Only call the Rover overloaded packed intrinsics methods on Rover measurables, maxIntrinsicHeight is not used")
     }
 }
 

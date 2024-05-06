@@ -41,7 +41,7 @@ import io.rover.sdk.experiences.rich.compose.ui.layout.*
 import io.rover.sdk.experiences.rich.compose.ui.layout.fallbackMeasure
 import io.rover.sdk.experiences.rich.compose.ui.layout.mapMaxIntrinsicWidthAsMeasure
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
-import io.rover.sdk.experiences.rich.compose.ui.utils.ifInfinity
+import io.rover.sdk.experiences.rich.compose.ui.layout.ifInfinity
 import io.rover.sdk.experiences.rich.compose.vendor.compose.foundation.horizontalScroll
 import io.rover.sdk.experiences.rich.compose.vendor.compose.foundation.rememberScrollState
 import io.rover.sdk.experiences.rich.compose.vendor.compose.foundation.verticalScroll
@@ -203,7 +203,7 @@ internal fun ScrollContainerMeasurePolicy(
             measurables: List<IntrinsicMeasurable>,
             width: Int,
         ): Int {
-            throw IllegalStateException("Only call maxIntrinsicWidth, with packed parameter, on Rover Experiences measurables.")
+            throw IllegalStateException("Only call the Rover overloaded packed intrinsics methods on Rover measurables, maxIntrinsicHeight is not used")
         }
     }
 }

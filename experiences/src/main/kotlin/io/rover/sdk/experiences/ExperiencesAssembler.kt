@@ -43,6 +43,7 @@ import io.rover.sdk.experiences.data.URLRequest
 import io.rover.sdk.experiences.services.ClassicEventEmitter
 import io.rover.sdk.experiences.services.ContextProviderService
 import io.rover.sdk.experiences.services.EventEmitter
+import io.rover.sdk.experiences.services.InterpolatedConversionsTrackerService
 import io.rover.sdk.experiences.services.ModularContextProvider
 import startListening
 
@@ -107,6 +108,15 @@ class ExperiencesAssembler(
             ContextProviderService::class.java
         ) { _ ->
             ModularContextProvider()
+        }
+
+        container.register(
+            Scope.Singleton,
+            InterpolatedConversionsTrackerService::class.java
+        ) { resolver ->
+            InterpolatedConversionsTrackerService(
+                resolver.resolveSingletonOrFail(ConversionsTrackerService::class.java)
+            )
         }
     }
 

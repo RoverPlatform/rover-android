@@ -15,32 +15,23 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        google()
-        mavenCentral()
-    }
-}
+package io.rover.sdk.adobeExperience
 
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-        // needed to retrieve the Rover Experiences SDK
-        maven {
-            url = java.net.URI.create("https://judoapp.github.io/judo-maven/maven")
-        }
-    }
-}
+/**
+ * An API to set and clear Adobe Experience Platform credentials on Rover.
+ */
+interface AdobeExperienceAuthorizer {
+    /**
+     * Set the user's Adobe Experience Platform's Experience Cloud ID (ECID).
 
-include(":core", ":location", ":notifications", ":debug", ":ticketmaster", ":experiences", ":seatgeek", ":adobeExperience")
-rootProject.name = "Rover Android"
-include(":example-app")
-include(":testbench")
+     * @param ECID The value of the `ecid`.
+     *
+     * @see See https://developer.adobe.com/client-sdks/home/base/mobile-core/identity/ for details on the Experience Cloud ID (ECID)
+     */
+    fun setECID(ecid: String)
 
-// automatic JDK fetching:
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version("0.5.0")
+    /**
+     * Clear the user's Adobe Experience credentials after a successful sign-out.
+     */
+    fun clearCredentials()
 }

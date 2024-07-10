@@ -17,40 +17,57 @@
 
 package io.rover.sdk.ticketmaster
 
+import android.os.Bundle
+
 /**
  * An API to set and clear Ticketmaster credentials on Rover after a user signs in with the
- * Ticketmaster [Presence
- * SDK](https://developer.ticketmaster.com/products-and-docs/sdks/presence-sdk/).
+ * Ticketmaster [Tickets SDK](https://ignite.ticketmaster.com/docs/tickets-sdk-overview).
  */
 interface TicketmasterAuthorizer {
     /**
-     * Set the user's Ticketmaster credentials after a successful sign-in with the [Presence
-     * SDK](https://developer.ticketmaster.com/products-and-docs/sdks/presence-sdk/). Implement the
-     * `onMemberUpdated()` method in your `TMLoginListener` and call this
-     * method passing in values from the `memberInfo`. Only call this function if the value returned
-     * from (`memberInfo?.memberId`) is not null.
-
-     * @param id The value of the second parameter's (`memberInfo`) `id`
+     * Set the user's Ticketmaster credentials after a successful sign-in with the Ticketmaster Ignite
+     * [Tickets SDK](https://ignite.ticketmaster.com/docs/tickets-sdk-overview). Implement the
+     * `onMemberUpdated()` method in your `com.ticketmaster.tickets.login.SimpleLoginListener` and
+     * call this method passing in values from the `member`.
+     *
+     * @param id The result of the second parameter's (`member`) call to `getGlobalId()`
      * property.
      *
      * Example:
      *
      * ```kotlin
-     * override fun onMemberUpdated(backendName: TMLoginApi.BackendName, memberInfo: TMLoginApi.MemberInfo?) {
-     *     memberInfo?.let {
-     *           Rover.shared.ticketmasterAuthorizer.setTicketmasterId(
-     *               it.memberId
-     *           )
-     *      }
+     * fun setupAnalytics() {
+     *   TmxLoginNotifier.getInstance().registerLoginListener(this)
+     * }
+     *
+     * override fun onMemberUpdated(backendName: TMLoginApi.BackendName, member: UserInfoManager.MemberInfo?) {
+     *   member?.let {
+     *     Rover.shared.ticketmasterAuthorizer.setTicketmasterId(
+     *       member.getGlobalId()
+     *     )
+     *   }
      * }
      * ```
      */
     fun setTicketmasterId(id: String)
 
     /**
-     * Clear the user's Ticketmaster credentials after a successful sign-out with the [Presence
-     * SDK](https://developer.ticketmaster.com/products-and-docs/sdks/presence-sdk/). Implement the
-     * `onLogoutAllSuccessful()` method in your `TMLoginListener` and call this method.
+     * Clear the user's Ticketmaster credentials after a successful sign-out with the Ticketmaster
+     * Ignite [Tickets SDK](https://ignite.ticketmaster.com/docs/tickets-sdk-overview).
+     * Implement the `onLogoutSuccessful()` method in your `com.ticketmaster.tickets.login.SimpleLoginListener`
+     * and call this method.
+     *
+     * Example:
+     *
+     * ```kotlin
+     * fun setupAnalytics() {
+     *   TmxLoginNotifier.getInstance().registerLoginListener(this)
+     * }
+     *
+     * override fun onLogoutSuccessful(backendName: TMLoginApi.BackendName) {
+     *   Rover.shared.ticketmasterAuthorizer.clearCredentials()
+     * }
+     * ```
      */
     fun clearCredentials()
 }

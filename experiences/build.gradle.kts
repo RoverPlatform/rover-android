@@ -20,7 +20,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("maven-publish")
     id("kotlin-parcelize")
-    id("kotlin-kapt")
+    id("com.google.devtools.ksp").version("1.8.20-1.0.10")
 }
 
 val roverSdkVersion: String by rootProject.extra
@@ -96,11 +96,9 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("com.google.android.material:material:1.7.0")
     implementation("androidx.vectordrawable:vectordrawable:1.1.0")
-    implementation("com.google.android.material:material:1.6.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.5.1")
     implementation("androidx.lifecycle:lifecycle-process:2.5.1")
     implementation("androidx.browser:browser:1.4.0")
-    implementation("androidx.viewpager2:viewpager2:1.0.0")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     api("androidx.coordinatorlayout:coordinatorlayout:1.1.0")
     // endregion AndroidX
@@ -126,7 +124,7 @@ dependencies {
     // endregion Test
 
     // region Square
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.14.0")
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
     implementation("com.squareup.moshi:moshi-adapters:1.14.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-moshi:2.6.3")

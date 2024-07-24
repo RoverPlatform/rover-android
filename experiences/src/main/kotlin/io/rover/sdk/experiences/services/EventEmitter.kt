@@ -182,6 +182,43 @@ internal data class ButtonTapped(
     }
 }
 
+internal data class CarouselPageViewed(
+        val experienceName: String?,
+        val experienceId: String?,
+        val experienceUrl: Uri?,
+        val campaignId: String?,
+        val carouselId: String?,
+        val isStoryStyleEnabled: Boolean,
+        val isLoopEnabled: Boolean,
+        val position: Int
+) : ExperienceEvent {
+    override fun toEventQueueFormat(): Event {
+        val experienceAttributes = mapOf(
+                "name" to experienceName,
+                "id" to experienceId,
+                "campaignID" to campaignId,
+                "url" to experienceUrl?.toString(),
+        ).filterNullValues()
+
+        val carouselAttributes = mapOf(
+                "id" to carouselId,
+                "storyStyle" to isStoryStyleEnabled,
+                "loop" to isLoopEnabled
+        ).filterNullValues()
+
+        val attributes: Map<String, Any> = mapOf(
+                "experience" to experienceAttributes,
+                "carousel" to carouselAttributes,
+                "position" to position,
+        ).filterNullValues()
+
+        return Event(
+                name = "Carousel Page Viewed",
+                attributes = attributes,
+        )
+    }
+}
+
 private fun <K, V> Map<K, V?>.filterNullValues(): Map<K, V> {
     @Suppress("UNCHECKED_CAST")
     return this.filterValues { it != null } as Map<K, V>

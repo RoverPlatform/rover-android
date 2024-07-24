@@ -34,7 +34,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import io.rover.sdk.core.Rover
-import io.rover.sdk.core.tracking.ConversionsTrackerService
 import io.rover.sdk.experiences.rich.compose.model.values.Action
 import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.Services
@@ -43,6 +42,7 @@ import io.rover.sdk.experiences.rich.compose.ui.data.makeDataContext
 import io.rover.sdk.experiences.rich.compose.ui.layout.SimpleMeasurePolicy
 import io.rover.sdk.experiences.services.ButtonTapped
 import io.rover.sdk.experiences.services.CustomActionActivated
+import io.rover.sdk.experiences.services.InterpolatedConversionsTrackerService
 
 @SuppressLint("ModifierParameter")
 @Composable
@@ -86,8 +86,8 @@ internal fun ActionModifier(
                 return
             }
 
-            val conversionTrackerService = Rover.shared.resolve(ConversionsTrackerService::class.java)
-            conversionTrackerService?.trackConversions(action.conversionTags)
+            val conversionTrackerService = Rover.shared.resolve(InterpolatedConversionsTrackerService::class.java)
+            conversionTrackerService?.trackConversions(action.conversionTags, dataContext)
 
             services.eventEmitter.emit(
                 ButtonTapped(

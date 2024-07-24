@@ -42,11 +42,11 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import io.rover.experiences.R
 import io.rover.sdk.core.Rover
-import io.rover.sdk.core.tracking.ConversionsTrackerService
 import io.rover.sdk.experiences.rich.compose.model.nodes.*
 import io.rover.sdk.experiences.rich.compose.model.values.*
 import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.Services
+import io.rover.sdk.experiences.rich.compose.ui.data.makeDataContext
 import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.ZStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.layout.experiencesHorizontalFlex
 import io.rover.sdk.experiences.rich.compose.ui.layout.experiencesVerticalFlex
@@ -54,10 +54,10 @@ import io.rover.sdk.experiences.rich.compose.ui.layout.fallbackMeasure
 import io.rover.sdk.experiences.rich.compose.ui.layout.mapMaxIntrinsicWidthAsMeasure
 import io.rover.sdk.experiences.rich.compose.ui.layout.mapMinIntrinsicAsFlex
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.ActionModifier
-import io.rover.sdk.experiences.rich.compose.ui.modifiers.experiencesFrame
 import io.rover.sdk.experiences.rich.compose.ui.utils.rememberSystemBarController
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeColor
 import io.rover.sdk.experiences.services.ExperienceScreenViewed
+import io.rover.sdk.experiences.services.InterpolatedConversionsTrackerService
 
 /**
  * Starting layer for a [Screen]. This is the starting point of the experience and any further screens accessible through navigation.
@@ -78,6 +78,8 @@ internal fun ScreenLayer(node: Screen, appearance: Appearance) {
     val experienceId = Environment.LocalExperienceId.current
     val experienceName = Environment.LocalExperienceName.current
     val experienceSourceUrl = Environment.LocalExperienceSourceUrl.current
+    val deviceContext = Environment.LocalDeviceContext.current
+    val userInfo = Environment.LocalUserInfo.current?.invoke() ?: emptyMap()
 
     val backgroundColor = remember { node.androidStatusBarBackgroundColor.getComposeColor(isDarkTheme) }
 
@@ -88,8 +90,15 @@ internal fun ScreenLayer(node: Screen, appearance: Appearance) {
 
     Services.Inject { services ->
         LaunchedEffect(true) {
-            val conversionTrackerService = Rover.shared.resolve(ConversionsTrackerService::class.java)
-            conversionTrackerService?.trackConversions(node.conversionTags)
+            val conversionTrackerService = Rover.shared.resolve(InterpolatedConversionsTrackerService::class.java)
+            val dataContext = makeDataContext(
+                    userInfo = userInfo,
+                    urlParameters = urlParameters,
+                    deviceContext = deviceContext,
+                    data = localData
+            )
+
+            conversionTrackerService?.trackConversions(node.conversionTags, dataContext)
 
             services.eventEmitter.emit(
                 ExperienceScreenViewed(

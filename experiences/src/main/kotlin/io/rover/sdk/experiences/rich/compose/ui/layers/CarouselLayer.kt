@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
@@ -62,6 +63,7 @@ import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.layout.ExpandMeasurePolicy
 import io.rover.sdk.experiences.rich.compose.ui.utils.floorMod
 import io.rover.sdk.experiences.rich.compose.vendor.compose.ui.clip
+import io.rover.sdk.experiences.services.CarouselPageViewed
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -122,6 +124,33 @@ internal fun CarouselLayer(node: Carousel, modifier: Modifier = Modifier) {
 
         onDispose {
             Environment.LocalCarouselStates.remove(viewID)
+        }
+    }
+
+    val urlParameters = Environment.LocalUrlParameters.current
+    val experienceId = Environment.LocalExperienceId.current
+    val experienceName = Environment.LocalExperienceName.current
+    val experienceUrl = Environment.LocalExperienceUrl.current
+    val carouselId = node.id
+    val isStoryStyleEnabled = node.isStoryStyleEnabled
+    val isLoopEnabled = node.isLoopEnabled
+    val campaignId = urlParameters["campaignID"]
+    val services = Environment.LocalServices.current
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }.collect { page ->
+            services?.eventEmitter?.emit(
+                    CarouselPageViewed(
+                            experienceName = experienceName,
+                            experienceId = experienceId,
+                            experienceUrl = experienceUrl,
+                            campaignId = campaignId,
+                            carouselId = carouselId,
+                            isStoryStyleEnabled = isStoryStyleEnabled,
+                            isLoopEnabled = isLoopEnabled,
+                            position = page
+                    )
+            )
         }
     }
 

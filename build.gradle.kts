@@ -18,7 +18,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 // The version number for the build SDK modules and testbench app.
-val roverSdkVersion by extra("4.7.0")
+val roverSdkVersion by extra("4.8.0")
 
 // Definitions of several core shared dependencies:
 val kotlinVersion by extra("1.8.20") // NB: when changing this one check the two duplicates of this number below
@@ -45,6 +45,8 @@ plugins {
     id("com.android.library") version "7.1.1" apply false
     // Kotlin version duplicated here because of goofy kts scoping rules.
     id("org.jetbrains.kotlin.android") version "1.8.20" apply false
+    id("com.google.firebase.appdistribution") version "5.0.0" apply false
+    id("com.google.firebase.crashlytics") version "3.0.1" apply false
 }
 
 task("printVersionNumber") {

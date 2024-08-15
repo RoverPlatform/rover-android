@@ -15,32 +15,21 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        google()
-        mavenCentral()
-    }
-}
+package io.rover.sdk.axs
 
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        google()
-        mavenCentral()
-        // needed to retrieve the Rover Experiences SDK
-        maven {
-            url = java.net.URI.create("https://judoapp.github.io/judo-maven/maven")
-        }
-    }
-}
+/**
+ * An API to set and clear AXS credentials on Rover.
+ */
+interface AxsAuthorizer {
+    /**
+     * Set the user's AXS userID.
 
-include(":core", ":location", ":notifications", ":debug", ":ticketmaster", ":experiences", ":seatgeek", ":adobeExperience", "axs")
-rootProject.name = "Rover Android"
-include(":example-app")
-include(":testbench")
+     * @param userID The value of the `userID`.
+     */
+    fun setUserId(userID: String)
 
-// automatic JDK fetching:
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version("0.5.0")
+    /**
+     * Clear the user's AXS credentials after a successful sign-out.
+     */
+    fun clearCredentials()
 }

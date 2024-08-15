@@ -156,12 +156,12 @@ internal fun CarouselLayer(node: Carousel, modifier: Modifier = Modifier) {
 
     ApplyLayerModifiers(layerModifiers = LayerModifiers(node), modifier = modifier) { modifier ->
         LaunchedEffect(key1 = carouselState.anyMediaLayersPresent, pagerState.currentPage) {
-            val startTime = Date()
-            val page = pagerState.currentPage
-
             if (!node.isStoryStyleEnabled) {
                 return@LaunchedEffect
             }
+
+            val startTime = Date()
+            val page = pagerState.currentPage
             val dueTime = startTime.time + node.storyAutoAdvanceDuration * 1000L
             val dueDate = Date(dueTime)
             while (true) {
@@ -239,6 +239,10 @@ internal fun CarouselLayer(node: Carousel, modifier: Modifier = Modifier) {
                         // overdraw to child's size) from causing jank in the pager.
                         .clip(RectangleShape)
                         .fillMaxSize()
+
+                    if (collection.isEmpty()) {
+                        return@HorizontalPager
+                    }
 
                     Box(contentAlignment = Alignment.Center, modifier = pageModifier) {
                         val page = (index - startIndex).floorMod(collection.size)

@@ -87,8 +87,8 @@ internal fun CarouselLayer(node: Carousel, modifier: Modifier = Modifier) {
     )
 
     val collection = carouselPages(node, dataContext)
-    val startIndex = if (node.isLoopEnabled) Int.MAX_VALUE / 2 else 0
-    val pagerCount = if (node.isLoopEnabled) Int.MAX_VALUE else collection.size
+    val pagerCount = if (node.isLoopEnabled) collection.size * 10 else collection.size
+    val startIndex = if (node.isLoopEnabled) pagerCount / 2 else 0
     val pagerState = rememberPagerState(initialPage = startIndex) { pagerCount }
 
     // shared preferences, used for restoring carousel position
@@ -207,6 +207,7 @@ internal fun CarouselLayer(node: Carousel, modifier: Modifier = Modifier) {
 
                 HorizontalPager(
                     state = pagerState,
+                    beyondBoundsPageCount = 0,
                     modifier = carouselModifier
                 ) { index ->
                     val tapToAdvanceModifier = if(node.isStoryStyleEnabled) {

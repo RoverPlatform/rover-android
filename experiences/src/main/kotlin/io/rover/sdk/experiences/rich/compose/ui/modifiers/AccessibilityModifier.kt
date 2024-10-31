@@ -22,8 +22,8 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.*
 import io.rover.sdk.experiences.rich.compose.model.values.Accessibility
+import kotlinx.coroutines.flow.merge
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun AccessibilityModifier(
     accessibility: Accessibility?,
@@ -31,23 +31,25 @@ internal fun AccessibilityModifier(
     content: @Composable (modifier: Modifier) -> Unit
 ) {
     if (accessibility != null) {
-        content(
-            modifier.semantics {
-                if (accessibility.isHidden) {
-                    invisibleToUser()
-                }
+        if(accessibility.isHidden) {
+            content(
+                modifier.clearAndSetSemantics {  }
+            )
+        } else {
+            content(
+                modifier.semantics(mergeDescendants = true) {
+                    accessibility.label?.let {
+                        contentDescription = accessibility.label
+                    }
 
-                accessibility.label?.let {
-                    contentDescription = accessibility.label
-                }
+                    if (accessibility.isHeader) {
+                        heading()
+                    }
 
-                if (accessibility.isHeader) {
-                    heading()
+                    // TODO: Support the rest of the accessibility node, as API is updated
                 }
-
-                // TODO: Support the rest of the accessibility node, as API is updated
-            }
-        )
+            )
+        }
     } else {
         content(modifier)
     }

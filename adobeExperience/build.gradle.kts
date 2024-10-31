@@ -55,7 +55,7 @@ android {
         jvmTarget = "11"
     }
 
-    namespace = "io.rover.adobeMobile"
+    namespace = "io.rover.adobeExperience"
 }
 
 dependencies {
@@ -77,7 +77,7 @@ afterEvaluate {
                 from(components["release"])
 
                 groupId = "io.rover.sdk"
-                artifactId = "adobeMobile"
+                artifactId = "adobeExperience"
                 version = roverSdkVersion
 
                 pom {

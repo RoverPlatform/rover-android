@@ -142,7 +142,7 @@ internal fun ScreenLayer(node: Screen, appearance: Appearance) {
                             // This has the effect of inhibiting ZStack's "adopt size of largest
                             // child" behaviour, which we need to emulate here, which is done
                             // by FixedToProposedSize().
-                            Children(children = node.children, modifier = FixedToProposedSize())
+                            Children(children = node.children.reversed(), modifier = FixedToProposedSize())
                         }
                     }
                 }

@@ -24,6 +24,7 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.ripple.rememberRipple
@@ -250,7 +251,7 @@ private fun ActionModifierButton(
             onClick = onClick,
             role = Role.Button,
             interactionSource = remember { MutableInteractionSource() },
-            indication = rememberRipple()
+            indication = LocalIndication.current
         )
     )
 }

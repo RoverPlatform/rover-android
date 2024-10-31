@@ -55,7 +55,6 @@ import kotlinx.coroutines.launch
  * @param measurePolicy Specify the sizing behaviour for this media player. Note that this measure
  * policy needs to support Rover's packed intrinsics.
  */
-@OptIn(ExperimentalFoundationApi::class)
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 @Composable
 internal fun MediaPlayer(

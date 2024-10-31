@@ -37,7 +37,6 @@ import io.rover.sdk.experiences.rich.compose.ui.utils.floorMod
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeColor
 import io.rover.sdk.experiences.rich.compose.vendor.accompanist.pager.*
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun PageControlLayer(node: PageControl, modifier: Modifier = Modifier) {
     // This ViewID is used to look up the carousel state in the environment, ensuring

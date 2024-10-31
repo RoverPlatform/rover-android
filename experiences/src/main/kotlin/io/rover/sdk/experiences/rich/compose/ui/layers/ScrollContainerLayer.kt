@@ -17,11 +17,15 @@
 
 package io.rover.sdk.experiences.rich.compose.ui.layers
 
+import android.util.Log
 import android.util.Size
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -42,9 +46,6 @@ import io.rover.sdk.experiences.rich.compose.ui.layout.fallbackMeasure
 import io.rover.sdk.experiences.rich.compose.ui.layout.mapMaxIntrinsicWidthAsMeasure
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.LayerModifiers
 import io.rover.sdk.experiences.rich.compose.ui.layout.ifInfinity
-import io.rover.sdk.experiences.rich.compose.vendor.compose.foundation.horizontalScroll
-import io.rover.sdk.experiences.rich.compose.vendor.compose.foundation.rememberScrollState
-import io.rover.sdk.experiences.rich.compose.vendor.compose.foundation.verticalScroll
 
 @Composable
 internal fun ScrollContainerLayer(node: ScrollContainer, modifier: Modifier = Modifier) {
@@ -73,10 +74,11 @@ internal fun ScrollContainerLayer(axis: Axis = Axis.VERTICAL, layerModifiers: La
                             modifier = Modifier
                                 .then(NestedScrollProtector(Axis.VERTICAL))
                                 .verticalScroll(rememberScrollState())
-                                .then(FillSpaceModifier(Axis.VERTICAL)),
+                                .then(ScrollContainerInnerLayoutModifier(Axis.VERTICAL)),
                         ) {
                             content()
                         }
+
                     Axis.HORIZONTAL -> {
                         HStackLayer(
                             alignment = Alignment.CENTER,
@@ -84,7 +86,7 @@ internal fun ScrollContainerLayer(axis: Axis = Axis.VERTICAL, layerModifiers: La
                             modifier = Modifier
                                 .then(NestedScrollProtector(Axis.HORIZONTAL))
                                 .horizontalScroll(rememberScrollState())
-                                .then(FillSpaceModifier(Axis.HORIZONTAL)),
+                                .then(ScrollContainerInnerLayoutModifier(Axis.HORIZONTAL)),
                         ) {
                             content()
                         }
@@ -92,7 +94,7 @@ internal fun ScrollContainerLayer(axis: Axis = Axis.VERTICAL, layerModifiers: La
                 }
             },
             modifier = modifier,
-            measurePolicy = ScrollContainerMeasurePolicy(axis),
+            measurePolicy = ScrollContainerOuterMeasurePolicy(axis),
         )
     }
 }
@@ -102,7 +104,7 @@ internal fun ScrollContainerLayer(axis: Axis = Axis.VERTICAL, layerModifiers: La
  * proposed constraint, in which case it adopts the intrinsic size of the child, ie., the scroll
  * container's content.)
  */
-internal fun ScrollContainerMeasurePolicy(
+internal fun ScrollContainerOuterMeasurePolicy(
     axis: Axis,
 ): MeasurePolicy {
     return object : MeasurePolicy {
@@ -164,9 +166,7 @@ internal fun ScrollContainerMeasurePolicy(
                         if (axis == Axis.VERTICAL) Constraints.Infinity else proposedHeight,
                     )
 
-                    it.fallbackMeasure(
-                        size,
-                    )
+                    Size(it.maxIntrinsicWidth(size.height), it.maxIntrinsicHeight(size.width))
                 }
 
                 val scrollWidth = proposedWidth.ifInfinity { sizes.maxOf { it.width } }
@@ -218,7 +218,7 @@ internal fun ScrollContainerMeasurePolicy(
  * (This is used to take up the orthogonal space within a scroll container to make the negative space
  * grabbable.)
  */
-private class FillSpaceModifier(private val axis: Axis) : LayoutModifier {
+private class ScrollContainerInnerLayoutModifier(private val axis: Axis) : LayoutModifier {
     override fun MeasureScope.measure(
         measurable: Measurable,
         constraints: Constraints,
@@ -260,12 +260,40 @@ private class FillSpaceModifier(private val axis: Axis) : LayoutModifier {
     override fun IntrinsicMeasureScope.maxIntrinsicHeight(
         measurable: IntrinsicMeasurable,
         width: Int,
-    ): Int = measurable.maxIntrinsicHeight(width)
+    ): Int {
+        // this is being called in the context of normal Jetpack Compose intrinsics, particularly
+        // the MeasuringIntrinsics builtins being used by the scrollable modifier.
+
+        // We want to return a correct result for the content, which is Rover Experiences content
+        // using Packed Intrinsics.
+
+        // Use fallbackMeasure to get the width, and then we'll return that as the result.
+        val proposedSize = Size(
+            width,
+            Constraints.Infinity
+        )
+
+        return measurable.fallbackMeasure(proposedSize).height
+    }
 
     override fun IntrinsicMeasureScope.maxIntrinsicWidth(
         measurable: IntrinsicMeasurable,
         height: Int,
-    ): Int = measurable.maxIntrinsicWidth(height)
+    ): Int {
+        // this is being called in the context of normal Jetpack Compose intrinsics, particularly
+        // the MeasuringIntrinsics builtins being used by the scrollable modifier.
+
+        // We want to return a correct result for the content, which is Rover Experiences content
+        // using Packed Intrinsics.
+
+        // Use fallbackMeasure to get the width, and then we'll return that as the result.
+        val proposedSize = Size(
+            Constraints.Infinity,
+            height
+        )
+
+        return measurable.fallbackMeasure(proposedSize).width
+    }
 
     override fun IntrinsicMeasureScope.minIntrinsicHeight(
         measurable: IntrinsicMeasurable,

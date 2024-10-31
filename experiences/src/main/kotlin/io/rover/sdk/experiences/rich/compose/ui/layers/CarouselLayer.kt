@@ -68,7 +68,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun CarouselLayer(node: Carousel, modifier: Modifier = Modifier) {
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -207,7 +206,7 @@ internal fun CarouselLayer(node: Carousel, modifier: Modifier = Modifier) {
 
                 HorizontalPager(
                     state = pagerState,
-                    beyondBoundsPageCount = 0,
+                    beyondViewportPageCount = 0,
                     modifier = carouselModifier
                 ) { index ->
                     val tapToAdvanceModifier = if(node.isStoryStyleEnabled) {

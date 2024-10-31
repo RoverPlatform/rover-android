@@ -26,7 +26,6 @@ import io.rover.sdk.core.logging.log
 import io.rover.sdk.experiences.rich.compose.model.nodes.Carousel
 import io.rover.sdk.experiences.rich.compose.ui.utils.floorMod
 
-@OptIn(ExperimentalFoundationApi::class)
 internal data class CarouselState(
     val pagerState: PagerState,
     val startIndex: Int,

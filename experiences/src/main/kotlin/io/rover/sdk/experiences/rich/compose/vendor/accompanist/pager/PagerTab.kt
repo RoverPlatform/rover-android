@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("DEPRECATION")
 package io.rover.sdk.experiences.rich.compose.vendor.accompanist.pager
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -31,7 +30,6 @@ import androidx.compose.ui.unit.lerp
  * [androidx.compose.foundation.pager.HorizontalPager] or
  * [androidx.compose.foundation.pager.VerticalPager].
  */
-@OptIn(ExperimentalFoundationApi::class)
 fun Modifier.pagerTabIndicatorOffset(
     pagerState: androidx.compose.foundation.pager.PagerState,
     tabPositions: List<TabPosition>,

@@ -43,6 +43,7 @@ import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.darkColors
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.lightColors
@@ -56,6 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.capitalize
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
@@ -171,7 +173,6 @@ private fun StringRow(label: String, value: String, updateValue: (String) -> Uni
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun TrackingModeRow(value: PrivacyService.TrackingMode, updateValue: (PrivacyService.TrackingMode) -> Unit) {
     Column(
@@ -182,45 +183,37 @@ private fun TrackingModeRow(value: PrivacyService.TrackingMode, updateValue: (Pr
         Text(text = "Tracking Mode", fontSize = 15.sp)
         var expanded by remember { mutableStateOf(false) }
 
-        ExposedDropdownMenuBox(
-            expanded = expanded,
+        TextField(
+            value = value.wireFormat.capitalize(Locale.current),
             modifier = Modifier.fillMaxWidth(),
-            onExpandedChange = { newValue ->
-                expanded = newValue
+            onValueChange = {},
+            readOnly = true,
+            trailingIcon = {
+                IconButton({
+                    expanded = !expanded
+                }) {
+                    Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = "Expand")
+                }
             },
+        )
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            properties = PopupProperties(focusable = true),
         ) {
-            TextField(
-                value = value.wireFormat.capitalize(),
-                modifier = Modifier.fillMaxWidth(),
-                onValueChange = {},
-                readOnly = true,
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                },
-                placeholder = {
-                    Text(text = "Please select your gender")
-                },
-                colors = ExposedDropdownMenuDefaults.textFieldColors(),
-            )
+            DropdownMenuItem(onClick = {
+                updateValue(PrivacyService.TrackingMode.Default)
+                expanded = false
+            }) {
+                Text(text = "Default")
+            }
 
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                properties = PopupProperties(focusable = true),
-            ) {
-                DropdownMenuItem(onClick = {
-                    updateValue(PrivacyService.TrackingMode.Default)
-                    expanded = false
-                }) {
-                    Text(text = "Default")
-                }
-
-                DropdownMenuItem(onClick = {
-                    updateValue(PrivacyService.TrackingMode.Anonymized)
-                    expanded = false
-                }) {
-                    Text(text = "Anonymized")
-                }
+            DropdownMenuItem(onClick = {
+                updateValue(PrivacyService.TrackingMode.Anonymized)
+                expanded = false
+            }) {
+                Text(text = "Anonymized")
             }
         }
     }

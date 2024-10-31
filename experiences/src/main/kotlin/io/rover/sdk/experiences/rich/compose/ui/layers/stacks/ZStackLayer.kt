@@ -46,7 +46,7 @@ import io.rover.sdk.experiences.rich.compose.ui.utils.preview.FixedSizeModifier
 @Composable
 internal fun ZStackLayer(node: ZStack, modifier: Modifier = Modifier) {
     ZStackLayer(node.alignment, layerModifiers = LayerModifiers(node), modifier = modifier) {
-        Children(children = node.children, modifier = Modifier)
+        Children(children = node.children.reversed(), modifier = Modifier)
     }
 }
 
@@ -77,14 +77,12 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
 
             data class ZStackChild(
                 val measurable: Measurable,
-                val zIndex: Int,
                 val priority: Int,
             )
 
             val children = measurables.mapIndexed { index, measurable ->
                 ZStackChild(
                     measurable = measurable,
-                    zIndex = index,
                     priority = measurable.layerModifierData?.layoutPriority ?: 0,
                 )
             }
@@ -99,7 +97,6 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
 
             data class PlaceableChild(
                 val placeable: Placeable,
-                val zIndex: Int,
             )
 
             Trace.beginSection("ZStack::measure::fallback")
@@ -141,7 +138,6 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
                     child.measurable.measure(
                         childConstraints,
                     ),
-                    child.zIndex,
                 )
             }
 
@@ -159,7 +155,6 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
                     child.measurable.measure(
                         childConstraints,
                     ),
-                    child.zIndex,
                 )
             }
 
@@ -193,7 +188,6 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
                     placeable.place(
                         (placeable.measuredWidth - placeable.width) / 2 + position.x,
                         (placeable.measuredHeight - placeable.height) / 2 + position.y,
-                        zIndex = child.zIndex * -1f,
                     )
                 }
             }
@@ -214,14 +208,12 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
 
                     data class ZStackChild(
                         val measurable: IntrinsicMeasurable,
-                        val zIndex: Int,
                         val priority: Int,
                     )
 
                     val children = measurables.mapIndexed { index, measurable ->
                         ZStackChild(
                             measurable = measurable,
-                            zIndex = index,
                             priority = measurable.layerModifierData?.layoutPriority ?: 0,
                         )
                     }
@@ -236,7 +228,6 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
 
                     data class PlaceableChild(
                         val size: Size,
-                        val zIndex: Int,
                     )
 
                     Trace.beginSection("ZStack::intrinsicMeasure::fallback")
@@ -272,7 +263,6 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
                                     measureSize.height,
                                 ),
                             ),
-                            child.zIndex,
                         )
                     }
 
@@ -300,7 +290,6 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
 
                     data class ZStackChild(
                         val measurable: IntrinsicMeasurable,
-                        val zIndex: Int,
                         val priority: Int,
                     )
 
@@ -309,7 +298,6 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
                     val children = measurables.mapIndexed { index, measurable ->
                         ZStackChild(
                             measurable = measurable,
-                            zIndex = index,
                             priority = measurable.layerModifierData?.layoutPriority ?: 0,
                         )
                     }
@@ -345,7 +333,6 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
 
                     data class ZStackChild(
                         val measurable: IntrinsicMeasurable,
-                        val zIndex: Int,
                         val priority: Int,
                     )
 
@@ -354,7 +341,6 @@ internal fun zStackMeasurePolicy(alignment: Alignment): MeasurePolicy {
                     val children = measurables.mapIndexed { index, measurable ->
                         ZStackChild(
                             measurable = measurable,
-                            zIndex = index,
                             priority = measurable.layerModifierData?.layoutPriority ?: 0,
                         )
                     }

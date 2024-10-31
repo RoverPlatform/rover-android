@@ -20,10 +20,6 @@ package io.rover.sdk.experiences.rich.compose.ui
 import android.app.Activity
 import android.util.Log
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContentScope
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -49,7 +45,6 @@ import io.rover.sdk.experiences.rich.compose.ui.utils.getDarkModeValue
  * either the `screenID` query parameter in [Environment.LocalUrlParameters], or, ultimately,
  * the screen marked as initial screen in the experience.)
  */
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 internal fun RenderExperience(
     experience: ExperienceModel,

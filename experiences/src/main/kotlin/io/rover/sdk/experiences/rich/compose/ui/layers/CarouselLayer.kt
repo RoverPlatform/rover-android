@@ -66,6 +66,7 @@ import io.rover.sdk.experiences.rich.compose.vendor.compose.ui.clip
 import io.rover.sdk.experiences.services.CarouselPageViewed
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Base64
 import java.util.Date
 
 @Composable
@@ -76,7 +77,8 @@ internal fun CarouselLayer(node: Carousel, modifier: Modifier = Modifier) {
     val viewID = ViewID(node.id, collectionIndex)
 
     // used for storing carousel page when isRememberPositionEnabled is set
-    val carouselIdentifier = "${Environment.LocalExperienceId.current ?: "local"}-${viewID}"
+    val base64url = Environment.LocalExperienceUrl.current?.let { Base64.getEncoder().encodeToString(it.toString().toByteArray() ) }
+    val carouselIdentifier = "${base64url ?: "unknown"}-${viewID}"
 
     val dataContext = makeDataContext(
         userInfo = Environment.LocalUserInfo.current?.invoke() ?: emptyMap(),

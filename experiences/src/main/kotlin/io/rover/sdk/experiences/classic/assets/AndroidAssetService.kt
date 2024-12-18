@@ -66,8 +66,7 @@ internal open class AndroidAssetService(
                 // threads than CPU cores.  However, I'm bending that rule a bit by having image
                 // decoding occur inband.  Thankfully, the risk of that spamming too many CPU-bound
                 // workloads across many threads is mitigated by the HTTP client library
-                // (HttpURLConnection, itself internally backed by OkHttp inside the Android
-                // standard library) limiting concurrent image downloads from the same origin, which
+                // (okhttp) limiting concurrent image downloads from the same origin, which
                 // most of the images in Rover experiences will be.
                 synchronousImagePipeline.request(url)
             )

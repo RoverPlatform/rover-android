@@ -17,6 +17,7 @@
 
 package io.rover.sdk.core.assets
 
+import io.rover.sdk.core.data.http.HttpClientResponse
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.streams.blockForResult
 import java.io.BufferedInputStream
@@ -62,17 +63,17 @@ class AssetRetrievalStage(
         // even with large experiences, it seems to work well.  The timeout given by
         // Publisher.blockForResult is a sufficient fail-safe against the pool overflow case.
         return when (streamResult) {
-            is ImageDownloader.HttpClientResponse.ConnectionFailure -> {
+            is HttpClientResponse.ConnectionFailure -> {
                 PipelineStageResult.Failed(
                     RuntimeException("Network or HTTP error downloading asset", streamResult.reason)
                 )
             }
-            is ImageDownloader.HttpClientResponse.ApplicationError -> {
+            is HttpClientResponse.ApplicationError -> {
                 PipelineStageResult.Failed(
                     RuntimeException("Remote HTTP API error downloading asset (code ${streamResult.responseCode}): ${streamResult.reportedReason}")
                 )
             }
-            is ImageDownloader.HttpClientResponse.Success -> {
+            is HttpClientResponse.Success -> {
                 // we have the stream! pass it downstream for decoding.
                 PipelineStageResult.Successful(
                     streamResult.bufferedInputStream

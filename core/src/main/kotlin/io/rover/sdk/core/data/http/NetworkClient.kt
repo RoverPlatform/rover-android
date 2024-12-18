@@ -26,9 +26,12 @@ interface NetworkClient {
      * Note that the subscriber is given an [HttpClientResponse], which includes readable streams.
      * Thus, it is called on the background worker thread to allow for client code to read those
      * streams, safely away from the Android main UI thread.
+     *
+     * @param gzip If true, the request's body will be gzipped.
      */
     fun request(
         request: HttpRequest,
-        bodyData: String?
+        bodyData: String?,
+        gzip: Boolean = false
     ): Publisher<HttpClientResponse>
 }

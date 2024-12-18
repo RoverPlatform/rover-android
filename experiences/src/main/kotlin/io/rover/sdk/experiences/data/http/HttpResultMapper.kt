@@ -41,7 +41,6 @@ internal class HttpResultMapper {
                         it.reader(Charsets.UTF_8).readText()
                     }
 
-                    log.v("RESPONSE BODY: $body")
                     when (body) {
                         "" -> NetworkResult.Error(NetworkError.EmptyResponseData(), false)
                         else -> {

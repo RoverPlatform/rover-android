@@ -37,15 +37,30 @@ class AxsManager(
         private const val STORAGE_CONTEXT_IDENTIFIER = "axs"
         private const val AXS_MAP_KEY = "axs"
         private const val AXS_ID_KEY = "userID"
+        private const val FLASH_MEMBER_ID_KEY = "flashMemberID"
+        private const val FLASH_MOBILE_ID_KEY = "flashMobileID"
     }
 
     override fun setUserId(userID: String) {
+        setUserId(userID, null, null)
+    }
+
+    override fun setUserId(userId: String?, flashMemberId: String?, flashMobileId: String?) {
         if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
             return
         }
-        axsID = userID
+
+        if (userId == null) {
+            clearCredentials()
+            return
+        }
+
+        this.axsUserId = userId
+        this.flashMemberId = flashMemberId
+        this.flashMobileId = flashMobileId
+
         updateUserInfoWithMemberAttributes()
-        log.i("AXS signed in with '$userID'.")
+        log.i("AXS IDs have been set. user ID: $userId, flashMemberID: $flashMemberId, flashMobileID: $flashMobileId")
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -66,12 +81,18 @@ class AxsManager(
     }
 
     override fun clearCredentials() {
-        axsID = null
-        userInfo.update { it.remove(AXS_MAP_KEY) }
+        axsUserId = null
+        flashMemberId = null
+        flashMobileId = null
+        userInfo.update {
+            it.remove(AXS_MAP_KEY)
+            it.remove(FLASH_MEMBER_ID_KEY)
+            it.remove((FLASH_MOBILE_ID_KEY))
+        }
         log.i("AXS signed out.")
     }
 
-    private var axsID: String?
+    private var axsUserId: String?
         get() {
             val storageJson = storage["axs"]
             return storageJson.whenNotNull { axsIDString ->
@@ -93,9 +114,55 @@ class AxsManager(
             }
         }
 
+    private var flashMemberId: String?
+        get() {
+            val storageJson = storage["axs.flashMemberID"]
+            return storageJson.whenNotNull { axsIDString ->
+                try {
+                    JSONObject(axsIDString).safeOptString(FLASH_MEMBER_ID_KEY)
+                } catch (e: JSONException) {
+                    log.w("Invalid JSON for FlashMemberID in AXS manager storage, ignoring: $e")
+                    null
+                }
+            }
+        }
+        set(value) {
+            if (value != null) {
+                storage["axs.flashMemberID"] = JSONObject()
+                    .put(FLASH_MEMBER_ID_KEY, value)
+                    .toString()
+            } else {
+                storage["axs.flashMemberID"] = null
+            }
+        }
+
+    private var flashMobileId: String?
+        get() {
+            val storageJson = storage["axs.flashMobileID"]
+            return storageJson.whenNotNull { axsIDString ->
+                try {
+                    JSONObject(axsIDString).safeOptString(FLASH_MOBILE_ID_KEY)
+                } catch (e: JSONException) {
+                    log.w("Invalid JSON for FlashMobileID in AXS manager storage, ignoring: $e")
+                    null
+                }
+            }
+        }
+        set(value) {
+            if (value != null) {
+                storage["axs.flashMobileID"] = JSONObject()
+                    .put(FLASH_MOBILE_ID_KEY, value)
+                    .toString()
+            } else {
+                storage["axs.flashMobileID"] = null
+            }
+        }
+
     private fun getNonNullPropertiesMap(): Map<String, String> {
         val propertiesMap = mutableMapOf<String, String>()
-        axsID.whenNotNull { propertiesMap.put(AXS_ID_KEY, it)}
+        axsUserId.whenNotNull { propertiesMap.put(AXS_ID_KEY, it)}
+        flashMemberId.whenNotNull { propertiesMap.put(FLASH_MEMBER_ID_KEY, it)}
+        flashMobileId.whenNotNull { propertiesMap.put(FLASH_MOBILE_ID_KEY, it)}
         return propertiesMap
     }
 

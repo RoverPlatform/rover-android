@@ -32,6 +32,7 @@ import io.rover.sdk.core.container.Container
 import io.rover.sdk.core.container.Resolver
 import io.rover.sdk.core.container.Scope
 import io.rover.sdk.core.data.graphql.GraphQlApiServiceInterface
+import io.rover.sdk.core.data.http.NetworkClient
 import io.rover.sdk.core.events.ContextProvider
 import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.core.logging.log
@@ -92,7 +93,8 @@ class ExperiencesAssembler(
                 resolver.resolveSingletonOrFail(String::class.java, "accountToken"),
                 resolver.resolveSingletonOrFail(Int::class.java, "chromeTabBackgroundColor"),
                 resolver.resolveSingletonOrFail(GraphQlApiServiceInterface::class.java),
-                appThemeDescription = appThemeDescription
+                appThemeDescription = appThemeDescription,
+                networkClient = resolver.resolveSingletonOrFail(NetworkClient::class.java),
             )
         }
 

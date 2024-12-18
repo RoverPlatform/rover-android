@@ -24,13 +24,11 @@ import io.rover.core.BuildConfig
 import io.rover.sdk.core.container.Assembler
 import io.rover.sdk.core.container.ContainerResolver
 import io.rover.sdk.core.container.InjectionContainer
-import io.rover.sdk.core.data.http.AndroidHttpsUrlConnectionNetworkClient
 import io.rover.sdk.core.logging.AndroidLogger
 import io.rover.sdk.core.logging.GlobalStaticLogHolder
 import io.rover.sdk.core.logging.LogBuffer
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.routing.LinkOpenInterface
-import java.net.HttpURLConnection
 
 /**
  * Entry point for the Rover SDK.
@@ -113,18 +111,11 @@ class Rover(
             log.i("Started Rover Android SDK v${BuildConfig.ROVER_SDK_VERSION}.")
         }
 
-        /**
-         * Be sure to always call this after [Rover.initialize] in your Application's onCreate()!
-         *
-         * Rover internally uses the standard HTTP client included with Android, but to work
-         * effectively it needs HTTP caching enabled.  Unfortunately, this can only be done at the
-         * global level, so we ask that you call this method -- [installSaneGlobalHttpCache] -- at
-         * application start time (unless you have already added your own cache to Android's
-         * [HttpURLConnection].
-         */
+
+        @Deprecated("No longer needed, and may be safely removed.")
         @JvmStatic
         fun installSaneGlobalHttpCache(applicationContext: Context) {
-            AndroidHttpsUrlConnectionNetworkClient.installSaneGlobalHttpCache(applicationContext)
+            // no-op
         }
     }
 }

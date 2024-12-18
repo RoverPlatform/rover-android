@@ -105,7 +105,6 @@ class GraphQlApiService(
                         it.reader(Charsets.UTF_8).readText()
                     }
 
-                    log.v("RESPONSE BODY: $body")
                     when (body) {
                         "" -> NetworkResult.Error(NetworkError.EmptyResponseData(), false)
                         else -> {
@@ -148,10 +147,8 @@ class GraphQlApiService(
         val urlRequest = urlRequest(request.mutation, request.encodeQueryParameters())
         val bodyData = request.encodeBody()
 
-        log.v("going to make network request $urlRequest")
-
         return if (authenticationContext.isAvailable()) {
-            networkClient.request(urlRequest, bodyData).map { httpClientResponse ->
+            networkClient.request(urlRequest, bodyData, gzip = true).map { httpClientResponse ->
                 httpResult(request, httpClientResponse)
             }
         } else {

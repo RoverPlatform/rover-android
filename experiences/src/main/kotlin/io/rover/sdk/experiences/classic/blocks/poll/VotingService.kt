@@ -19,10 +19,10 @@ package io.rover.sdk.experiences.classic.blocks.poll
 
 import android.net.Uri
 import io.rover.sdk.core.data.NetworkResult
-import io.rover.sdk.core.data.http.AndroidHttpsUrlConnectionNetworkClient
 import io.rover.sdk.core.data.http.HttpClientResponse
 import io.rover.sdk.core.data.http.HttpRequest
 import io.rover.sdk.core.data.http.HttpVerb
+import io.rover.sdk.core.data.http.NetworkClient
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.streams.map
 import io.rover.sdk.experiences.data.http.HttpResultMapper
@@ -32,7 +32,7 @@ import java.net.URL
 
 internal class VotingService(
     private val endpoint: String,
-    private val httpClient: AndroidHttpsUrlConnectionNetworkClient,
+    private val httpClient: NetworkClient,
     private val httpResultMapper: HttpResultMapper = HttpResultMapper(),
     private val urlBuilder: URLBuilder = URLBuilder()
 ) {

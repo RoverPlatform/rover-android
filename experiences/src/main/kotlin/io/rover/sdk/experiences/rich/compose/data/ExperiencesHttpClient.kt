@@ -18,7 +18,7 @@
 package io.rover.sdk.experiences.rich.compose.data
 
 import android.content.Context
-import io.rover.experiences.BuildConfig
+import io.rover.sdk.core.platform.roverUserAgent
 import okhttp3.OkHttpClient
 
 internal class ExperiencesHttpClient(
@@ -29,22 +29,19 @@ internal class ExperiencesHttpClient(
             context.packageName,
             0
         )
-        val httpAgent = System.getProperty("http.agent") ?: ""
-        val clientPackageName = packageInfo.packageName
-        val appVersion = packageInfo.versionName
 
-        "$httpAgent $clientPackageName/$appVersion RoverSDK/${BuildConfig.VERSION_NAME}"
+        packageInfo.roverUserAgent
     }
 
     val client: OkHttpClient by lazy {
-        OkHttpClient().newBuilder().apply {
-            addNetworkInterceptor { chain ->
+        OkHttpClient()
+            .newBuilder()
+            .addInterceptor { chain ->
                 chain.proceed(
                     chain.request().newBuilder().apply {
                         header("User-Agent", userAgent)
                     }.build()
                 )
-            }
-        }.build()
+            }.build()
     }
 }

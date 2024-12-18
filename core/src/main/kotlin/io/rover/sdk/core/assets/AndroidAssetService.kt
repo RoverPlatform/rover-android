@@ -78,9 +78,8 @@ internal class AndroidAssetService(
                 // ioExecutor is really only intended for I/O multiplexing only: it spawns many more
                 // threads than CPU cores.  However, I'm bending that rule a bit by having image
                 // decoding occur in-band.  Thankfully, the risk of that spamming too many CPU-bound
-                // workloads across many threads is mitigated by the HTTP client library
-                // (HttpURLConnection, itself internally backed by OkHttp inside the Android
-                // standard library) limiting concurrent image downloads from the same origin, which
+                // workloads across many threads is mitigated by http client library (okhttp)
+                // limiting concurrent image downloads from the same origin, which
                 // most of the images in Rover experiences will be.
                 synchronousImagePipeline.request(url)
             )

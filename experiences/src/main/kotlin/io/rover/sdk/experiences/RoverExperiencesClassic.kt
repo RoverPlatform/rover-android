@@ -25,7 +25,7 @@ import android.util.DisplayMetrics
 import androidx.lifecycle.Lifecycle
 import io.rover.sdk.core.data.domain.*
 import io.rover.sdk.core.data.graphql.GraphQlApiServiceInterface
-import io.rover.sdk.core.data.http.AndroidHttpsUrlConnectionNetworkClient
+import io.rover.sdk.core.data.http.NetworkClient
 import io.rover.sdk.core.streams.Scheduler
 import io.rover.sdk.core.streams.forAndroidMainThread
 import io.rover.sdk.core.streams.forExecutor
@@ -83,25 +83,27 @@ internal class RoverExperiencesClassic(
     /**
      * When initializing Rover you must give it a reference
      */
-    private val application: Application,
+    application: Application,
 
     /**
      * Set your Rover Account Token (API Key) here.
      */
-    private var accountToken: String,
+    accountToken: String,
 
     /**
      * Set the background colour for the Custom Chrome tabs that are used for presenting web content
      * in a web browser.
      */
-    private val chromeTabBackgroundColor: Int,
+    chromeTabBackgroundColor: Int,
 
     /**
      * Network service for making Rover API requests via GraphQL.
      */
     private val apiService: GraphQlApiServiceInterface,
 
-    internal val appThemeDescription: AppThemeDescription
+    internal val appThemeDescription: AppThemeDescription,
+
+    networkClient: NetworkClient
 ) {
     var classicExperienceTransformer: ((ClassicExperienceModel) -> ClassicExperienceModel)? = null
         private set
@@ -131,7 +133,7 @@ internal class RoverExperiencesClassic(
         ioExecutor
     )
 
-    private val imageDownloader: ImageDownloader = ImageDownloader(ioExecutor)
+    private val imageDownloader: ImageDownloader = ImageDownloader(networkClient)
 
     private val assetService: AndroidAssetService =
         AndroidAssetService(imageDownloader, ioScheduler, mainScheduler)
@@ -139,8 +141,6 @@ internal class RoverExperiencesClassic(
     private val imageOptimizationService: ImageOptimizationService = ImageOptimizationService()
 
     private val packageInfo = application.packageManager.getPackageInfo(application.packageName, 0)
-
-    private val httpClient: AndroidHttpsUrlConnectionNetworkClient = AndroidHttpsUrlConnectionNetworkClient(ioScheduler, packageInfo)
 
     internal val webBrowserDisplay: EmbeddedWebBrowserDisplay =
         EmbeddedWebBrowserDisplay(chromeTabBackgroundColor)
@@ -151,7 +151,7 @@ internal class RoverExperiencesClassic(
 
     private val miniAnalyticsService: MiniAnalyticsService = MiniAnalyticsService(
         application,
-        packageInfo,
+        networkClient,
         accountToken,
         classicEventEmitter
     )
@@ -160,7 +160,7 @@ internal class RoverExperiencesClassic(
 
     private val pollsEndpoint = "https://polls.rover.io/v1/polls"
 
-    private val pollVotingService: VotingService = VotingService(pollsEndpoint, httpClient)
+    private val pollVotingService: VotingService = VotingService(pollsEndpoint, networkClient)
 
     private val pollVotingStorage: VotingStorage = VotingStorage(localStorage.getKeyValueStorageFor("voting"))
 

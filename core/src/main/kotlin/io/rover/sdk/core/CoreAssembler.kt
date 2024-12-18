@@ -37,8 +37,8 @@ import io.rover.sdk.core.data.AuthenticationContext
 import io.rover.sdk.core.data.ServerKey
 import io.rover.sdk.core.data.graphql.GraphQlApiService
 import io.rover.sdk.core.data.graphql.GraphQlApiServiceInterface
-import io.rover.sdk.core.data.http.AndroidHttpsUrlConnectionNetworkClient
 import io.rover.sdk.core.data.http.NetworkClient
+import io.rover.sdk.core.data.http.OkHttpNetworkClient
 import io.rover.sdk.core.data.sync.SyncByApplicationLifecycle
 import io.rover.sdk.core.data.sync.SyncClient
 import io.rover.sdk.core.data.sync.SyncClientInterface
@@ -204,10 +204,7 @@ class CoreAssembler @JvmOverloads constructor(
         }
 
         container.register(Scope.Singleton, NetworkClient::class.java) { resolver ->
-            AndroidHttpsUrlConnectionNetworkClient(
-                resolver.resolveSingletonOrFail(Scheduler::class.java, "io"),
-                application.packageManager.getPackageInfo(application.packageName, 0)
-            )
+            OkHttpNetworkClient(application.packageManager.getPackageInfo(application.packageName, 0))
         }
 
         container.register(Scope.Singleton, Int::class.java, "chromeTabBackgroundColor") { _ ->
@@ -263,7 +260,7 @@ class CoreAssembler @JvmOverloads constructor(
         }
 
         container.register(Scope.Singleton, ImageDownloader::class.java) { resolver ->
-            ImageDownloader(resolver.resolveSingletonOrFail(Executor::class.java, "io"))
+            ImageDownloader(resolver.resolveSingletonOrFail(NetworkClient::class.java))
         }
 
         container.register(Scope.Singleton, AssetService::class.java) { resolver ->

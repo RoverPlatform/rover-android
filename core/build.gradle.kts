@@ -66,6 +66,8 @@ dependencies {
 
     implementation("androidx.work:work-runtime-ktx:2.7.1")
 
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+
     implementation("androidx.browser:browser:1.2.0")
     implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 

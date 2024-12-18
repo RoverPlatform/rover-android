@@ -22,11 +22,21 @@ package io.rover.sdk.axs
  */
 interface AxsAuthorizer {
     /**
-     * Set the user's AXS userID.
-
-     * @param userID The value of the `userID`.
+     * Set the user's AXS user ID after a successful sign-in.
+     *
+     * @param userID The value of the user's AXS User ID.
      */
+    @Deprecated("Use setUserId(userId: String?, flashMemberId: String?, flashMobileId: String?) instead, see https://developer.rover.io/docs/data/axs")
     fun setUserId(userID: String)
+
+    /**
+     * Set the user's AXS credentials after a successful sign-in. If `userId` is null, then it is treated as a sign out.
+     *
+     * @param userId The value of the user's AXS User ID.
+     * @param flashMemberId The value of the Flash Seats member ID.
+     * @param flashMobileId The value of the Flash Seats mobile ID.
+     */
+    fun setUserId(userId: String?, flashMemberId: String?, flashMobileId: String?)
 
     /**
      * Clear the user's AXS credentials after a successful sign-out.

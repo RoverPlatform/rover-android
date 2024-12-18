@@ -20,20 +20,18 @@ package io.rover.sdk.experiences.data.events
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageInfo
-import android.os.AsyncTask
 import io.rover.sdk.core.data.domain.Attributes
 import io.rover.sdk.core.data.graphql.operations.data.encodeJson
+import io.rover.sdk.core.data.http.HttpClientResponse
 import io.rover.sdk.core.data.http.HttpRequest
 import io.rover.sdk.core.data.http.HttpVerb
+import io.rover.sdk.core.data.http.NetworkClient
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.streams.subscribe
 import io.rover.sdk.experiences.platform.dateAsIso8601
 import io.rover.sdk.experiences.platform.debugExplanation
-import io.rover.sdk.experiences.platform.setRoverUserAgent
 import io.rover.sdk.experiences.services.ClassicEventEmitter
 import org.json.JSONObject
-import java.io.DataOutputStream
-import java.net.HttpURLConnection
 import java.net.URL
 import java.util.*
 
@@ -43,7 +41,7 @@ import java.util.*
  */
 internal class MiniAnalyticsService(
     context: Context,
-    private val packageInfo: PackageInfo,
+    private val networkClient: NetworkClient,
     private val accountToken: String?,
     classicEventEmitter: ClassicEventEmitter
 ) {
@@ -105,7 +103,13 @@ internal class MiniAnalyticsService(
             val urlRequest = buildRequest(URL(ANALYTICS_ENDPOINT), accountToken)
             val bodyData = encodeBody(eventInformation)
 
-            request(urlRequest, bodyData)
+            networkClient.request(urlRequest, bodyData).subscribe { response ->
+                when (response) {
+                    is HttpClientResponse.Success -> log.v("Mini-Analytics event sent.")
+                    is HttpClientResponse.ApplicationError -> log.w("Mini-Analytics event failed: ${response.reportedReason}")
+                    is HttpClientResponse.ConnectionFailure -> log.w("Mini-Analytics event failed: ${response.reason.debugExplanation()}")
+                }
+            }
         } catch (e: Exception) {
             log.w("Problem sending analytics: ${e.message}")
         }
@@ -116,36 +120,6 @@ internal class MiniAnalyticsService(
      */
     init {
         classicEventEmitter.trackedEvents.subscribe { sendRequest(it) }
-    }
-
-    private fun request(
-        request: HttpRequest,
-        bodyData: String
-    ) {
-        AsyncTask.execute {
-            try {
-                val connection = request.url.openConnection() as HttpURLConnection
-                val requestBody = bodyData.toByteArray(Charsets.UTF_8)
-
-                connection.apply {
-                    setFixedLengthStreamingMode(requestBody.size)
-                    request.headers.onEach { (field, value) -> setRequestProperty(field, value) }
-
-                    this.setRoverUserAgent(packageInfo)
-
-                    doOutput = true
-                    requestMethod = request.verb.wireFormat
-                }
-
-                connection.outputStream.use { stream ->
-                    DataOutputStream(stream).use { dataOutputStream ->
-                        dataOutputStream.write(requestBody)
-                    }
-                }
-            } catch (e: Exception) {
-                this@MiniAnalyticsService.log.w("$request : event analytics request failed ${e.debugExplanation()}")
-            }
-        }
     }
 }
 

@@ -25,8 +25,10 @@ import androidx.compose.material.Colors
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.ui.graphics.toArgb
+import com.squareup.moshi.JsonReader.Token
 import io.rover.sdk.core.Rover
 import io.rover.sdk.core.UrlSchemes
+import io.rover.sdk.core.authenticationContext
 import io.rover.sdk.core.container.Assembler
 import io.rover.sdk.core.container.Container
 import io.rover.sdk.core.container.Resolver
@@ -189,6 +191,17 @@ class ExperiencesAssembler(
  * Use this to add your own custom authentication headers for API keys, etc.
  */
 fun Rover.authorize(pattern: String, callback: (URLRequest) -> Unit) {
+    this.resolveSingletonOrFail(Authorizers::class.java).registerAuthorizer(pattern, callback)
+}
+
+/**
+ * Call this method to register a callback that can mutate outgoing HTTP requests to
+ * Data Source APIs being used in Experiences. This version can accept a suspend function,
+ * allowing you to do perform an async task to acquire credentials.
+ *
+ * Use this to add your own custom authentication headers for API keys, etc.
+ */
+fun Rover.authorizeAsync(pattern: String, callback: suspend (URLRequest) -> Unit) {
     this.resolveSingletonOrFail(Authorizers::class.java).registerAuthorizer(pattern, callback)
 }
 

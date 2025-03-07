@@ -26,6 +26,7 @@ import coil.ImageLoader
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import io.rover.sdk.core.Rover
+import io.rover.sdk.core.data.AuthenticationContextInterface
 import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.experiences.Authorizers
 import io.rover.sdk.experiences.RoverExperiencesClassic
@@ -70,6 +71,9 @@ internal data class Services(
 
     val authorizers: Authorizers
         get() = rover.resolveSingletonOrFail(Authorizers::class.java)
+
+    val authenticationContext: AuthenticationContextInterface
+        get() = rover.resolveSingletonOrFail(AuthenticationContextInterface::class.java)
 
     /**
      * Wherever needed, we use this loader instead of setting it through Coil.setImageLoader, as that

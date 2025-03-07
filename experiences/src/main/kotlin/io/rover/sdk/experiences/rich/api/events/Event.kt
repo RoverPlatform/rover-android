@@ -89,9 +89,9 @@ sealed class Event {
     )
 
     /**
-     * Describes a user's activation (ie., a tap) of a custom action on a layer in a Judo experience.
+     * Describes a user's activation (ie., a tap) of a custom action on a layer in an experience.
      * A value of this type is given to any registered custom action callbacks registered with
-     * [Judo.addCustomActionCallback]. Use this to implement the behavior for custom buttons
+     * [Rover.addCustomActionCallback]. Use this to implement the behavior for custom buttons
      * and the like.
      *
      * This type provides the context for the user activation custom action, giving the node

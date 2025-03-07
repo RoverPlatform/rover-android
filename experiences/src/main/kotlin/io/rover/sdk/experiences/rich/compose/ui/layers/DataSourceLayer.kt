@@ -20,8 +20,10 @@ package io.rover.sdk.experiences.rich.compose.ui.layers
 import android.util.Log
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.core.net.toUri
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.experiences.data.URLRequest
+import io.rover.sdk.experiences.data.authenticateRequest
 import io.rover.sdk.experiences.rich.compose.model.nodes.DataSource
 import io.rover.sdk.experiences.rich.compose.model.values.HttpMethod
 import io.rover.sdk.experiences.rich.compose.ui.Environment
@@ -75,7 +77,7 @@ internal fun DataSourceLayer(node: DataSource, modifier: Modifier = Modifier) {
     // Interpolation on URL, headers, and body. If interpolation fails, yield empty.
     val url = interpolator.interpolate(node.url) ?: return
     val requestBody = node.httpBody?.let { interpolator.interpolate(it) ?: return@DataSourceLayer }
-    val headers = node.headers.associateBy({
+    var headers = node.headers.associateBy({
         it.key
     }, {
         interpolator.interpolate(it.value) ?: return@DataSourceLayer
@@ -90,36 +92,45 @@ internal fun DataSourceLayer(node: DataSource, modifier: Modifier = Modifier) {
         body = requestBody
     )
 
-    Environment.LocalAuthorizerHandler.current?.invoke(urlRequest)
+    val authorizerHandler = Environment.LocalAuthorizerHandler.current
+    val authenticationContext = Environment.LocalAuthenticationContext.current
 
     LaunchedEffect(key1 = urlRequest) {
         state = State.Loading
 
         do {
             scope.launch {
+                // make a copy of authorizedRequest, so the authorizer mutating it
+                // won't re-trigger LaunchedEffect.
+                // perform SDK authentication, then run the custom Authorizers
+                val authorizedRequest = urlRequest.copy().let {
+                    authenticationContext?.authenticateRequest(it) ?: it
+                }
+                authorizerHandler?.invoke(authorizedRequest)
+
                 val response = try {
-                    when (urlRequest.method) {
+                    when (authorizedRequest.method) {
                         HttpMethod.GET -> {
-                            api.get(urlRequest.url, urlRequest.headers)
+                            api.get(authorizedRequest.url, authorizedRequest.headers)
                         }
                         HttpMethod.PUT -> {
-                            val body = urlRequest.body
+                            val body = authorizedRequest.body
                             if (body == null) {
-                                api.put(urlRequest.url, urlRequest.headers)
+                                api.put(authorizedRequest.url, authorizedRequest.headers)
                             } else {
                                 val contentType = "text/plain".toMediaType()
                                 val requestBody = RequestBody.create(contentType, body)
-                                api.putWithBody(urlRequest.url, urlRequest.headers, requestBody)
+                                api.putWithBody(authorizedRequest.url, authorizedRequest.headers, requestBody)
                             }
                         }
                         HttpMethod.POST -> {
-                            val body = urlRequest.body
+                            val body = authorizedRequest.body
                             if (body == null) {
-                                api.post(urlRequest.url, urlRequest.headers)
+                                api.post(authorizedRequest.url, authorizedRequest.headers)
                             } else {
                                 val contentType = "text/plain".toMediaType()
                                 val requestBody = RequestBody.create(contentType, body)
-                                api.postWithBody(urlRequest.url, urlRequest.headers, requestBody)
+                                api.postWithBody(authorizedRequest.url, authorizedRequest.headers, requestBody)
                             }
                         }
                     }

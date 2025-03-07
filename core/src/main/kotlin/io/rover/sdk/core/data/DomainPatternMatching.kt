@@ -17,13 +17,15 @@
 
 package io.rover.sdk.core.data
 
-/**
- * A version of Authentication Context that works with simply a standard SDK Key, acquired from
- * [Rover Profile/Account settings](https://app.rover.io/settings/overview), as "Server Key" under
- * the "Account Tokens"->"Android" section.
- */
-data class ServerKey(
-    override val sdkToken: String?
-) : AuthenticationContext {
-    override val bearerToken: String? = ""
+fun matchesDomainPattern(string: String, pattern: String): Boolean {
+    val lowercasedPattern = pattern.lowercase()
+    val lowercasedString = string.lowercase()
+    val wildcardAndRoot = lowercasedPattern.split("*.")
+    if (wildcardAndRoot.size > 2) return false
+
+    val root = wildcardAndRoot.lastOrNull() ?: return false
+
+    val hasWildcard = wildcardAndRoot.size > 1
+
+    return (!hasWildcard && lowercasedString == lowercasedPattern) || (hasWildcard && (lowercasedString == root || lowercasedString.endsWith(".$root")))
 }

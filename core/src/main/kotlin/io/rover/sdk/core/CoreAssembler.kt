@@ -33,8 +33,8 @@ import io.rover.sdk.core.container.Assembler
 import io.rover.sdk.core.container.Container
 import io.rover.sdk.core.container.Resolver
 import io.rover.sdk.core.container.Scope
+import io.rover.sdk.core.data.AuthenticationContextInterface
 import io.rover.sdk.core.data.AuthenticationContext
-import io.rover.sdk.core.data.ServerKey
 import io.rover.sdk.core.data.graphql.GraphQlApiService
 import io.rover.sdk.core.data.graphql.GraphQlApiServiceInterface
 import io.rover.sdk.core.data.http.NetworkClient
@@ -73,7 +73,6 @@ import io.rover.sdk.core.platform.DeviceIdentificationInterface
 import io.rover.sdk.core.platform.IoMultiplexingExecutor
 import io.rover.sdk.core.platform.LocalStorage
 import io.rover.sdk.core.platform.SharedPreferencesLocalStorage
-import io.rover.sdk.core.platform.whenNotNull
 import io.rover.sdk.core.privacy.PrivacyService
 import io.rover.sdk.core.routing.LinkOpenInterface
 import io.rover.sdk.core.routing.Router
@@ -240,14 +239,14 @@ class CoreAssembler @JvmOverloads constructor(
             )
         }
 
-        container.register(Scope.Singleton, AuthenticationContext::class.java) { _ ->
-            ServerKey(accountToken)
+        container.register(Scope.Singleton, AuthenticationContextInterface::class.java) { resolver ->
+            AuthenticationContext(accountToken, resolver.resolveSingletonOrFail(LocalStorage::class.java))
         }
 
         container.register(Scope.Singleton, GraphQlApiServiceInterface::class.java) { resolver ->
             GraphQlApiService(
                 URL(endpoint),
-                resolver.resolveSingletonOrFail(AuthenticationContext::class.java),
+                resolver.resolveSingletonOrFail(AuthenticationContextInterface::class.java),
                 resolver.resolveSingletonOrFail(NetworkClient::class.java),
                 resolver.resolveSingletonOrFail(DateFormattingInterface::class.java)
             )
@@ -383,7 +382,7 @@ class CoreAssembler @JvmOverloads constructor(
         container.register(Scope.Singleton, SyncClientInterface::class.java) { resolver ->
             SyncClient(
                 URL(endpoint),
-                resolver.resolveSingletonOrFail(AuthenticationContext::class.java),
+                resolver.resolveSingletonOrFail(AuthenticationContextInterface::class.java),
                 resolver.resolveSingletonOrFail(DateFormattingInterface::class.java),
                 resolver.resolveSingletonOrFail(NetworkClient::class.java)
             )
@@ -560,6 +559,9 @@ val Rover.deviceIdentification
         "DeviceIdentificationInterface"
     )
 
+val Rover.authenticationContext: AuthenticationContextInterface
+    get() = this.resolve(AuthenticationContextInterface::class.java) ?: throw missingDependencyError("AuthenticationContext")
+
 val Rover.userInfoManager: UserInfoInterface
     get() = this.resolve(UserInfoInterface::class.java) ?: throw missingDependencyError("UserInfoInterface")
 
@@ -575,3 +577,33 @@ var Rover.trackingMode: PrivacyService.TrackingMode
     set(value) {
         privacyService.trackingMode = value
     }
+
+/**
+ * Set a JWT token for the signed-in user, signed (RS256 or better).
+ *
+ * This securely attests to the user's identity to enable additional personalization features.
+ *
+ * Call this method when your user signs in with your account system, and whenever you do your
+ * token-refresh cycle.
+ */
+fun Rover.setSdkAuthorizationIdToken(token: String) {
+    authenticationContext.setSdkAuthenticationIdToken(token)
+}
+
+/**
+ * Clear the SDK authorization token.
+ */
+fun Rover.clearSdkAuthorizationIdToken() {
+    authenticationContext.clearSdkAuthenticationIdToken()
+}
+
+/**
+ * Register a callback to be called when the Rover SDK needs needs a refreshed SDK authorization
+ * token.  When you have obtained a new token, set it as usual with [setSdkAuthorizationIdToken].
+ *
+ * If the token is needed for an interactive user operation (such as fetching an api.rover.io data
+ * source), the SDK will wait for 10 seconds before timing out that operation.
+ */
+fun Rover.registerSdkAuthorizationIdTokenRefreshCallback(callback: () -> Unit) {
+    this.authenticationContext.sdkAuthenticationIdTokenRefreshCallback = callback
+}

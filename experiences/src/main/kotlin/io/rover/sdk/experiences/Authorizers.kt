@@ -17,14 +17,17 @@
 
 package io.rover.sdk.experiences
 
+import io.rover.sdk.core.data.matchesDomainPattern
 import io.rover.sdk.experiences.data.URLRequest
 import java.net.URL
 
+// TODO: move this to Core.
+
 /**
  * This object is responsible for holding references to HTTP data source authorizers
- * (that can rewrite [URLREquest]
+ * that can rewrite [URLRequest].
  */
-public class Authorizers {
+internal class Authorizers {
     private val authorizers: MutableList<Authorizer> = mutableListOf()
 
     /**
@@ -33,7 +36,7 @@ public class Authorizers {
      *
      * Use this to add your own custom authentication headers for API keys, etc.
      */
-    fun registerAuthorizer(pattern: String, callback: (URLRequest) -> Unit) {
+    fun registerAuthorizer(pattern: String, callback: suspend (URLRequest) -> Unit) {
         authorizers.add(
             Authorizer(pattern, callback)
         )
@@ -41,19 +44,11 @@ public class Authorizers {
 
     internal class Authorizer(
         private val pattern: String,
-        private val block: (URLRequest) -> Unit
+        private val block: suspend (URLRequest) -> Unit
     ) {
-        fun authorize(request: URLRequest) {
+        suspend fun authorize(request: URLRequest) {
             val host = URL(request.url).host
-
-            val wildcardAndRoot = pattern.split("*.")
-            if (wildcardAndRoot.size > 2) return
-
-            val root = wildcardAndRoot.lastOrNull() ?: return
-
-            val hasWildcard = wildcardAndRoot.size > 1
-
-            if ((!hasWildcard && host == pattern) || (hasWildcard && (host == root || host.endsWith(".$root")))) {
+            if (matchesDomainPattern(host, pattern)) {
                 block(request)
             }
         }
@@ -62,7 +57,7 @@ public class Authorizers {
     /**
      * Apply all the applicable authorizers to the given [URLRequest].
      */
-    internal fun authorize(request: URLRequest) {
+    internal suspend fun authorize(request: URLRequest) {
         authorizers.forEach { it.authorize(request) }
     }
 }

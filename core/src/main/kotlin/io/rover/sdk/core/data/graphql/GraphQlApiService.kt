@@ -19,10 +19,11 @@ package io.rover.sdk.core.data.graphql
 
 import android.net.Uri
 import io.rover.sdk.core.data.APIException
-import io.rover.sdk.core.data.AuthenticationContext
+import io.rover.sdk.core.data.AuthenticationContextInterface
 import io.rover.sdk.core.data.GraphQlRequest
 import io.rover.sdk.core.data.NetworkError
 import io.rover.sdk.core.data.NetworkResult
+import io.rover.sdk.core.data.authenticateRequest
 import io.rover.sdk.core.data.domain.ClassicExperienceModel
 import io.rover.sdk.core.data.domain.EventSnapshot
 import io.rover.sdk.core.data.graphql.operations.FetchExperienceRequest
@@ -34,7 +35,11 @@ import io.rover.sdk.core.data.http.NetworkClient
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.DateFormattingInterface
 import io.rover.sdk.core.streams.Publishers
+import io.rover.sdk.core.streams.flatMap
 import io.rover.sdk.core.streams.map
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.reactive.publish
 import org.json.JSONException
 import org.reactivestreams.Publisher
 import java.io.IOException
@@ -45,25 +50,24 @@ import java.net.URL
  */
 class GraphQlApiService(
     private val endpoint: URL,
-    private val authenticationContext: AuthenticationContext,
+    private val authenticationContext: AuthenticationContextInterface,
     private val networkClient: NetworkClient,
     private val dateFormatting: DateFormattingInterface
 ) : GraphQlApiServiceInterface {
-    private fun urlRequest(mutation: Boolean, queryParams: Map<String, String>): HttpRequest {
+    private suspend fun urlRequest(mutation: Boolean, queryParams: Map<String, String>): HttpRequest {
         val uri = Uri.parse(endpoint.toString())
         val builder = uri.buildUpon()
         queryParams.forEach { (k, v) -> builder.appendQueryParameter(k, v) }
 
-        return HttpRequest(
+        val request = HttpRequest(
             URL(builder.toString()),
             hashMapOf<String, String>().apply {
                 if (mutation) {
                     this["Content-Type"] = "application/json"
                 }
 
-                when {
-                    authenticationContext.sdkToken != null -> this["x-rover-account-token"] = authenticationContext.sdkToken!!
-                    authenticationContext.bearerToken != null -> this["authorization"] = "Bearer ${authenticationContext.bearerToken}"
+                if (authenticationContext.sdkToken != null) {
+                    this["x-rover-account-token"] = authenticationContext.sdkToken!!
                 }
 
                 this.entries.forEach { (key, value) ->
@@ -76,6 +80,8 @@ class GraphQlApiService(
                 HttpVerb.GET
             }
         )
+
+        return authenticationContext.authenticateRequest(request)
     }
 
     private fun <TEntity> httpResult(httpRequest: GraphQlRequest<TEntity>, httpResponse: HttpClientResponse): NetworkResult<TEntity> =
@@ -144,12 +150,15 @@ class GraphQlApiService(
     override fun <TEntity> operation(request: GraphQlRequest<TEntity>): Publisher<NetworkResult<TEntity>> {
         // TODO: once we change urlRequest() to use query parameters and GET for non-mutation
         // requests, replace true `below` with `request.mutation`.
-        val urlRequest = urlRequest(request.mutation, request.encodeQueryParameters())
-        val bodyData = request.encodeBody()
-
         return if (authenticationContext.isAvailable()) {
-            networkClient.request(urlRequest, bodyData, gzip = true).map { httpClientResponse ->
-                httpResult(request, httpClientResponse)
+            // wrap a coroutine into a reactive streams publisher
+            return publish<HttpRequest>(Dispatchers.Main) {
+                send(urlRequest(request.mutation, request.encodeQueryParameters()))
+            }.flatMap { urlRequest ->
+                val bodyData = request.encodeBody()
+                networkClient.request(urlRequest, bodyData, gzip = true).map { httpClientResponse ->
+                    httpResult(request, httpClientResponse)
+                }
             }
         } else {
             Publishers.just(

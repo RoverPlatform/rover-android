@@ -17,20 +17,21 @@
 
 package io.rover.sdk.experiences.data
 
-import io.rover.sdk.experiences.rich.compose.model.values.HttpMethod
+import androidx.core.net.toUri
+import io.rover.sdk.core.data.AuthenticationContextInterface
+import io.rover.sdk.core.data.matchesDomainPattern
 
-/**
- * A mutable description of the configuration of an outbound HTTP API request to a Data Source.
- *
- * Mutate the fields on this object to change the request to a data source before Rover Experiences submits it.
- */
-data class URLRequest(
-    var url: String,
-    var method: HttpMethod,
-    var headers: HashMap<String, String> = hashMapOf(),
-    var body: String? = null
-) {
-    fun copy(): URLRequest {
-        return URLRequest(url, method, HashMap(headers.toMap()), body)
+internal suspend fun AuthenticationContextInterface.authenticateRequest(request: URLRequest): URLRequest {
+    val matched = this.sdkAuthenticationEnabledDomains.any { pattern ->
+        request.url.toUri().host?.let { matchesDomainPattern(pattern, it) } == true
+    }
+
+    if (matched) {
+        val token = obtainSdkAuthenticationIdToken() ?: return request
+        val authorizedRequest = request.copy()
+        authorizedRequest.headers["Authorization"] = "Bearer $token"
+        return authorizedRequest
+    } else {
+        return request
     }
 }

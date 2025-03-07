@@ -61,8 +61,9 @@ android {
 
 dependencies {
     implementation("androidx.appcompat:appcompat:1.5.1")
-    // Until java.util.concurrent.Flow appears in Android SDK, import:
+
     api("org.reactivestreams:reactive-streams:1.0.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.6.1")
 
     implementation("androidx.work:work-runtime-ktx:2.7.1")
 

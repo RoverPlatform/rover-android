@@ -47,11 +47,11 @@ internal interface AssetContext {
 }
 
 /**
- * This [AssetContext] provides access to assets from recently loaded Judo ZIP containers.
+ * This [AssetContext] provides access to assets from recently loaded experience ZIP containers.
  *
  * This asset context needs no contextual information about the specific experience
  * being loaded because assets from Experiences ZIP containers are unpacked into a single shared temp
- * directory. For now we rely on the content-addressed filenames assigned to assets by the Judo app
+ * directory. For now we rely on the content-addressed filenames assigned to assets by the Rover mac app
  * to discriminate between them.
  */
 internal object UnpackedTempfilesZipContext : AssetContext {

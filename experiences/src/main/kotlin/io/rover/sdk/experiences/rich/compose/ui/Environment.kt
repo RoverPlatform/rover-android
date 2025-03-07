@@ -21,6 +21,7 @@ import android.net.Uri
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.navigation.NavHostController
+import io.rover.sdk.core.data.AuthenticationContextInterface
 import io.rover.sdk.experiences.data.URLRequest
 import io.rover.sdk.experiences.rich.compose.model.nodes.Node
 import io.rover.sdk.experiences.rich.compose.model.nodes.Screen
@@ -140,6 +141,8 @@ internal object Environment {
 
     val LocalAssetContext = compositionLocalOf<AssetContext> { UnpackedTempfilesZipContext }
 
+    val LocalAuthenticationContext = compositionLocalOf<AuthenticationContextInterface?> { null }
+
     /**
      * Set by [RenderExperience], this allows the registered callback for an authorizer to be used
      * by any Data Sources within the Experience.
@@ -171,4 +174,4 @@ internal data class ViewID(
 /**
  * The shape of the custom action handler callback.
  */
-internal typealias AuthorizerHandler = (URLRequest) -> Unit
+internal typealias AuthorizerHandler = suspend (URLRequest) -> Unit

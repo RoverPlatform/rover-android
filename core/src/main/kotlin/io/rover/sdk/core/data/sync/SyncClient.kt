@@ -18,7 +18,7 @@
 package io.rover.sdk.core.data.sync
 
 import android.net.Uri
-import io.rover.sdk.core.data.AuthenticationContext
+import io.rover.sdk.core.data.AuthenticationContextInterface
 import io.rover.sdk.core.data.domain.Attributes
 import io.rover.sdk.core.data.graphql.operations.data.encodeJson
 import io.rover.sdk.core.data.http.HttpClientResponse
@@ -33,7 +33,7 @@ import java.util.Locale
 
 class SyncClient(
     private val endpoint: URL,
-    private val authenticationContext: AuthenticationContext,
+    private val authenticationContext: AuthenticationContextInterface,
     private val dateFormatting: DateFormattingInterface,
     private val networkClient: NetworkClient
 ) : SyncClientInterface {
@@ -94,9 +94,8 @@ class SyncClient(
         return HttpRequest(
             URL(builder.build().toString()),
             hashMapOf<String, String>().apply {
-                when {
-                    authenticationContext.sdkToken != null -> this["x-rover-account-token"] = authenticationContext.sdkToken!!
-                    authenticationContext.bearerToken != null -> this["authorization"] = "Bearer ${authenticationContext.bearerToken}"
+                if (authenticationContext.sdkToken != null) {
+                    this["x-rover-account-token"] = authenticationContext.sdkToken!!
                 }
             },
             HttpVerb.GET

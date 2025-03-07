@@ -97,7 +97,8 @@ internal fun RenderExperience(
                 Environment.LocalDismissExperience provides { closeActivity() },
                 Environment.LocalExperienceModel provides experience,
                 Environment.LocalDocumentFonts provides experience.fonts,
-                Environment.LocalIsDarkTheme provides experience.appearance.getDarkModeValue()
+                Environment.LocalIsDarkTheme provides experience.appearance.getDarkModeValue(),
+                Environment.LocalAuthenticationContext provides services.authenticationContext
             ) {
                 // Every screen needs to be created as a potential route here.
                 // The first one is chosen by its id, so it's the only one to be composed at this point.

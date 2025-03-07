@@ -30,7 +30,7 @@ dependencyResolutionManagement {
         mavenCentral()
         // needed to retrieve the Rover Experiences SDK
         maven {
-            url = java.net.URI.create("https://judoapp.github.io/judo-maven/maven")
+            url = java.net.URI.create("https://roverplatform.github.io/rover-maven/maven")
         }
     }
 }
@@ -38,7 +38,7 @@ dependencyResolutionManagement {
 include(":core", ":location", ":notifications", ":debug", ":ticketmaster", ":experiences", ":seatgeek", ":adobeExperience", "axs")
 rootProject.name = "Rover Android"
 include(":example-app")
-include(":testbench")
+include(":bench")
 
 // automatic JDK fetching:
 plugins {

@@ -28,6 +28,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.*
@@ -39,6 +40,8 @@ import io.rover.sdk.experiences.rich.compose.model.values.Alignment
 import io.rover.sdk.experiences.rich.compose.model.values.Axis
 import io.rover.sdk.experiences.rich.compose.model.values.ColorReference
 import io.rover.sdk.experiences.rich.compose.model.values.Fill
+import io.rover.sdk.experiences.rich.compose.ui.Environment.LocalHasHorizontalScrollContainer
+import io.rover.sdk.experiences.rich.compose.ui.Environment.LocalHasVerticalScrollContainer
 import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.HStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.VStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.layout.*
@@ -63,39 +66,66 @@ internal fun ScrollContainerLayer(axis: Axis = Axis.VERTICAL, layerModifiers: La
     // 4. implicit stack
     // 5. content itself
 
-    ApplyLayerModifiers(layerModifiers, modifier) { modifier ->
-        Layout(
-            {
-                when (axis) {
-                    Axis.VERTICAL ->
-                        VStackLayer(
-                            alignment = Alignment.CENTER,
-                            spacing = 0f,
-                            modifier = Modifier
-                                .then(NestedScrollProtector(Axis.VERTICAL))
-                                .verticalScroll(rememberScrollState())
-                                .then(ScrollContainerInnerLayoutModifier(Axis.VERTICAL)),
-                        ) {
-                            content()
-                        }
+    val hasVerticalScrollContainer = LocalHasVerticalScrollContainer.current
+    val hasHorizontalScrollContainer = LocalHasHorizontalScrollContainer.current
 
-                    Axis.HORIZONTAL -> {
-                        HStackLayer(
-                            alignment = Alignment.CENTER,
-                            spacing = 0f,
-                            modifier = Modifier
-                                .then(NestedScrollProtector(Axis.HORIZONTAL))
-                                .horizontalScroll(rememberScrollState())
-                                .then(ScrollContainerInnerLayoutModifier(Axis.HORIZONTAL)),
-                        ) {
-                            content()
+    // if the designer has accidentally nested a scroll container with the same axis (which Jetpack Compose's scrollable modifier does not support),
+    // replace self with stack.
+    if (hasVerticalScrollContainer && axis == Axis.VERTICAL) {
+        VStackLayer(
+            alignment = Alignment.CENTER,
+            spacing = 0f,
+            modifier = modifier,
+            layerModifiers = layerModifiers,
+        ) {
+            content()
+        }
+    } else if (hasHorizontalScrollContainer && axis == Axis.HORIZONTAL) {
+        HStackLayer(
+            alignment = Alignment.CENTER,
+            spacing = 0f,
+            modifier = modifier,
+            layerModifiers = layerModifiers,
+        ) { 
+            content()
+        }
+    } else {
+        ApplyLayerModifiers(layerModifiers, modifier) { modifier ->
+            CompositionLocalProvider(
+                LocalHasVerticalScrollContainer provides (axis == Axis.VERTICAL),
+                LocalHasHorizontalScrollContainer provides (axis == Axis.HORIZONTAL),
+            ) {
+                Layout({
+                    when (axis) {
+                        Axis.VERTICAL ->
+                            VStackLayer(
+                                alignment = Alignment.CENTER,
+                                spacing = 0f,
+                                modifier = Modifier
+                                    .verticalScroll(rememberScrollState())
+                                    .then(ScrollContainerInnerLayoutModifier(Axis.VERTICAL)),
+                            ) {
+                                content()
+                            }
+
+                        Axis.HORIZONTAL -> {
+                            HStackLayer(
+                                alignment = Alignment.CENTER,
+                                spacing = 0f,
+                                modifier = Modifier
+                                    .horizontalScroll(rememberScrollState())
+                                    .then(ScrollContainerInnerLayoutModifier(Axis.HORIZONTAL)),
+                            ) {
+                                content()
+                            }
                         }
                     }
-                }
-            },
-            modifier = modifier,
-            measurePolicy = ScrollContainerOuterMeasurePolicy(axis),
-        )
+                },
+                modifier = modifier,
+                    measurePolicy = ScrollContainerOuterMeasurePolicy(axis),
+                )
+            }
+        }
     }
 }
 
@@ -369,83 +399,6 @@ private fun CrossAxisNestedScrollContainers() {
             TextLayer("I am some more text")
             TextLayer("And another")
         }
-    }
-}
-
-/**
- * Guard a nested scroll modifier from crashing if it has been embedded in a scroll container
- * of the same axis. While this is something of an illegal use case, users can build it in
- * the Mac app, and we should produce the same results without crashing.
- */
-private class NestedScrollProtector(
-    private val axis: Axis,
-) : LayoutModifier {
-    override fun MeasureScope.measure(
-        measurable: Measurable,
-        constraints: Constraints,
-    ): MeasureResult {
-        // here the goal is to maintain the sizing/measurement behaviour of the child,
-        // except in one case: if we are proposed infinity on axis of expansion, that means
-        // the scroll container has been nested within a scroll container of same dimension.
-
-        // in the event of nested scroll, instead of proposing infinity to child, instead
-        // use fallbackMeasure (which bypasses .scrollable) to determine the nominal
-        // height of the child and we'll fall back to that.
-        val childConstraints = when (axis) {
-            Axis.HORIZONTAL -> {
-                constraints.copy(
-                    maxWidth = constraints.maxWidth.ifInfinity {
-                        measurable.fallbackMeasure(
-                            Size(constraints.maxWidth, constraints.maxHeight),
-                        ).width
-                    },
-                )
-            }
-            Axis.VERTICAL -> {
-                constraints.copy(
-                    maxHeight = constraints.maxHeight.ifInfinity {
-                        measurable.fallbackMeasure(
-                            Size(constraints.maxWidth, constraints.maxHeight),
-                        ).height
-                    },
-                )
-            }
-        }
-
-        val placeable =
-            measurable.measure(childConstraints)
-
-        return layout(placeable.measuredWidth, placeable.measuredHeight) {
-            placeable.place(0, 0)
-        }
-    }
-
-    override fun IntrinsicMeasureScope.maxIntrinsicHeight(
-        measurable: IntrinsicMeasurable,
-        width: Int,
-    ): Int {
-        return measurable.maxIntrinsicHeight(width)
-    }
-
-    override fun IntrinsicMeasureScope.maxIntrinsicWidth(
-        measurable: IntrinsicMeasurable,
-        height: Int,
-    ): Int {
-        return measurable.maxIntrinsicWidth(height)
-    }
-
-    override fun IntrinsicMeasureScope.minIntrinsicHeight(
-        measurable: IntrinsicMeasurable,
-        width: Int,
-    ): Int {
-        return measurable.minIntrinsicHeight(width)
-    }
-
-    override fun IntrinsicMeasureScope.minIntrinsicWidth(
-        measurable: IntrinsicMeasurable,
-        height: Int,
-    ): Int {
-        return measurable.minIntrinsicWidth(height)
     }
 }
 

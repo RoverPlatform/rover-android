@@ -158,6 +158,17 @@ internal object Environment {
      * Pre-defined font styles specified in the document.
      */
     val LocalDocumentFonts = compositionLocalOf<List<DocumentFont>> { emptyList() }
+
+    /**
+     * Indicates whether a vertical scroll container exists in the parent hierarchy.
+     */
+    val LocalHasVerticalScrollContainer = compositionLocalOf<Boolean> { false }
+
+    /**
+     * Indicates whether a horizontal scroll container exists in the parent hierarchy.
+     */
+    val LocalHasHorizontalScrollContainer = compositionLocalOf<Boolean> { false }
+
 }
 
 internal data class ViewID(

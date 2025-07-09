@@ -46,7 +46,7 @@ data class AuthenticationContext(
     override val sdkToken: String?,
     var localStorage: LocalStorage
 ) : AuthenticationContextInterface {
-    override val sdkAuthenticationEnabledDomains = mutableSetOf("api.rover.io")
+    override val sdkAuthenticationEnabledDomains = mutableSetOf("*.rover.io")
 
     private val keyValueStorage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
 

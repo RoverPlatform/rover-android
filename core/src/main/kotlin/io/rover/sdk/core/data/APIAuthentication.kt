@@ -21,7 +21,7 @@ import io.rover.sdk.core.data.http.HttpRequest
 
 internal suspend fun AuthenticationContextInterface.authenticateRequest(request: HttpRequest): HttpRequest {
     val matched = this.sdkAuthenticationEnabledDomains.any { pattern ->
-        request.url.host?.let { matchesDomainPattern(pattern, it) } == true
+        request.url.host?.let { matchesDomainPattern(it, pattern) } == true
     }
 
     if (matched) {

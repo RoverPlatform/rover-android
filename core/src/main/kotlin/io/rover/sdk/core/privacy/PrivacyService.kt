@@ -53,10 +53,11 @@ class PrivacyService(
             return _trackingEnabledFlow.value
         }
         set(value) {
+            val oldValue = _trackingEnabledFlow.value
             localStorage.getKeyValueStorageFor("PrivacyService")["trackingMode"] =
                 value.wireFormat
             _trackingEnabledFlow.value = value
-            log.i("Tracking set to ${value.wireFormat}.")
+            log.i("Privacy tracking mode changed from ${oldValue.wireFormat} to ${value.wireFormat}")
             listeners.forEach { it.onTrackingModeChanged(value) }
         }
 

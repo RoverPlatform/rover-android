@@ -88,7 +88,7 @@ internal fun Experience(
             return@Inject
         }
 
-        val viewModel = viewModel<ExperienceFetchViewModel>(key = url.toString())
+        val viewModel = viewModel<ExperienceFetchViewModel>()
 
         val context = LocalContext.current
 

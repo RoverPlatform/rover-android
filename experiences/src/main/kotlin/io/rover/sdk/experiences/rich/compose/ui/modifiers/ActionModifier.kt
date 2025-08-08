@@ -65,7 +65,7 @@ internal fun ActionModifier(
     )
 
     if (action == null) {
-        return content(modifier = modifier)
+        return content(modifier)
     }
 
     Services.Inject { services ->
@@ -125,7 +125,7 @@ internal fun ActionModifier(
                     },
                     modifier = modifier
                 ) {
-                    content(modifier = Modifier)
+                    content(Modifier)
                 }
             }
 
@@ -154,7 +154,7 @@ internal fun ActionModifier(
                     },
                     modifier = modifier
                 ) {
-                    content(modifier = Modifier)
+                    content(Modifier)
                 }
             }
 
@@ -175,7 +175,7 @@ internal fun ActionModifier(
                     },
                     modifier = modifier
                 ) {
-                    content(modifier = Modifier)
+                    content(Modifier)
                 }
             }
 
@@ -189,7 +189,7 @@ internal fun ActionModifier(
                     },
                     modifier = modifier
                 ) {
-                    content(modifier = Modifier)
+                    content(Modifier)
                 }
             }
 
@@ -228,11 +228,11 @@ internal fun ActionModifier(
                     },
                     modifier = modifier
                 ) {
-                    content(modifier = Modifier)
+                    content(Modifier)
                 }
             }
 
-            else -> content(modifier = modifier)
+            else -> content(modifier)
         }
     }
 }
@@ -245,7 +245,7 @@ private fun ActionModifierButton(
     content: @Composable (modifier: Modifier) -> Unit
 ) {
     Layout(
-        content = { content(modifier = Modifier) },
+        content = { content(Modifier) },
         measurePolicy = SimpleMeasurePolicy(),
         modifier = modifier.clickable(
             onClick = onClick,

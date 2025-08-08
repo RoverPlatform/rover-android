@@ -30,7 +30,6 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-import androidx.lifecycle.ViewTreeLifecycleOwner
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
@@ -74,7 +73,7 @@ open class InboxListView :
         LifecycleRegistry(this)
     }
 
-    override fun getLifecycle(): Lifecycle = registry
+    override val lifecycle: Lifecycle get() = registry
 
     /**
      * This method will generate a row view.

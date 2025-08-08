@@ -16,23 +16,26 @@
  */
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlin.ksp)
+    id("kotlin-parcelize")
     id("maven-publish")
 }
 
 val roverSdkVersion: String by rootProject.extra
-val kotlinVersion: String by rootProject.extra
+
 
 kotlin {
     jvmToolchain(11)
 }
 
 android {
-    compileSdk = 34
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 26
+        minSdk = libs.versions.minSdk.get().toInt()
     }
 
     buildTypes {
@@ -54,31 +57,71 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    
+    buildFeatures {
+        compose = true
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
 
     namespace = "io.rover.notifications"
 }
 
 dependencies {
-    implementation("androidx.appcompat:appcompat:1.5.1")
+    implementation(libs.androidx.appcompat)
 
-    implementation("androidx.legacy:legacy-support-v4:1.0.0")
+    implementation(libs.androidx.legacy.support.v4)
 
-    implementation("androidx.recyclerview:recyclerview:1.1.0")
-    implementation("com.google.android.material:material:1.2.1")
-    implementation("androidx.vectordrawable:vectordrawable:1.1.0")
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.material)
+    implementation(libs.androidx.vectordrawable)
 
-    implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    implementation(libs.androidx.lifecycle.extensions)
+    implementation(libs.bundles.kotlin)
+    implementation(libs.kotlinx.coroutines.reactive)
+
+    // Room dependencies for Communication Hub
+    implementation(libs.bundles.room)
+    ksp(libs.room.compiler)
+    
+    // Moshi KSP processor for Communication Hub DTOs
+    ksp(libs.moshi.kotlin.codegen)
+
+    // JSON parsing for Communication Hub API
+    implementation(libs.bundles.json)
+    
+    // Networking for Communication Hub API
+    implementation(libs.bundles.networking)
+
+    // Compose dependencies for Communication Hub UI
+    implementation(platform(libs.compose.bom))
+    implementation(libs.androidx.browser)
+    implementation(libs.compose.ui)
+
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.compose.material)
+    implementation(libs.compose.activity)
+    implementation(libs.compose.lifecycle.viewmodel)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.compose.material3.adaptive)
+    implementation(libs.androidx.compose.adaptive.layout.android)
+    implementation(libs.androidx.compose.adaptive.navigation.android)
+    debugImplementation(libs.androidx.ui.tooling)
+    implementation(libs.compose.ui.tooling.preview)
 
     implementation(project(":core"))
 
-    testImplementation("junit:junit:4.12")
+    testImplementation(libs.junit.legacy)
 
-    testImplementation("com.natpryce:hamkrest:1.6.0.0")
+    testImplementation(libs.hamkrest)
 
-    androidTestImplementation("androidx.test.ext:junit:1.1.3")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
+    androidTestImplementation(libs.bundles.android.testing)
 }
 
 afterEvaluate {

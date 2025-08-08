@@ -159,6 +159,11 @@ class CoreAssembler @JvmOverloads constructor(
     private val endpoint: String = "https://api.rover.io/graphql",
 
     /**
+     * The location of the Engage API endpoint.  You should never need to change this.
+     */
+    private val engageEndpoint: String = "https://engage.rover.io/",
+
+    /**
      * By default the Rover SDK will schedule occasional background syncs (for instance, if you have
      * the Rover Location module installed, this will keep the monitored beacons and geofences up to
      * date).
@@ -172,6 +177,8 @@ class CoreAssembler @JvmOverloads constructor(
         }
 
         container.register(Scope.Singleton, String::class.java, "accountToken") { _ -> accountToken }
+
+        container.register(Scope.Singleton, String::class.java, "engageEndpoint") { _ -> engageEndpoint }
 
         container.register(Scope.Singleton, Application::class.java) { _ ->
             application

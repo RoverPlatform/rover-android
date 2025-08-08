@@ -22,7 +22,10 @@ import android.util.Size
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -296,7 +299,10 @@ private fun ExperiencesAppBar(
             }
         },
         // The color "beneath" the app bar should be the same as the screen.
-        modifier = Modifier.background(color = screenBackground)
+        // Add window insets padding to ensure content doesn't overlap with system UI
+        modifier = Modifier
+            .background(color = screenBackground)
+            .windowInsetsPadding(WindowInsets.statusBars)
     )
 }
 

@@ -24,11 +24,9 @@ import io.rover.sdk.notifications.domain.Notification
 
 interface PushReceiverInterface {
     /**
-     * You need to implement a
+     * To support incoming FCM Push Notifications, you will need to implement a
      * [FirebaseMessagingService](https://firebase.google.com/docs/reference/android/com/google/firebase/messaging/FirebaseMessagingService)
      * in your application, and then override its `onMessageReceived` method.
-     *
-     * If you are using GCM instead of FCM, then look at [onMessageReceivedDataAsBundle] instead.
      *
      * Then, retrieve `data` from the `RemoteMessage` object it received and pass it here.
      *

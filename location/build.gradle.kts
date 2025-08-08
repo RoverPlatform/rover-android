@@ -16,23 +16,23 @@
  */
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
     id("maven-publish")
 }
 
 val roverSdkVersion: String by rootProject.extra
-val kotlinVersion: String by rootProject.extra
+
 
 kotlin {
     jvmToolchain(11)
 }
 
 android {
-    compileSdk = 34
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 26
+        minSdk = libs.versions.minSdk.get().toInt()
     }
 
     buildTypes {
@@ -55,22 +55,27 @@ android {
         jvmTarget = "11"
     }
 
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+
     namespace = "io.rover.location"
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.6.1")
+    implementation(libs.bundles.kotlin)
+    implementation(libs.kotlinx.coroutines.reactive)
 
-    testImplementation("junit:junit:4.12")
+    testImplementation(libs.junit.legacy)
 
-    androidTestImplementation("androidx.test.ext:junit:1.1.3")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
+    androidTestImplementation(libs.bundles.android.testing)
     implementation(project(":core"))
 
-    implementation("com.google.android.gms:play-services-nearby:18.5.0")
-    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation(libs.play.services.nearby)
+    implementation(libs.play.services.location)
 }
 
 afterEvaluate {

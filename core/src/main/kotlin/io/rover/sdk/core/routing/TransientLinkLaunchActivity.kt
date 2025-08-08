@@ -35,14 +35,22 @@ open class TransientLinkLaunchActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+
+
         val rover = Rover.failableShared
         if (rover == null) {
             log.e("A deep or universal link mapped to Rover was opened, but Rover is not initialized.  Ignoring.")
+            finish()
             return
         }
+
+        // if for some reason we can't resolve a useful intent, fallback to just opening the app.
+
+        val fallbackIntent = rover.resolve(Intent::class.java, "openApp")
         val linkOpen = rover.resolve(LinkOpenInterface::class.java)
         if (linkOpen == null) {
             log.e("A deep or universal link mapped to Rover was opened, but LinkOpenInterface is not registered in the Rover container. Ensure ExperiencesAssembler() is in Rover.initialize(). Ignoring.")
+            finish()
             return
         }
 
@@ -57,8 +65,10 @@ open class TransientLinkLaunchActivity : Activity() {
             // no fallback to making a stock ACTION_VIEW intent for this uri is needed if Rover
             // Router fails to produce a Uri is needed. This is because Link Launch activity
             // is only used for *inbound* links being launched with the Rover SDK.
-            log.e("Rover router could not give us a URL for the URI: '$uri'.  Ignoring.")
-            return
+            log.w("Rover router could not give us a URL for the URI: '$uri'.  Ignoring.")
+
+            // fall back to app open intent so there's not a blank screen
+            fallbackIntent ?: return
         }
 
         log.v("Launching intent: $linkIntent")

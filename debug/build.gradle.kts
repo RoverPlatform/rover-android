@@ -16,25 +16,25 @@
  */
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlin.android)
     id("maven-publish")
 }
 
 val roverSdkVersion: String by rootProject.extra
-val kotlinVersion: String by rootProject.extra
+
 val composeBomVersion: String by rootProject.extra
-val composeKotlinCompilerExtensionVersion: String by rootProject.extra
 
 kotlin {
     jvmToolchain(11)
 }
 
 android {
-    compileSdk = 34
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 26
+        minSdk = libs.versions.minSdk.get().toInt()
     }
 
     buildTypes {
@@ -61,27 +61,26 @@ android {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = composeKotlinCompilerExtensionVersion
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
     }
 
     namespace = "io.rover.debug"
 }
 
 dependencies {
-    implementation("androidx.appcompat:appcompat:1.5.1")
-    implementation("androidx.legacy:legacy-support-v4:1.0.0")
-    implementation("androidx.preference:preference:1.0.0")
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.legacy.support.v4)
+    implementation(libs.androidx.preference)
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
+    implementation(libs.kotlin.stdlib)
     implementation(project(":core"))
 
-    implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.foundation:foundation")
-    implementation("androidx.compose.material:material")
-    implementation("androidx.compose.material:material-icons-core")
-    implementation("androidx.activity:activity-compose:1.5.1")
+    implementation(platform(libs.compose.bom))
+    implementation(libs.bundles.compose.ui)
 }
 
 afterEvaluate {

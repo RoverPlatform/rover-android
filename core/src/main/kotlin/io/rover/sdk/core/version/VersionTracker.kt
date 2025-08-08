@@ -36,7 +36,7 @@ class VersionTracker(
         val packageInfo = applicationContext.packageManager.getPackageInfo(applicationContext.packageName, 0)
 
         val versionCode = packageInfo.versionCode
-        val versionName = packageInfo.versionName
+        val versionName = packageInfo.versionName ?: "unknown"
 
         val lastSeenCode = store[LAST_SEEN_VERSION_CODE_KEY]?.toIntOrNull()
         val lastSeenName = store[LAST_SEEN_VERSION_NAME_KEY] ?: ""

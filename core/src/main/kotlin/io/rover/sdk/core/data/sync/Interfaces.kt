@@ -99,6 +99,11 @@ interface SyncCoordinatorInterface {
     fun registerParticipant(participant: SyncParticipant)
 
     /**
+     * Adds a [SyncStandaloneParticipant] to be included in sync runs but operating independently of GraphQL.
+     */
+    fun registerStandaloneParticipant(participant: SyncStandaloneParticipant)
+
+    /**
      * Trigger an immediate sync with all of the registered participants.
      *
      * (This will start each participant at its initial sync request).
@@ -137,4 +142,15 @@ interface SyncCoordinatorInterface {
 interface SyncParticipant {
     fun initialRequest(): SyncRequest?
     fun saveResponse(json: JSONObject): SyncResult
+}
+
+/**
+ * Services that wish to sync when requested by SyncCoordinator (but do not participate in the GraphQL sync API) should implement this interface.
+ * This is the Android equivalent of the iOS SyncStandaloneParticipant protocol.
+ */
+interface SyncStandaloneParticipant {
+    /**
+     * Syncs this module. Returns false if the sync was unsuccessful.
+     */
+    suspend fun sync(): Boolean
 }

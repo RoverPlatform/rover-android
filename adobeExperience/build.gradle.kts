@@ -16,23 +16,23 @@
  */
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
     id("maven-publish")
 }
 
 val roverSdkVersion: String by rootProject.extra
-val kotlinVersion: String by rootProject.extra
+
 
 kotlin {
     jvmToolchain(11)
 }
 
 android {
-    compileSdk = 34
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 26
+        minSdk = libs.versions.minSdk.get().toInt()
     }
 
     buildTypes {
@@ -55,19 +55,24 @@ android {
         jvmTarget = "11"
     }
 
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+
     namespace = "io.rover.adobeExperience"
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
-    implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
+    implementation(libs.bundles.kotlin)
+    implementation(libs.androidx.localbroadcastmanager)
     implementation(project(":core"))
-    testImplementation("junit:junit:4.12")
+    testImplementation(libs.junit.legacy)
     // spek
-    testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0")
-    androidTestImplementation("androidx.test.ext:junit:1.1.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
+    testImplementation(libs.mockito.kotlin)
+    androidTestImplementation(libs.bundles.android.testing)
 }
 
 afterEvaluate {

@@ -49,7 +49,7 @@ internal data class ExperienceRequested(
     val experienceURLForRequest: String? by lazy {
         experienceURL?.let { uriString ->
             val uri = URI.create(uriString)
-            if (arrayOf("http", "https").contains(uri.scheme?.toLowerCase(Locale.ROOT))) {
+            if (arrayOf("http", "https").contains(uri.scheme.lowercase(Locale.ROOT))) {
                 // An Experience link was opened directly, just exclude any query parameters (eg screenID):
                 URI(uri.scheme, uri.authority, uri.path, null, uri.fragment).toString()
             } else {

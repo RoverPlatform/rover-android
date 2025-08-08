@@ -19,7 +19,11 @@ package io.rover.sdk.core
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import io.rover.core.BuildConfig
 import io.rover.sdk.core.container.Assembler
 import io.rover.sdk.core.container.ContainerResolver
@@ -71,6 +75,23 @@ class Rover(
 
     val associatedDomains: List<String>
         get() = shared.resolveSingletonOrFail(UrlSchemes::class.java).associatedDomains
+
+    /**
+     * A Material 3 Compose color light scheme for use in Rover UI, when used in contexts where a theme
+     * cannot be already set.
+     *
+     * This applies in cases such as when the Communication Hub is launched modally as an Activity.
+     */
+    var lightColorScheme: ColorScheme = lightColorScheme()
+
+
+    /**
+     * A Material 3 Compose color light scheme for use in Rover UI, when used in contexts where a theme
+     * cannot be already set.
+     *
+     * This applies in cases such as when the Communication Hub is launched modally as an Activity.
+     */
+    var darkColorScheme: ColorScheme = darkColorScheme()
 
     // And here is the singleton logic:
 

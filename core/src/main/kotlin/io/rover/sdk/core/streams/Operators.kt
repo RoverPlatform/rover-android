@@ -27,6 +27,7 @@ import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
 import java.util.ArrayDeque
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
@@ -946,7 +947,7 @@ fun <T> Publisher<T>.timeout(interval: Long, unit: TimeUnit): Publisher<T> {
                         val timeoutHandler = {
                             if (stillWaiting) {
                                 // timeout has run out!
-                                onError(Throwable("$interval ${unit.name.toLowerCase()} timeout has expired."))
+                                onError(Throwable("$interval ${unit.name.lowercase(Locale.getDefault())} timeout has expired."))
                                 subscription.cancel()
                             }
                         }

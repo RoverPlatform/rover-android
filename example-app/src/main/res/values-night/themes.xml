@@ -28,6 +28,12 @@
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+
+        <!-- Note: for the Inbox/Communication hub, for the webview to correctly display posts in
+             dark mode, this theme item must be present in values-night, even in a pure
+             Jetpack Compose app. -->
+        <item name="android:isLightTheme" tools:targetApi="29">false</item>
+
         <!-- Customize your theme here. -->
     </style>
 </resources>

@@ -40,6 +40,7 @@ class AdobeExperienceManager(
 
     override fun setECID(ecid: String) {
         if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
+            log.i("Adobe Experience ECID set while privacy is in anonymous/anonymized mode, ignored")
             return
         }
         adobeECID = ecid

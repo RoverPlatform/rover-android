@@ -43,6 +43,11 @@ import io.rover.sdk.core.streams.observeOn
 import io.rover.sdk.core.streams.share
 import io.rover.sdk.core.streams.shareHotAndReplay
 import io.rover.sdk.core.streams.subscribeOn
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.json.JSONException
 import org.json.JSONObject
 import org.reactivestreams.Publisher
@@ -58,6 +63,10 @@ class SyncCoordinator(
 
     override fun registerParticipant(participant: SyncParticipant) {
         participants.add(participant)
+    }
+
+    override fun registerStandaloneParticipant(participant: SyncStandaloneParticipant) {
+        standaloneParticipants.add(participant)
     }
 
     override fun sync(): Publisher<SyncCoordinatorInterface.Result> {
@@ -92,7 +101,52 @@ class SyncCoordinator(
         )
     }
 
-    private fun sync(participants: List<SyncParticipant>, requests: List<SyncRequest>): Publisher<SyncCoordinatorInterface.Result> {
+    private fun syncWithStandaloneParticipants(participants: List<SyncParticipant>, requests: List<SyncRequest>): Publisher<SyncCoordinatorInterface.Result> {
+        // Run GraphQL sync and standalone sync, combining results
+        return syncGraphQL(participants, requests)
+            .flatMap { graphqlResult ->
+                // Run standalone sync if there are any standalone participants
+                if (standaloneParticipants.isNotEmpty()) {
+                    Publishers.just(Unit)
+                        .subscribeOn(ioScheduler)
+                        .map {
+                            // Execute standalone sync synchronously on IO thread
+                            val standaloneResult = syncStandaloneParticipantsBlocking()
+                            
+                            // Return success if either sync succeeded
+                            when {
+                                graphqlResult == SyncCoordinatorInterface.Result.Succeeded || standaloneResult -> SyncCoordinatorInterface.Result.Succeeded
+                                else -> SyncCoordinatorInterface.Result.RetryNeeded
+                            }
+                        }
+                } else {
+                    // No standalone participants, just return GraphQL result
+                    Publishers.just(graphqlResult)
+                }
+            }
+    }
+
+    private fun syncStandaloneParticipantsBlocking(): Boolean {
+        var hasNewData = false
+        
+        for (participant in standaloneParticipants) {
+            try {
+                // Use runBlocking to execute suspend function synchronously
+                val success = kotlinx.coroutines.runBlocking {
+                    participant.sync()
+                }
+                if (success) {
+                    hasNewData = true
+                }
+            } catch (e: Exception) {
+                log.w("Standalone sync participant failed: ${e.message}")
+            }
+        }
+        
+        return hasNewData
+    }
+
+    private fun syncGraphQL(participants: List<SyncParticipant>, requests: List<SyncRequest>): Publisher<SyncCoordinatorInterface.Result> {
         // this chains recursively.
         return if (!requests.isEmpty() && !participants.isEmpty()) {
             syncClient
@@ -141,7 +195,7 @@ class SyncCoordinator(
                             }
 
                             log.v("Recursing to the ${nextParticipants.count()} next sync participants.")
-                            sync(nextParticipants.map { it.first }, nextParticipants.map { it.second })
+                            syncGraphQL(nextParticipants.map { it.first }, nextParticipants.map { it.second })
                         }
                     }
                 }
@@ -152,6 +206,7 @@ class SyncCoordinator(
     }
 
     private val participants: MutableSet<SyncParticipant> = mutableSetOf()
+    private val standaloneParticipants: MutableSet<SyncStandaloneParticipant> = mutableSetOf()
 
     private val subject = PublishSubject<Action>()
 
@@ -162,19 +217,19 @@ class SyncCoordinator(
         .observeOn(ioScheduler)
         .filter {
             // filter out all incoming requests if a sync is already executing.
-            synchronized(executing) { !executing }
+            synchronized(this) { !executing }
         }
         .doOnNext {
-            synchronized(executing) { executing = true }
+            synchronized(this) { executing = true }
         }.flatMap {
-            log.v("Starting sync with ${participants.count()} participants.")
-            sync(
+            log.v("Starting sync with ${participants.count()} participants and ${standaloneParticipants.count()} standalone participants.")
+            syncWithStandaloneParticipants(
                 // starting with all the registered participants.
                 this.participants.toList(),
                 this.participants.mapNotNull { it.initialRequest() }
             ).doOnNext { log.v("Sync completed with: $it") }
         }.doOnNext {
-            synchronized(executing) { executing = false }
+            synchronized(this) { executing = false }
         }.observeOn(mainThreadScheduler).shareHotAndReplay(0).subscribeOn(mainThreadScheduler)
 
     override val syncResults: Publisher<SyncCoordinatorInterface.Result> = chain

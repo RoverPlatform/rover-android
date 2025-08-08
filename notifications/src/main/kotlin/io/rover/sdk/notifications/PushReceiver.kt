@@ -21,17 +21,19 @@ import android.os.Bundle
 import io.rover.sdk.core.events.PushTokenTransmissionChannel
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.DateFormattingInterface
+import io.rover.sdk.notifications.communicationhub.push.CommunicationHubPushHandler
 import io.rover.sdk.notifications.domain.Notification
 import io.rover.sdk.notifications.graphql.decodeJson
 import org.json.JSONException
 import org.json.JSONObject
 import java.net.MalformedURLException
 
-open class PushReceiver(
+internal open class PushReceiver(
     private val pushTokenTransmissionChannel: PushTokenTransmissionChannel,
     private val notificationDispatcher: NotificationDispatcher,
     private val dateFormatting: DateFormattingInterface,
-    private val influenceTrackerService: InfluenceTrackerServiceInterface
+    private val influenceTrackerService: InfluenceTrackerServiceInterface,
+    internal val communicationHubPushHandler: CommunicationHubPushHandler? = null
 ) : PushReceiverInterface {
 
     override fun onTokenRefresh(token: String?) {
@@ -49,7 +51,7 @@ open class PushReceiver(
         // b) the app is running in foreground.
 
         if (!parameters.containsKey("rover")) {
-            log.w("A push notification received that appeared to be not intended for Rover : `rover` data parameter not present. Ignoring.")
+            log.i("A push notification received that appeared to be not intended for Rover : `rover` data parameter not present. Ignoring.")
             // clear influenced open data so we don't take credit for an influenced open for a
             // notification we did not receive.
             influenceTrackerService.nonRoverPushReceived()
@@ -68,8 +70,22 @@ open class PushReceiver(
     }
 
     private fun handleRoverNotificationObject(roverJson: String) {
+        // Check if this is a Communication Hub push notification
+        if (communicationHubPushHandler != null) {
+            
+            communicationHubPushHandler.handleCommunicationHubPush(roverJson)
+
+        }
+        
+        // Handle standard notification
         val notification = try {
-            val notificationJsonObject = JSONObject(roverJson).getJSONObject("notification")
+            val jsonObject = JSONObject(roverJson)
+            if (!jsonObject.has("notification")) {
+                // this rover push does not contain a classic notification.
+                return
+            }
+            val notificationJsonObject = jsonObject.getJSONObject("notification")
+
             Notification.decodeJson(
                 notificationJsonObject,
                 dateFormatting

@@ -28,6 +28,7 @@ import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import io.rover.sdk.experiences.platform.toAndroidBitmap
+import androidx.core.graphics.createBitmap
 
 internal class BarcodeRenderingService {
     enum class Format {
@@ -113,7 +114,10 @@ internal class BarcodeRenderingService {
                     val newHeight = fixedHeight + margin * 2
                     val newWidth = bitmap.width + margin * 2
 
-                    val newBitmap = Bitmap.createBitmap(newWidth, newHeight, bitmap.config)
+                    // if config is somehow missing, then just return the unprocessed bitmap.
+                    val bitmapConfig = bitmap.config ?: return bitmap
+
+                    val newBitmap = createBitmap(newWidth, newHeight, bitmapConfig)
 
                     val canvas = Canvas(newBitmap)
 
@@ -145,7 +149,10 @@ internal class BarcodeRenderingService {
                     val newHeight = bitmap.height + margin * 2
                     val newWidth = bitmap.width + margin * 2
 
-                    val newBitmap = Bitmap.createBitmap(newWidth, newHeight, bitmap.config)
+                    // if config is somehow missing, then just return the unprocessed bitmap.
+                    val bitmapConfig = bitmap.config ?: return bitmap
+
+                    val newBitmap = createBitmap(newWidth, newHeight, bitmapConfig)
 
                     val canvas = Canvas(newBitmap)
 

@@ -17,11 +17,16 @@
 
 package io.rover.sdk.experiences.classic.toolbar
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
 /**
@@ -69,6 +74,9 @@ internal fun ExperienceToolbar(
                     )
                 }
             }
-        }
+        },
+        modifier = Modifier
+            .background(color = backgroundColor)
+            .windowInsetsPadding(WindowInsets.statusBars)
     )
 }

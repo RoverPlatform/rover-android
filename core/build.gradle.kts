@@ -16,23 +16,22 @@
  */
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
     id("maven-publish")
 }
 
 val roverSdkVersion: String by rootProject.extra
-val kotlinVersion: String by rootProject.extra
 
 kotlin {
     jvmToolchain(11)
 }
 
 android {
-    compileSdk = 34
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 26
+        minSdk = libs.versions.minSdk.get().toInt()
         buildConfigField("String", "ROVER_SDK_VERSION", "\"$roverSdkVersion\"")
     }
 
@@ -56,29 +55,43 @@ android {
         jvmTarget = "11"
     }
 
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+
     namespace = "io.rover.core"
 }
 
 dependencies {
-    implementation("androidx.appcompat:appcompat:1.5.1")
+    implementation(libs.androidx.appcompat)
 
-    api("org.reactivestreams:reactive-streams:1.0.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.6.1")
+    api(libs.reactive.streams)
+    implementation(libs.kotlinx.coroutines.reactive)
 
-    implementation("androidx.work:work-runtime-ktx:2.7.1")
+    implementation(libs.androidx.work.runtime.ktx)
 
-    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation(libs.okhttp)
 
-    implementation("androidx.browser:browser:1.2.0")
-    implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
+    implementation(libs.androidx.browser)
+    implementation(libs.androidx.lifecycle.extensions)
 
-    testImplementation("junit:junit:4.12")
+    testImplementation(libs.junit.legacy)
 
-    testImplementation("com.natpryce:hamkrest:1.6.0.0")
-    testImplementation("org.skyscreamer:jsonassert:1.5.0")
+    testImplementation(libs.hamkrest)
+    testImplementation(libs.jsonassert)
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.kotlin.reflect)
+
+    // Compose and Material
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.tooling.preview)
+    debugImplementation(libs.androidx.ui.tooling)
+    implementation(libs.androidx.compose.material3)
 }
 
 afterEvaluate {

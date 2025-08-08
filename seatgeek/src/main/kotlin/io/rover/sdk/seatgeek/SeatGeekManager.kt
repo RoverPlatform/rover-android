@@ -41,6 +41,7 @@ class SeatGeekManager(
 
     override fun setSeatGeekId(crmID: String) {
         if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
+            log.i("SeatGeek ID set while privacy is in anonymous/anonymized mode, ignored")
             return
         }
         seatGeekID = crmID

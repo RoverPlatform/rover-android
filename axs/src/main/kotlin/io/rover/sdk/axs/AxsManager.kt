@@ -47,6 +47,7 @@ class AxsManager(
 
     override fun setUserId(userId: String?, flashMemberId: String?, flashMobileId: String?) {
         if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
+            log.i("AXS user ID (with flash IDs) set while privacy is in anonymous/anonymized mode, ignored")
             return
         }
 

@@ -47,7 +47,10 @@ class TicketmasterManager(
     }
 
     override fun setTicketmasterId(id: String) {
-        if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) return
+        if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
+            log.i("Ticketmaster ID set while privacy is in anonymous/anonymized mode, ignored")
+            return
+        }
         member = Member(
             ticketmasterID = id,
             email = null,

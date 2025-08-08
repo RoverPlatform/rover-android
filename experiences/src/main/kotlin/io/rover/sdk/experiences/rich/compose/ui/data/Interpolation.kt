@@ -185,8 +185,8 @@ internal class Interpolator(
      */
     private fun evaluateExpressionCommand(arguments: List<String>): String {
         val result: String = when (arguments[0]) {
-            "lowercase" -> twoArgumentHelper(arguments) { it.toLowerCase(Locale.getDefault()) }
-            "uppercase" -> twoArgumentHelper(arguments) { it.toUpperCase(Locale.getDefault()) }
+            "lowercase" -> twoArgumentHelper(arguments) { it.lowercase(Locale.getDefault()) }
+            "uppercase" -> twoArgumentHelper(arguments) { it.uppercase(Locale.getDefault()) }
             "dropFirst" -> threeArgumentHelper(arguments) { value, places -> value.drop(places) }
             "dropLast" -> threeArgumentHelper(arguments) { value, places -> value.dropLast(places) }
             "prefix" -> threeArgumentHelper(arguments) { value, places -> value.take(places) }

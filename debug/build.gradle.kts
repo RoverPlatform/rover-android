@@ -19,6 +19,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.dokka)
     id("maven-publish")
 }
 
@@ -27,7 +28,7 @@ val roverSdkVersion: String by rootProject.extra
 val composeBomVersion: String by rootProject.extra
 
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(17)
 }
 
 android {
@@ -50,11 +51,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 
     buildFeatures { // Enables Jetpack Compose for this module
@@ -64,14 +65,23 @@ android {
     publishing {
         singleVariant("release") {
             withSourcesJar()
-            withJavadocJar()
         }
     }
 
     namespace = "io.rover.debug"
 }
 
+// Create custom Javadoc JAR using Dokka
+val dokkaJavadoc by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)
+
+val javadocJar by tasks.registering(Jar::class) {
+    dependsOn(dokkaJavadoc)
+    from(dokkaJavadoc.outputDirectory)
+    archiveClassifier.set("javadoc")
+}
+
 dependencies {
+    dokkaPlugin("org.jetbrains.dokka:dokka-base:${libs.versions.dokka.get()}")
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.legacy.support.v4)
     implementation(libs.androidx.preference)
@@ -88,6 +98,7 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
+                artifact(javadocJar)
 
                 groupId = "io.rover.sdk"
                 artifactId = "debug"

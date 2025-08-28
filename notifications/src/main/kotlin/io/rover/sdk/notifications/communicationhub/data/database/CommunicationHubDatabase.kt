@@ -59,6 +59,8 @@ abstract class CommunicationHubDatabase : RoomDatabase() {
                     CommunicationHubDatabase::class.java,
                     "communication_hub_database"
                 )
+                // in the event of a migration issue, wipe the DB entirely, don't crash.
+                .fallbackToDestructiveMigration(true)
 
                     // uncomment to enable Room SQL query debug logging:
 //                .setQueryCallback(

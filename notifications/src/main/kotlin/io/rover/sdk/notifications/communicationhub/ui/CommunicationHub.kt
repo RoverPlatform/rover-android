@@ -17,6 +17,7 @@
 
 package io.rover.sdk.notifications.communicationhub.ui
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +35,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.rover.sdk.core.Rover
@@ -44,6 +46,32 @@ import io.rover.sdk.notifications.communicationhub.data.database.entities.PostWi
 import io.rover.sdk.notifications.ui.screens.PostDetail
 import io.rover.sdk.notifications.ui.screens.PostsList
 import io.rover.sdk.notifications.ui.viewmodels.PostsListViewModel
+
+/**
+ * Embed this view within a tab to integrate the Rover Communication Hub.
+ *
+ * @param modifier Modifier for styling
+ * @param title Optional title for the Communication Hub (defaults to "Inbox")
+ * @param sourceColor The source color to use for automatic generating the theme.
+ *
+ * Will adopt an automatically generated Material 3 theme based on the provided accent color.
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+public fun CommunicationHub(
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    sourceColor: Color,
+    isDark: Boolean = isSystemInDarkTheme(),
+) {
+    val colorScheme = automaticMaterialScheme(sourceColor = sourceColor, isDark = isDark, dynamicColor = false)
+
+    MaterialTheme(
+        colorScheme = colorScheme
+    ) {
+        CommunicationHub(modifier = modifier, title = title)
+    }
+}
 
 /**
  * Embed this view within a tab to integrate the Rover Communication Hub.
@@ -62,13 +90,15 @@ public fun CommunicationHub(
 ) {
     val context = LocalContext.current
     val rover = Rover.shared
-    
+
     val postsRepository = rover.communicationHubRepository
     val linkOpen = rover.resolve(LinkOpenInterface::class.java)
-    
+
     val scaffoldNavigator = rememberListDetailPaneScaffoldNavigator<PostWithSubscription>()
     val coroutineScope = rememberCoroutineScope()
     val displayTitle = title ?: "Inbox"
+
+
 
     Surface(
         modifier = modifier.fillMaxSize(),

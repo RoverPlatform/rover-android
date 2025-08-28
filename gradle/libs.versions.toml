@@ -1,6 +1,6 @@
 [versions]
 # Rover SDK
-roverSdkVersion = "4.11.0"
+roverSdkVersion = "4.11.1"
 
 # Kotlin
 kotlin = "2.2.0"
@@ -90,6 +90,7 @@ roverLegacy = "3.8.0"
 firebaseAppDistribution = "5.0.0"
 firebaseCrashlytics = "3.0.1"
 foojayResolver = "0.5.0"
+dokka = "2.0.0"
 uiTooling = "1.8.3"
 adaptive = "1.1.0"
 adaptiveLayoutAndroid = "1.1.0"
@@ -284,6 +285,7 @@ android-testing = [
     "androidx-test-espresso-core"
 ]
 
+
 [plugins]
 # Android
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -302,6 +304,7 @@ firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "
 
 # Other
 foojay-resolver = { id = "org.gradle.toolchains.foojay-resolver-convention", version.ref = "foojayResolver" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 
 # Compose
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

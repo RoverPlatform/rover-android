@@ -37,12 +37,34 @@ internal interface EngageApiService {
     suspend fun getSubscriptions(): Response<ResponseBody>
 
     companion object {
+        /**
+         * Ensures a URL ends with a trailing slash, as required by Retrofit for base URLs.
+         *
+         * Retrofit requires base URLs to end with '/' when using relative paths in API endpoints
+         * (such as @GET("posts") or @GET("subscriptions")). Without a trailing slash, Retrofit
+         * throws IllegalArgumentException during initialization, causing app crashes.
+         *
+         * @param url The URL to normalize
+         * @return The URL with a trailing slash, or empty string if input was empty
+         */
+        private fun ensureTrailingSlash(url: String): String {
+            return when {
+                url.isEmpty() -> url
+                url.endsWith("/") -> url
+                else -> "$url/"
+            }
+        }
+
         fun create(httpClient: CommunicationHubHttpClient, baseUrl: String): EngageApiService {
+            // Defensive normalization as final safety net to prevent crashes if a malformed URL
+            // somehow makes it through the endpoint configuration layer
+            val normalizedBaseUrl = ensureTrailingSlash(baseUrl)
+
             val retrofit = Retrofit.Builder()
-                .baseUrl(baseUrl)
+                .baseUrl(normalizedBaseUrl)
                 .client(httpClient.client)
                 .build()
-            
+
             return retrofit.create(EngageApiService::class.java)
         }
     }

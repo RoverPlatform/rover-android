@@ -1,6 +1,6 @@
 [versions]
 # Rover SDK
-roverSdkVersion = "4.11.1"
+roverSdkVersion = "4.11.2"
 
 # Kotlin
 kotlin = "2.2.0"
@@ -13,7 +13,7 @@ targetSdk = "35"
 agp = "8.12.0"
 
 # Compose
-composeBom = "2024.09.02"
+composeBom = "2025.06.01"
 
 activityCompose = "1.6.0"
 lifecycleRuntimeCompose = "2.7.0"

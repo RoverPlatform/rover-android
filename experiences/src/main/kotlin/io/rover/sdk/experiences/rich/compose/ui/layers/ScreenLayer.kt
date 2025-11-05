@@ -24,12 +24,27 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material.*
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,8 +60,17 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import io.rover.experiences.R
 import io.rover.sdk.core.Rover
-import io.rover.sdk.experiences.rich.compose.model.nodes.*
-import io.rover.sdk.experiences.rich.compose.model.values.*
+import io.rover.sdk.experiences.rich.compose.model.nodes.AppBar
+import io.rover.sdk.experiences.rich.compose.model.nodes.Icon
+import io.rover.sdk.experiences.rich.compose.model.nodes.MenuItem
+import io.rover.sdk.experiences.rich.compose.model.nodes.Node
+import io.rover.sdk.experiences.rich.compose.model.nodes.Screen
+import io.rover.sdk.experiences.rich.compose.model.values.Appearance
+import io.rover.sdk.experiences.rich.compose.model.values.ColorReference
+import io.rover.sdk.experiences.rich.compose.model.values.Font
+import io.rover.sdk.experiences.rich.compose.model.values.MenuItemVisibility
+import io.rover.sdk.experiences.rich.compose.model.values.NamedIcon
+import io.rover.sdk.experiences.rich.compose.model.values.resolve
 import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.Services
 import io.rover.sdk.experiences.rich.compose.ui.data.makeDataContext
@@ -124,12 +148,23 @@ internal fun ScreenLayer(node: Screen, appearance: Appearance) {
         ) {
             Scaffold(
                 topBar = {
-                    (node.children.firstOrNull { it is AppBar } as? AppBar)?.let {
-                        ExperiencesAppBar(
-                            appBar = it,
-                            buttonColor = remember { it.buttonColor.getComposeColor(isDarkTheme) },
-                            backgroundColor = remember { it.backgroundColor.getComposeColor(isDarkTheme) },
-                            screenBackground = backgroundColor
+                    if (node.children.firstOrNull { it is AppBar } != null) {
+                        // Show AppBar when present
+                        (node.children.firstOrNull { it is AppBar } as? AppBar)?.let {
+                            ExperiencesAppBar(
+                                appBar = it,
+                                buttonColor = remember { it.buttonColor.getComposeColor(isDarkTheme) },
+                                backgroundColor = remember { it.backgroundColor.getComposeColor(isDarkTheme) },
+                                screenBackground = backgroundColor
+                            )
+                        }
+                    } else {
+                        // Show status bar area when no AppBar
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(backgroundColor) // Ensure that we use the same color as the AppBar
+                                .statusBarsPadding()
                         )
                     }
                 }

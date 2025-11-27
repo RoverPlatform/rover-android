@@ -1,6 +1,6 @@
 [versions]
 # Rover SDK
-roverSdkVersion = "4.11.2"
+roverSdkVersion = "4.11.3"
 
 # Kotlin
 kotlin = "2.2.0"

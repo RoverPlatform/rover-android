@@ -38,10 +38,14 @@ class PresentExperienceRoute(
             return null
         }
 
+        if (uri.scheme == null) {
+            log.w("URI is missing its scheme. URI: $uri")
+        }
+
         // first, continue to support `presentExperience` legacy deep links as they can
         // still appear in old Rover notifications and so forth:
-        if (urlSchemes.contains(uri.scheme.lowercase()) && uri.authority == "presentExperience") {
-            val queryParameters = uri.query.parseAsQueryParameters()
+        if (uri.scheme != null && urlSchemes.contains(uri.scheme.lowercase()) && uri.authority == "presentExperience") {
+            val queryParameters = uri.query?.parseAsQueryParameters() ?: emptyMap()
             val possibleCampaignId = queryParameters["campaignID"]
 
             // For now, you need to support deep links with both `experienceID` and `id` to enable backwards compatibility

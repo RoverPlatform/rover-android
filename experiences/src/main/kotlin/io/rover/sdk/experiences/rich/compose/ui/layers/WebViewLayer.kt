@@ -20,6 +20,7 @@ package io.rover.sdk.experiences.rich.compose.ui.layers
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.util.AttributeSet
 import android.view.View.FOCUSABLE
@@ -94,7 +95,18 @@ internal fun WebViewLayer(
 
                     when (webSource) {
                         is WebViewSource.URL -> {
-                            view.loadUrl(webSource.value)
+                            val html = handleEmbeddedVideo(webSource.value)
+                            if (html != null) {
+                                view.loadDataWithBaseURL(
+                                    "https://embedded.local",
+                                    html,
+                                    "text/html",
+                                    "UTF-8",
+                                    null
+                                )
+                            } else {
+                                view.loadUrl(webSource.value)
+                            }
                         }
 
                         is WebViewSource.HTML -> {
@@ -150,6 +162,112 @@ internal class ExperiencesWebView constructor(
             isTouchEvent
         )
     }
+}
+
+/**
+ * HTML-escapes a string for safe use in HTML attributes.
+ * Escapes: &, <, >, ", and ' characters.
+ */
+private fun htmlEscapeAttribute(value: String): String {
+    return buildString(value.length) {
+        for (char in value) {
+            when (char) {
+                '&' -> append("&amp;")
+                '<' -> append("&lt;")
+                '>' -> append("&gt;")
+                '"' -> append("&quot;")
+                '\'' -> append("&#x27;")
+                else -> append(char)
+            }
+        }
+    }
+}
+
+private fun handleEmbeddedVideo(urlString: String): String? {
+    val uri = try {
+        Uri.parse(urlString)
+    } catch (e: Exception) {
+        return null
+    }
+
+    val host = uri.host ?: return null
+
+    fun hostMatches(host: String, domain: String): Boolean {
+        val lowercasedHost = host.lowercase()
+        val lowercasedDomain = domain.lowercase()
+
+        // Exact match
+        if (lowercasedHost == lowercasedDomain) {
+            return true
+        }
+
+        // Check if host ends with ".{domain}"
+        val suffix = ".$lowercasedDomain"
+        if (lowercasedHost.endsWith(suffix)) {
+            // Ensure there's at least one character before the suffix
+            // and the host doesn't start with a dot
+            val prefixLength = lowercasedHost.length - suffix.length
+            return prefixLength > 0 && !lowercasedHost.startsWith(".")
+        }
+
+        return false
+    }
+
+    val isYouTubeHost = hostMatches(host, "youtube.com")
+    val isYouTubeNoCookieHost = hostMatches(host, "youtube-nocookie.com")
+
+    val path = uri.path ?: ""
+
+    val isYouTubeEmbed = isYouTubeHost && path.contains("/embed/")
+    val isYouTubeNoCookie = isYouTubeNoCookieHost && path.contains("/embed/")
+    val isVimeoEmbed = hostMatches(host, "player.vimeo.com")
+
+    if (!isYouTubeEmbed && !isYouTubeNoCookie && !isVimeoEmbed) {
+        return null
+    }
+
+    // Validate URL scheme before using it
+    val scheme = uri.scheme
+    if (scheme != "http" && scheme != "https") {
+        return null
+    }
+  
+    // HTML-escape the URL before interpolating into HTML attribute
+    val escapedUrl = htmlEscapeAttribute(uri.toString())
+
+    val html = """
+        <!doctype html>
+        <html>
+        <head>
+            <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+            <meta name="referrer" content="origin">
+            <style>
+            html, body {
+                margin: 0;
+                padding: 0;
+                background: transparent;
+                height: 100%;
+                overflow: hidden;
+            }
+            iframe {
+                border: 0;
+                width: 100%;
+                height: 100%;
+            }
+            </style>
+        </head>
+        <body>
+            <iframe
+            src="$escapedUrl"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen>
+            </iframe>
+        </body>
+        </html>
+    """.trimIndent()
+
+    return html
 }
 
 @Preview

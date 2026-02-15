@@ -1,0 +1,159 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "5fd036b69e12650a1377c8eccc3d5bc6",
+    "entities": [
+      {
+        "tableName": "posts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `subject` TEXT NOT NULL, `previewText` TEXT NOT NULL, `receivedAt` INTEGER NOT NULL, `url` TEXT, `isRead` INTEGER NOT NULL, `coverImageURL` TEXT, `subscription_id` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`subscription_id`) REFERENCES `subscriptions`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subject",
+            "columnName": "subject",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "previewText",
+            "columnName": "previewText",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "receivedAt",
+            "columnName": "receivedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "url",
+            "columnName": "url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isRead",
+            "columnName": "isRead",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "coverImageURL",
+            "columnName": "coverImageURL",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "subscriptionId",
+            "columnName": "subscription_id",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_posts_subscription_id",
+            "unique": false,
+            "columnNames": [
+              "subscription_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_posts_subscription_id` ON `${TABLE_NAME}` (`subscription_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "subscriptions",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "subscription_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "subscriptions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `optIn` INTEGER NOT NULL, `status` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "optIn",
+            "columnName": "optIn",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "cursors",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`roverEntity` TEXT NOT NULL, `cursor` TEXT, PRIMARY KEY(`roverEntity`))",
+        "fields": [
+          {
+            "fieldPath": "roverEntity",
+            "columnName": "roverEntity",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cursor",
+            "columnName": "cursor",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "roverEntity"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5fd036b69e12650a1377c8eccc3d5bc6')"
+    ]
+  }
+}

@@ -17,50 +17,58 @@
 
 package io.rover.sdk.notifications.communicationhub.data.database
 
+import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import android.content.Context
-import android.os.Handler
-import android.os.Looper
-import android.util.Log
-import androidx.core.content.ContextCompat
+import io.rover.sdk.core.logging.log
 import io.rover.sdk.notifications.communicationhub.data.database.dao.CursorsDao
 import io.rover.sdk.notifications.communicationhub.data.database.dao.PostsDao
 import io.rover.sdk.notifications.communicationhub.data.database.dao.SubscriptionsDao
 import io.rover.sdk.notifications.communicationhub.data.database.entities.CursorEntity
 import io.rover.sdk.notifications.communicationhub.data.database.entities.PostEntity
 import io.rover.sdk.notifications.communicationhub.data.database.entities.SubscriptionEntity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Database(
     entities = [
         PostEntity::class,
         SubscriptionEntity::class,
-        CursorEntity::class
+        CursorEntity::class,
     ],
     version = 1,
-    exportSchema = false
+    exportSchema = true,
 )
-@TypeConverters(CommunicationHubTypeConverters::class)
-abstract class CommunicationHubDatabase : RoomDatabase() {
+@TypeConverters(RoverEngageTypeConverters::class)
+abstract class RoverEngageDatabase : RoomDatabase() {
     abstract fun postsDao(): PostsDao
     abstract fun subscriptionsDao(): SubscriptionsDao
     abstract fun cursorsDao(): CursorsDao
 
     companion object {
         @Volatile
-        private var INSTANCE: CommunicationHubDatabase? = null
+        private var INSTANCE: RoverEngageDatabase? = null
 
-        fun getDatabase(context: Context): CommunicationHubDatabase {
+
+        fun getDatabase(context: Context): RoverEngageDatabase {
             return INSTANCE ?: synchronized(this) {
+                // side effect, delete the DB with the previous name if it still exists
+                CoroutineScope(Dispatchers.IO).launch {
+                    if (context.deleteDatabase("communication_hub_database")) {
+                        log.i("Deleted legacy communication_hub_database")
+                    }
+                }
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
-                    CommunicationHubDatabase::class.java,
-                    "communication_hub_database"
+                    RoverEngageDatabase::class.java,
+                    "rover_engage_database",
                 )
-                // in the event of a migration issue, wipe the DB entirely, don't crash.
                 .fallbackToDestructiveMigration(true)
+                .fallbackToDestructiveMigrationOnDowngrade(true)
 
                     // uncomment to enable Room SQL query debug logging:
 //                .setQueryCallback(

@@ -18,7 +18,7 @@
 package io.rover.sdk.notifications.communicationhub.badge
 
 import io.rover.sdk.core.logging.log
-import io.rover.sdk.notifications.communicationhub.data.repository.CommHubRepository
+import io.rover.sdk.notifications.communicationhub.data.repository.RoverEngageRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,13 +33,13 @@ import kotlinx.coroutines.reactive.asPublisher
 import org.reactivestreams.Publisher
 
 /**
- * Observable badge implementation for Communication Hub notifications, similar to iOS RoverBadge.
- * 
- * This class observes the Communication Hub repository for changes and provides
+ * Observable badge implementation for Rover content, such as posts.
+ *
+ * This class observes the Rover Engage API repository for changes and provides
  * reactive badge count information that can be consumed by Jetpack Compose or traditional Views.
  */
 internal class RoverBadge(
-    private val commHubRepository: CommHubRepository
+    private val roverEngageRepository: RoverEngageRepository
 ) : RoverBadgeInterface {
     
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -55,13 +55,13 @@ internal class RoverBadge(
     override fun newBadgePublisher(): Publisher<Int> = _newBadgePublisherFlow.asPublisher(scope.coroutineContext)
     
     private fun observePostsChanges() {
-        commHubRepository.getPostsFlow()
+        roverEngageRepository.getPostsFlow()
             .map { postsWithSubscriptions ->
                 val unreadCount = postsWithSubscriptions.count { postWithSubscription ->
                     !postWithSubscription.post.isRead
                 }
 
-                log.v("Communication Hub badge count updated: $unreadCount")
+                log.v("Rover badge count updated: $unreadCount")
                 return@map unreadCount
             }
             .distinctUntilChanged()

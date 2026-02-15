@@ -1,6 +1,6 @@
 [versions]
 # Rover SDK
-roverSdkVersion = "4.11.3"
+roverSdkVersion = "4.13.0"
 
 # Kotlin
 kotlin = "2.2.0"
@@ -67,6 +67,9 @@ hamkrest = "1.6.0.0"
 jsonassert = "1.5.0"
 androidxTestExt = "1.1.3"
 espresso = "3.4.0"
+androidxTestCore = "1.4.0"
+kotlinxCoroutinesTest = "1.6.1"
+robolectric = "4.10.3"
 
 # Room
 room = "2.7.2"
@@ -80,7 +83,7 @@ shot = "6.0.0"
 
 # Third-party integrations
 ticketmasterRetail = "3.0.0"
-mockitoKotlin = "2.1.0"
+mockitoKotlin = "5.1.0"
 auth0 = "3.4.0"
 
 # Rover Legacy
@@ -157,6 +160,7 @@ retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit
 retrofit-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "retrofitMoshi" }
 
 # JSON
+moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-kotlin-codegen = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "moshi" }
 moshi-adapters = { module = "com.squareup.moshi:moshi-adapters", version.ref = "moshiAdapters" }
 
@@ -185,6 +189,7 @@ play-services-location = { module = "com.google.android.gms:play-services-locati
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 
 # Other
 reactive-streams = { module = "org.reactivestreams:reactive-streams", version.ref = "reactiveStreams" }
@@ -204,11 +209,14 @@ hamkrest = { module = "com.natpryce:hamkrest", version.ref = "hamkrest" }
 jsonassert = { module = "org.skyscreamer:jsonassert", version.ref = "jsonassert" }
 androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidxTestExt" }
 androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso" }
+androidx-test-core = { module = "androidx.test:core", version.ref = "androidxTestCore" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 
 # Third-party integrations
 ticketmaster-purchase = { module = "com.ticketmaster.retail:purchase", version.ref = "ticketmasterRetail" }
 ticketmaster-discoveryapi = { module = "com.ticketmaster.retail:discoveryapi", version.ref = "ticketmasterRetail" }
-mockito-kotlin = { module = "com.nhaarman.mockitokotlin2:mockito-kotlin", version.ref = "mockitoKotlin" }
+mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlin" }
 auth0-android = { module = "com.auth0.android:auth0", version.ref = "auth0" }
 
 [bundles]
@@ -305,6 +313,9 @@ firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "
 # Other
 foojay-resolver = { id = "org.gradle.toolchains.foojay-resolver-convention", version.ref = "foojayResolver" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+
+# Room
+androidx-room = { id = "androidx.room", version.ref = "room" }
 
 # Compose
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

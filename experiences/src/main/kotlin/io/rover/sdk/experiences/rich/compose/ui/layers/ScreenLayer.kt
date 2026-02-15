@@ -37,7 +37,10 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Icon as Material3Icon
+import androidx.compose.material3.IconButton as Material3IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -73,6 +76,8 @@ import io.rover.sdk.experiences.rich.compose.model.values.NamedIcon
 import io.rover.sdk.experiences.rich.compose.model.values.resolve
 import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.Services
+import io.rover.sdk.experiences.rich.compose.ui.AppBarConfig
+import io.rover.sdk.experiences.rich.compose.ui.LocalAppBarConfigSink
 import io.rover.sdk.experiences.rich.compose.ui.data.makeDataContext
 import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.ZStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.layout.experiencesHorizontalFlex
@@ -93,6 +98,8 @@ import io.rover.sdk.experiences.services.InterpolatedConversionsTrackerService
  * This is necessary as we can only place children inside its parents layout size. So while we want everything to be measured correctly,
  * we also need to have the option to place things outside the parent layout size, such as when a layer is offset.
  * The surface filling the whole screen achieves exactly that for its children (the whole Experience, basically).
+ * 
+ * This composable includes full chrome (Scaffold, TopAppBar, etc.).
  */
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
@@ -189,6 +196,243 @@ internal fun ScreenLayer(node: Screen, appearance: Appearance) {
     }
 }
 
+/**
+ * Renders just the content of a screen without any chrome (no Scaffold, no TopAppBar).
+ * 
+ * This is used in pluggable navigation mode where the parent composable controls the
+ * app bar and we just need to render the screen's body content.
+ * 
+ * @param node The screen to render
+ * @param appearance The appearance configuration
+ * @param isRootScreen Whether this is the root (initial) screen of the experience
+ */
+@Composable
+internal fun ScreenContent(node: Screen, appearance: Appearance, isRootScreen: Boolean = false) {
+    val systemBarController = rememberSystemBarController()
+
+    val isDarkTheme = Environment.LocalIsDarkTheme.current
+    val localData = Environment.LocalData.current
+    val urlParameters = Environment.LocalUrlParameters.current
+    val experienceId = Environment.LocalExperienceId.current
+    val experienceName = Environment.LocalExperienceName.current
+    val experienceSourceUrl = Environment.LocalExperienceSourceUrl.current
+    val deviceContext = Environment.LocalDeviceContext.current
+    val userInfo = Environment.LocalUserInfo.current?.invoke() ?: emptyMap()
+    val appBarConfigSink = LocalAppBarConfigSink.current
+
+    val backgroundColor = remember { node.androidStatusBarBackgroundColor.getComposeColor(isDarkTheme) }
+
+    // TODO: two bugs with this status bar setup.
+    // Bug 1. this happens with all experiences, even ones that are not being embedded underneath
+    //        the status bar area.
+    // Bug 2. When navigating away from the Experience, status bar change sticks around. Waiting for
+    //        Compose 1.9 (August 2025 BoM), which provides modifier for tracking visibility.
+    LaunchedEffect(true) {
+        systemBarController.setStatusBarColor(backgroundColor)
+        systemBarController.setStatusBarIconTint(node.androidStatusBarStyle, appearance)
+    }
+
+    // Report app bar config to parent
+    val appBarConfig = extractAppBarConfig(node, isRootScreen)
+    LaunchedEffect(appBarConfig) {
+        appBarConfigSink?.invoke(appBarConfig)
+    }
+
+    Services.Inject { services ->
+        LaunchedEffect(true) {
+            val conversionTrackerService = Rover.shared.resolve(InterpolatedConversionsTrackerService::class.java)
+            val dataContext = makeDataContext(
+                    userInfo = userInfo,
+                    urlParameters = urlParameters,
+                    deviceContext = deviceContext,
+                    data = localData
+            )
+
+            conversionTrackerService?.trackConversions(node.conversionTags, dataContext)
+
+            services.eventEmitter.emit(
+                ExperienceScreenViewed(
+                    experienceName,
+                    experienceId,
+                    experienceSourceUrl,
+                    node.name,
+                    node.id,
+                    node.metadata?.tags?.toList() ?: emptyList(),
+                    node.metadata?.propertiesMap ?: emptyMap(),
+                    localData,
+                    urlParameters,
+                    urlParameters["campaignID"]
+                )
+            )
+        }
+
+        CompositionLocalProvider(
+            Environment.LocalScreen provides node
+        ) {
+            Surface(color = node.backgroundColor.getComposeColor()) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    ZStackLayer {
+                        Children(children = node.children.reversed(), modifier = FixedToProposedSize())
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Captures Experience composition locals and returns a wrapper function that re-injects them.
+ * 
+ * This helper is necessary for the pluggable navigation feature, where Experience composables
+ * (like app bar navigation icons and action buttons) need to be rendered outside the Experience's
+ * composition scope (e.g., in a parent app's TopAppBar). Without re-injecting the composition
+ * locals, these composables would not have access to critical Experience context like services,
+ * navigation handlers, and event tracking.
+ * 
+ * Usage example:
+ * ```kotlin
+ * val reinject = captureCompositionLocals()
+ * 
+ * // Later, when creating a composable that will be used outside this scope:
+ * val navigationIcon = reinject {
+ *     IconButton(onClick = { /* uses captured locals */ }) { ... }
+ * }
+ * ```
+ * 
+ * @return A function that wraps content with a CompositionLocalProvider containing captured locals
+ */
+@Composable
+private fun captureCompositionLocals(): (@Composable () -> Unit) -> (@Composable () -> Unit) {
+    // Capture all composition locals at the call site (inside Experience scope)
+    val services = Environment.LocalServices.current
+    val userInfo = Environment.LocalUserInfo.current
+    val urlParameters = Environment.LocalUrlParameters.current
+    val deviceContext = Environment.LocalDeviceContext.current
+    val data = Environment.LocalData.current
+    val node = Environment.LocalNode.current
+    val screen = Environment.LocalScreen.current
+    val experienceId = Environment.LocalExperienceId.current
+    val experienceName = Environment.LocalExperienceName.current
+    val experienceUrl = Environment.LocalExperienceUrl.current
+    val experienceModel = Environment.LocalExperienceModel.current
+    val navigateToScreen = Environment.LocalNavigateToScreen.current
+    val dismissExperience = Environment.LocalDismissExperience.current
+    val navigateUp = Environment.LocalNavigateUp.current
+    val isDarkTheme = Environment.LocalIsDarkTheme.current
+    
+    // Return a wrapper function that re-injects the captured locals
+    return { content ->
+        @Composable {
+            CompositionLocalProvider(
+                Environment.LocalServices provides services,
+                Environment.LocalUserInfo provides userInfo,
+                Environment.LocalUrlParameters provides urlParameters,
+                Environment.LocalDeviceContext provides deviceContext,
+                Environment.LocalData provides data,
+                Environment.LocalNode provides node,
+                Environment.LocalScreen provides screen,
+                Environment.LocalExperienceId provides experienceId,
+                Environment.LocalExperienceName provides experienceName,
+                Environment.LocalExperienceUrl provides experienceUrl,
+                Environment.LocalExperienceModel provides experienceModel,
+                Environment.LocalNavigateToScreen provides navigateToScreen,
+                Environment.LocalDismissExperience provides dismissExperience,
+                Environment.LocalNavigateUp provides navigateUp,
+                Environment.LocalIsDarkTheme provides isDarkTheme
+            ) {
+                content()
+            }
+        }
+    }
+}
+
+/**
+ * Extracts AppBar configuration from a screen for external rendering.
+ * 
+ * Returns null if the screen has no AppBar.
+ */
+@Composable
+internal fun extractAppBarConfig(
+    node: Screen,
+    isRootScreen: Boolean
+): AppBarConfig? {
+    val isDarkTheme = Environment.LocalIsDarkTheme.current
+    val appBarNode = node.children.firstOrNull { it is AppBar } as? AppBar ?: return null
+
+    val stringTable = Environment.LocalExperienceModel.current?.localizations
+    val buttonColor = remember { appBarNode.buttonColor.getComposeColor(isDarkTheme) }
+    val backgroundColor = remember { appBarNode.backgroundColor.getComposeColor(isDarkTheme) }
+
+    // Capture composition locals so they can be re-injected when composables are rendered
+    // outside the Experience's composition scope (e.g., in parent app's TopAppBar)
+    val reinject = captureCompositionLocals()
+    
+    // capture composition local up here since the navigationIcon in the AppBarConfig is used further
+    // up in the compose hierarchy before the locals are injected.
+    val localNavigateUp = Environment.LocalNavigateUp.current
+
+    // Note the use of reinject() in each of the composables we pass up in the AppBarConfig, since
+    // they are used outside of the ExperienceComposable's hierarchy (up in the Hub) and won't
+    // have our various locals available.
+    return AppBarConfig(
+        title = reinject {
+            TextLayer(
+                text = stringTable?.resolve(appBarNode.title) ?: appBarNode.title,
+                textColor = appBarNode.titleColor,
+                font = appBarNode.titleFont,
+                lineLimit = 1
+            )
+        },
+        navigationIcon = if (!appBarNode.hideUpIcon && !isRootScreen) {
+            reinject {
+                Material3IconButton(
+                    onClick = {
+                        localNavigateUp?.invoke()
+                    }
+                ) {
+                    Material3Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.rover_screen_layer_navigation_back_button),
+                        tint = buttonColor
+                    )
+                }
+            }
+        } else null,
+        backgroundColor = backgroundColor,
+        actions = buildAppBarActions(appBarNode),
+        isRootScreen = isRootScreen
+    )
+}
+
+@Composable
+private fun buildAppBarActions(appBar: AppBar): List<@Composable () -> Unit> {
+    val actions = mutableListOf<@Composable () -> Unit>()
+    
+    // Capture composition locals so they can be re-injected when actions are rendered
+    // outside the Experience's composition scope (e.g., in parent app's TopAppBar)
+    val reinject = captureCompositionLocals()
+    
+    val itemsOverflow = appBar.children.size > 3
+    val itemsFilteredByPriority = appBar.children.sortedBy { node ->
+        when ((node as MenuItem).showAsAction) {
+            MenuItemVisibility.ALWAYS -> 0
+            MenuItemVisibility.IF_ROOM -> 1
+            MenuItemVisibility.NEVER -> 2
+        }
+    }
+
+    if (itemsOverflow) {
+        actions.add(reinject { RoverActionIconButton(itemsFilteredByPriority[0] as MenuItem, appBar.buttonColor) } )
+        actions.add(reinject { RoverActionIconButton(itemsFilteredByPriority[1] as MenuItem, appBar.buttonColor) } )
+        actions.add(reinject { DropdownActionItem(itemsFilteredByPriority, appBar.buttonColor) } )
+    } else {
+        itemsFilteredByPriority.forEach { item ->
+            actions.add(reinject { RoverActionIconButton(item as MenuItem, appBar.buttonColor) })
+        }
+    }
+    
+    return actions
+}
 
 /**
  * This layout modifier adopts the size proposed to it by the parent.

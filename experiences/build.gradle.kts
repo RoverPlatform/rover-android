@@ -123,6 +123,7 @@ dependencies {
     debugImplementation(libs.bundles.compose.debug)
     implementation(libs.compose.lifecycle.viewmodel)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.compose.material3)
     // endregion Compose
 
     // region Test

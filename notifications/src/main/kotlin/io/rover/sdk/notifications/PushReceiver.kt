@@ -21,7 +21,7 @@ import android.os.Bundle
 import io.rover.sdk.core.events.PushTokenTransmissionChannel
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.DateFormattingInterface
-import io.rover.sdk.notifications.communicationhub.push.CommunicationHubPushHandler
+import io.rover.sdk.notifications.communicationhub.push.PostPushHandler
 import io.rover.sdk.notifications.domain.Notification
 import io.rover.sdk.notifications.graphql.decodeJson
 import org.json.JSONException
@@ -33,7 +33,7 @@ internal open class PushReceiver(
     private val notificationDispatcher: NotificationDispatcher,
     private val dateFormatting: DateFormattingInterface,
     private val influenceTrackerService: InfluenceTrackerServiceInterface,
-    internal val communicationHubPushHandler: CommunicationHubPushHandler? = null
+    internal val postPushHandler: PostPushHandler? = null
 ) : PushReceiverInterface {
 
     override fun onTokenRefresh(token: String?) {
@@ -70,12 +70,8 @@ internal open class PushReceiver(
     }
 
     private fun handleRoverNotificationObject(roverJson: String) {
-        // Check if this is a Communication Hub push notification
-        if (communicationHubPushHandler != null) {
-            
-            communicationHubPushHandler.handleCommunicationHubPush(roverJson)
-
-        }
+        // Check if this is a Post push notification
+        postPushHandler?.handleCommunicationHubPush(roverJson)
         
         // Handle standard notification
         val notification = try {

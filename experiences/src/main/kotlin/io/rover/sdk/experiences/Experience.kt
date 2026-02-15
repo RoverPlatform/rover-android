@@ -72,12 +72,20 @@ import org.json.JSONObject
  * use case.  Full-screen experiences, in the event user can not successfully retry, ought
  * to be resignable, whereas embedded experiences should likely not prevent
  * the surrounding UI from being usable.
+ * 
+ * @param navigationMode Controls how the experience integrates with navigation. Defaults to
+ * [NavigationMode.Standalone]. Use [NavigationMode.Pluggable] when embedding in a parent
+ * navigation stack.
+ *
+ * @param defaultColorSchemeDark For experiences with color scheme set to auto, should it use dark mode? null to follow system.
  */
 @Composable
 internal fun Experience(
     url: Uri,
     modifier: Modifier = Modifier,
-    onCanceled: (() -> Unit)? = null
+    onCanceled: (() -> Unit)? = null,
+    defaultColorSchemeDark: Boolean? = null,
+    navigationMode: NavigationMode = NavigationMode.Standalone
 ) {
     Services.Inject { services ->
         // security check, verify that URL domain is what is configured in Rover (to prevent
@@ -160,7 +168,8 @@ internal fun Experience(
                                 typeFaceMapping = state.experience.typeFaceMapping,
                                 experienceId = state.experience.experienceId,
                                 experienceName = state.experience.experienceName,
-                                urlParams = state.experience.urlParams
+                                urlParams = state.experience.urlParams,
+                                navigationMode = navigationMode
                             )
                         }
                         is LoadedExperience.Classic -> {
@@ -423,7 +432,15 @@ private fun NetworkExperience(
     /**
      * URL parameters.
      */
-    urlParams: Map<String, String>
+    urlParams: Map<String, String>,
+    /**
+     * For experiences with color scheme set to auto, should it use dark mode? null to follow system.
+     */
+    defaultColorSchemeDark: Boolean? = null,
+    /**
+     * Navigation mode for this experience.
+     */
+    navigationMode: NavigationMode = NavigationMode.Standalone
 ) {
     Services.Inject { services ->
         // TODO: use remember on all these to avoid recomputation:
@@ -454,7 +471,9 @@ private fun NetworkExperience(
             }
         ) {
             RenderExperience(
-                experience = experience
+                experience = experience,
+                navigationMode = navigationMode,
+                defaultColorSchemeDark = defaultColorSchemeDark
             )
         }
     }

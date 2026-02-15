@@ -26,6 +26,9 @@ import io.rover.sdk.notifications.communicationhub.data.database.entities.Subscr
 interface SubscriptionsDao {
     @Query("SELECT * FROM subscriptions WHERE id = :subscriptionId")
     suspend fun getSubscriptionById(subscriptionId: String): SubscriptionEntity?
+
+    @Query("SELECT * FROM subscriptions")
+    suspend fun getAllSubscriptions(): List<SubscriptionEntity>
     
     @Upsert
     suspend fun upsertSubscription(subscription: SubscriptionEntity)

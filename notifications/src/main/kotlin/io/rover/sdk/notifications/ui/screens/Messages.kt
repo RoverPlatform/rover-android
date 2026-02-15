@@ -22,8 +22,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -44,7 +47,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.rover.sdk.notifications.communicationhub.data.database.entities.PostEntity
@@ -54,7 +56,7 @@ import io.rover.sdk.notifications.ui.components.PostListItem
 
 @OptIn(androidx.compose.material.ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
-internal fun PostsList(
+internal fun Messages(
     posts: List<PostWithSubscription>,
     searchQuery: String,
     displayTitle: String,
@@ -64,7 +66,8 @@ internal fun PostsList(
     onPostClick: (String) -> Unit,
     onRefresh: () -> Unit,
     isRefreshing: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val pullRefreshState = rememberPullRefreshState(
         refreshing = isRefreshing,
@@ -72,12 +75,18 @@ internal fun PostsList(
     )
     
     Surface(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize(),
+
         color = MaterialTheme.colorScheme.background,
 
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             SearchBar(
+                // this search bar is always being embedded, within a context where a Scaffold
+                // and app bar are present, so we'll turn off the clever.
+//                windowInsets = androidx.compose.foundation.layout.WindowInsets(0.dp),
+                windowInsets = WindowInsets.navigationBars,
                 inputField = {
                     SearchBarDefaults.InputField(
                         query = searchQuery,
@@ -487,8 +496,8 @@ private fun samplePostsData(): List<PostWithSubscription> {
 
 @Preview
 @Composable
-private fun PostsListPreview() {
-    PostsList(
+private fun MessagesPreview() {
+    Messages(
         posts = samplePostsData(),
         searchQuery = "",
         isExpanded = false,

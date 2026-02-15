@@ -18,6 +18,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.dokka)
     id("maven-publish")
 }
@@ -84,6 +85,7 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
 
     implementation(libs.okhttp)
+    implementation(libs.retrofit)
 
     implementation(libs.androidx.browser)
     implementation(libs.androidx.lifecycle.extensions)
@@ -92,9 +94,17 @@ dependencies {
 
     testImplementation(libs.hamkrest)
     testImplementation(libs.jsonassert)
+    testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.9.3")
 
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.reflect)
+    
+    // JSON
+    implementation(libs.moshi)
+    ksp(libs.moshi.kotlin.codegen)
 
     // Compose and Material
     implementation(platform(libs.compose.bom))

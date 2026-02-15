@@ -22,10 +22,12 @@ import androidx.compose.runtime.Composable
 import io.rover.sdk.experiences.rich.compose.model.values.Appearance
 
 @Composable
-internal fun Appearance.getDarkModeValue(): Boolean {
+internal fun Appearance.getDarkModeValue(
+    darkModeDefault: Boolean? = null
+): Boolean {
     return when (this) {
-        Appearance.LIGHT -> { false }
-        Appearance.DARK -> { true }
-        Appearance.AUTO -> { isSystemInDarkTheme() }
+        Appearance.LIGHT -> false
+        Appearance.DARK -> true
+        Appearance.AUTO -> darkModeDefault ?: isSystemInDarkTheme()
     }
 }

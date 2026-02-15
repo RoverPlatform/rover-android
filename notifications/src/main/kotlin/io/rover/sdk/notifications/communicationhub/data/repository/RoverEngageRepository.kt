@@ -32,16 +32,17 @@ import io.rover.sdk.notifications.communicationhub.data.dto.PostItem
 import io.rover.sdk.notifications.communicationhub.data.dto.PostsSyncResponse
 import io.rover.sdk.notifications.communicationhub.data.dto.SubscriptionsSyncResponse
 import io.rover.sdk.notifications.communicationhub.data.network.EngageApiService
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import java.util.Date
 import java.util.concurrent.atomic.AtomicReference
 
-internal class CommHubRepository(
+internal class RoverEngageRepository(
     private val engageApiService: EngageApiService,
     private val postsDao: PostsDao,
     private val subscriptionsDao: SubscriptionsDao,
@@ -64,69 +65,58 @@ internal class CommHubRepository(
     override suspend fun sync(): Boolean {
         // task coalescing: if a sync is already in progress, wait for it to complete instead of
         // dispatching another.
-        val job = activeSyncJob.updateAndGet { current ->
+        var job = activeSyncJob.updateAndGet { current ->
             current ?: CoroutineScope(Dispatchers.IO).async { performSync() }
         }!!
 
+        // If the job is already cancelled or completed, clear it and create a new one
+        if (job.isCancelled || job.isCompleted) {
+            activeSyncJob.compareAndSet(job, null)
+            job = activeSyncJob.updateAndGet { current ->
+                current ?: CoroutineScope(Dispatchers.IO).async { performSync() }
+            }!!
+        }
+
         return try {
             job.await()
+        } catch (e: CancellationException) {
+            // Cancel the underlying job and clear the reference so subsequent syncs start fresh
+            job.cancel()
+            activeSyncJob.compareAndSet(job, null)
+            throw e
         } finally {
+            // Clear on normal completion
             activeSyncJob.compareAndSet(job, null)
         }
     }
 
     private suspend fun performSync(): Boolean = withContext(Dispatchers.IO) {
         try {
+            var hasNewContent = false
+
             // First sync subscriptions
             val subscriptionsResult = syncSubscriptions()
             if (!subscriptionsResult) {
-                log.w("Failed to sync subscriptions, continuing with posts sync")
+                log.w("Failed to sync subscriptions, continuing with other syncs")
             }
-            
+
+            // Sync posts (recursively fetches all pages)
             log.i("Starting posts sync")
             val cursor = cursorsDao.getCursor(POSTS_ENTITY_TYPE)
             log.d("Current cursor for posts sync: $cursor")
             val deviceId = deviceIdentification.installationIdentifier
-            
-            log.d("Making API request to get posts for device: $deviceId")
-            val response = engageApiService.getPosts(deviceId, cursor)
-            
-            if (response.isSuccessful) {
-                val responseBody = response.body()?.string()
-                if (responseBody != null) {
-                    log.i("Successfully received posts sync response")
-                    val syncResponse = postsSyncResponseAdapter.fromJson(responseBody)
-                        ?: throw IllegalArgumentException("Failed to parse posts response")
-                    log.d("Parsed ${syncResponse.posts.size} posts from response")
-                    
-                    // Save posts and subscriptions
-                    log.d("Processing ${syncResponse.posts.size} posts")
-                    syncResponse.posts.forEach { postItem ->
-                        log.d("Processing post ${postItem.id}")
-                        upsertPostFromDto(postItem)
-                    }
 
-                    log.d("Updating cursor to: ${syncResponse.nextCursor}")
-                    cursorsDao.updateCursor(POSTS_ENTITY_TYPE, syncResponse.nextCursor)
-                    
-                    // Continue syncing if more pages available
-                    if (syncResponse.hasMore) {
-                        log.i("More pages available, continuing sync")
-                        performSync()
-                    } else {
-                        log.i("Posts sync completed successfully")
-                        true
-                    }
-                } else {
-                    log.e("Empty response body from API")
-                    false
-                }
-            } else {
-                log.e("API request failed with code: ${response.code()}")
-                false
+            val postsResult = syncPosts(deviceId, cursor)
+            if (!postsResult) {
+                log.i("No new posts")
             }
+            hasNewContent = hasNewContent || postsResult
+
+            log.i("Sync completed, hasNewContent: $hasNewContent")
+            return@withContext hasNewContent
+            
         } catch (e: Exception) {
-            log.e("Failed to sync posts: ${e.message}")
+            log.e("Failed to sync: ${e.message}")
             false
         }
     }
@@ -166,10 +156,59 @@ internal class CommHubRepository(
         }
     }
 
+    /**
+     * Recursively retrieves all pages of posts, accumulating results.
+     * Returns true if any posts were retrieved, false otherwise.
+     */
+    private suspend fun syncPosts(deviceId: String, cursor: String?): Boolean = withContext(Dispatchers.IO) {
+        try {
+            log.d("Fetching posts page with cursor: $cursor")
+            val response = engageApiService.getPosts(deviceId, cursor)
+
+            if (response.isSuccessful) {
+                val responseBody = response.body()?.string()
+                if (responseBody != null) {
+                    val syncResponse = postsSyncResponseAdapter.fromJson(responseBody)
+                        ?: throw IllegalArgumentException("Failed to parse posts response")
+                    log.d("Parsed ${syncResponse.posts.size} posts from page")
+
+                    // Save all posts from this page
+                    syncResponse.posts.forEach { postItem ->
+                        upsertPostFromDto(postItem)
+                    }
+
+                    // Update cursor for next sync
+                    cursorsDao.updateCursor(POSTS_ENTITY_TYPE, syncResponse.nextCursor)
+
+                    val hasPostsInPage = syncResponse.posts.isNotEmpty()
+
+                    // Continue recursively if more pages available
+                    if (syncResponse.hasMore) {
+                        log.i("More pages available, fetching next page")
+                        val hasPostsInNextPages = syncPosts(deviceId, syncResponse.nextCursor)
+                        return@withContext hasPostsInPage || hasPostsInNextPages
+                    } else {
+                        log.i("No more pages, posts sync complete")
+                        return@withContext hasPostsInPage
+                    }
+                } else {
+                    log.e("Empty response body from posts API")
+                    return@withContext false
+                }
+            } else {
+                log.e("Posts API request failed with code: ${response.code()}")
+                return@withContext false
+            }
+        } catch (e: Exception) {
+            log.e("Failed to sync posts: ${e.message}")
+            false
+        }
+    }
+
     /// For the given DTO, upsert it into the database.
     suspend fun upsertPostFromDto(postItem: PostItem) {
         val existingPost = postsDao.getPostById(postItem.id)
-        log.d("Inserting ${if (existingPost == null) "existing" else "new"} post with ID${postItem.id}")
+        log.d("Inserting ${if (existingPost == null) "new" else "existing"} post with ID ${postItem.id}")
         // Subscription should generally already exist from subscription sync, but if new post
         // arrives from push with a new subscription that was published on the API since our last sync,
         // it won't yet exist.
@@ -202,6 +241,10 @@ internal class CommHubRepository(
     
     suspend fun getPostById(postId: String): PostEntity? = withContext(Dispatchers.IO) {
         postsDao.getPostById(postId)
+    }
+    
+    suspend fun getPostWithSubscriptionById(postId: String): PostWithSubscription? = withContext(Dispatchers.IO) {
+        postsDao.getPostWithSubscriptionById(postId)
     }
     
     suspend fun markPostAsRead(postId: String) = withContext(Dispatchers.IO) {

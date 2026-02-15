@@ -80,7 +80,7 @@ class Rover(
      * A Material 3 Compose color light scheme for use in Rover UI, when used in contexts where a theme
      * cannot be already set.
      *
-     * This applies in cases such as when the Communication Hub is launched modally as an Activity.
+     * This color scheme is no longer used.
      */
     var lightColorScheme: ColorScheme = lightColorScheme()
 
@@ -89,11 +89,9 @@ class Rover(
      * A Material 3 Compose color light scheme for use in Rover UI, when used in contexts where a theme
      * cannot be already set.
      *
-     * This applies in cases such as when the Communication Hub is launched modally as an Activity.
+     * This color scheme is no longer used.
      */
     var darkColorScheme: ColorScheme = darkColorScheme()
-
-    // And here is the singleton logic:
 
     companion object {
         // we have a global singleton of the Rover container.

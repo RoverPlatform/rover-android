@@ -24,14 +24,25 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.core.net.toUri
 import io.rover.sdk.core.Rover
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.routing.LinkOpenInterface
-import io.rover.sdk.notifications.communicationHubRepository
+import io.rover.sdk.notifications.communicationhub.data.database.entities.PostWithSubscription
+import io.rover.sdk.notifications.roverEngageRepository
 import io.rover.sdk.notifications.ui.screens.PostDetail
 
 /**
@@ -40,6 +51,7 @@ import io.rover.sdk.notifications.ui.screens.PostDetail
  */
 class ShowPostActivity : ComponentActivity() {
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -64,23 +76,57 @@ class ShowPostActivity : ComponentActivity() {
                 Rover.shared.lightColorScheme
             }
 
+            val postForTitle by androidx.compose.runtime.produceState<PostWithSubscription?>(
+                initialValue = null,
+                key1 = postId
+            ) {
+                value = postId?.let { Rover.shared.roverEngageRepository.getPostWithSubscriptionById(it) }
+            }
+
             MaterialTheme(colorScheme = colorScheme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    PostDetail(
-                        postId = postId,
-                        postsRepository = Rover.shared.communicationHubRepository,
-                        onBackClick = { finish() },
-                        onOpenUrl = { url ->
-                            val linkOpen = Rover.shared.resolve(LinkOpenInterface::class.java)
-                            // Use Rover's link open interface to handle external links
-
-                        },
-                        onErrorDismiss = { finish() },
+                    Scaffold(
                         modifier = Modifier.fillMaxSize(),
-                    )
+                        containerColor = MaterialTheme.colorScheme.background,
+                        topBar = {
+                            TopAppBar(
+                                title = {
+                                    Text(
+                                        text = postForTitle?.post?.subject ?: "Post",
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                },
+                                navigationIcon = {
+                                    androidx.compose.material3.IconButton(onClick = { finish() }) {
+                                        androidx.compose.material3.Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                            contentDescription = "Back",
+                                            tint = MaterialTheme.colorScheme.onBackground
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                    ) { innerPadding ->
+                        PostDetail(
+                            postId = postId,
+                            postsRepository = Rover.shared.roverEngageRepository,
+                            onBackClick = { finish() },
+                            onOpenUrl = { url ->
+                                val linkOpen = Rover.shared.resolve(LinkOpenInterface::class.java)
+                                // Use Rover's link open interface to handle external links
+                                val uri = url.toUri()
+                                linkOpen?.intentForLink(this, uri)?.let { intent ->
+                                    startActivity(intent)
+                                }
+                            },
+                            onErrorDismiss = { finish() },
+                            modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding).fillMaxSize(),
+                        )
+                    }
                 }
             }
         }

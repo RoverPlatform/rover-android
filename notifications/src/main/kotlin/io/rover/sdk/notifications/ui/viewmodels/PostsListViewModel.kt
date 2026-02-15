@@ -20,22 +20,18 @@ package io.rover.sdk.notifications.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.rover.sdk.notifications.communicationhub.data.database.entities.PostWithSubscription
-import io.rover.sdk.notifications.communicationhub.data.repository.CommHubRepository
+import io.rover.sdk.notifications.communicationhub.data.repository.RoverEngageRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import java.util.Locale
 
 
 internal class PostsListViewModel(
-    private val repository: CommHubRepository
+    private val repository: RoverEngageRepository
 ) : ViewModel() {
     
     private val _allPosts = MutableStateFlow<List<PostWithSubscription>>(emptyList())

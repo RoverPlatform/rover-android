@@ -21,14 +21,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.notifications.communicationhub.data.database.entities.PostEntity
-import io.rover.sdk.notifications.communicationhub.data.repository.CommHubRepository
+import io.rover.sdk.notifications.communicationhub.data.repository.RoverEngageRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 internal class PostDetailViewModel(
-    private val postsRepository: CommHubRepository,
+    private val postsRepository: RoverEngageRepository,
     private val postId: String
 ) : ViewModel() {
     

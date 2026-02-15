@@ -20,21 +20,33 @@ package io.rover.sdk.notifications.communicationhub.routing
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import io.rover.sdk.core.data.config.ConfigManager
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.routing.Route
+import io.rover.sdk.notifications.communicationhub.navigation.HubCoordinator
 import io.rover.sdk.notifications.communicationhub.ui.ShowPostActivity
 import java.net.URI
 import androidx.core.net.toUri
 
 /**
- * Route handler for Posts deep links using [ShowPostActivity].
+ * Route handler for Posts deep links.
  *
  * Handles:
- * - rv-myapp://posts/{id} -> Opens standalone posts with specific post
+ * - rv-myapp://posts/{id} -> Coordinates with HubCoordinator for in-app navigation,
+ *                            or opens standalone ShowPostActivity
+ * 
+ * This route now supports deep link coordination with the Hub before it's presented on screen.
+ * When a deep link arrives, it will queue navigation through the HubCoordinator, which the
+ * Hub composable will execute when it's ready.
+ * 
+ * When both a Hub deep link is configured and inbox is enabled, this route will use the
+ * host app's deep link to reveal the Hub tab, providing a seamless navigation experience.
  */
 internal class ShowPostRoute(
     private val context: Context,
-    private val urlSchemes: Set<String>
+    private val urlSchemes: Set<String>,
+    private val hubCoordinator: HubCoordinator,
+    private val configManager: ConfigManager
 ) : Route {
 
     override fun resolveUri(uri: URI?): Intent? {
@@ -55,16 +67,44 @@ internal class ShowPostRoute(
             "posts" -> {
                 when {
                     pathSegments.size == 1 -> {
-                        // rover://posts/{id} -> Opens standalone posts with specific post
                         val postId = pathSegments[0]
-                        log.v("Posts List: Opening standalone post detail for ID: $postId")
-                        ShowPostActivity.makeIntent(context, androidUri, postId)
+                        val config = configManager.config.value
+                        
+                        // Check if we should use host app deep link coordination
+                        val shouldUseHostDeepLink = config.hub.isInboxEnabled && 
+                                                   config.hub.deepLink != null
+                        
+                        if (shouldUseHostDeepLink) {
+                            log.v("Posts: Using host app deep link coordination for post $postId")
+                            
+                            // Step 1: Queue navigation in coordinator
+                            hubCoordinator.navigateToPost(postId)
+                            
+                            // Step 2: Return ACTION_VIEW intent for host app's deep link
+                            Intent(Intent.ACTION_VIEW).apply {
+                                data = Uri.parse(config.hub.deepLink)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                        } else {
+                            // Fallback to current behavior
+                            log.v("Posts: Using standalone activity for post $postId")
+                            hubCoordinator.navigateToPost(postId)
+                            ShowPostActivity.makeIntent(context, androidUri, postId)
+                        }
                     }
                     else -> {
                         log.w("Posts List: Unknown posts path: ${uri.path}")
                         null
                     }
                 }
+            }
+            "inbox" -> {
+                // Handle inbox deep links
+                log.v("Posts List: Coordinating navigation to inbox")
+                hubCoordinator.navigateToInbox()
+                
+                // Return null since inbox is handled by the Hub composable
+                null
             }
             else -> {
                 log.w("Posts List: Unknown authority: ${uri.authority}")

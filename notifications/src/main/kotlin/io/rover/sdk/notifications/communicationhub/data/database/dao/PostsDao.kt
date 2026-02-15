@@ -37,6 +37,10 @@ interface PostsDao {
     @Query("SELECT * FROM posts WHERE id = :postId")
     suspend fun getPostById(postId: String): PostEntity?
 
+    @Transaction
+    @Query("SELECT * FROM posts WHERE id = :postId")
+    suspend fun getPostWithSubscriptionById(postId: String): PostWithSubscription?
+
     @Upsert
     suspend fun upsertPost(post: PostEntity)
     

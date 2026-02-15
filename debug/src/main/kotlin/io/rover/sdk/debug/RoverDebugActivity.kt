@@ -22,6 +22,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 
 /**
  * This activity displays a list of hidden debug settings for the Rover SDK.
@@ -31,6 +32,7 @@ class RoverDebugActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
+            enableEdgeToEdge()
             RoverSettingsView(dismiss = { finish() })
         }
     }

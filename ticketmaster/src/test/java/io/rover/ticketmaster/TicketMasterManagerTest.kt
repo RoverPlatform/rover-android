@@ -17,9 +17,9 @@
 
 package io.rover.ticketmaster
 
-import com.nhaarman.mockitokotlin2.mock
-import com.nhaarman.mockitokotlin2.verify
-import com.nhaarman.mockitokotlin2.whenever
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import io.rover.sdk.core.data.graphql.safeOptString
 import io.rover.sdk.ticketmaster.TicketmasterManager.Member
 import io.rover.sdk.ticketmaster.decodeJson

@@ -30,11 +30,17 @@ import androidx.compose.ui.Modifier
  *
  * @param url The URL of the Experience to display.
  * @param modifier A Jetpack Compose modifier to apply to the Experience.
+ * @param navigationMode Controls how the experience integrates with navigation. Defaults to
+ * [NavigationMode.Standalone] for backward compatibility. Use [NavigationMode.Pluggable] when
+ * embedding in a parent navigation stack (e.g., Hub).
+ * @param defaultColorSchemeDark For experiences with color scheme set to auto, should it use dark mode? null to follow system.
  */
 @Composable
 fun ExperienceComposable(
     url: Uri,
     modifier: Modifier = Modifier,
+    navigationMode: NavigationMode = NavigationMode.Standalone,
+    defaultColorSchemeDark: Boolean? = null,
 ) {
-    Experience(url = url, modifier = modifier)
+    Experience(url = url, modifier = modifier, navigationMode = navigationMode, defaultColorSchemeDark = defaultColorSchemeDark)
 }

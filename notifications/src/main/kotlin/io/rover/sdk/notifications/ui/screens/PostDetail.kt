@@ -23,22 +23,13 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,8 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -68,11 +57,11 @@ import java.util.Locale
 @Composable
 internal fun PostDetail(
     post: PostWithSubscription,
-    postsRepository: io.rover.sdk.notifications.communicationhub.data.repository.CommHubRepository,
+    postsRepository: io.rover.sdk.notifications.communicationhub.data.repository.RoverEngageRepository,
     onBackClick: () -> Unit,
+    modifier: Modifier = Modifier,
     onOpenUrl: (String) -> Unit,
     onErrorDismiss: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     // using key() to ensure PostDetail is not reused for different posts
     key(post.post.id) {
@@ -98,7 +87,7 @@ internal fun PostDetail(
 @Composable
 internal fun PostDetail(
     postId: String,
-    postsRepository: io.rover.sdk.notifications.communicationhub.data.repository.CommHubRepository,
+    postsRepository: io.rover.sdk.notifications.communicationhub.data.repository.RoverEngageRepository,
     onBackClick: () -> Unit,
     onOpenUrl: (String) -> Unit,
     onErrorDismiss: () -> Unit,
@@ -148,7 +137,6 @@ internal fun PostDetail(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun PostDetailContent(
     post: PostEntity,
@@ -167,34 +155,12 @@ internal fun PostDetailContent(
         log.d("Tracked Post Opened event for postID: ${post.id}")
     }
     
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text(post.subject, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
-    ) { paddingValues ->
-        PostDetailWebView(
-            post = post,
-            eventQueueService = eventQueueService,
-            onOpenUrl = onOpenUrl,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        )
-    }
+    PostDetailWebView(
+        post = post,
+        eventQueueService = eventQueueService,
+        onOpenUrl = onOpenUrl,
+        modifier = modifier.fillMaxSize()
+    )
 }
 
 @SuppressLint("SetJavaScriptEnabled")

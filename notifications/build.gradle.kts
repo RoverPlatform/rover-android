@@ -23,6 +23,7 @@ plugins {
     alias(libs.plugins.kotlin.ksp)
     id("kotlin-parcelize")
     id("maven-publish")
+    alias(libs.plugins.androidx.room)
 }
 
 val roverSdkVersion: String by rootProject.extra
@@ -51,6 +52,14 @@ android {
         java.srcDir("src/main/kotlin")
     }
 
+    sourceSets.getByName("test") {
+        assets.srcDir("$projectDir/schemas")
+    }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -70,6 +79,14 @@ android {
     }
 
     namespace = "io.rover.notifications"
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
+}
+
+ksp {
+    arg("room.incremental", "true")
 }
 
 // Create custom Javadoc JAR using Dokka
@@ -95,20 +112,20 @@ dependencies {
     implementation(libs.bundles.kotlin)
     implementation(libs.kotlinx.coroutines.reactive)
 
-    // Room dependencies for Communication Hub
+    // Room dependencies for Engage features
     implementation(libs.bundles.room)
     ksp(libs.room.compiler)
     
-    // Moshi KSP processor for Communication Hub DTOs
+    // Moshi KSP processor for Engage DTOs
     ksp(libs.moshi.kotlin.codegen)
 
-    // JSON parsing for Communication Hub API
+    // JSON parsing for Engage API
     implementation(libs.bundles.json)
     
-    // Networking for Communication Hub API
+    // Networking for Engage API
     implementation(libs.bundles.networking)
 
-    // Compose dependencies for Communication Hub UI
+    // Compose dependencies for Engage UI
     implementation(platform(libs.compose.bom))
     implementation(libs.androidx.browser)
     implementation(libs.bundles.compose.ui)
@@ -126,10 +143,26 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
 
     implementation(project(":core"))
+    implementation(project(":experiences"))
 
     testImplementation(libs.junit.legacy)
-
     testImplementation(libs.hamkrest)
+    
+    // Mockito for testing
+    testImplementation(libs.mockito.kotlin)
+    
+    // Coroutines testing
+    testImplementation(libs.kotlinx.coroutines.test)
+    
+    // AndroidX testing
+    testImplementation(libs.androidx.test.ext.junit)
+    testImplementation(libs.androidx.test.core)
+    
+    // Room testing
+    testImplementation(libs.room.testing)
+    
+    // Robolectric for Android framework stubs in unit tests
+    testImplementation(libs.robolectric)
 
     androidTestImplementation(libs.bundles.android.testing)
 

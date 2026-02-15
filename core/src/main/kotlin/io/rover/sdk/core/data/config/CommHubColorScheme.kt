@@ -15,20 +15,22 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package io.rover.sdk.notifications.communicationhub.data.database
+package io.rover.sdk.core.data.config
 
-import androidx.room.TypeConverter
-import java.util.Date
+import com.squareup.moshi.Json
 
-class CommunicationHubTypeConverters {
+/**
+ * Color scheme preference for Rover.
+ *
+ * Maps to backend API values for UI usage.
+ */
+public enum class CommHubColorScheme {
+    @Json(name = "auto")
+    AUTO,
     
-    @TypeConverter
-    fun fromTimestamp(value: Long?): Date? {
-        return value?.let { Date(it) }
-    }
-
-    @TypeConverter
-    fun dateToTimestamp(date: Date?): Long? {
-        return date?.time
-    }
+    @Json(name = "light")
+    LIGHT,
+    
+    @Json(name = "dark")
+    DARK
 }

@@ -22,11 +22,11 @@ import org.reactivestreams.Publisher
 
 /**
  * Provides badge count information that can be observed in Jetpack Compose or traditional Views.
- * The badge indicates the number of unread Inbox (Communication Hub) posts.
+ * The badge indicates the number of unread Inbox (Messages) posts.
  */
 interface RoverBadgeInterface {
     /**
-     * Whether the Inbox (Communication Hub) tab has unread items and should display a badge.
+     * Whether the Inbox (Messages) tab has unread items and should display a badge.
      *
      * If null, then the count is 0 and the badge is not displayed.
      *
@@ -38,7 +38,7 @@ interface RoverBadgeInterface {
      * Reactive Streams Publisher API for Java users, in the event that the newBadge StateFlow
      * is not suitable for their use case.
      *
-     * Publishes the unread count of posts in the Inbox (Communication Hub).
+     * Publishes the unread count of posts in the Inbox (Messages).
      */
     fun newBadgePublisher(): Publisher<Int>
 }

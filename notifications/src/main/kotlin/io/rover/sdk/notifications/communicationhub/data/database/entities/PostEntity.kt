@@ -21,6 +21,7 @@ import android.os.Parcelable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import kotlinx.parcelize.Parcelize
 
@@ -33,6 +34,9 @@ import kotlinx.parcelize.Parcelize
             childColumns = ["subscription_id"],
             onDelete = ForeignKey.SET_NULL
         )
+    ],
+    indices = [
+        Index(value = ["subscription_id"])
     ]
 )
 @Parcelize

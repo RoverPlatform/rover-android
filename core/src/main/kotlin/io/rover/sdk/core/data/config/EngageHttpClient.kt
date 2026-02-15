@@ -15,15 +15,21 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package io.rover.sdk.notifications.communicationhub.data.network
+package io.rover.sdk.core.data.config
 
 import android.content.Context
+import io.rover.sdk.core.data.AuthenticationContextInterface
 import io.rover.sdk.core.platform.roverUserAgent
 import okhttp3.OkHttpClient
 
-internal class CommunicationHubHttpClient(
+/**
+ * HTTP client for Engage API config endpoint.
+ *
+ * Provides OkHttpClient configured with authentication headers for config requests.
+ */
+internal class EngageHttpClient(
     private val context: Context,
-    private val accountToken: String?
+    private val authenticationContext: AuthenticationContextInterface
 ) {
     private val userAgent: String by lazy {
         val packageInfo = context.packageManager.getPackageInfo(
@@ -40,7 +46,7 @@ internal class CommunicationHubHttpClient(
                 val requestBuilder = chain.request().newBuilder().apply {
                     header("User-Agent", userAgent)
                     header("Content-Type", "application/json")
-                    accountToken?.let { token ->
+                    authenticationContext.sdkToken?.let { token ->
                         header("x-rover-account-token", token)
                     }
                 }

@@ -21,7 +21,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.notifications.communicationhub.data.dto.PostItem
-import io.rover.sdk.notifications.communicationhub.data.repository.CommHubRepository
+import io.rover.sdk.notifications.communicationhub.data.repository.RoverEngageRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.json.JSONException
@@ -30,11 +30,11 @@ import java.net.MalformedURLException
 import java.util.Date
 
 /**
- * Handles Communication Hub push notifications by parsing post data and saving to repository.
+ * Handles Rover Post push notifications by parsing post data and saving to repository.
  * Also creates standard Android notifications for display.
  */
-internal class CommunicationHubPushHandler(
-    private val repository: CommHubRepository,
+internal class PostPushHandler(
+    private val repository: RoverEngageRepository,
     private val coroutineScope: CoroutineScope
 ) {
     
@@ -45,7 +45,7 @@ internal class CommunicationHubPushHandler(
     private val postItemAdapter = moshi.adapter(PostItem::class.java)
     
     /**
-     * Process a Communication Hub push notification.
+     * Process a Post push notification.
      */
     fun handleCommunicationHubPush(roverJson: String) {
         try {
@@ -60,20 +60,20 @@ internal class CommunicationHubPushHandler(
             coroutineScope.launch {
                 try {
                     repository.savePostFromPush(postItem)
-                    log.v("Communication Hub post saved from push: ${postItem.id}")
+                    log.v("Post saved from push: ${postItem.id}")
                 } catch (e: Exception) {
-                    log.e("Failed to save Communication Hub post from push: ${e.message}")
+                    log.e("Failed to save post from push: ${e.message}")
                 }
             }
 
         } catch (e: JSONException) {
-            log.w("Invalid Communication Hub push notification received: '${e.message}'")
+            log.w("Invalid Post push notification received: '${e.message}'")
             log.w("... contents were: $roverJson")
         } catch (e: MalformedURLException) {
-            log.w("Invalid Communication Hub push notification URL: '${e.message}'")
+            log.w("Invalid Post push notification URL: '${e.message}'")
             log.w("... contents were: $roverJson")
         } catch (e: Exception) {
-            log.e("Error processing Communication Hub push notification: ${e.message}")
+            log.e("Error processing Post push notification: ${e.message}")
         }
     }
 }

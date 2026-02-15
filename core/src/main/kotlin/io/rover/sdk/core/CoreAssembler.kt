@@ -35,6 +35,10 @@ import io.rover.sdk.core.container.Resolver
 import io.rover.sdk.core.container.Scope
 import io.rover.sdk.core.data.AuthenticationContextInterface
 import io.rover.sdk.core.data.AuthenticationContext
+import io.rover.sdk.core.data.config.ConfigManager
+import io.rover.sdk.core.data.config.EngageApiService
+import io.rover.sdk.core.data.config.HomeViewManager
+import io.rover.sdk.core.data.config.RoverConfig
 import io.rover.sdk.core.data.graphql.GraphQlApiService
 import io.rover.sdk.core.data.graphql.GraphQlApiServiceInterface
 import io.rover.sdk.core.data.http.NetworkClient
@@ -88,6 +92,7 @@ import io.rover.sdk.core.tracking.ConversionsManager
 import io.rover.sdk.core.tracking.ConversionsTrackerService
 import io.rover.sdk.core.tracking.SessionStore
 import io.rover.sdk.core.tracking.SessionStoreInterface
+import kotlinx.coroutines.flow.StateFlow
 import io.rover.sdk.core.tracking.SessionTracker
 import io.rover.sdk.core.tracking.SessionTrackerInterface
 import io.rover.sdk.core.ui.LinkOpen
@@ -403,6 +408,33 @@ class CoreAssembler @JvmOverloads constructor(
             )
         }
 
+        container.register(Scope.Singleton, io.rover.sdk.core.data.config.ConfigManager::class.java) { resolver ->
+            io.rover.sdk.core.data.config.ConfigManager(
+                resolver.resolveSingletonOrFail(LocalStorage::class.java)
+            )
+        }
+
+        container.register(Scope.Singleton, io.rover.sdk.core.data.config.EngageHttpClient::class.java) { resolver ->
+            io.rover.sdk.core.data.config.EngageHttpClient(
+                resolver.resolveSingletonOrFail(Context::class.java),
+                resolver.resolveSingletonOrFail(AuthenticationContextInterface::class.java)
+            )
+        }
+
+        container.register(Scope.Singleton, io.rover.sdk.core.data.config.EngageApiService::class.java) { resolver ->
+            io.rover.sdk.core.data.config.EngageApiService.create(
+                resolver.resolveSingletonOrFail(io.rover.sdk.core.data.config.EngageHttpClient::class.java),
+                engageEndpoint
+            )
+        }
+
+        container.register(Scope.Singleton, io.rover.sdk.core.data.config.ConfigSync::class.java) { resolver ->
+            io.rover.sdk.core.data.config.ConfigSync(
+                resolver.resolveSingletonOrFail(io.rover.sdk.core.data.config.EngageApiService::class.java),
+                resolver.resolveSingletonOrFail(io.rover.sdk.core.data.config.ConfigManager::class.java)
+            )
+        }
+
         container.register(
             Scope.Singleton,
             Router::class.java
@@ -484,6 +516,18 @@ class CoreAssembler @JvmOverloads constructor(
                     resolver.resolveSingletonOrFail(ConversionsManager::class.java)
             )
         }
+
+        container.register(
+            Scope.Singleton,
+            HomeViewManager::class.java,
+        ) { resolver ->
+            HomeViewManager(
+                resolver.resolveSingletonOrFail(EngageApiService::class.java),
+                resolver.resolveSingletonOrFail(LocalStorage::class.java),
+               resolver.resolveSingletonOrFail(UserInfoInterface::class.java),
+                resolver.resolveSingletonOrFail(DeviceIdentificationInterface::class.java)
+            )
+        }
     }
 
     override fun afterAssembly(resolver: Resolver) {
@@ -512,6 +556,10 @@ class CoreAssembler @JvmOverloads constructor(
         resolver.resolveSingletonOrFail(ApplicationSessionEmitter::class.java).start()
 
         resolver.resolveSingletonOrFail(SyncByApplicationLifecycle::class.java).start()
+
+        resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java).registerStandaloneParticipant(
+            resolver.resolveSingletonOrFail(io.rover.sdk.core.data.config.ConfigSync::class.java)
+        )
 
         resolver.resolveSingletonOrFail(Router::class.java).apply {
             registerRoute(
@@ -578,6 +626,31 @@ private fun missingDependencyError(name: String): Throwable {
 
 val Rover.privacyService: PrivacyService
     get() = this.resolve(PrivacyService::class.java) ?: throw missingDependencyError("PrivacyService")
+
+/**
+ * Access to the Rover configuration via ConfigManager.
+ * Returns a StateFlow of RoverConfig that can be collected in Compose.
+ */
+val Rover.roverConfig: StateFlow<RoverConfig>
+    get() = this.resolve(ConfigManager::class.java)?.config 
+        ?: throw missingDependencyError("RoverConfig")
+
+/**
+ * Access to the Hub home view experience URL.
+ * Returns a StateFlow of the experience URL string (nullable) that can be collected in Compose.
+ */
+val Rover.hubHomeExperienceURL: StateFlow<String?>
+    get() = this.resolve(HomeViewManager::class.java)?.experienceURL
+        ?: throw missingDependencyError("HomeViewManager")
+
+/**
+ * Fetches the latest Hub home view URL from the backend.
+ * This is a suspend function that should be called from a coroutine.
+ */
+suspend fun Rover.refreshHubExperienceURL() {
+    this.resolve(HomeViewManager::class.java)?.fetch()
+        ?: throw missingDependencyError("HomeViewManager")
+}
 
 var Rover.trackingMode: PrivacyService.TrackingMode
     get() = privacyService.trackingMode

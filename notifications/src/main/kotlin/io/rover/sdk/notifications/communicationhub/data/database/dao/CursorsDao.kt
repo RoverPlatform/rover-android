@@ -27,6 +27,9 @@ import io.rover.sdk.notifications.communicationhub.data.database.entities.Cursor
 interface CursorsDao {
     @Query("SELECT cursor FROM cursors WHERE roverEntity = :entityType")
     suspend fun getCursor(entityType: String): String?
+
+    @Query("SELECT * FROM cursors")
+    suspend fun getAllCursors(): List<CursorEntity>
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCursor(cursor: CursorEntity)

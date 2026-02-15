@@ -55,7 +55,7 @@ internal interface EngageApiService {
             }
         }
 
-        fun create(httpClient: CommunicationHubHttpClient, baseUrl: String): EngageApiService {
+        fun create(httpClient: EngageHttpClient, baseUrl: String): EngageApiService {
             // Defensive normalization as final safety net to prevent crashes if a malformed URL
             // somehow makes it through the endpoint configuration layer
             val normalizedBaseUrl = ensureTrailingSlash(baseUrl)

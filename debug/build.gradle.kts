@@ -91,6 +91,7 @@ dependencies {
 
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose.ui)
+    implementation(libs.androidx.compose.material3)
 }
 
 afterEvaluate {

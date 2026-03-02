@@ -23,10 +23,21 @@ package io.rover.sdk.seatgeek
 interface SeatGeekAuthorizer {
     /**
      * Set the user's SeatGeek crmID.
-
+     *
      * @param crmID The value of the `crmID`.
      */
+    @Deprecated(
+        "Use setSeatGeekIDs instead"
+    )
     fun setSeatGeekId(crmID: String)
+
+    /**
+     * Set the user's SeatGeek IDs.
+     *
+     * @param clientID The SeatGeek client ID.
+     * @param crmID The SeatGeek CRM ID.
+     */
+    fun setSeatGeekIDs(clientID: String, crmID: String)
 
     /**
      * Clear the user's SeatGeek credentials after a successful sign-out.

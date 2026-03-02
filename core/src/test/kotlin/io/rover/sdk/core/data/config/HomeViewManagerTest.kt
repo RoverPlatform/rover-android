@@ -365,6 +365,71 @@ class HomeViewManagerTest {
     }
 
     @Test
+    fun `fetch passes seatGeek clientID when no other userID`() = runTest {
+        whenever(mockStorage.get(HomeViewManager.STORAGE_KEY)).thenReturn(null)
+        whenever(mockUserInfo.currentUserInfo).thenReturn(
+            hashMapOf("seatGeek.seatGeekClientID" to "sg-client-123")
+        )
+
+        val json = """
+            { "experienceURL": "https://example.com" }
+        """.trimIndent()
+
+        mockServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(json)
+                .addHeader("Content-Type", "application/json")
+        )
+
+        val manager = HomeViewManager(
+            engageApiService = engageApiService,
+            localStorage = localStorage,
+            userInfo = mockUserInfo,
+            deviceIdentification = mockDeviceIdentification
+        )
+
+        manager.fetch()
+
+        val request = mockServer.takeRequest()
+        assertEquals("/home?userID=sg-client-123", request.path)
+    }
+
+    @Test
+    fun `fetch prefers seatGeek clientID over seatGeekID`() = runTest {
+        whenever(mockStorage.get(HomeViewManager.STORAGE_KEY)).thenReturn(null)
+        whenever(mockUserInfo.currentUserInfo).thenReturn(
+            hashMapOf(
+                "seatGeek.seatGeekClientID" to "sg-client-abc",
+                "seatGeek.seatGeekID" to "sg-crm-xyz"
+            )
+        )
+
+        val json = """
+            { "experienceURL": "https://example.com" }
+        """.trimIndent()
+
+        mockServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(json)
+                .addHeader("Content-Type", "application/json")
+        )
+
+        val manager = HomeViewManager(
+            engageApiService = engageApiService,
+            localStorage = localStorage,
+            userInfo = mockUserInfo,
+            deviceIdentification = mockDeviceIdentification
+        )
+
+        manager.fetch()
+
+        val request = mockServer.takeRequest()
+        assertEquals("/home?userID=sg-client-abc", request.path)
+    }
+
+    @Test
     fun `fetch prefers direct userID over ticketmaster`() = runTest {
         whenever(mockStorage.get(HomeViewManager.STORAGE_KEY)).thenReturn(null)
         whenever(mockUserInfo.currentUserInfo).thenReturn(

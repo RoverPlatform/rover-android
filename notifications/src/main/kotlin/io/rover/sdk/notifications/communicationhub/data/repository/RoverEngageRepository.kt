@@ -63,19 +63,17 @@ internal class RoverEngageRepository(
     private val activeSyncJob = AtomicReference<Deferred<Boolean>?>(null)
 
     override suspend fun sync(): Boolean {
-        // task coalescing: if a sync is already in progress, wait for it to complete instead of
-        // dispatching another.
-        var job = activeSyncJob.updateAndGet { current ->
-            current ?: CoroutineScope(Dispatchers.IO).async { performSync() }
+        // Task coalescing: if a sync is already in progress (or just completed), reuse it.
+        // Only create a new job when there is no current job or the current job was cancelled.
+        // This avoids a race where a fast-completing IO job could be treated as "stale" and
+        // trigger a second redundant sync on the same call.
+        val job = activeSyncJob.updateAndGet { current ->
+            if (current == null || current.isCancelled) {
+                CoroutineScope(Dispatchers.IO).async { performSync() }
+            } else {
+                current
+            }
         }!!
-
-        // If the job is already cancelled or completed, clear it and create a new one
-        if (job.isCancelled || job.isCompleted) {
-            activeSyncJob.compareAndSet(job, null)
-            job = activeSyncJob.updateAndGet { current ->
-                current ?: CoroutineScope(Dispatchers.IO).async { performSync() }
-            }!!
-        }
 
         return try {
             job.await()

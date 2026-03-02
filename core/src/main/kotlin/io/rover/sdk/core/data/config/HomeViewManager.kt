@@ -122,7 +122,13 @@ internal class HomeViewManager(
             return HomeViewIdentifier.UserID(ticketmasterID)
         }
 
-        // Check for SeatGeek ID
+        // Check for SeatGeek Client ID
+        val seatGeekClientID = currentUserInfo["seatGeek.seatGeekClientID"] as? String
+        if (!seatGeekClientID.isNullOrEmpty()) {
+            return HomeViewIdentifier.UserID(seatGeekClientID)
+        }
+
+        // Check for SeatGeek CRM ID
         val seatGeekID = currentUserInfo["seatGeek.seatGeekID"] as? String
         if (!seatGeekID.isNullOrEmpty()) {
             return HomeViewIdentifier.UserID(seatGeekID)

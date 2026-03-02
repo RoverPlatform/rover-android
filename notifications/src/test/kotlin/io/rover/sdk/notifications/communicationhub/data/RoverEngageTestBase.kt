@@ -129,20 +129,16 @@ abstract class RoverEngageTestBase {
     protected suspend fun configureMockForFailure() {
         configureMockForFailure(
             subscriptionsError = RuntimeException("Subscriptions API failed"),
-            feedCategoriesError = RuntimeException("Categories API failed"),
             postsError = RuntimeException("Posts API failed"),
-            articlesError = RuntimeException("Articles API failed")
         )
     }
     
     /**
-     * Configures mocks for failure scenarios across all four phases with specific errors
+     * Configures mocks for failure scenarios across all two phases with specific errors
      */
     protected suspend fun configureMockForFailure(
         subscriptionsError: Throwable,
-        feedCategoriesError: Throwable,
         postsError: Throwable,
-        articlesError: Throwable
     ) {
         // Setup device identification
         doReturn("test-device-id").whenever(mockDeviceIdentification).installationIdentifier
@@ -245,11 +241,6 @@ abstract class RoverEngageTestBase {
      * Creates a unique post ID for testing
      */
     protected fun createUniquePostId(): String = "test-post-${UUID.randomUUID()}"
-
-    /**
-     * Creates a unique article ID for testing
-     */
-    protected fun createUniqueArticleId(): String = "article-${UUID.randomUUID()}"
 
     /**
      * Configures basic mocks to prevent null pointer exceptions

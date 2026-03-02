@@ -36,38 +36,53 @@ class SeatGeekManager(
     companion object {
         private const val STORAGE_CONTEXT_IDENTIFIER = "seatGeek"
         private const val SEATGEEK_MAP_KEY = "seatGeek"
+        // NOTE: seatGeekID is actually the CRM ID ("crmID"). The variable name is maintained for backward compatibility.
         private const val SEATGEEK_ID_KEY = "seatGeekID"
+        private const val CLIENT_ID_KEY = "seatGeekClientID"
     }
 
+    @Deprecated(
+        "Use setSeatGeekIDs instead"
+    )
     override fun setSeatGeekId(crmID: String) {
         if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
-            log.i("SeatGeek ID set while privacy is in anonymous/anonymized mode, ignored")
+            log.i("SeatGeek IDs set while privacy is in anonymous/anonymized mode, ignored")
             return
         }
         seatGeekID = crmID
+        seatGeekClientID = null
         updateUserInfoWithMemberAttributes()
-        log.i("SeatGeek signed in with '$crmID'.")
+        log.w("SeatGeek signed in with deprecated CRM ID-only API.")
     }
 
-    @Suppress("UNCHECKED_CAST")
+    override fun setSeatGeekIDs(clientID: String, crmID: String) {
+        if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
+            log.i("SeatGeek IDs set while privacy is in anonymous/anonymized mode, ignored")
+            return
+        }
+        seatGeekID = crmID
+        this.seatGeekClientID = clientID
+        updateUserInfoWithMemberAttributes()
+        log.i("SeatGeek IDs set.")
+    }
+
     private fun updateUserInfoWithMemberAttributes() {
         val localPropertiesMap = getNonNullPropertiesMap()
 
+        // Replace the entire seatGeek map atomically rather than merging, so that
+        // null-valued fields don't leave stale entries behind.
         userInfo.update {
-            if (it.containsKey(SEATGEEK_MAP_KEY)) {
-                val sgAttributes = it.getValue(SEATGEEK_MAP_KEY) as MutableMap<String, Any>
-                localPropertiesMap.forEach { (propertyName, propertyValue) ->
-                    sgAttributes[propertyName] = propertyValue
-                }
-                it[SEATGEEK_MAP_KEY] = sgAttributes
+            if (localPropertiesMap.isNotEmpty()) {
+                it[SEATGEEK_MAP_KEY] = localPropertiesMap
             } else {
-                if (localPropertiesMap.isNotEmpty()) it[SEATGEEK_MAP_KEY] = localPropertiesMap
+                it.remove(SEATGEEK_MAP_KEY)
             }
         }
     }
 
     override fun clearCredentials() {
         seatGeekID = null
+        seatGeekClientID = null
         userInfo.update { it.remove(SEATGEEK_MAP_KEY) }
         log.i("SeatGeek signed out.")
     }
@@ -94,9 +109,32 @@ class SeatGeekManager(
             }
         }
 
+    private var seatGeekClientID: String?
+        get() {
+            val storageJson = storage[CLIENT_ID_KEY]
+            return storageJson.whenNotNull { clientIDString ->
+                try {
+                    JSONObject(clientIDString).safeOptString(CLIENT_ID_KEY)
+                } catch (e: JSONException) {
+                    log.w("Invalid JSON in seatgeek client ID storage, ignoring: $e")
+                    null
+                }
+            }
+        }
+        set(value) {
+            if (value != null) {
+                storage[CLIENT_ID_KEY] = JSONObject()
+                    .put(CLIENT_ID_KEY, value)
+                    .toString()
+            } else {
+                storage[CLIENT_ID_KEY] = null
+            }
+        }
+
     private fun getNonNullPropertiesMap(): Map<String, String> {
         val propertiesMap = mutableMapOf<String, String>()
-        seatGeekID.whenNotNull { propertiesMap.put(SEATGEEK_ID_KEY, it)}
+        seatGeekID.whenNotNull { propertiesMap.put(SEATGEEK_ID_KEY, it) }
+        seatGeekClientID.whenNotNull { propertiesMap.put(CLIENT_ID_KEY, it) }
         return propertiesMap
     }
 

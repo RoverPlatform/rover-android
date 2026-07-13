@@ -20,11 +20,14 @@ package io.rover.sdk.notifications.communicationhub.data
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import io.rover.sdk.core.platform.DeviceIdentificationInterface
-import io.rover.sdk.notifications.communicationhub.data.database.RoverEngageDatabase
-import io.rover.sdk.notifications.communicationhub.data.dto.PostItem
-import io.rover.sdk.notifications.communicationhub.data.dto.SubscriptionItem
+import io.rover.sdk.notifications.communicationhub.data.RoverEngageDatabase
+import io.rover.sdk.notifications.communicationhub.posts.dto.PostItem
+import io.rover.sdk.notifications.communicationhub.posts.dto.SubscriptionItem
 import io.rover.sdk.notifications.communicationhub.data.network.EngageApiService
-import io.rover.sdk.notifications.communicationhub.data.repository.RoverEngageRepository
+import io.rover.sdk.notifications.communicationhub.posts.PostsRepository
+import io.rover.sdk.notifications.communicationhub.posts.PostsSync
+import io.rover.sdk.notifications.communicationhub.posts.SubscriptionsSync
+import io.rover.sdk.notifications.communicationhub.conversations.TestDataGenerator
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Before
@@ -36,10 +39,19 @@ import retrofit2.Response
 import java.util.*
 
 /**
- * Base test class for tests using the Rover Engage database, providing common setup and helper methods
+ * Base test class for tests using the Rover Engage database, providing common setup and helper methods.
+ *
+ * NOTE ON COROUTINE TEST DISPATCHERS: the [database] runs its suspend queries on Room's own executor
+ * (a real background thread), NOT on any injected test dispatcher. This means a virtual-time test
+ * (`runTest` + `StandardTestDispatcher` + `advanceUntilIdle`/`advanceTimeBy`) cannot deterministically
+ * await a Room continuation: `advanceUntilIdle` drains the virtual scheduler and returns without
+ * waiting for the real Room thread to post its result back. This bites specifically when a virtual
+ * `delay()` is followed by a DB call (e.g. testing the reply retry timer). For those cases prefer a
+ * real dispatcher with `runBlocking` and bounded polling; reserve virtual time for tests whose DB
+ * work is `join()`-awaited rather than drained via `advanceUntilIdle`.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [28])
+@Config(sdk = [36])
 abstract class RoverEngageTestBase {
 
     // Mock dependencies - shared across all tests
@@ -47,7 +59,9 @@ abstract class RoverEngageTestBase {
     internal lateinit var mockDeviceIdentification: DeviceIdentificationInterface
 
     // System under test
-    internal lateinit var repository: RoverEngageRepository
+    internal lateinit var repository: PostsRepository
+    internal lateinit var postsSync: PostsSync
+    internal lateinit var subscriptionsSync: SubscriptionsSync
 
     // Database support
     internal var database: RoverEngageDatabase? = null
@@ -77,12 +91,19 @@ abstract class RoverEngageTestBase {
         mockEngageApiService = mock()
         mockDeviceIdentification = mock()
         
-        repository = RoverEngageRepository(
-            mockEngageApiService,
+        repository = PostsRepository(
             database!!.postsDao(),
-            database!!.subscriptionsDao(),
-            database!!.cursorsDao(),
-            mockDeviceIdentification
+            database!!.subscriptionsDao()
+        )
+        postsSync = PostsSync(
+            engageApiService = mockEngageApiService,
+            postsRepository = repository,
+            syncStateDao = database!!.syncStateDao(),
+            deviceIdentification = mockDeviceIdentification,
+        )
+        subscriptionsSync = SubscriptionsSync(
+            engageApiService = mockEngageApiService,
+            subscriptionsDao = database!!.subscriptionsDao(),
         )
     }
 
@@ -193,6 +214,7 @@ abstract class RoverEngageTestBase {
     protected fun createTestSubscription(
         id: String = "sub-${UUID.randomUUID()}",
         name: String = "Test Subscription",
+        logoURL: String? = "https://example.com/$id.png",
         optIn: Boolean = false,
         status: String = "published"
     ): SubscriptionItem = SubscriptionItem(
@@ -200,7 +222,8 @@ abstract class RoverEngageTestBase {
         name = name,
         description = "Test description for $name",
         optIn = optIn,
-        status = status
+        status = status,
+        logoURL = logoURL,
     )
 
     // ===== Database Helpers =====
@@ -255,7 +278,7 @@ abstract class RoverEngageTestBase {
      * Asserts that a post has the expected properties
      */
     protected fun assertPostProperties(
-        post: io.rover.sdk.notifications.communicationhub.data.database.entities.PostEntity?,
+        post: io.rover.sdk.notifications.communicationhub.posts.PostEntity?,
         expectedSubject: String,
         expectedIsRead: Boolean? = null,
         expectedSubscriptionId: String? = null

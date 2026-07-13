@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 class HubCoordinator {
     private val _pendingNavigation = MutableStateFlow<HubNavigation?>(null)
+    private val _navigationState = MutableStateFlow<HubNavigationState>(HubNavigationState.Hidden)
     
     /**
      * Observable pending navigation state that the Hub composable can collect.
@@ -45,6 +46,13 @@ class HubCoordinator {
      * this by calling [clearPendingNavigation] after executing the navigation.
      */
     val pendingNavigation: StateFlow<HubNavigation?> = _pendingNavigation.asStateFlow()
+
+    /**
+     * Observable visibility-aware Hub destination state.
+     *
+     * This is informational only, and is published from the visible Compose routes.
+     */
+    val navigationState: StateFlow<HubNavigationState> = _navigationState.asStateFlow()
     
     /**
      * Navigate to a specific post by ID.
@@ -58,6 +66,17 @@ class HubCoordinator {
      */
     fun navigateToPost(postId: String) {
         _pendingNavigation.value = HubNavigation.Post(postId)
+    }
+
+    /**
+     * Navigate to a specific conversation by ID.
+     *
+     * This queues the navigation to be executed when the Hub is presented.
+     *
+     * @param conversationId The ID of the conversation to navigate to
+     */
+    fun navigateToConversation(conversationId: String) {
+        _pendingNavigation.value = HubNavigation.Conversation(conversationId)
     }
     
     /**
@@ -86,5 +105,19 @@ class HubCoordinator {
      */
     fun clearPendingNavigation() {
         _pendingNavigation.value = null
+    }
+
+    /**
+     * Updates the informational visible Hub state based on Compose visibility callbacks.
+     *
+     * Hidden updates only clear the state when they correspond to the currently published
+     * route, so stale callbacks from a prior route do not wipe out a newer visible route.
+     */
+    fun updateNavigationVisibility(state: HubNavigationState, isVisible: Boolean) {
+        if (isVisible) {
+            _navigationState.value = state
+        } else if (_navigationState.value == state) {
+            _navigationState.value = HubNavigationState.Hidden
+        }
     }
 }

@@ -26,6 +26,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.reactivestreams.Publisher
+import org.reactivestreams.Subscription
 
 class OkHttpNetworkClient(
     private val appPackageInfo: PackageInfo
@@ -87,14 +88,19 @@ class OkHttpNetworkClient(
 fun OkHttpClient.newCallPublisher(request: Request): Publisher<okhttp3.Response> {
     return Publisher { subscriber ->
         val call = this.newCall(request)
-        call.enqueue(object : okhttp3.Callback {
-            override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
-                subscriber.onError(e)
-            }
+        subscriber.onSubscribe(object : Subscription {
+            override fun cancel() { call.cancel() }
+            override fun request(n: Long) {
+                call.enqueue(object : okhttp3.Callback {
+                    override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                        subscriber.onError(e)
+                    }
 
-            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
-                subscriber.onNext(response)
-                subscriber.onComplete()
+                    override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                        subscriber.onNext(response)
+                        subscriber.onComplete()
+                    }
+                })
             }
         })
     }

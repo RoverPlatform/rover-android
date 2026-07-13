@@ -23,7 +23,6 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -41,13 +40,14 @@ import androidx.core.net.toUri
 import io.rover.sdk.core.Rover
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.routing.LinkOpenInterface
-import io.rover.sdk.notifications.communicationhub.data.database.entities.PostWithSubscription
-import io.rover.sdk.notifications.roverEngageRepository
-import io.rover.sdk.notifications.ui.screens.PostDetail
+import io.rover.sdk.notifications.communicationhub.rememberCommHubDarkTheme
+import io.rover.sdk.notifications.communicationhub.posts.PostWithSubscription
+import io.rover.sdk.notifications.postsRepository
+import io.rover.sdk.notifications.communicationhub.posts.PostDetail
 
 /**
  * An activity meant for presenting a single Post full-screen (modally), particularly
- * in the context of link routing. See [io.rover.sdk.notifications.communicationhub.routing.ShowPostRoute].
+ * in the context of link routing. See [ShowPostRoute].
  */
 class ShowPostActivity : ComponentActivity() {
 
@@ -70,7 +70,7 @@ class ShowPostActivity : ComponentActivity() {
             // compose UI, and thus its MaterialTheme setup, we offer the global setters
             // [Rover.shared.lightColorScheme] and [Rover.shared.darkColorScheme] to allow
             // the developer to provide their color scheme globally.
-            val colorScheme = if (isSystemInDarkTheme()) {
+            val colorScheme = if (rememberCommHubDarkTheme()) {
                 Rover.shared.darkColorScheme
             } else {
                 Rover.shared.lightColorScheme
@@ -80,7 +80,7 @@ class ShowPostActivity : ComponentActivity() {
                 initialValue = null,
                 key1 = postId
             ) {
-                value = postId?.let { Rover.shared.roverEngageRepository.getPostWithSubscriptionById(it) }
+                value = postId?.let { Rover.shared.postsRepository.getPostWithSubscriptionById(it) }
             }
 
             MaterialTheme(colorScheme = colorScheme) {
@@ -113,7 +113,7 @@ class ShowPostActivity : ComponentActivity() {
                     ) { innerPadding ->
                         PostDetail(
                             postId = postId,
-                            postsRepository = Rover.shared.roverEngageRepository,
+                            postsRepository = Rover.shared.postsRepository,
                             onBackClick = { finish() },
                             onOpenUrl = { url ->
                                 val linkOpen = Rover.shared.resolve(LinkOpenInterface::class.java)

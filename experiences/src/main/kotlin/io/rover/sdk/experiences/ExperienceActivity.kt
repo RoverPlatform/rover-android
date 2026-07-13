@@ -55,6 +55,12 @@ open class ExperienceActivity : ComponentActivity() {
                         // and allows us to resign the activity.
                         onCanceled = {
                             this.finish()
+                        },
+                        // Presented full-screen and dismissable: App Screens (V3) surfaces a root-page
+                        // close (✕) button whose tap resigns this activity. (Embedded ExperienceFragment
+                        // leaves this null.)
+                        onDismissButtonPressed = {
+                            this.finish()
                         }
                     )
                 } else {

@@ -21,7 +21,6 @@ import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.http.GET
-import retrofit2.http.Query
 
 /**
  * Retrofit service for the Engage API config endpoint.
@@ -34,10 +33,7 @@ internal interface EngageApiService {
     suspend fun getConfig(): Response<ResponseBody>
 
     @GET("home")
-    suspend fun getHomeView(
-        @Query("userID") userID: String? = null,
-        @Query("deviceIdentifier") deviceIdentifier: String? = null
-    ): Response<ResponseBody>
+    suspend fun getHomeView(): Response<ResponseBody>
 
     companion object {
         /**

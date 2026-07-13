@@ -19,6 +19,7 @@ package io.rover.sdk.experiences
 
 import android.content.Context
 import android.net.Uri
+import android.os.Trace
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,6 +42,8 @@ import io.rover.sdk.core.data.graphql.operations.data.decodeJson
 import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.experiences.ExperienceFetchViewModel.State
+import io.rover.sdk.experiences.appscreens.AppScreen
+import io.rover.sdk.experiences.appscreens.AppScreensDecisions
 import io.rover.sdk.experiences.classic.ClassicExperience
 import io.rover.sdk.experiences.data.http.RoverExperiencesWebService
 import io.rover.sdk.experiences.rich.compose.data.JsonParser
@@ -78,6 +81,11 @@ import org.json.JSONObject
  * navigation stack.
  *
  * @param defaultColorSchemeDark For experiences with color scheme set to auto, should it use dark mode? null to follow system.
+ *
+ * @param onDismissButtonPressed Pass when presenting the experience full-screen and dismissable; the
+ * callback performs the dismissal (e.g. `finish()`). Leave unset when embedding. Only the App Screens
+ * (V3) path acts on it (adding a root-page close affordance); the V1/V2 paths ignore it in this
+ * iteration.
  */
 @Composable
 internal fun Experience(
@@ -85,7 +93,8 @@ internal fun Experience(
     modifier: Modifier = Modifier,
     onCanceled: (() -> Unit)? = null,
     defaultColorSchemeDark: Boolean? = null,
-    navigationMode: NavigationMode = NavigationMode.Standalone
+    navigationMode: NavigationMode = NavigationMode.Standalone,
+    onDismissButtonPressed: (() -> Unit)? = null
 ) {
     Services.Inject { services ->
         // security check, verify that URL domain is what is configured in Rover (to prevent
@@ -96,15 +105,24 @@ internal fun Experience(
             return@Inject
         }
 
+        // App Screens (Experiences V3): AI-authored HTML screens served at /a/… URLs render
+        // through a separate WebView-based shell rather than the V1/V2 experience pipeline below.
+        if (AppScreensDecisions.isAppScreenUrl(url)) {
+            AppScreen(url = url, modifier = modifier, onDismissButtonPressed = onDismissButtonPressed)
+            return@Inject
+        }
+
         val viewModel = viewModel<ExperienceFetchViewModel>(key = url.toString())
 
         val context = LocalContext.current
+        val cache = LocalExperienceCache.current
 
-        SideEffect {
+        LaunchedEffect(viewModel) {
             viewModel.start(
                 context,
                 services.webService,
-                services.fontLoader
+                services.fontLoader,
+                cache
             )
         }
 
@@ -195,6 +213,39 @@ internal fun Experience(
     }
 }
 
+/**
+ * Short-lived in-memory cache for loaded experiences, scoped to a single Hub session via
+ * [LocalExperienceCache].
+ *
+ * When an Experience is embedded in a Hub using [NavigationMode.Pluggable], the Hub's NavHost
+ * must be rebuilt (via `key(destinations.size)`) each time the experience registers its screens,
+ * because Jetpack Navigation 2 does not support dynamically adding destinations after initial
+ * composition. This rebuild destroys and recreates the [ExperienceFetchViewModel], which would
+ * otherwise trigger a second network fetch. The cache intercepts that second creation and emits
+ * [ExperienceFetchViewModel.State.Success] immediately from the already-loaded data.
+ *
+ * The cache is created with `remember` in [Hub], so it lives exactly as long as the Hub
+ * composable — it survives NavHost rebuilds within the session but is discarded when the user
+ * navigates away, ensuring re-entry always loads fresh from the network.
+ *
+ * This class can be removed once the Hub migrates to Jetpack Navigation 3, whose dynamic
+ * `entryProvider` API eliminates the need for `key()`-forced NavHost rebuilds entirely.
+ */
+class ExperienceCache {
+    private val entries = mutableMapOf<String, LoadedExperience>()
+    internal fun get(url: String): LoadedExperience? = entries[url]
+    internal fun put(url: String, experience: LoadedExperience) { entries[url] = experience }
+}
+
+/**
+ * Provides an [ExperienceCache] to [ExperienceFetchViewModel] when an experience is embedded
+ * inside a Hub using [NavigationMode.Pluggable]. Defaults to `null` so standalone
+ * [ExperienceActivity] usage is completely unaffected.
+ *
+ * See [ExperienceCache] for the full rationale and removal condition.
+ */
+val LocalExperienceCache = compositionLocalOf<ExperienceCache?> { null }
+
 internal class ExperienceFetchViewModel : ViewModel() {
 
     internal sealed class State {
@@ -220,7 +271,8 @@ internal class ExperienceFetchViewModel : ViewModel() {
     fun start(
         context: Context,
         webService: RoverExperiencesWebService,
-        fontLoader: FontLoader
+        fontLoader: FontLoader,
+        cache: ExperienceCache? = null
     ) {
         // set up command processing pipeline. can handle cancellation, etc.
         viewModelScope.launch {
@@ -228,12 +280,22 @@ internal class ExperienceFetchViewModel : ViewModel() {
                 .filterIsInstance<Command.LoadExperience>()
                 // mapLatest allows us to cancel any in-flight request if new load command is issued
                 .collectLatest { loadExperienceCommand ->
-                    _state.emit(State.Loading)
-
                     // replace any non-HTTP scheme with HTTPS, to support deep linking setups.
                     val url = loadExperienceCommand.uri.buildUpon().scheme(
                         "https"
                     ).build()
+                    val urlForLogging = sanitizeUrlForLogging(url)
+
+                    val cached = cache?.get(url.toString())
+                    if (cached != null) {
+                        log.d("experience cache hit for $urlForLogging")
+                        _state.emit(State.Success(cached))
+                        return@collectLatest
+                    }
+
+                    _state.emit(State.Loading)
+
+                    log.i("fetching experience: $urlForLogging")
 
                     val documentJsonUrl = url.buildUpon().apply {
                         appendPath("document.json")
@@ -245,9 +307,13 @@ internal class ExperienceFetchViewModel : ViewModel() {
                     }.associate { it }
 
                     try {
+                        log.d("document.json fetch start: $documentJsonUrl")
+                        val documentFetchStart = System.currentTimeMillis()
                         val experienceResponse = webService.fetchData(documentJsonUrl.toString())
+                        log.d("document.json fetch complete: HTTP ${experienceResponse.code()} in ${System.currentTimeMillis() - documentFetchStart}ms")
 
                         if (experienceResponse.isSuccessful) {
+                            val bodyReadStart = System.currentTimeMillis()
                             val data = withContext(Dispatchers.IO) {
                                 val byteResult = kotlin.runCatching {
                                     experienceResponse.body()?.string()
@@ -260,6 +326,7 @@ internal class ExperienceFetchViewModel : ViewModel() {
                                     _state.emit(State.Failed(byteResult.exceptionOrNull() ?: Exception("Unknown error")))
                                 }
                             }
+                            log.d("document.json body read in ${System.currentTimeMillis() - bodyReadStart}ms")
 
                             // now, check Rover-Experience-Version header:
                             val experienceVersion = experienceResponse.headers()["Rover-Experience-Version"]
@@ -279,8 +346,8 @@ internal class ExperienceFetchViewModel : ViewModel() {
                                 }.associate { it }
                             } ?: emptyMap()
 
-                            log.v("URL parameters from URL query string: $urlParamsFromQueryString")
-                            log.v("URL parameters provided from server: $defaultUrlParamValuesMap")
+                            log.v("URL parameter keys from URL query string: ${urlParamsFromQueryString.keys}")
+                            log.v("URL parameter keys provided from server: ${defaultUrlParamValuesMap.keys}")
 
                             // merge the server defaults with those provided by the query string:
 
@@ -288,30 +355,24 @@ internal class ExperienceFetchViewModel : ViewModel() {
                             // passed to the two renderers.
                             val urlParams = defaultUrlParamValuesMap + urlParamsFromQueryString
 
-                            log.i("Final URL parameters: $urlParams")
+                            log.i("Final URL parameter keys: ${urlParams.keys}")
 
                             when (experienceVersion ?: "2") {
                                 "1" -> {
                                     // classic experience
                                     val jsonObject = JSONObject(data.toString())
-
                                     val exp = ClassicExperienceModel.decodeJson(jsonObject, url)
-
-                                    // decode data to classic experience model.
-                                    _state.emit(
-                                        State.Success(
-                                            LoadedExperience.Classic(
-                                                exp,
-                                                urlParams
-                                            )
-                                        )
-                                    )
+                                    val result = LoadedExperience.Classic(exp, urlParams)
+                                    cache?.put(url.toString(), result)
+                                    _state.emit(State.Success(result))
                                 }
                                 "2" -> {
                                     // new experience.
 
                                     // decode data to experience model using JsonParser
+                                    Trace.beginSection("Rover:parseExperience")
                                     val experience = JsonParser.parseExperience(data.toString())
+                                    Trace.endSection()
                                     if (experience == null) {
                                         log.w("Experience parsed to null")
                                         return@collectLatest
@@ -327,7 +388,10 @@ internal class ExperienceFetchViewModel : ViewModel() {
                                         path("configuration.json")
                                     }.build()
 
+                                    log.d("configuration.json fetch start: $cdnConfigUrl")
+                                    val configFetchStart = System.currentTimeMillis()
                                     val cdnConfig = webService.getConfiguration(cdnConfigUrl.toString())
+                                    log.d("configuration.json fetch complete in ${System.currentTimeMillis() - configFetchStart}ms")
 
                                     val assetContext = RemoteAssetContext(
                                         url,
@@ -340,27 +404,30 @@ internal class ExperienceFetchViewModel : ViewModel() {
                                         } ?: emptyList()
                                     }
 
+                                    log.d("font loading start: ${fontSources.size} font source(s)")
+                                    val fontLoadStart = System.currentTimeMillis()
                                     val typefaceMapping = fontLoader.getTypefaceMappings(
                                         context,
                                         assetContext,
                                         fontSources
                                     )
+                                    log.d("font loading complete in ${System.currentTimeMillis() - fontLoadStart}ms")
 
+                                    Trace.beginSection("Rover:buildTree")
                                     experience.buildTreeAndRelationships()
+                                    Trace.endSection()
                                     experience.sourceUrl = sourceUrl(url, urlParams)
 
-                                    _state.emit(
-                                        State.Success(
-                                            LoadedExperience.Standard(
-                                                experience,
-                                                assetContext,
-                                                typefaceMapping,
-                                                experienceId,
-                                                experienceName,
-                                                urlParams
-                                            )
-                                        )
+                                    val result = LoadedExperience.Standard(
+                                        experience,
+                                        assetContext,
+                                        typefaceMapping,
+                                        experienceId,
+                                        experienceName,
+                                        urlParams
                                     )
+                                    cache?.put(url.toString(), result)
+                                    _state.emit(State.Success(result))
                                 }
                                 else -> {
                                     // unknown experience version
@@ -373,7 +440,7 @@ internal class ExperienceFetchViewModel : ViewModel() {
                             _state.emit(State.Failed(Exception("Experience fetch failed: ${experienceResponse.code()}")))
                         }
                     } catch (e: Exception) {
-                        log.w("Experience fetch error: $e, at ${e.stackTraceToString()} for URL: $url")
+                        log.w("Experience fetch error: $e, at ${e.stackTraceToString()} for URL: $urlForLogging")
                         _state.emit(State.Failed(e))
                     }
                 }
@@ -381,8 +448,12 @@ internal class ExperienceFetchViewModel : ViewModel() {
     }
 
     fun request(url: Uri) {
+        log.i("requesting experience: ${sanitizeUrlForLogging(url)}")
         commands.value = Command.LoadExperience(url)
     }
+
+    private fun sanitizeUrlForLogging(url: Uri): String =
+        url.buildUpon().clearQuery().fragment(null).build().toString()
 
     private fun sourceUrl(url: Uri, params: Map<String, String>): Uri {
         if (params.isEmpty()) {

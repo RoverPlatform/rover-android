@@ -46,6 +46,7 @@ class HomeViewManagerTest {
     private lateinit var mockUserInfo: UserInfoInterface
     private lateinit var mockDeviceIdentification: DeviceIdentificationInterface
     private lateinit var mockStorage: KeyValueStorage
+    private lateinit var authenticationContext: FakeAuthenticationContext
 
     @Before
     fun setUp() {
@@ -63,12 +64,12 @@ class HomeViewManagerTest {
         whenever(mockContext.packageManager).thenReturn(mockPackageManager)
         whenever(mockPackageManager.getPackageInfo("io.rover.test", 0)).thenReturn(mockPackageInfo)
         
-        val mockAuthContext = mock<AuthenticationContextInterface>()
-        whenever(mockAuthContext.sdkToken).thenReturn("test-token")
+        authenticationContext = FakeAuthenticationContext(
+            sdkToken = "test-token",
+            idToken = null,
+            sdkAuthenticationEnabledDomains = emptySet()
+        )
         
-        val httpClient = EngageHttpClient(mockContext, mockAuthContext)
-        engageApiService = EngageApiService.create(httpClient, mockServer.url("/").toString())
-
         mockStorage = mock<KeyValueStorage>()
         localStorage = mock<LocalStorage>()
         whenever(localStorage.getKeyValueStorageFor("home-view")).thenReturn(mockStorage)
@@ -78,6 +79,14 @@ class HomeViewManagerTest {
 
         mockDeviceIdentification = mock<DeviceIdentificationInterface>()
         whenever(mockDeviceIdentification.installationIdentifier).thenReturn("test-device-id")
+
+        val httpClient = EngageHttpClient(
+            mockContext,
+            authenticationContext,
+            mockUserInfo,
+            mockDeviceIdentification
+        )
+        engageApiService = EngageApiService.create(httpClient, mockServer.url("/").toString())
     }
 
     @After
@@ -93,9 +102,7 @@ class HomeViewManagerTest {
 
         val manager = HomeViewManager(
             engageApiService = engageApiService,
-            localStorage = localStorage,
-            userInfo = mockUserInfo,
-            deviceIdentification = mockDeviceIdentification
+            localStorage = localStorage
         )
 
         assertNull(manager.experienceURL.first())
@@ -112,9 +119,7 @@ class HomeViewManagerTest {
 
         val manager = HomeViewManager(
             engageApiService = engageApiService,
-            localStorage = localStorage,
-            userInfo = mockUserInfo,
-            deviceIdentification = mockDeviceIdentification
+            localStorage = localStorage
         )
 
         assertEquals("https://cached.rover.io/experience", manager.experienceURL.first())
@@ -139,9 +144,7 @@ class HomeViewManagerTest {
 
         val manager = HomeViewManager(
             engageApiService = engageApiService,
-            localStorage = localStorage,
-            userInfo = mockUserInfo,
-            deviceIdentification = mockDeviceIdentification
+            localStorage = localStorage
         )
 
         manager.fetch()
@@ -166,9 +169,7 @@ class HomeViewManagerTest {
 
         val manager = HomeViewManager(
             engageApiService = engageApiService,
-            localStorage = localStorage,
-            userInfo = mockUserInfo,
-            deviceIdentification = mockDeviceIdentification
+            localStorage = localStorage
         )
 
         manager.fetch()
@@ -202,9 +203,7 @@ class HomeViewManagerTest {
 
         val manager = HomeViewManager(
             engageApiService = engageApiService,
-            localStorage = localStorage,
-            userInfo = mockUserInfo,
-            deviceIdentification = mockDeviceIdentification
+            localStorage = localStorage
         )
 
         manager.fetch()
@@ -230,9 +229,7 @@ class HomeViewManagerTest {
 
         val manager = HomeViewManager(
             engageApiService = engageApiService,
-            localStorage = localStorage,
-            userInfo = mockUserInfo,
-            deviceIdentification = mockDeviceIdentification
+            localStorage = localStorage
         )
 
         manager.fetch()
@@ -257,9 +254,7 @@ class HomeViewManagerTest {
 
         val manager = HomeViewManager(
             engageApiService = engageApiService,
-            localStorage = localStorage,
-            userInfo = mockUserInfo,
-            deviceIdentification = mockDeviceIdentification
+            localStorage = localStorage
         )
 
         // Initial value should be cached
@@ -291,22 +286,20 @@ class HomeViewManagerTest {
 
         val manager = HomeViewManager(
             engageApiService = engageApiService,
-            localStorage = localStorage,
-            userInfo = mockUserInfo,
-            deviceIdentification = mockDeviceIdentification
+            localStorage = localStorage
         )
 
         manager.fetch()
 
         val request = mockServer.takeRequest()
-        assertEquals("/home?userID=user-abc", request.path)
+        assertEquals("/home?deviceIdentifier=test-device-id&userID=user-abc", request.path)
     }
 
     @Test
     fun `fetch passes ticketmasterID when no direct userID`() = runTest {
         whenever(mockStorage.get(HomeViewManager.STORAGE_KEY)).thenReturn(null)
         whenever(mockUserInfo.currentUserInfo).thenReturn(
-            hashMapOf("ticketmaster.ticketmasterID" to "tm-123")
+            hashMapOf("ticketmaster" to hashMapOf("ticketmasterID" to "tm-123"))
         )
 
         val json = """
@@ -322,22 +315,20 @@ class HomeViewManagerTest {
 
         val manager = HomeViewManager(
             engageApiService = engageApiService,
-            localStorage = localStorage,
-            userInfo = mockUserInfo,
-            deviceIdentification = mockDeviceIdentification
+            localStorage = localStorage
         )
 
         manager.fetch()
 
         val request = mockServer.takeRequest()
-        assertEquals("/home?userID=tm-123", request.path)
+        assertEquals("/home?deviceIdentifier=test-device-id&userID=tm-123", request.path)
     }
 
     @Test
     fun `fetch passes seatGeekID when no other userID`() = runTest {
         whenever(mockStorage.get(HomeViewManager.STORAGE_KEY)).thenReturn(null)
         whenever(mockUserInfo.currentUserInfo).thenReturn(
-            hashMapOf("seatGeek.seatGeekID" to "sg-456")
+            hashMapOf("seatGeek" to hashMapOf("seatGeekID" to "sg-456"))
         )
 
         val json = """
@@ -353,22 +344,20 @@ class HomeViewManagerTest {
 
         val manager = HomeViewManager(
             engageApiService = engageApiService,
-            localStorage = localStorage,
-            userInfo = mockUserInfo,
-            deviceIdentification = mockDeviceIdentification
+            localStorage = localStorage
         )
 
         manager.fetch()
 
         val request = mockServer.takeRequest()
-        assertEquals("/home?userID=sg-456", request.path)
+        assertEquals("/home?deviceIdentifier=test-device-id&userID=sg-456", request.path)
     }
 
     @Test
     fun `fetch passes seatGeek clientID when no other userID`() = runTest {
         whenever(mockStorage.get(HomeViewManager.STORAGE_KEY)).thenReturn(null)
         whenever(mockUserInfo.currentUserInfo).thenReturn(
-            hashMapOf("seatGeek.seatGeekClientID" to "sg-client-123")
+            hashMapOf("seatGeek" to hashMapOf("seatGeekClientID" to "sg-client-123"))
         )
 
         val json = """
@@ -384,25 +373,23 @@ class HomeViewManagerTest {
 
         val manager = HomeViewManager(
             engageApiService = engageApiService,
-            localStorage = localStorage,
-            userInfo = mockUserInfo,
-            deviceIdentification = mockDeviceIdentification
+            localStorage = localStorage
         )
 
         manager.fetch()
 
         val request = mockServer.takeRequest()
-        assertEquals("/home?userID=sg-client-123", request.path)
+        assertEquals("/home?deviceIdentifier=test-device-id&userID=sg-client-123", request.path)
     }
 
     @Test
     fun `fetch prefers seatGeek clientID over seatGeekID`() = runTest {
         whenever(mockStorage.get(HomeViewManager.STORAGE_KEY)).thenReturn(null)
         whenever(mockUserInfo.currentUserInfo).thenReturn(
-            hashMapOf(
-                "seatGeek.seatGeekClientID" to "sg-client-abc",
-                "seatGeek.seatGeekID" to "sg-crm-xyz"
-            )
+            hashMapOf("seatGeek" to hashMapOf(
+                "seatGeekClientID" to "sg-client-abc",
+                "seatGeekID" to "sg-crm-xyz",
+            ))
         )
 
         val json = """
@@ -418,15 +405,13 @@ class HomeViewManagerTest {
 
         val manager = HomeViewManager(
             engageApiService = engageApiService,
-            localStorage = localStorage,
-            userInfo = mockUserInfo,
-            deviceIdentification = mockDeviceIdentification
+            localStorage = localStorage
         )
 
         manager.fetch()
 
         val request = mockServer.takeRequest()
-        assertEquals("/home?userID=sg-client-abc", request.path)
+        assertEquals("/home?deviceIdentifier=test-device-id&userID=sg-client-abc", request.path)
     }
 
     @Test
@@ -435,7 +420,7 @@ class HomeViewManagerTest {
         whenever(mockUserInfo.currentUserInfo).thenReturn(
             hashMapOf(
                 "userID" to "direct-user",
-                "ticketmaster.ticketmasterID" to "tm-123"
+                "ticketmaster" to hashMapOf("ticketmasterID" to "tm-123"),
             )
         )
 
@@ -452,15 +437,13 @@ class HomeViewManagerTest {
 
         val manager = HomeViewManager(
             engageApiService = engageApiService,
-            localStorage = localStorage,
-            userInfo = mockUserInfo,
-            deviceIdentification = mockDeviceIdentification
+            localStorage = localStorage
         )
 
         manager.fetch()
 
         val request = mockServer.takeRequest()
-        assertEquals("/home?userID=direct-user", request.path)
+        assertEquals("/home?deviceIdentifier=test-device-id&userID=direct-user", request.path)
     }
 
     @Test
@@ -481,14 +464,77 @@ class HomeViewManagerTest {
 
         val manager = HomeViewManager(
             engageApiService = engageApiService,
-            localStorage = localStorage,
-            userInfo = mockUserInfo,
-            deviceIdentification = mockDeviceIdentification
+            localStorage = localStorage
         )
 
         manager.fetch()
 
         val request = mockServer.takeRequest()
         assertEquals("/home?deviceIdentifier=test-device-id", request.path)
+    }
+
+    @Test
+    fun `config request includes deviceIdentifier and resolved userID`() = runTest {
+        whenever(mockUserInfo.currentUserInfo).thenReturn(
+            hashMapOf("ticketmaster" to hashMapOf("ticketmasterID" to "tm-123"))
+        )
+
+        mockServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody("{}")
+                .addHeader("Content-Type", "application/json")
+        )
+
+        engageApiService.getConfig()
+
+        val request = mockServer.takeRequest()
+        assertEquals("/config?deviceIdentifier=test-device-id&userID=tm-123", request.path)
+    }
+
+    @Test
+    fun `config request includes bearer token when sdk auth domain matches and userID resolves`() = runTest {
+        whenever(mockUserInfo.currentUserInfo).thenReturn(
+            hashMapOf("ticketmaster" to hashMapOf("ticketmasterID" to "tm-123"))
+        )
+        authenticationContext.idToken = "id-token-123"
+        authenticationContext.sdkAuthenticationEnabledDomains = setOf(mockServer.url("/").host)
+
+        mockServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody("{}")
+                .addHeader("Content-Type", "application/json")
+        )
+
+        engageApiService.getConfig()
+
+        val request = mockServer.takeRequest()
+        assertEquals("/config?deviceIdentifier=test-device-id&userID=tm-123", request.path)
+        assertEquals("Bearer id-token-123", request.getHeader("Authorization"))
+    }
+
+    private class FakeAuthenticationContext(
+        override val sdkToken: String?,
+        var idToken: String?,
+        override var sdkAuthenticationEnabledDomains: Set<String>,
+    ) : AuthenticationContextInterface {
+        override var sdkAuthenticationIdTokenRefreshCallback: () -> Unit = {}
+
+        override fun setSdkAuthenticationIdToken(token: String?) {
+            idToken = token
+        }
+
+        override fun clearSdkAuthenticationIdToken() {
+            idToken = null
+        }
+
+        override suspend fun obtainSdkAuthenticationIdToken(checkValidity: Boolean): String? {
+            return idToken
+        }
+
+        override fun enableSdkAuthIdTokenRefreshForDomain(pattern: String) {
+            sdkAuthenticationEnabledDomains += pattern
+        }
     }
 }

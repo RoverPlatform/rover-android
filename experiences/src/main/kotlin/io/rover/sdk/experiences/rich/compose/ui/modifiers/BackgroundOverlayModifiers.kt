@@ -46,7 +46,7 @@ internal fun BackgroundModifier(
             content(Modifier)
             Layout({
                 Layer(background.node, modifier = Modifier)
-            }, measurePolicy = SimpleMeasurePolicy(), modifier = Modifier.layoutId("backgroundOrOverlay"))
+            }, measurePolicy = SimpleMeasurePolicy(allowEmpty = true), modifier = Modifier.layoutId("backgroundOrOverlay"))
         }, measurePolicy = OverlayBackgroundMeasurePolicy(overlay = false, alignment = background.alignment), modifier = modifier)
 
         // Original code that uses a synthesized ZStack, a bit more accurate when Composables
@@ -76,7 +76,7 @@ internal fun OverlayModifier(
             content(Modifier)
             Layout({
                 Layer(overlay.node, modifier = Modifier)
-            }, measurePolicy = SimpleMeasurePolicy(), modifier = Modifier.layoutId("backgroundOrOverlay"))
+            }, measurePolicy = SimpleMeasurePolicy(allowEmpty = true), modifier = Modifier.layoutId("backgroundOrOverlay"))
         }, measurePolicy = OverlayBackgroundMeasurePolicy(overlay = true, alignment = overlay.alignment), modifier = modifier)
     } else {
         content(modifier)

@@ -19,7 +19,9 @@ package io.rover.sdk.experiences
 
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import io.rover.sdk.experiences.rich.compose.ui.Environment
 
 /**
  * Display a Rover Experience.
@@ -34,6 +36,17 @@ import androidx.compose.ui.Modifier
  * [NavigationMode.Standalone] for backward compatibility. Use [NavigationMode.Pluggable] when
  * embedding in a parent navigation stack (e.g., Hub).
  * @param defaultColorSchemeDark For experiences with color scheme set to auto, should it use dark mode? null to follow system.
+ * @param manageStatusBar Whether this experience may style the host window's status bar (icon tint,
+ * and background where applicable). Defaults to true. Even when true, the experience only touches the
+ * status bar while it is actually drawn as the top-of-screen content; if it is embedded below other
+ * chrome it leaves the status bar alone. Set to false when the host owns the status bar itself and
+ * the experience should never touch it (e.g. when embedded in the Hub).
+ * @param onDismissButtonPressed Pass when presenting the experience full-screen and dismissable; the
+ * callback performs the dismissal (e.g. `finish()`). Leave unset when embedding. Only App Screens
+ * (Experiences V3) act on it today, adding an explicit close (✕) affordance to the root page; the
+ * V1/V2 rendering paths ignore it. The Hub and other embedders leave it null (embedded experiences
+ * get no SDK-injected close chrome). By convention a host supplies either this handler (full-screen
+ * presenters) or the root affordance (Hub envelope), never both.
  */
 @Composable
 fun ExperienceComposable(
@@ -41,6 +54,16 @@ fun ExperienceComposable(
     modifier: Modifier = Modifier,
     navigationMode: NavigationMode = NavigationMode.Standalone,
     defaultColorSchemeDark: Boolean? = null,
+    manageStatusBar: Boolean = true,
+    onDismissButtonPressed: (() -> Unit)? = null,
 ) {
-    Experience(url = url, modifier = modifier, navigationMode = navigationMode, defaultColorSchemeDark = defaultColorSchemeDark)
+    CompositionLocalProvider(Environment.LocalManageStatusBar provides manageStatusBar) {
+        Experience(
+            url = url,
+            modifier = modifier,
+            navigationMode = navigationMode,
+            defaultColorSchemeDark = defaultColorSchemeDark,
+            onDismissButtonPressed = onDismissButtonPressed
+        )
+    }
 }

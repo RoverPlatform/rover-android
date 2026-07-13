@@ -43,16 +43,19 @@ import io.rover.sdk.core.streams.observeOn
 import io.rover.sdk.core.streams.share
 import io.rover.sdk.core.streams.shareHotAndReplay
 import io.rover.sdk.core.streams.subscribeOn
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.reactive.awaitFirst
+import kotlinx.coroutines.reactive.publish
+import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONException
 import org.json.JSONObject
 import org.reactivestreams.Publisher
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CancellationException
 
 class SyncCoordinator(
     private val ioScheduler: Scheduler,
@@ -76,6 +79,9 @@ class SyncCoordinator(
             subject.onNext(Action.AttemptSync)
         }
     }
+
+    override suspend fun awaitSync(): SyncCoordinatorInterface.Result =
+        chain.doOnSubscribe { subject.onNext(Action.AttemptSync) }.awaitFirst()
 
     override fun triggerSync() {
         subject.onNext(Action.AttemptSync)
@@ -102,48 +108,73 @@ class SyncCoordinator(
     }
 
     private fun syncWithStandaloneParticipants(participants: List<SyncParticipant>, requests: List<SyncRequest>): Publisher<SyncCoordinatorInterface.Result> {
-        // Run GraphQL sync and standalone sync, combining results
-        return syncGraphQL(participants, requests)
-            .flatMap { graphqlResult ->
-                // Run standalone sync if there are any standalone participants
-                if (standaloneParticipants.isNotEmpty()) {
-                    Publishers.just(Unit)
-                        .subscribeOn(ioScheduler)
-                        .map {
-                            // Execute standalone sync synchronously on IO thread
-                            val standaloneResult = syncStandaloneParticipantsBlocking()
-                            
-                            // Return success if either sync succeeded
-                            when {
-                                graphqlResult == SyncCoordinatorInterface.Result.Succeeded || standaloneResult -> SyncCoordinatorInterface.Result.Succeeded
-                                else -> SyncCoordinatorInterface.Result.RetryNeeded
-                            }
-                        }
-                } else {
-                    // No standalone participants, just return GraphQL result
-                    Publishers.just(graphqlResult)
-                }
-            }
-    }
-
-    private fun syncStandaloneParticipantsBlocking(): Boolean {
-        var hasNewData = false
-        
-        for (participant in standaloneParticipants) {
+        return publish(Dispatchers.IO) {
             try {
-                // Use runBlocking to execute suspend function synchronously
-                val success = kotlinx.coroutines.runBlocking {
-                    participant.sync()
-                }
-                if (success) {
-                    hasNewData = true
-                }
-            } catch (e: Exception) {
-                log.w("Standalone sync participant failed: ${e.message}")
+                send(performCombinedSync(participants, requests))
+            } catch (error: Exception) {
+                log.w("Combined sync failed unexpectedly: $error")
+                send(SyncCoordinatorInterface.Result.RetryNeeded)
             }
         }
-        
-        return hasNewData
+    }
+
+    internal suspend fun performCombinedSync(
+        participants: List<SyncParticipant>,
+        requests: List<SyncRequest>,
+    ): SyncCoordinatorInterface.Result {
+        return try {
+            withTimeoutOrNull(5.minutes) {
+                coroutineScope {
+                    val graphQLSync = async {
+                        syncGraphQL(participants, requests).awaitFirst()
+                    }
+                    val standaloneSync = async(Dispatchers.IO) {
+                        syncStandaloneParticipants()
+                    }
+
+                    val graphQLResult = graphQLSync.await()
+                    val standaloneSucceeded = standaloneSync.await()
+
+                    if (graphQLResult == SyncCoordinatorInterface.Result.Succeeded && standaloneSucceeded) {
+                        SyncCoordinatorInterface.Result.Succeeded
+                    } else {
+                        SyncCoordinatorInterface.Result.RetryNeeded
+                    }
+                }
+            } ?: run {
+                log.w("Combined sync timed out after 5 minutes")
+                SyncCoordinatorInterface.Result.RetryNeeded
+            }
+        } catch (resetRequired: SyncResetRequiredException) {
+            log.i("Combined sync cancelled because server requested a reset.")
+            resetRequired.resetHandler.resetAfterSyncCancellation()
+            SyncCoordinatorInterface.Result.RetryNeeded
+        }
+    }
+
+    private suspend fun syncStandaloneParticipants(): Boolean {
+        if (standaloneParticipants.isEmpty()) {
+            return true
+        }
+
+        return coroutineScope {
+            standaloneParticipants
+                .map { participant ->
+                    async(Dispatchers.IO) {
+                        try {
+                            participant.sync()
+                        } catch (resetRequired: SyncResetRequiredException) {
+                            throw resetRequired
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
+                        } catch (error: Exception) {
+                            log.w("Standalone sync participant failed: ${error.message}")
+                            false
+                        }
+                    }
+                }
+                .all { it.await() }
+        }
     }
 
     private fun syncGraphQL(participants: List<SyncParticipant>, requests: List<SyncRequest>): Publisher<SyncCoordinatorInterface.Result> {

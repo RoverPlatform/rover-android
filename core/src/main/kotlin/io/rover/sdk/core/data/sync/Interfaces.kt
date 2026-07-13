@@ -90,6 +90,21 @@ interface SyncClientInterface {
     fun executeSyncRequests(requests: List<SyncRequest>): Publisher<HttpClientResponse>
 }
 
+/**
+ * Handles a sync-domain reset after SyncCoordinator has cancelled in-flight sync work.
+ */
+interface SyncResetHandler {
+    suspend fun resetAfterSyncCancellation()
+}
+
+/**
+ * Thrown by sync participants when the server indicates that local synced state is invalid and
+ * must be dropped after in-flight sync work is cancelled.
+ */
+class SyncResetRequiredException(
+    val resetHandler: SyncResetHandler,
+) : RuntimeException("Server indicated that synced state must be reset.")
+
 // and then the actual interface and service types:
 
 interface SyncCoordinatorInterface {
@@ -102,6 +117,13 @@ interface SyncCoordinatorInterface {
      * Adds a [SyncStandaloneParticipant] to be included in sync runs but operating independently of GraphQL.
      */
     fun registerStandaloneParticipant(participant: SyncStandaloneParticipant)
+
+    /**
+     * Triggers a sync and suspends until it completes, returning the result.
+     * If a sync is already in-flight, joins it instead of starting a new one —
+     * all concurrent callers resume when the same sync finishes.
+     */
+    suspend fun awaitSync(): Result
 
     /**
      * Trigger an immediate sync with all of the registered participants.

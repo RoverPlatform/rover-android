@@ -41,11 +41,12 @@ class NavDestinationRegistry {
     val destinations: List<RegisteredDestination> get() = _destinations
     
     /**
-     * Register a new destination. Duplicates (by route) are ignored.
+     * Register multiple destinations at once. Duplicates (by route) are ignored.
      */
-    fun register(route: String, content: @Composable () -> Unit) {
-        if (_destinations.none { it.route == route }) {
-            _destinations.add(RegisteredDestination(route, content))
+    fun registerAll(destinations: List<RegisteredDestination>) {
+        val newDestinations = destinations.distinctBy { it.route }.filter { new -> _destinations.none { it.route == new.route } }
+        if (newDestinations.isNotEmpty()) {
+            _destinations.addAll(newDestinations)
         }
     }
     
@@ -106,6 +107,7 @@ class AppBarConfigRegistry {
  * @param title The title content to display
  * @param navigationIcon The navigation icon (typically back button), if any
  * @param backgroundColor The background color of the app bar
+ * @param buttonColor The color the experience authored for the app bar's icons/buttons
  * @param actions The action items to display in the app bar
  * @param isRootScreen True if this is the root (initial) screen of the experience
  */
@@ -113,13 +115,14 @@ data class AppBarConfig(
     val title: @Composable () -> Unit,
     val navigationIcon: @Composable (() -> Unit)?,
     val backgroundColor: Color,
+    val buttonColor: Color,
     val actions: List<@Composable () -> Unit>,
     val isRootScreen: Boolean
 )
 
 /**
  * CompositionLocal for providing the navigation destination registry.
- * 
+ *
  * Parent composables provide this to allow child experiences to register
  * their screens into the parent's NavHost.
  */
@@ -145,7 +148,7 @@ val LocalAppBarConfigSink = compositionLocalOf<((AppBarConfig?) -> Unit)?> { nul
 
 /**
  * CompositionLocal for providing the app bar config registry.
- * 
+ *
  * Parent composables provide this to allow child experiences to register
  * their app bar configs keyed by route.
  */

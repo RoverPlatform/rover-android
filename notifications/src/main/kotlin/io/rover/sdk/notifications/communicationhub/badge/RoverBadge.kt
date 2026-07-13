@@ -18,16 +18,17 @@
 package io.rover.sdk.notifications.communicationhub.badge
 
 import io.rover.sdk.core.logging.log
-import io.rover.sdk.notifications.communicationhub.data.repository.RoverEngageRepository
+import io.rover.sdk.notifications.communicationhub.conversations.ConversationsRepository
+import io.rover.sdk.notifications.communicationhub.posts.PostsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.reactive.asPublisher
 import org.reactivestreams.Publisher
@@ -39,7 +40,8 @@ import org.reactivestreams.Publisher
  * reactive badge count information that can be consumed by Jetpack Compose or traditional Views.
  */
 internal class RoverBadge(
-    private val roverEngageRepository: RoverEngageRepository
+    private val postsRepository: PostsRepository,
+    private val conversationsRepository: ConversationsRepository,
 ) : RoverBadgeInterface {
     
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -55,19 +57,17 @@ internal class RoverBadge(
     override fun newBadgePublisher(): Publisher<Int> = _newBadgePublisherFlow.asPublisher(scope.coroutineContext)
     
     private fun observePostsChanges() {
-        roverEngageRepository.getPostsFlow()
-            .map { postsWithSubscriptions ->
-                val unreadCount = postsWithSubscriptions.count { postWithSubscription ->
-                    !postWithSubscription.post.isRead
-                }
-
-                log.v("Rover badge count updated: $unreadCount")
-                return@map unreadCount
+        postsRepository.getPostsFlow()
+            .combine(conversationsRepository.getUnreadConversationCountFlow()) { postsWithSubscriptions, unreadConversations ->
+                val unreadPosts = postsWithSubscriptions.count { !it.post.isRead }
+                unreadPosts + unreadConversations
             }
             .distinctUntilChanged()
             .onEach { unreadCount ->
+                log.v("Rover badge count updated: $unreadCount")
                 val badgeValue = when {
                     unreadCount <= 0 -> null
+                    unreadCount > 99 -> "99+"
                     else -> unreadCount.toString()
                 }
 

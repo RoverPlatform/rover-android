@@ -29,6 +29,7 @@ import io.rover.sdk.experiences.rich.compose.model.values.Axis
 import io.rover.sdk.experiences.rich.compose.model.values.DocumentFont
 import io.rover.sdk.experiences.rich.compose.model.values.ExperienceModel
 import io.rover.sdk.experiences.rich.compose.ui.fonts.FontLoader
+import io.rover.sdk.experiences.rich.compose.ui.utils.SystemBarController
 
 /**
  * This object contains all the Composition Local properties used within the Compose hierarchy.
@@ -142,6 +143,22 @@ internal object Environment {
     val LocalAssetContext = compositionLocalOf<AssetContext> { UnpackedTempfilesZipContext }
 
     val LocalAuthenticationContext = compositionLocalOf<AuthenticationContextInterface?> { null }
+
+    /**
+     * The per-experience [SystemBarController], used by screen composables to apply and restore the
+     * host window's status-bar icon tint. Set by [RenderExperience].
+     */
+    val LocalSystemBarController = compositionLocalOf<SystemBarController?> { null }
+
+    /**
+     * Whether this experience is allowed to manage the host window's status bar (icon tint and,
+     * where applicable, background). Defaults to true. Even when true, the experience only touches
+     * the status bar while it is actually the top-of-screen content (see
+     * [io.rover.sdk.experiences.rich.compose.ui.utils.rememberExperienceStatusBarControl]). A host
+     * that owns the status bar itself (e.g. the Hub) sets this to false so the embedded experience
+     * unambiguously does nothing.
+     */
+    val LocalManageStatusBar = compositionLocalOf<Boolean> { true }
 
     /**
      * Set by [RenderExperience], this allows the registered callback for an authorizer to be used

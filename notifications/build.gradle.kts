@@ -33,6 +33,18 @@ kotlin {
     jvmToolchain(17)
 }
 
+// Compile against the JDK 17 toolchain (the published-bytecode floor for consumers),
+// but run unit tests on JDK 21: Robolectric 4.16 requires a JDK 21 runtime to load the
+// Android SDK 36 framework these tests target (@Config(sdk = [36])). The
+// foojay-resolver-convention plugin auto-provisions JDK 21 if it isn't installed.
+tasks.withType<Test>().configureEach {
+    javaLauncher.set(
+        javaToolchains.launcherFor {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
+    )
+}
+
 android {
     compileSdk = libs.versions.compileSdk.get().toInt()
 
@@ -58,14 +70,12 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.isReturnDefaultValues = true
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
     }
     
     buildFeatures {
@@ -147,6 +157,9 @@ dependencies {
 
     testImplementation(libs.junit.legacy)
     testImplementation(libs.hamkrest)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    testImplementation(libs.compose.ui.test.manifest)
     
     // Mockito for testing
     testImplementation(libs.mockito.kotlin)
@@ -163,6 +176,7 @@ dependencies {
     
     // Robolectric for Android framework stubs in unit tests
     testImplementation(libs.robolectric)
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.11.0")
 
     androidTestImplementation(libs.bundles.android.testing)
 

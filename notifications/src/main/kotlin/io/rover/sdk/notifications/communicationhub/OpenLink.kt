@@ -17,10 +17,12 @@
 
 package io.rover.sdk.notifications.communicationhub
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.net.toUri
+import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.routing.LinkOpenInterface
 
 /**
@@ -50,5 +52,10 @@ internal fun LinkOpenInterface.openLink(url: String, context: Context) {
             Intent(Intent.ACTION_VIEW, uri)
         }
     }()
-    context.startActivity(intent)
+    try {
+        context.startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        // Some devices lack a handler (browser, dialer, email) for the URI's scheme.
+        log.w("No activity available to open link: $url")
+    }
 }

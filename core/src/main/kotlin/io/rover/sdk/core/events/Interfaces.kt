@@ -135,6 +135,7 @@ interface UserInfoInterface {
      * them in outgoing [Event]s.
      */
     val currentUserInfo: Attributes
+
 }
 
 interface AppLastSeenInterface {

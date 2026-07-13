@@ -18,12 +18,21 @@
 package io.rover.sdk.notifications.communicationhub.data.network
 
 import android.content.Context
+import io.rover.sdk.core.data.AuthenticationContextInterface
+import io.rover.sdk.core.data.OkHttpRequestAuthenticator
+import io.rover.sdk.core.events.UserInfoInterface
+import io.rover.sdk.core.events.resolveUserIdentifier
+import io.rover.sdk.core.platform.DeviceIdentificationInterface
 import io.rover.sdk.core.platform.roverUserAgent
 import okhttp3.OkHttpClient
+import okhttp3.Request
 
 internal class EngageHttpClient(
     private val context: Context,
-    private val accountToken: String?
+    private val accountToken: String?,
+    private val authenticationContext: AuthenticationContextInterface,
+    private val userInfo: UserInfoInterface,
+    private val deviceIdentification: DeviceIdentificationInterface,
 ) {
     private val userAgent: String by lazy {
         val packageInfo = context.packageManager.getPackageInfo(
@@ -37,14 +46,38 @@ internal class EngageHttpClient(
         OkHttpClient()
             .newBuilder()
             .addInterceptor { chain ->
-                val requestBuilder = chain.request().newBuilder().apply {
+                var request = chain.request().newBuilder().apply {
                     header("User-Agent", userAgent)
                     header("Content-Type", "application/json")
                     accountToken?.let { token ->
                         header("x-rover-account-token", token)
                     }
+                }.build()
+
+                val engageUserId = userInfo.resolveUserIdentifier()
+                request = decorateEngageRequest(request, engageUserId)
+                if (engageUserId != null) {
+                    request = OkHttpRequestAuthenticator.authenticate(authenticationContext, request)
                 }
-                chain.proceed(requestBuilder.build())
+
+                chain.proceed(request)
             }.build()
     }
+
+    private fun decorateEngageRequest(request: Request, userId: String?): Request {
+        val urlBuilder = request.url.newBuilder()
+        val deviceIdentifier = deviceIdentification.installationIdentifier
+        if (deviceIdentifier.isNotBlank()) {
+            urlBuilder.setQueryParameter("deviceIdentifier", deviceIdentifier)
+        }
+
+        userId?.let { userID ->
+            urlBuilder.setQueryParameter("userID", userID)
+        }
+
+        return request.newBuilder()
+            .url(urlBuilder.build())
+            .build()
+    }
+
 }

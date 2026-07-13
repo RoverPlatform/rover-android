@@ -252,7 +252,13 @@ class CoreAssembler @JvmOverloads constructor(
         }
 
         container.register(Scope.Singleton, AuthenticationContextInterface::class.java) { resolver ->
-            AuthenticationContext(accountToken, resolver.resolveSingletonOrFail(LocalStorage::class.java))
+            AuthenticationContext(accountToken, resolver.resolveSingletonOrFail(LocalStorage::class.java)).also { ctx ->
+                val host = java.net.URI(engageEndpoint).host
+                if (host != null) ctx.enableSdkAuthIdTokenRefreshForDomain(host)
+                associatedDomains.forEach { domain ->
+                    ctx.enableSdkAuthIdTokenRefreshForDomain(domain)
+                }
+            }
         }
 
         container.register(Scope.Singleton, GraphQlApiServiceInterface::class.java) { resolver ->
@@ -417,7 +423,9 @@ class CoreAssembler @JvmOverloads constructor(
         container.register(Scope.Singleton, io.rover.sdk.core.data.config.EngageHttpClient::class.java) { resolver ->
             io.rover.sdk.core.data.config.EngageHttpClient(
                 resolver.resolveSingletonOrFail(Context::class.java),
-                resolver.resolveSingletonOrFail(AuthenticationContextInterface::class.java)
+                resolver.resolveSingletonOrFail(AuthenticationContextInterface::class.java),
+                resolver.resolveSingletonOrFail(UserInfoInterface::class.java),
+                resolver.resolveSingletonOrFail(DeviceIdentificationInterface::class.java)
             )
         }
 
@@ -523,9 +531,7 @@ class CoreAssembler @JvmOverloads constructor(
         ) { resolver ->
             HomeViewManager(
                 resolver.resolveSingletonOrFail(EngageApiService::class.java),
-                resolver.resolveSingletonOrFail(LocalStorage::class.java),
-               resolver.resolveSingletonOrFail(UserInfoInterface::class.java),
-                resolver.resolveSingletonOrFail(DeviceIdentificationInterface::class.java)
+                resolver.resolveSingletonOrFail(LocalStorage::class.java)
             )
         }
     }
@@ -650,6 +656,26 @@ val Rover.hubHomeExperienceURL: StateFlow<String?>
 suspend fun Rover.refreshHubExperienceURL() {
     this.resolve(HomeViewManager::class.java)?.fetch()
         ?: throw missingDependencyError("HomeViewManager")
+}
+
+/**
+ * Re-fetches the remote Rover config (Hub settings, colorScheme override, accent color) on
+ * demand, outside the app-foreground/background sync cadence. The Hub calls this each time it
+ * appears — matching iOS, where `HubContentView.onAppear` runs a targeted config sync — so a
+ * dashboard change lands on the next Hub entry rather than the next app foreground. On success
+ * the updated config is published through [io.rover.sdk.core.data.config.ConfigManager]'s
+ * StateFlow and observers (the Hub theme, embedded App Screens) restyle reactively; a failed
+ * fetch is logged by the sync and the cached config stays active.
+ *
+ * Cross-module hook exposed to sibling Rover modules only via
+ * [RestrictTo][androidx.annotation.RestrictTo]
+ * ([LIBRARY_GROUP][androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP]); NOT part of the
+ * supported public SDK API surface.
+ */
+@androidx.annotation.RestrictTo(androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP)
+suspend fun Rover.refreshRoverConfig() {
+    this.resolve(io.rover.sdk.core.data.config.ConfigSync::class.java)?.sync()
+        ?: throw missingDependencyError("ConfigSync")
 }
 
 var Rover.trackingMode: PrivacyService.TrackingMode

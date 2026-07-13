@@ -51,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.IntrinsicMeasurable
 import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.LayoutModifier
@@ -78,6 +79,8 @@ import io.rover.sdk.experiences.rich.compose.ui.Environment
 import io.rover.sdk.experiences.rich.compose.ui.Services
 import io.rover.sdk.experiences.rich.compose.ui.AppBarConfig
 import io.rover.sdk.experiences.rich.compose.ui.LocalAppBarConfigSink
+import io.rover.sdk.experiences.rich.compose.ui.LocalStatusBarConfigSink
+import io.rover.sdk.experiences.rich.compose.ui.StatusBarConfig
 import io.rover.sdk.experiences.rich.compose.ui.data.makeDataContext
 import io.rover.sdk.experiences.rich.compose.ui.layers.stacks.ZStackLayer
 import io.rover.sdk.experiences.rich.compose.ui.layout.experiencesHorizontalFlex
@@ -86,7 +89,8 @@ import io.rover.sdk.experiences.rich.compose.ui.layout.fallbackMeasure
 import io.rover.sdk.experiences.rich.compose.ui.layout.mapMaxIntrinsicWidthAsMeasure
 import io.rover.sdk.experiences.rich.compose.ui.layout.mapMinIntrinsicAsFlex
 import io.rover.sdk.experiences.rich.compose.ui.modifiers.ActionModifier
-import io.rover.sdk.experiences.rich.compose.ui.utils.rememberSystemBarController
+import io.rover.sdk.experiences.rich.compose.ui.utils.isDarkIconTint
+import io.rover.sdk.experiences.rich.compose.ui.utils.rememberExperienceStatusBarControl
 import io.rover.sdk.experiences.rich.compose.ui.values.getComposeColor
 import io.rover.sdk.experiences.services.ExperienceScreenViewed
 import io.rover.sdk.experiences.services.InterpolatedConversionsTrackerService
@@ -104,9 +108,14 @@ import io.rover.sdk.experiences.services.InterpolatedConversionsTrackerService
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 internal fun ScreenLayer(node: Screen, appearance: Appearance) {
-    val systemBarController = rememberSystemBarController()
-
     val isDarkTheme = Environment.LocalIsDarkTheme.current
+    val statusBarModifier = rememberExperienceStatusBarControl(
+        screenId = node.id,
+        statusBarStyle = node.androidStatusBarStyle,
+        statusBarBackgroundColor = node.androidStatusBarBackgroundColor.getComposeColor(isDarkTheme),
+        appearance = appearance
+    )
+
     val localData = Environment.LocalData.current
     val urlParameters = Environment.LocalUrlParameters.current
     val experienceId = Environment.LocalExperienceId.current
@@ -116,11 +125,6 @@ internal fun ScreenLayer(node: Screen, appearance: Appearance) {
     val userInfo = Environment.LocalUserInfo.current?.invoke() ?: emptyMap()
 
     val backgroundColor = remember { node.androidStatusBarBackgroundColor.getComposeColor(isDarkTheme) }
-
-    LaunchedEffect(true) {
-        systemBarController.setStatusBarColor(backgroundColor)
-        systemBarController.setStatusBarIconTint(node.androidStatusBarStyle, appearance)
-    }
 
     Services.Inject { services ->
         LaunchedEffect(true) {
@@ -154,6 +158,9 @@ internal fun ScreenLayer(node: Screen, appearance: Appearance) {
             Environment.LocalScreen provides node
         ) {
             Scaffold(
+                // Tracks whether this screen is drawn beneath the status bar so the icon tint is only
+                // applied while it is, and restored when it isn't.
+                modifier = statusBarModifier,
                 topBar = {
                     if (node.children.firstOrNull { it is AppBar } != null) {
                         // Show AppBar when present
@@ -208,9 +215,14 @@ internal fun ScreenLayer(node: Screen, appearance: Appearance) {
  */
 @Composable
 internal fun ScreenContent(node: Screen, appearance: Appearance, isRootScreen: Boolean = false) {
-    val systemBarController = rememberSystemBarController()
-
     val isDarkTheme = Environment.LocalIsDarkTheme.current
+    val statusBarModifier = rememberExperienceStatusBarControl(
+        screenId = node.id,
+        statusBarStyle = node.androidStatusBarStyle,
+        statusBarBackgroundColor = node.androidStatusBarBackgroundColor.getComposeColor(isDarkTheme),
+        appearance = appearance
+    )
+
     val localData = Environment.LocalData.current
     val urlParameters = Environment.LocalUrlParameters.current
     val experienceId = Environment.LocalExperienceId.current
@@ -219,23 +231,29 @@ internal fun ScreenContent(node: Screen, appearance: Appearance, isRootScreen: B
     val deviceContext = Environment.LocalDeviceContext.current
     val userInfo = Environment.LocalUserInfo.current?.invoke() ?: emptyMap()
     val appBarConfigSink = LocalAppBarConfigSink.current
+    val statusBarConfigSink = LocalStatusBarConfigSink.current
+    val context = LocalContext.current
 
     val backgroundColor = remember { node.androidStatusBarBackgroundColor.getComposeColor(isDarkTheme) }
-
-    // TODO: two bugs with this status bar setup.
-    // Bug 1. this happens with all experiences, even ones that are not being embedded underneath
-    //        the status bar area.
-    // Bug 2. When navigating away from the Experience, status bar change sticks around. Waiting for
-    //        Compose 1.9 (August 2025 BoM), which provides modifier for tracking visibility.
-    LaunchedEffect(true) {
-        systemBarController.setStatusBarColor(backgroundColor)
-        systemBarController.setStatusBarIconTint(node.androidStatusBarStyle, appearance)
-    }
 
     // Report app bar config to parent
     val appBarConfig = extractAppBarConfig(node, isRootScreen)
     LaunchedEffect(appBarConfig) {
         appBarConfigSink?.invoke(appBarConfig)
+    }
+
+    // Report the authored status-bar styling to the host (e.g. the Hub), which owns the window's
+    // status bar when the experience is embedded pluggably. Reported for every screen, including
+    // those without an app bar. Values are resolved here so the host needs no experience-model
+    // knowledge.
+    val statusBarConfig = remember(node.androidStatusBarStyle, appearance, backgroundColor, isDarkTheme) {
+        StatusBarConfig(
+            lightStatusBarAppearance = node.androidStatusBarStyle.isDarkIconTint(context, appearance),
+            backgroundColor = backgroundColor,
+        )
+    }
+    LaunchedEffect(statusBarConfig) {
+        statusBarConfigSink?.invoke(statusBarConfig)
     }
 
     Services.Inject { services ->
@@ -269,7 +287,12 @@ internal fun ScreenContent(node: Screen, appearance: Appearance, isRootScreen: B
         CompositionLocalProvider(
             Environment.LocalScreen provides node
         ) {
-            Surface(color = node.backgroundColor.getComposeColor()) {
+            Surface(
+                color = node.backgroundColor.getComposeColor(),
+                // Tracks whether this screen is drawn beneath the status bar so the icon tint is only
+                // applied while it is, and restored when it isn't.
+                modifier = statusBarModifier
+            ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     ZStackLayer {
                         Children(children = node.children.reversed(), modifier = FixedToProposedSize())
@@ -399,6 +422,7 @@ internal fun extractAppBarConfig(
             }
         } else null,
         backgroundColor = backgroundColor,
+        buttonColor = buttonColor,
         actions = buildAppBarActions(appBarNode),
         isRootScreen = isRootScreen
     )

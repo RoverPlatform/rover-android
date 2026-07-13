@@ -17,9 +17,15 @@
 
 package io.rover.sdk.notifications.communicationhub.data.network
 
+import com.squareup.moshi.JsonClass
+import io.rover.sdk.notifications.communicationhub.conversations.dto.ReplyContentBlockItem
 import okhttp3.ResponseBody
+import retrofit2.http.Body
+import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.Response
 import retrofit2.Retrofit
+import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -35,6 +41,35 @@ internal interface EngageApiService {
     
     @GET("subscriptions")
     suspend fun getSubscriptions(): Response<ResponseBody>
+
+    @GET("participants")
+    suspend fun getParticipants(): Response<ResponseBody>
+
+    @POST("conversations/{conversationId}/replies")
+    suspend fun sendConversationReply(
+        @Path("conversationId") conversationId: String,
+        @Body body: SendConversationReplyRequest,
+    ): Response<ResponseBody>
+
+    @GET("conversations")
+    suspend fun getConversations(
+        @Query("include") include: String? = "participants",
+        @Query("cursor") cursor: String? = null,
+        @Query("before") before: String? = null,
+    ): Response<ResponseBody>
+
+    @GET("conversations/{conversationId}/replies")
+    suspend fun getConversationReplies(
+        @Path("conversationId") conversationId: String,
+        @Query("cursor") cursor: String? = null,
+        @Query("before") before: String? = null,
+    ): Response<ResponseBody>
+
+    @POST("conversations/{conversationId}/read")
+    suspend fun markConversationRead(
+        @Path("conversationId") conversationId: String,
+        @Body body: MarkConversationReadRequest,
+    ): Response<ResponseBody>
 
     companion object {
         /**
@@ -63,9 +98,28 @@ internal interface EngageApiService {
             val retrofit = Retrofit.Builder()
                 .baseUrl(normalizedBaseUrl)
                 .client(httpClient.client)
+                .addConverterFactory(MoshiConverterFactory.create())
                 .build()
 
             return retrofit.create(EngageApiService::class.java)
         }
     }
 }
+
+@JsonClass(generateAdapter = true)
+internal data class SendConversationReplyRequest(
+    val content: List<ReplyContentBlockItem>,
+    val externalID: String,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class MarkConversationReadRequest(
+    @param:com.squareup.moshi.Json(name = "lastReadReplyID") val lastReadReplyId: String?,
+)
+
+@JsonClass(generateAdapter = true)
+internal data class MarkConversationReadResponse(
+    @param:com.squareup.moshi.Json(name = "conversationID") val conversationID: String,
+    val lastReadAt: String,
+    val lastReadReplyID: String? = null,
+)

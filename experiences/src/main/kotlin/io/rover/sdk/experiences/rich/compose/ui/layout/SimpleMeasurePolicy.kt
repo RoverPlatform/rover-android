@@ -29,7 +29,8 @@ import androidx.compose.ui.unit.Constraints
  * determine intrinsic sizes rather than just delegating it to the child measurable directly.
  */
 internal fun SimpleMeasurePolicy(
-    traceName: String? = null
+    traceName: String? = null,
+    allowEmpty: Boolean = false
 ): MeasurePolicy {
     return object : MeasurePolicy {
 
@@ -37,6 +38,10 @@ internal fun SimpleMeasurePolicy(
             measurables: List<Measurable>,
             constraints: Constraints
         ): MeasureResult {
+            if (allowEmpty && measurables.isEmpty()) {
+                return layout(0, 0) { }
+            }
+
             require(measurables.size == 1) {
                 "SimpleMeasurePolicy expects a single measurable being passed in. Received: $measurables"
             }
@@ -76,7 +81,7 @@ internal fun SimpleMeasurePolicy(
             height: Int
         ): Int {
             val measurable = measurables.singleOrNull()
-            assert(measurable != null) {
+            assert(allowEmpty || measurable != null) {
                 "SimpleMeasurePolicy expects a single measurable being passed in. Received: $measurables"
             }
             if (measurable == null) {
@@ -96,7 +101,7 @@ internal fun SimpleMeasurePolicy(
             height: Int
         ): Int {
             val measurable = measurables.singleOrNull()
-            assert(measurable != null) {
+            assert(allowEmpty || measurable != null) {
                 "SimpleMeasurePolicy expects a single measurable being passed in. Received: $measurables"
             }
             if (measurable == null) {
@@ -110,7 +115,7 @@ internal fun SimpleMeasurePolicy(
             width: Int
         ): Int {
             val measurable = measurables.singleOrNull()
-            assert(measurable != null) {
+            assert(allowEmpty || measurable != null) {
                 "SimpleMeasurePolicy expects a single measurable being passed in. Received: $measurables"
             }
             if (measurable == null) {

@@ -40,6 +40,8 @@ import io.rover.sdk.core.streams.onErrorReturn
 import io.rover.sdk.core.streams.subscribe
 import io.rover.sdk.core.streams.subscribeOn
 import io.rover.sdk.core.streams.timeout
+import io.rover.sdk.notifications.communicationhub.HubPushKind
+import io.rover.sdk.notifications.communicationhub.HubPushNotification
 import io.rover.sdk.notifications.domain.NotificationAttachment
 import io.rover.sdk.notifications.ui.concerns.NotificationStoreInterface
 import org.reactivestreams.Publisher
@@ -87,8 +89,20 @@ class NotificationDispatcher(
     private val iconColor: Int? = null
 ) {
     fun ingest(notificationFromAction: io.rover.sdk.notifications.domain.Notification) {
+        ingest(notificationFromAction, null)
+    }
+
+    /**
+     * Ingests a notification, optionally tagging it as a Hub push of the given [hubPushKind] so a
+     * 410 Hub reset can later identify and clear it from the tray. Classic campaign notifications
+     * pass `null` and are left unmarked.
+     */
+    internal fun ingest(
+        notificationFromAction: io.rover.sdk.notifications.domain.Notification,
+        hubPushKind: HubPushKind?,
+    ) {
         Publishers.defer {
-            processNotification(notificationFromAction)
+            processNotification(notificationFromAction, hubPushKind)
         }.subscribeOn(mainThreadScheduler).subscribe {} // TODO: do not use subscriber like this, it will leak
     }
 
@@ -122,7 +136,10 @@ class NotificationDispatcher(
         notificationManager.createNotificationChannel(mChannel)
     }
 
-    private fun processNotification(notification: io.rover.sdk.notifications.domain.Notification): Publisher<Unit> {
+    private fun processNotification(
+        notification: io.rover.sdk.notifications.domain.Notification,
+        hubPushKind: HubPushKind? = null,
+    ): Publisher<Unit> {
         // notify the influenced opens tracker that a notification is being executed.
         influenceTrackerService.notifyNotificationReceived(notification)
 
@@ -144,6 +161,9 @@ class NotificationDispatcher(
 
         builder.setStyle(NotificationCompat.BigTextStyle())
         builder.setSmallIcon(smallIconResId, smallIconDrawableLevel)
+
+        // Mark Hub push notifications so a 410 Hub reset can identify and clear them from the tray.
+        hubPushKind?.let { HubPushNotification.stamp(builder, it) }
 
         notificationsRepository.notificationArrivedByPush(notification)
 

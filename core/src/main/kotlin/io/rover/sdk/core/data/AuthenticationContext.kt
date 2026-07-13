@@ -59,8 +59,10 @@ data class AuthenticationContext(
     }
 
     override suspend fun obtainSdkAuthenticationIdToken(checkValidity: Boolean): String? {
-        // if we don't already have a token, then no refresh is necessary.
-        val existingIDToken = keyValueStorage["sdkAuthenticationToken"] ?: return null
+        val existingIDToken = keyValueStorage["sdkAuthenticationToken"]
+        if (existingIDToken == null) {
+            return null
+        }
         if (!checkValidity) {
             return existingIDToken
         }

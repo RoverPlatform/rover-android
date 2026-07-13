@@ -529,7 +529,7 @@ class InterpolatorTests {
 
         )
         // 14:46 because the date will be converted to local timezone (America/Toronto in test).
-        assertEquals("2022-02-01, 14:46:31. Tuesday, Feb. 1, 2022", result)
+        assertEquals("2022-02-01, 14:46:31. Tuesday, Feb 1, 2022", result)
     }
 
     @Test
@@ -542,7 +542,7 @@ class InterpolatorTests {
         ).interpolate(
             "{{date data.datetime \"EEE, MMM d, h:mm a\"}}"
         )
-        assertEquals("Tue., Feb. 1, 7:46 p.m.", result)
+        assertEquals("Tue, Feb 1, 7:46 p.m.", result)
     }
 
     @Test
@@ -574,7 +574,7 @@ class InterpolatorTests {
             "{{date data.date \"yyyy-MM-dd\"}}, {{date url.time \"HH:mm:ss\"}}. {{date user.day \"EEEE, MMM d, yyyy\"}}"
         )
         // 14:46 because the date will be converted to local timezone (America/Toronto in test).
-        assertEquals("2022-02-01, 14:46:31. Tuesday, Feb. 1, 2022", result)
+        assertEquals("2022-02-01, 14:46:31. Tuesday, Feb 1, 2022", result)
     }
 
     @Test
@@ -640,7 +640,7 @@ class InterpolatorTests {
             overrideTimeZone = testTimeZone
         ).interpolate(format)
 
-        assertEquals("Thursday, Jan. 5, 2023 3:25p.m. EST", result)
+        assertEquals("Thursday, Jan 5, 2023 3:25p.m. EST", result)
     }
 
     //endregion

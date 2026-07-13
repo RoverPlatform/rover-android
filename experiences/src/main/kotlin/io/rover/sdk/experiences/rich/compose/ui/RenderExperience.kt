@@ -36,8 +36,11 @@ import io.rover.sdk.experiences.rich.compose.ui.graphics.popExitTransition
 import io.rover.sdk.experiences.rich.compose.ui.layers.ScreenLayer
 import io.rover.sdk.experiences.rich.compose.ui.layers.ScreenContent
 import io.rover.sdk.experiences.rich.compose.ui.utils.getDarkModeValue
+import io.rover.sdk.experiences.rich.compose.ui.utils.rememberSystemBarController
 import io.rover.sdk.experiences.rich.compose.ui.LocalAppBarConfigRegistry
 import io.rover.sdk.experiences.rich.compose.ui.LocalAppBarConfigSink
+import io.rover.sdk.experiences.rich.compose.ui.LocalStatusBarConfigRegistry
+import io.rover.sdk.experiences.rich.compose.ui.LocalStatusBarConfigSink
 
 /**
  * This presents an [ExperienceModel].
@@ -94,6 +97,8 @@ private fun RenderExperienceStandalone(
     var screens by remember { mutableStateOf<List<Screen>>(emptyList()) }
     val navController = rememberNavController()
     val context = LocalContext.current
+    // One controller per experience, shared by all its screens to apply/restore the status-bar tint.
+    val systemBarController = rememberSystemBarController()
 
     // We need to hold Environment.LocalData information for passing it into child screens.
     // Serializing the Any type for using the navigation arguments is not achievable at the moment.
@@ -133,7 +138,8 @@ private fun RenderExperienceStandalone(
                 Environment.LocalExperienceModel provides experience,
                 Environment.LocalDocumentFonts provides experience.fonts,
                 Environment.LocalIsDarkTheme provides experience.appearance.getDarkModeValue(),
-                Environment.LocalAuthenticationContext provides services.authenticationContext
+                Environment.LocalAuthenticationContext provides services.authenticationContext,
+                Environment.LocalSystemBarController provides systemBarController
             ) {
                 // Every screen needs to be created as a potential route here.
                 // The first one is chosen by its id, so it's the only one to be composed at this point.
@@ -195,6 +201,7 @@ private fun RenderExperiencePluggable(
     val navRegistry = LocalNavDestinationRegistry.current
     val externalNavController = LocalExternalNavController.current
     val appBarRegistry = LocalAppBarConfigRegistry.current
+    val statusBarRegistry = LocalStatusBarConfigRegistry.current
     
     if (externalNavController == null) {
         Log.e(tag, "RenderExperiencePluggable requires LocalExternalNavController to be provided")
@@ -202,7 +209,14 @@ private fun RenderExperiencePluggable(
     }
     
     val context = LocalContext.current
-    
+    // One controller per experience, shared by the root screen and all registered destinations so
+    // they apply/restore the host's status-bar tint against a single captured baseline.
+    val systemBarController = rememberSystemBarController()
+    // Registered destinations are invoked later by the host's NavHost, outside this composition
+    // subtree, so composition locals set above us (e.g. by ExperienceComposable) do not reach them.
+    // Capture the manage-status-bar flag here so it can be re-injected into each destination.
+    val manageStatusBar = Environment.LocalManageStatusBar.current
+
     // We need to hold Environment.LocalData information for passing it into child screens.
     val localDataByScreenId: MutableMap<String, Any?> = remember { mutableMapOf() }
     val closeActivity = { (context as? Activity)?.finish() }
@@ -229,50 +243,56 @@ private fun RenderExperiencePluggable(
             
             screenNode = initialScreen
             
-            // Register all non-root screens as destinations in the parent NavHost
-            screens.filter { it.id != initialScreen.id }.forEach { screen ->
-                navRegistry?.register(screen.id) {
-                    CompositionLocalProvider(
-                        LocalAppBarConfigSink provides { config ->
-                            // Register app bar config for this screen's route
-                            appBarRegistry?.register(screen.id, config)
-                        },
-                        Environment.LocalNavigateToScreen provides { destination, localData ->
-                            localDataByScreenId[destination] = localData
-                            externalNavController.navigate(destination)
-                        },
-                        Environment.LocalNavigateUp provides { 
-                            if (externalNavController.previousBackStackEntry != null) {
-                                popBackNavigationStack()
-                            } else {
-                                closeActivity()
-                            }
-                        },
-                        Environment.LocalDismissExperience provides { closeActivity() },
-                        Environment.LocalExperienceModel provides experience,
-                        Environment.LocalDocumentFonts provides experience.fonts,
-                        Environment.LocalIsDarkTheme provides experience.appearance.getDarkModeValue(
-                            darkModeDefault = defaultColorSchemeDark
-                        ),
-                        Environment.LocalAuthenticationContext provides services.authenticationContext,
-                        Environment.LocalData provides localDataByScreenId[screen.id],
-                        // Add missing composition locals for action handlers and event tracking
-                        Environment.LocalServices provides services,
-                        Environment.LocalUserInfo provides Environment.LocalUserInfo.current,
-                        Environment.LocalUrlParameters provides Environment.LocalUrlParameters.current,
-                        Environment.LocalDeviceContext provides Environment.LocalDeviceContext.current,
-                        Environment.LocalExperienceId provides Environment.LocalExperienceId.current,
-                        Environment.LocalExperienceName provides Environment.LocalExperienceName.current,
-                        Environment.LocalExperienceUrl provides Environment.LocalExperienceUrl.current
-                    ) {
-                        ScreenContent(
-                            node = screen,
-                            appearance = experience.appearance,
-                            isRootScreen = false
-                        )
+            // Register all non-root screens as destinations in the parent NavHost in a single
+            // batch to avoid triggering multiple recompositions of the parent NavHost.
+            navRegistry?.registerAll(
+                screens.filter { it.id != initialScreen.id }.map { screen ->
+                    RegisteredDestination(screen.id) {
+                        CompositionLocalProvider(
+                            LocalAppBarConfigSink provides { config ->
+                                appBarRegistry?.register(screen.id, config)
+                            },
+                            LocalStatusBarConfigSink provides { config ->
+                                statusBarRegistry?.register(screen.id, config)
+                            },
+                            Environment.LocalNavigateToScreen provides { destination, localData ->
+                                localDataByScreenId[destination] = localData
+                                externalNavController.navigate(destination)
+                            },
+                            Environment.LocalNavigateUp provides {
+                                if (externalNavController.previousBackStackEntry != null) {
+                                    popBackNavigationStack()
+                                } else {
+                                    closeActivity()
+                                }
+                            },
+                            Environment.LocalDismissExperience provides { closeActivity() },
+                            Environment.LocalExperienceModel provides experience,
+                            Environment.LocalDocumentFonts provides experience.fonts,
+                            Environment.LocalIsDarkTheme provides experience.appearance.getDarkModeValue(
+                                darkModeDefault = defaultColorSchemeDark
+                            ),
+                            Environment.LocalAuthenticationContext provides services.authenticationContext,
+                            Environment.LocalData provides localDataByScreenId[screen.id],
+                            Environment.LocalServices provides services,
+                            Environment.LocalUserInfo provides Environment.LocalUserInfo.current,
+                            Environment.LocalUrlParameters provides Environment.LocalUrlParameters.current,
+                            Environment.LocalDeviceContext provides Environment.LocalDeviceContext.current,
+                            Environment.LocalExperienceId provides Environment.LocalExperienceId.current,
+                            Environment.LocalExperienceName provides Environment.LocalExperienceName.current,
+                            Environment.LocalExperienceUrl provides Environment.LocalExperienceUrl.current,
+                            Environment.LocalSystemBarController provides systemBarController,
+                            Environment.LocalManageStatusBar provides manageStatusBar
+                        ) {
+                            ScreenContent(
+                                node = screen,
+                                appearance = experience.appearance,
+                                isRootScreen = false
+                            )
+                        }
                     }
                 }
-            }
+            )
         }
         
         screenNode?.let { initialScreen ->
@@ -302,7 +322,8 @@ private fun RenderExperiencePluggable(
                 Environment.LocalDeviceContext provides Environment.LocalDeviceContext.current,
                 Environment.LocalExperienceId provides Environment.LocalExperienceId.current,
                 Environment.LocalExperienceName provides Environment.LocalExperienceName.current,
-                Environment.LocalExperienceUrl provides Environment.LocalExperienceUrl.current
+                Environment.LocalExperienceUrl provides Environment.LocalExperienceUrl.current,
+                Environment.LocalSystemBarController provides systemBarController
             ) {
                 // Render root screen inline (parent will handle the AppBar)
                 ScreenContent(

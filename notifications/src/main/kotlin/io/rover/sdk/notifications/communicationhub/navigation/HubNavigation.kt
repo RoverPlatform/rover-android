@@ -31,6 +31,13 @@ sealed class HubNavigation {
      * @param postId The ID of the post to display
      */
     data class Post(val postId: String) : HubNavigation()
+
+    /**
+     * Navigate to a specific conversation detail screen.
+     *
+     * @param conversationId The ID of the conversation to display
+     */
+    data class Conversation(val conversationId: String) : HubNavigation()
     
     /**
      * Navigate to the inbox (messages list) screen.

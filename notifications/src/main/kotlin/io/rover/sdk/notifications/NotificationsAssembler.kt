@@ -37,6 +37,7 @@ import io.rover.sdk.core.container.Assembler
 import io.rover.sdk.core.container.Container
 import io.rover.sdk.core.container.Resolver
 import io.rover.sdk.core.container.Scope
+import io.rover.sdk.core.data.AuthenticationContextInterface
 import io.rover.sdk.core.data.config.ConfigManager
 import io.rover.sdk.core.data.sync.RealPagedSyncParticipant
 import io.rover.sdk.core.data.sync.SyncCoordinatorInterface
@@ -45,6 +46,7 @@ import io.rover.sdk.core.data.sync.SyncParticipant
 import io.rover.sdk.core.events.ContextProvider
 import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.core.events.PushTokenTransmissionChannel
+import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.core.events.contextproviders.FirebasePushTokenContextProvider
 import io.rover.sdk.core.platform.DateFormattingInterface
 import io.rover.sdk.core.platform.DeviceIdentificationInterface
@@ -65,13 +67,26 @@ import io.rover.sdk.notifications.ui.concerns.NotificationStoreInterface
 import io.rover.sdk.notifications.ui.containers.InboxActivity
 import io.rover.sdk.notifications.communicationhub.badge.RoverBadge
 import io.rover.sdk.notifications.communicationhub.badge.RoverBadgeInterface
-import io.rover.sdk.notifications.communicationhub.data.database.RoverEngageDatabase
+import io.rover.sdk.notifications.communicationhub.data.RoverEngageDatabase
 import io.rover.sdk.notifications.communicationhub.data.network.EngageHttpClient
 import io.rover.sdk.notifications.communicationhub.data.network.EngageApiService
-import io.rover.sdk.notifications.communicationhub.data.repository.RoverEngageRepository
+import io.rover.sdk.notifications.communicationhub.conversations.ConversationsRepository
+import io.rover.sdk.notifications.communicationhub.conversations.RoomConversationsTransactionRunner
+import io.rover.sdk.notifications.communicationhub.posts.PostsRepository
+import io.rover.sdk.notifications.communicationhub.conversations.ConversationsSync
+import io.rover.sdk.notifications.communicationhub.conversations.ParticipantsSync
+import io.rover.sdk.notifications.communicationhub.posts.PostsSync
+import io.rover.sdk.notifications.communicationhub.posts.SubscriptionsSync
+import io.rover.sdk.notifications.communicationhub.AndroidDeliveredHubNotificationClearer
 import io.rover.sdk.notifications.communicationhub.navigation.HubCoordinator
-import io.rover.sdk.notifications.communicationhub.push.PostPushHandler
-import io.rover.sdk.notifications.communicationhub.routing.ShowPostRoute
+import io.rover.sdk.notifications.communicationhub.sync.HubSyncCoordinator
+import io.rover.sdk.notifications.communicationhub.conversations.AndroidConversationPushNotificationPresenter
+import io.rover.sdk.notifications.communicationhub.conversations.ConversationPushHandler
+import io.rover.sdk.notifications.communicationhub.conversations.ConversationPushNotificationPresenter
+import io.rover.sdk.notifications.communicationhub.posts.PostPushHandler
+import io.rover.sdk.notifications.communicationhub.posts.ShowPostRoute
+import io.rover.sdk.notifications.communicationhub.conversations.ShowConversationRoute
+import io.rover.sdk.notifications.communicationhub.conversations.StandaloneConversationVisibilityTracker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -293,7 +308,8 @@ class NotificationsAssembler @JvmOverloads constructor(
                 resolver.resolveSingletonOrFail(NotificationDispatcher::class.java),
                 resolver.resolveSingletonOrFail(DateFormattingInterface::class.java),
                 resolver.resolveSingletonOrFail(InfluenceTrackerServiceInterface::class.java),
-                resolver.resolveSingletonOrFail(PostPushHandler::class.java)
+                resolver.resolveSingletonOrFail(PostPushHandler::class.java),
+                resolver.resolveSingletonOrFail(ConversationPushHandler::class.java)
             )
         }
 
@@ -333,7 +349,10 @@ class NotificationsAssembler @JvmOverloads constructor(
         ) { resolver ->
             EngageHttpClient(
                 applicationContext,
-                resolver.resolve(String::class.java, "accountToken")
+                resolver.resolve(String::class.java, "accountToken"),
+                resolver.resolveSingletonOrFail(AuthenticationContextInterface::class.java),
+                resolver.resolveSingletonOrFail(UserInfoInterface::class.java),
+                resolver.resolveSingletonOrFail(DeviceIdentificationInterface::class.java)
             )
         }
         
@@ -349,15 +368,99 @@ class NotificationsAssembler @JvmOverloads constructor(
         
         container.register(
             Scope.Singleton,
-            RoverEngageRepository::class.java
+            HubSyncCoordinator::class.java
         ) { resolver ->
             val database = resolver.resolveSingletonOrFail(RoverEngageDatabase::class.java)
-            RoverEngageRepository(
-                resolver.resolveSingletonOrFail(EngageApiService::class.java),
+            HubSyncCoordinator(
+                engageApiService = resolver.resolveSingletonOrFail(EngageApiService::class.java),
+                postsDao = database.postsDao(),
+                subscriptionsDao = database.subscriptionsDao(),
+                conversationsDao = database.conversationsDao(),
+                repliesDao = database.repliesDao(),
+                participantsDao = database.participantsDao(),
+                syncStateDao = database.syncStateDao(),
+                transactionRunner = RoomConversationsTransactionRunner(database),
+                hubCoordinator = resolver.resolveSingletonOrFail(HubCoordinator::class.java),
+                deliveredHubNotificationClearer = AndroidDeliveredHubNotificationClearer(applicationContext),
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            PostsRepository::class.java
+        ) { resolver ->
+            val database = resolver.resolveSingletonOrFail(RoverEngageDatabase::class.java)
+            PostsRepository(
                 database.postsDao(),
                 database.subscriptionsDao(),
-                database.cursorsDao(),
-                resolver.resolveSingletonOrFail(DeviceIdentificationInterface::class.java)
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            ConversationsRepository::class.java
+        ) { resolver ->
+            val database = resolver.resolveSingletonOrFail(RoverEngageDatabase::class.java)
+            ConversationsRepository(
+                hubSyncCoordinator = resolver.resolveSingletonOrFail(HubSyncCoordinator::class.java),
+                conversationsDao = database.conversationsDao(),
+                repliesDao = database.repliesDao(),
+                participantsDao = database.participantsDao(),
+                syncStateDao = database.syncStateDao(),
+                transactionRunner = RoomConversationsTransactionRunner(database),
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            SubscriptionsSync::class.java
+        ) { resolver ->
+            val database = resolver.resolveSingletonOrFail(RoverEngageDatabase::class.java)
+            SubscriptionsSync(
+                hubSyncCoordinator = resolver.resolveSingletonOrFail(HubSyncCoordinator::class.java),
+                subscriptionsDao = database.subscriptionsDao(),
+                transactionRunner = RoomConversationsTransactionRunner(database),
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            PostsSync::class.java
+        ) { resolver ->
+            val database = resolver.resolveSingletonOrFail(RoverEngageDatabase::class.java)
+            PostsSync(
+                hubSyncCoordinator = resolver.resolveSingletonOrFail(HubSyncCoordinator::class.java),
+                postsRepository = resolver.resolveSingletonOrFail(PostsRepository::class.java),
+                syncStateDao = database.syncStateDao(),
+                deviceIdentification = resolver.resolveSingletonOrFail(DeviceIdentificationInterface::class.java),
+                transactionRunner = RoomConversationsTransactionRunner(database),
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            ConversationsSync::class.java
+        ) { resolver ->
+            val database = resolver.resolveSingletonOrFail(RoverEngageDatabase::class.java)
+            ConversationsSync(
+                conversationsRepository = resolver.resolveSingletonOrFail(ConversationsRepository::class.java),
+                hubSyncCoordinator = resolver.resolveSingletonOrFail(HubSyncCoordinator::class.java),
+                conversationsDao = database.conversationsDao(),
+                participantsDao = database.participantsDao(),
+                syncStateDao = database.syncStateDao(),
+                transactionRunner = RoomConversationsTransactionRunner(database),
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            ParticipantsSync::class.java
+        ) { resolver ->
+            val database = resolver.resolveSingletonOrFail(RoverEngageDatabase::class.java)
+            ParticipantsSync(
+                hubSyncCoordinator = resolver.resolveSingletonOrFail(HubSyncCoordinator::class.java),
+                participantsDao = database.participantsDao(),
+                transactionRunner = RoomConversationsTransactionRunner(database),
             )
         }
         
@@ -366,8 +469,34 @@ class NotificationsAssembler @JvmOverloads constructor(
             PostPushHandler::class.java
         ) { resolver ->
             PostPushHandler(
-                resolver.resolveSingletonOrFail(RoverEngageRepository::class.java),
+                resolver.resolveSingletonOrFail(PostsRepository::class.java),
                 CoroutineScope(SupervisorJob() + Dispatchers.IO)
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            ConversationPushNotificationPresenter::class.java,
+        ) { resolver ->
+            AndroidConversationPushNotificationPresenter(
+                applicationContext = applicationContext,
+                smallIconResId = smallIconResId,
+                smallIconDrawableLevel = smallIconDrawableLevel,
+                defaultChannelId = defaultChannelId,
+                iconColor = iconColor,
+                hubCoordinator = resolver.resolveSingletonOrFail(HubCoordinator::class.java),
+                standaloneConversationVisibilityTracker = resolver.resolveSingletonOrFail(StandaloneConversationVisibilityTracker::class.java),
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            ConversationPushHandler::class.java,
+        ) { resolver ->
+            ConversationPushHandler(
+                conversationPushRepository = resolver.resolveSingletonOrFail(ConversationsRepository::class.java),
+                notificationPresenter = resolver.resolveSingletonOrFail(ConversationPushNotificationPresenter::class.java),
+                coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
             )
         }
         
@@ -376,7 +505,8 @@ class NotificationsAssembler @JvmOverloads constructor(
             RoverBadgeInterface::class.java
         ) { resolver ->
             RoverBadge(
-                resolver.resolveSingletonOrFail(RoverEngageRepository::class.java)
+                postsRepository = resolver.resolveSingletonOrFail(PostsRepository::class.java),
+                conversationsRepository = resolver.resolveSingletonOrFail(ConversationsRepository::class.java),
             )
         }
         
@@ -385,6 +515,13 @@ class NotificationsAssembler @JvmOverloads constructor(
             HubCoordinator::class.java
         ) { _ ->
             HubCoordinator()
+        }
+
+        container.register(
+            Scope.Singleton,
+            StandaloneConversationVisibilityTracker::class.java
+        ) { _ ->
+            StandaloneConversationVisibilityTracker()
         }
     }
 
@@ -420,6 +557,14 @@ class NotificationsAssembler @JvmOverloads constructor(
                     resolver.resolveSingletonOrFail(ConfigManager::class.java)
                 )
             )
+            registerRoute(
+                ShowConversationRoute(
+                    context = applicationContext,
+                    urlSchemes = resolver.resolveSingletonOrFail(UrlSchemes::class.java).schemes.toSet(),
+                    hubCoordinator = resolver.resolveSingletonOrFail(HubCoordinator::class.java),
+                    configManager = resolver.resolveSingletonOrFail(ConfigManager::class.java),
+                )
+            )
         }
 
         resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java).registerParticipant(
@@ -427,7 +572,36 @@ class NotificationsAssembler @JvmOverloads constructor(
         )
 
         resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java).registerStandaloneParticipant(
-            resolver.resolveSingletonOrFail(RoverEngageRepository::class.java)
+            resolver.resolveSingletonOrFail(SubscriptionsSync::class.java)
+        )
+
+        resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java).registerStandaloneParticipant(
+            resolver.resolveSingletonOrFail(PostsSync::class.java)
+        )
+
+        resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java).registerStandaloneParticipant(
+            resolver.resolveSingletonOrFail(ConversationsSync::class.java)
+        )
+
+        resolver.resolveSingletonOrFail(SyncCoordinatorInterface::class.java).registerStandaloneParticipant(
+            resolver.resolveSingletonOrFail(ParticipantsSync::class.java)
+        )
+
+        resolver.resolveSingletonOrFail(HubSyncCoordinator::class.java).registerResetObserver(
+            resolver.resolveSingletonOrFail(ConversationsRepository::class.java)
+        )
+
+        resolver.resolveSingletonOrFail(HubSyncCoordinator::class.java).registerResetCancellable(
+            resolver.resolveSingletonOrFail(SubscriptionsSync::class.java)
+        )
+        resolver.resolveSingletonOrFail(HubSyncCoordinator::class.java).registerResetCancellable(
+            resolver.resolveSingletonOrFail(PostsSync::class.java)
+        )
+        resolver.resolveSingletonOrFail(HubSyncCoordinator::class.java).registerResetCancellable(
+            resolver.resolveSingletonOrFail(ConversationsSync::class.java)
+        )
+        resolver.resolveSingletonOrFail(HubSyncCoordinator::class.java).registerResetCancellable(
+            resolver.resolveSingletonOrFail(ParticipantsSync::class.java)
         )
 
         requestPushToken { userProvidedToken ->
@@ -454,11 +628,25 @@ val Rover.roverBadge: RoverBadgeInterface
 val Rover.hubCoordinator: HubCoordinator
     get() = this.resolve(HubCoordinator::class.java) ?: throw missingDependencyError("HubCoordinator")
 
+internal val Rover.standaloneConversationVisibilityTracker: StandaloneConversationVisibilityTracker
+    get() = this.resolve(StandaloneConversationVisibilityTracker::class.java)
+        ?: throw missingDependencyError("StandaloneConversationVisibilityTracker")
+
+internal val Rover.conversationPushNotificationPresenter: ConversationPushNotificationPresenter
+    get() = this.resolve(ConversationPushNotificationPresenter::class.java)
+        ?: throw missingDependencyError("ConversationPushNotificationPresenter")
+
 internal val Rover.roverEngageDatabase: RoverEngageDatabase
     get() = this.resolve(RoverEngageDatabase::class.java) ?: throw missingDependencyError("CommunicationHubDatabase")
 
-internal val Rover.roverEngageRepository: RoverEngageRepository
-    get() = this.resolve(RoverEngageRepository::class.java) ?: throw missingDependencyError("RoverEngageRepository")
+internal val Rover.postsRepository: PostsRepository
+    get() = this.resolve(PostsRepository::class.java) ?: throw missingDependencyError("RoverEngageRepository")
+
+internal val Rover.conversationsRepository: ConversationsRepository
+    get() = this.resolve(ConversationsRepository::class.java) ?: throw missingDependencyError("ConversationsRepository")
+
+internal val Rover.conversationsSync: ConversationsSync
+    get() = this.resolve(ConversationsSync::class.java) ?: throw missingDependencyError("ConversationsSync")
 
 private fun missingDependencyError(name: String): Throwable {
     throw RuntimeException("Dependency not registered: $name.  Did you include NotificationsAssembler() in the assembler list?")

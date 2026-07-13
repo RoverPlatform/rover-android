@@ -42,6 +42,14 @@ import io.rover.sdk.core.platform.whenNotNull
 import io.rover.sdk.core.privacy.PrivacyService
 import io.rover.sdk.core.routing.Router
 import io.rover.sdk.core.tracking.ConversionsTrackerService
+import io.rover.sdk.core.data.AuthenticationContextInterface
+import io.rover.sdk.core.events.UserInfoInterface
+import io.rover.sdk.core.platform.DeviceIdentificationInterface
+import io.rover.sdk.experiences.appscreens.AppScreenLoader
+import io.rover.sdk.experiences.appscreens.AppScreenNavigator
+import io.rover.sdk.experiences.appscreens.AppScreenScopeRegistry
+import io.rover.sdk.experiences.appscreens.network.AppScreensDataClient
+import io.rover.sdk.experiences.appscreens.network.AppScreensDocumentClient
 import io.rover.sdk.experiences.data.URLRequest
 import io.rover.sdk.experiences.services.ClassicEventEmitter
 import io.rover.sdk.experiences.services.ContextProviderService
@@ -120,6 +128,56 @@ class ExperiencesAssembler(
         ) { resolver ->
             InterpolatedConversionsTrackerService(
                 resolver.resolveSingletonOrFail(ConversionsTrackerService::class.java)
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            AppScreenScopeRegistry::class.java
+        ) { _ ->
+            AppScreenScopeRegistry()
+        }
+
+        container.register(
+            Scope.Singleton,
+            AppScreensDocumentClient::class.java
+        ) { resolver ->
+            AppScreensDocumentClient(
+                resolver.resolveSingletonOrFail(Context::class.java)
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            AppScreensDataClient::class.java
+        ) { resolver ->
+            AppScreensDataClient(
+                context = resolver.resolveSingletonOrFail(Context::class.java),
+                authenticationContext = resolver.resolveSingletonOrFail(AuthenticationContextInterface::class.java),
+                userInfo = resolver.resolveSingletonOrFail(UserInfoInterface::class.java),
+                deviceIdentification = resolver.resolveSingletonOrFail(DeviceIdentificationInterface::class.java)
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            AppScreenLoader::class.java
+        ) { resolver ->
+            AppScreenLoader(
+                documentClient = resolver.resolveSingletonOrFail(AppScreensDocumentClient::class.java),
+                dataClient = resolver.resolveSingletonOrFail(AppScreensDataClient::class.java),
+                scopeRegistry = resolver.resolveSingletonOrFail(AppScreenScopeRegistry::class.java)
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
+            AppScreenNavigator::class.java
+        ) { resolver ->
+            AppScreenNavigator(
+                appContext = resolver.resolveSingletonOrFail(Context::class.java),
+                loader = resolver.resolveSingletonOrFail(AppScreenLoader::class.java),
+                scopeRegistry = resolver.resolveSingletonOrFail(AppScreenScopeRegistry::class.java)
             )
         }
     }

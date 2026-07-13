@@ -21,7 +21,10 @@ import android.os.Bundle
 import io.rover.sdk.core.events.PushTokenTransmissionChannel
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.DateFormattingInterface
-import io.rover.sdk.notifications.communicationhub.push.PostPushHandler
+import io.rover.sdk.notifications.communicationhub.HubPushKind
+import io.rover.sdk.notifications.communicationhub.HubPushNotification
+import io.rover.sdk.notifications.communicationhub.conversations.ConversationPushHandler
+import io.rover.sdk.notifications.communicationhub.posts.PostPushHandler
 import io.rover.sdk.notifications.domain.Notification
 import io.rover.sdk.notifications.graphql.decodeJson
 import org.json.JSONException
@@ -33,10 +36,15 @@ internal open class PushReceiver(
     private val notificationDispatcher: NotificationDispatcher,
     private val dateFormatting: DateFormattingInterface,
     private val influenceTrackerService: InfluenceTrackerServiceInterface,
-    internal val postPushHandler: PostPushHandler? = null
+    internal val postPushHandler: PostPushHandler? = null,
+    internal val conversationPushHandler: ConversationPushHandler? = null,
 ) : PushReceiverInterface {
 
     override fun onTokenRefresh(token: String?) {
+        if (token == null) {
+            log.w("Null push token received; ignoring to avoid clearing a previously valid token.")
+            return
+        }
         pushTokenTransmissionChannel.setPushToken(token)
     }
 
@@ -70,33 +78,53 @@ internal open class PushReceiver(
     }
 
     private fun handleRoverNotificationObject(roverJson: String) {
-        // Check if this is a Post push notification
-        postPushHandler?.handleCommunicationHubPush(roverJson)
-        
-        // Handle standard notification
+        val jsonObject = try {
+            JSONObject(roverJson)
+        } catch (e: JSONException) {
+            log.w("Invalid push notification action received, because: '${e.message}'. Ignoring. (payload size: ${roverJson.length} bytes)")
+            return
+        }
+
+        // Classify once using the shared predicate. The same classification decides what to insert
+        // here and, via the marker stamped on the notification we post, what a 410 reset later
+        // clears from the tray — keeping insert and clear from drifting apart.
+        val hubPushKind = HubPushNotification.kind(jsonObject)
+        when (hubPushKind) {
+            HubPushKind.POST -> postPushHandler?.handleCommunicationHubPush(roverJson)
+            HubPushKind.CONVERSATION ->
+                // The predicate keys on the `conversation` object alone; only actually process a
+                // conversation whose reply/participant siblings are also present.
+                if (isConversationPushPayload(jsonObject)) {
+                    conversationPushHandler?.handleCommunicationHubPush(roverJson)
+                }
+            null -> { /* not a Hub push */ }
+        }
+
         val notification = try {
-            val jsonObject = JSONObject(roverJson)
             if (!jsonObject.has("notification")) {
-                // this rover push does not contain a classic notification.
                 return
             }
+
             val notificationJsonObject = jsonObject.getJSONObject("notification")
 
             Notification.decodeJson(
                 notificationJsonObject,
                 dateFormatting
             )
-        } catch (e: JSONException) {
-            log.w("Invalid push notification action received, because: '${e.message}'. Ignoring.")
-            log.w("... contents were: $roverJson")
-            return
         } catch (e: MalformedURLException) {
             log.w("Invalid push notification action received, because: '${e.message}'. Ignoring.")
             log.w("... contents were: $roverJson")
             return
         }
 
-        notificationDispatcher.ingest(notification)
+        // Pass the Hub kind through so the dispatched tray notification carries the marker a 410
+        // reset uses to clear it. For a post push this marks the post's notification; classic
+        // campaign pushes classify as null and stay unmarked (and untouched by reset).
+        notificationDispatcher.ingest(notification, hubPushKind)
+    }
+
+    private fun isConversationPushPayload(jsonObject: JSONObject): Boolean {
+        return jsonObject.has("conversation") && jsonObject.has("reply") && jsonObject.has("participant")
     }
 
     override fun onMessageReceivedNotification(notification: Notification) {

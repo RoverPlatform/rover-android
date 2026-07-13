@@ -19,6 +19,11 @@
     <application>
         <activity android:name="io.rover.sdk.notifications.TransientNotificationLaunchActivity" />
         <activity android:name="io.rover.sdk.notifications.ui.containers.InboxActivity" android:theme="@style/Theme.AppCompat.Light" />
+        <activity android:name="io.rover.sdk.notifications.communicationhub.ui.ShowConversationActivity" />
+        <activity android:name="io.rover.sdk.notifications.communicationhub.ui.ShowPostActivity" />
+        <receiver
+            android:name="io.rover.sdk.notifications.communicationhub.conversations.ConversationReplyReceiver"
+            android:exported="false" />
     </application>
 
     <queries>

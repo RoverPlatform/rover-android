@@ -30,6 +30,11 @@ import io.rover.sdk.core.data.AuthenticationContextInterface
 import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.experiences.Authorizers
 import io.rover.sdk.experiences.RoverExperiencesClassic
+import io.rover.sdk.experiences.appscreens.AppScreenLoader
+import io.rover.sdk.experiences.appscreens.AppScreenNavigator
+import io.rover.sdk.experiences.appscreens.AppScreenScopeRegistry
+import io.rover.sdk.experiences.appscreens.network.AppScreensDataClient
+import io.rover.sdk.experiences.appscreens.network.AppScreensDocumentClient
 import io.rover.sdk.experiences.data.http.RoverExperiencesWebService
 import io.rover.sdk.experiences.rich.compose.data.ExperiencesHttpClient
 import io.rover.sdk.experiences.rich.compose.data.LargeImageInterceptor
@@ -74,6 +79,21 @@ internal data class Services(
 
     val authenticationContext: AuthenticationContextInterface
         get() = rover.resolveSingletonOrFail(AuthenticationContextInterface::class.java)
+
+    val appScreenScopeRegistry: AppScreenScopeRegistry
+        get() = rover.resolveSingletonOrFail(AppScreenScopeRegistry::class.java)
+
+    val appScreensDocumentClient: AppScreensDocumentClient
+        get() = rover.resolveSingletonOrFail(AppScreensDocumentClient::class.java)
+
+    val appScreensDataClient: AppScreensDataClient
+        get() = rover.resolveSingletonOrFail(AppScreensDataClient::class.java)
+
+    val appScreenLoader: AppScreenLoader
+        get() = rover.resolveSingletonOrFail(AppScreenLoader::class.java)
+
+    val appScreenNavigator: AppScreenNavigator
+        get() = rover.resolveSingletonOrFail(AppScreenNavigator::class.java)
 
     /**
      * Wherever needed, we use this loader instead of setting it through Coil.setImageLoader, as that

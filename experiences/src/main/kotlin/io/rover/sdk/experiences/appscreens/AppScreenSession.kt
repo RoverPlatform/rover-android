@@ -131,6 +131,17 @@ internal class AppScreenSession(
     @Volatile
     var currentHref: String = ""
 
+    /**
+     * Whether this session is a live (polling) screen. Set true on the first `refresh` tick the
+     * session ever receives — the ONLY liveness signal native gets (the refresh timing logic is
+     * wholly internal to the App Screens JavaScript). Gates the reappear/foreground refreshes so
+     * only screens the runtime is actually polling get refetched on becoming visible again. Reset
+     * to false wherever the shell/document (re)loads: the fresh document's runtime re-announces
+     * liveness by ticking again (or, if rebaked as non-live, correctly goes quiet).
+     */
+    @Volatile
+    var isLive: Boolean = false
+
     /** The raw (un-normalized) document ETag last loaded into the WebView. */
     @Volatile
     var documentETag: String? = null

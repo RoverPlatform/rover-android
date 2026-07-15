@@ -26,6 +26,10 @@ import android.webkit.WebView
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.experiences.appscreens.network.AppScreenDocument
 import io.rover.sdk.experiences.appscreens.network.AppScreensDocumentClient
@@ -94,6 +98,19 @@ internal class AppScreenNavigator(
     private val jobs = HashMap<String, Job>()
 
     /**
+     * The subset of [jobs] that are REFRESH refetch+show jobs (keyed by entryId, main-thread-only
+     * like [jobs]). When a `refresh` tick finds a job already in flight for its entry, this lets
+     * [onBridgeRefresh] tell a stale refresh apart from a real navigation/recovery pipeline: the
+     * former is cancel-replaced (latest wins — parity with iOS's single per-session pipeline slot)
+     * so it cannot pin the slot and starve the reappear/foreground recovery; the latter is left to
+     * finish. Stored by Job IDENTITY, so a refresh that was cancel-replaced by a navigation/recovery
+     * pipeline under the same entryId is never misread as still-refreshing — the identity check is
+     * self-healing and needs no cleanup at the navigation cancel sites. The tracked refresh removes
+     * its own entry on completion.
+     */
+    private val refreshJobs = HashMap<String, Job>()
+
+    /**
      * The per-surface external-link executor, keyed by surface token (main-thread-only, like [jobs]).
      * Each composed [AppScreen] registers one so external-link bridge messages route to the active
      * presentation's Activity-backed context.
@@ -131,6 +148,19 @@ internal class AppScreenNavigator(
         isTemplateKnown = { templateKey -> model.isTemplateKnown(templateKey) },
         decorViewProvider = { currentDecorView.get() }
     )
+
+    init {
+        // Foreground "refresh now" (cross-platform design decision 3): on app foreground, refresh the
+        // currently-visible live session. Both OSes throttle/suspend hidden-app timers, so a live
+        // screen's poll loop stalls while backgrounded; a foreground refetch+show freshens it and
+        // re-arms the runtime's loop. Non-live screens are deliberately left alone. Registered once —
+        // the navigator is a process singleton. onStart fires on every process foreground.
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) {
+                refreshExposedTopIfLive()
+            }
+        })
+    }
 
     val rootStack: SnapshotStateList<NavigatorModel.Entry<AppScreenSession>> get() = model.rootStack
     val sheetStack: SnapshotStateList<NavigatorModel.Entry<AppScreenSession>> get() = model.sheetStack
@@ -472,6 +502,89 @@ internal class AppScreenNavigator(
     }
 
     /**
+     * Handle a `refresh` poll-tick that arrived from [session]'s runtime: refetch the screen it is
+     * already showing and re-`show()` it in place, both freshening a live screen and re-arming the
+     * runtime's one-shot poll timer (which only re-arms on a completed render).
+     *
+     * The first tick a session ever posts is the ONLY liveness signal native gets (the refresh
+     * timing logic is wholly internal to the App Screens JavaScript), so
+     * [AppScreenSession.isLive] is set true FIRST — even when this tick is
+     * then dropped — so the reappear ([onPopped]/[onSheetPopped]/[onSheetDismissed]) and foreground
+     * paths know to refresh this screen when it next becomes visible.
+     *
+     * A tick is honored only for the currently-VISIBLE session on an active presentation with the
+     * process at least STARTED: a detached/hidden WebView cannot complete a `show()` (the runtime
+     * resolves it via afterPaint()'s double-rAF, which Chromium freezes while detached), so the call
+     * would just burn SHOW_TIMEOUT. Dropping the tick deliberately leaves that session's loop
+     * unarmed until it reappears or the app foregrounds (cross-platform design decision 1).
+     *
+     * When a job is already in flight for the entry the tick is handled by KIND: a real
+     * navigation/recovery pipeline keeps the slot and the tick is dropped (its own `show()` re-arms
+     * the loop); an in-flight REFRESH (tracked in [refreshJobs]) is instead cancel-replaced by this
+     * newer one (latest wins — parity with iOS's single per-session pipeline slot), so a refresh
+     * whose `.json` fetch/handshake stalled cannot pin the slot and starve the reappear/foreground
+     * recovery, nor go on to `show()` against a WebView that has since gone hidden. Because these
+     * visibility gates hold only at admission, [refetchAndShow] re-checks them once more just before
+     * its `show()`.
+     */
+    private fun onBridgeRefresh(session: AppScreenSession) {
+        // Liveness is learned from the first tick regardless of whether this one is honored — but
+        // only from a tick whose runtime has actually loaded. A genuine tick can only come from a
+        // runtime that has loaded and completed a show() (which arms the one-shot timer), so gating
+        // never suppresses a real latch; it only rejects a stale tick still queued from a PREVIOUS
+        // document (arriving while this session loads a replacement, its `loaded` deferred re-armed
+        // and not yet completed), which would otherwise wrongly mark the replacement screen live.
+        if (session.bridge.runtimeLoaded) {
+            session.isLive = true
+        }
+
+        // The visible entry is the top of the sheet stack when a sheet is up, else the root top
+        // (mirrors NavigatorModel.livenessOf's Visible rule).
+        val entry = sheetStack.lastOrNull() ?: rootStack.lastOrNull()
+        if (entry == null || entry.session !== session) {
+            log.d("App Screen refresh: tick from a non-visible session template=${session.templateKey}; dropping (loop unarms)")
+            return
+        }
+        if (activeSurfaceTokenState.value == null) {
+            log.d("App Screen refresh: tick with no active presentation surface; dropping (loop unarms)")
+            return
+        }
+        if (!ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            log.d("App Screen refresh: tick while process below STARTED; dropping (loop unarms)")
+            return
+        }
+        val entryId = entry.entryId
+        val inFlight = jobs[entryId]
+        if (inFlight?.isActive == true) {
+            if (refreshJobs[entryId] === inFlight) {
+                // The in-flight job is itself a refresh: cancel-replace it so the latest tick wins
+                // (parity with iOS's single per-session pipeline slot). A stale refresh whose
+                // fetch/handshake stalled would otherwise hold the slot and starve this newer tick.
+                log.d("App Screen refresh: preempting in-flight refresh for entry=$entryId (latest wins)")
+                inFlight.cancel()
+            } else {
+                // A real navigation/recovery pipeline holds the slot; its own show() re-arms the
+                // loop, so drop this tick and let that pipeline finish.
+                log.d("App Screen refresh: navigation pipeline already in flight for entry=$entryId; dropping tick (its show re-arms)")
+                return
+            }
+        }
+
+        log.i("App Screen refresh: refetch+show for visible live session template=${session.templateKey} href=${session.currentHref}")
+        val job = scope.launch { refetchAndShow(session) }
+        refreshJobs[entryId] = job
+        jobs[entryId] = job
+        job.invokeOnCompletion {
+            // Main-thread bookkeeping (a Main.immediate coroutine completes on main), matching jobs.
+            // Only clear the marker if this is still the tracked refresh — a later cancel-replace may
+            // have installed a newer one whose mapping must survive.
+            if (refreshJobs[entryId] === job) {
+                refreshJobs.remove(entryId)
+            }
+        }
+    }
+
+    /**
      * The external-link executor for the active presentation, or null (logged) when [fromSession]
      * is off-stack or no handler is registered for the active surface. The message must originate
      * from a session on the root or sheet stack (a live presentation), and is dispatched to the
@@ -514,11 +627,13 @@ internal class AppScreenNavigator(
     /** Reconcile a NavHost-committed root pop: release the removed entries. */
     fun onPopped(entryIds: List<String>) {
         releaseEntries(model.onPopped(entryIds), reason = "popped")
+        refreshExposedTopIfLive()
     }
 
     /** Reconcile an in-sheet pop. */
     fun onSheetPopped(entryIds: List<String>) {
         releaseEntries(model.onSheetPopped(entryIds), reason = "sheet-popped")
+        refreshExposedTopIfLive()
     }
 
     /** The sheet was dismissed (swipe/scrim/back at its root): release its whole stack. */
@@ -526,6 +641,23 @@ internal class AppScreenNavigator(
         val removed = model.onSheetDismissed()
         log.i("App Screen sheet dismissed, releasing ${removed.size} entr${if (removed.size == 1) "y" else "ies"}")
         releaseEntries(removed, reason = "sheet-dismissed")
+        refreshExposedTopIfLive()
+    }
+
+    /**
+     * After a pop/sheet-dismiss exposes a new top entry, kick a refresh for it if it is a live
+     * (polling) screen. The runtime's one-shot poll loop went unarmed while the screen was hidden
+     * (its ticks were dropped by [onBridgeRefresh]'s visibility gate), so a reappear refetch+show
+     * both freshens the now-stale screen and re-arms the loop (cross-platform design decision 2).
+     * No-op when nothing is exposed or the exposed screen is not live. Routes through
+     * [onBridgeRefresh], which re-checks visibility/foreground/in-flight before honoring it.
+     */
+    private fun refreshExposedTopIfLive() {
+        val top = sheetStack.lastOrNull() ?: rootStack.lastOrNull() ?: return
+        if (top.session.isLive) {
+            log.i("App Screen refresh: live screen re-exposed template=${top.session.templateKey}; refreshing")
+            onBridgeRefresh(top.session)
+        }
     }
 
     /**
@@ -722,6 +854,7 @@ internal class AppScreenNavigator(
         session.bridge.onLinks = { message -> onBridgeLinks(session, message) }
         session.bridge.onOpenURL = { message -> onBridgeOpenURL(session, message) }
         session.bridge.onPresentWebsite = { message -> onBridgePresentWebsite(session, message) }
+        session.bridge.onRefresh = { onBridgeRefresh(session) }
         (session.webView.webViewClient as? AppScreenWebViewClient)?.onRenderProcessGone =
             { view, didCrash -> onRenderProcessGone(session, view, didCrash) }
     }
@@ -1195,8 +1328,81 @@ internal class AppScreenNavigator(
         }
     }
 
+    /**
+     * The refresh refetch+show: refetch the session's CURRENT href's `.json` under the session's
+     * scope, run it through the templateHash/ETag handshake ([AppScreenLoader.reconcileScreenData],
+     * with a one-shot document reload on mismatch — the go-quiet mechanism), then re-`show()` the
+     * screen in place and record the payload for renderer-death replay.
+     *
+     * Deliberately a PARALLEL of [runWarmReuse]'s morph tail rather than a shared extraction: warm
+     * reuse fires its `.json` fetch concurrently with the hydrate `show` to overlap the network
+     * round-trip, whereas a refresh has no hydrate to overlap and no optimistic data — it fetches
+     * serially and shows once. Keep the reconcile→show→record steps in sync with runWarmReuse.
+     *
+     * Pre-show gate re-check: the visibility/foreground gates in [onBridgeRefresh] ran when the tick
+     * was ADMITTED, but the `.json` fetch and handshake above suspend, and the user may push another
+     * screen or background the app while they are in flight. So immediately before `show()` — after
+     * the reconcile — the same gates are re-validated (this session is still the visible entry, an
+     * active surface is present, process ≥ STARTED); if any fails the show is dropped WITHOUT calling
+     * `bridge.call`, avoiding burning the full SHOW_TIMEOUT against a now-detached WebView whose rAF
+     * Chromium has frozen. The loop simply stays unarmed until the next reappear/foreground.
+     *
+     * Error policy = web parity: a failed refetch logs and does NOT call `show()`, leaving the
+     * runtime's one-shot poll timer unarmed (no retries, no stale re-show); the loop recovers on the
+     * next reappear/foreground/navigation. A `show` rejection is funnelled through the same
+     * one-attempt liveness recovery as the load pipelines. A CancellationException always propagates.
+     */
+    private suspend fun refetchAndShow(session: AppScreenSession) {
+        val href = session.currentHref
+        try {
+            val url = Uri.parse(href)
+            val scopeForData = session.dataScope
+                ?: scopeRegistry.scopeFor(session.templateKey)
+                ?: AppScreensDecisions.effectiveScope(null)
+
+            val envelope = withTimeout(JSON_TIMEOUT) { loader.loadScreenData(url, scopeForData) }
+            val reconciled = loader.reconcileScreenData(envelope, session.documentETag) {
+                refetchDocument(session, href)
+            }
+            session.documentETag = reconciled.documentETag
+
+            // Re-check the admission gates now that the fetch+reconcile have suspended and resumed:
+            // the user may have pushed another screen or backgrounded the app meanwhile. Showing onto
+            // a hidden/detached WebView would only burn SHOW_TIMEOUT (its rAF is frozen), so drop
+            // before the call and leave the loop unarmed (it recovers on the next reappear/foreground).
+            val stillVisible = sheetStack.lastOrNull() ?: rootStack.lastOrNull()
+            if (stillVisible?.session !== session ||
+                activeSurfaceTokenState.value == null ||
+                !ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+            ) {
+                log.i("App Screen refresh: went hidden mid-refresh; dropping before show — loop unarms (template=${session.templateKey})")
+                return
+            }
+
+            val showArgs = AppScreenShowArgs.build(href, optimisticDataJson = null, responseJson = reconciled.envelope.rawJson)
+            val showResult = session.bridge.call("show", showArgs, SHOW_TIMEOUT)
+            session.lastShowPayload = ShowPayload(
+                href, optimisticDataJson = null, reconciled.envelope.rawJson, reconciled.envelope.templateHash
+            )
+            log.i("App Screen refresh show resolved: hydrateMs=${showResult.opt("hydrateMs")}")
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (rejected: ShowRejectedException) {
+            log.w("App Screen refresh: show rejected for $href — routing to liveness recovery")
+            onShowRejected(session, rejected)
+        } catch (error: Exception) {
+            // Web parity: a failed refetch does not show; the runtime's poll timer stays unarmed.
+            log.w("App Screen refresh failed for $href (no show, loop stays unarmed): $error")
+        }
+    }
+
     private fun loadShell(session: AppScreenSession, href: String, html: String) {
         session.bridge.rearmLoaded()
+        // A fresh document re-announces its own liveness by ticking again once booted; clear the flag
+        // so a screen rebaked as non-live correctly goes quiet (the spec's §7 mechanism).
+        // This is the single choke point for every shell (re)load: cold, recovery, and the
+        // handshake-mismatch document refetch.
+        session.isLive = false
         // Base URL = the document URL so relative script srcs resolve through the WebView's stack.
         session.webView.loadDataWithBaseURL(href, html, "text/html", "utf-8", null)
     }

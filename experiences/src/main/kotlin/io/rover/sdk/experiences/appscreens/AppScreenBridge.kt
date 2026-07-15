@@ -88,6 +88,12 @@ internal sealed class BridgeMessage {
     object Loaded : BridgeMessage()
 
     /**
+     * A runtime-driven poll tick: refetch the screen already navigated to and call `show()` again.
+     * Bare — the host owns the URL + credentials, the runtime owns the cadence.
+     */
+    object Refresh : BridgeMessage()
+
+    /**
      * A navigation request. [optimisticData] is kept as raw JSON text so it can be spliced back
      * byte-perfect into a later `show` call; it is null when the runtime omitted it.
      */
@@ -133,6 +139,7 @@ internal sealed class BridgeMessage {
         fun parse(json: JSONObject): BridgeMessage? {
             return when (json.optString("type")) {
                 "loaded" -> Loaded
+                "refresh" -> Refresh
                 "navigate" -> {
                     val href = json.optString("href", "").takeIf { it.isNotBlank() } ?: return null
                     Navigate(
@@ -220,10 +227,25 @@ internal class AppScreenBridge private constructor() {
     @Volatile
     var onPresentWebsite: ((BridgeMessage.PresentWebsite) -> Unit)? = null
 
+    /**
+     * Invoked on the main thread for every `refresh` poll-tick message from the runtime. Set by the
+     * navigator when it creates the session; null until then (ticks are logged and dropped).
+     */
+    @Volatile
+    var onRefresh: (() -> Unit)? = null
+
     /** Suspends until the runtime reports it has booted (`{type:'loaded'}`). */
     suspend fun awaitLoaded() {
         loaded.await()
     }
+
+    /**
+     * Whether the runtime has reported `loaded` for the CURRENT document (reset by
+     * [rearmLoaded] at every shell load). Lets callers tell a tick from a booted
+     * runtime apart from a stale tick still queued from a previous document.
+     */
+    val runtimeLoaded: Boolean
+        get() = loaded.isCompleted
 
     /**
      * Re-arm the [awaitLoaded] signal before reloading the same WebView (the message listener
@@ -285,6 +307,15 @@ internal class AppScreenBridge private constructor() {
             is BridgeMessage.Loaded -> {
                 log.d("App Screen bridge: runtime loaded")
                 loaded.complete(Unit)
+            }
+            is BridgeMessage.Refresh -> {
+                log.d("App Screen bridge: refresh")
+                val handler = onRefresh
+                if (handler == null) {
+                    log.d("App Screen bridge: refresh with no handler installed, dropping")
+                } else {
+                    handler()
+                }
             }
             is BridgeMessage.Navigate -> {
                 log.d(

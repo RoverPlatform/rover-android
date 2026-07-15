@@ -41,6 +41,17 @@ class AppScreenBridgeMessageTest {
     }
 
     @Test
+    fun `refresh parses to Refresh`() {
+        assertTrue(parse("""{"type":"refresh"}""") is BridgeMessage.Refresh)
+    }
+
+    @Test
+    fun `refresh with stray extra fields still parses to Refresh`() {
+        // The tick is bare; unknown fields the runtime might tack on are ignored, not fatal.
+        assertTrue(parse("""{"type":"refresh","cadence":3000,"foo":"bar"}""") is BridgeMessage.Refresh)
+    }
+
+    @Test
     fun `navigate without optimisticData or transition`() {
         val message = parse("""{"type":"navigate","href":"/a/detail"}""")
         assertTrue(message is BridgeMessage.Navigate)

@@ -56,8 +56,25 @@ class AppScreenLoaderTest {
 
         loader.loadDocument(url)
 
-        assertEquals(AppScreenDataScope.PUBLIC, registry.scopeFor("/a/home"))
+        assertEquals(AppScreenDataScope.PUBLIC, registry.scopeFor("https://testbench.rover.io/a/home"))
         assertEquals(AppScreenDataScope.PUBLIC, loader.recordedScope(url))
+    }
+
+    @Test
+    fun `recordedScope keys by origin so the same path on two hosts is independent`() = runBlocking {
+        val registry = AppScreenScopeRegistry()
+        val one = Uri.parse("https://one.example/a/home")
+        val two = Uri.parse("https://two.example/a/home")
+        val loader = AppScreenLoader(
+            FakeDocClient(context, doc("\"v1\"", AppScreenDataScope.PUBLIC)),
+            FakeDataClient(context),
+            registry
+        )
+
+        loader.loadDocument(one)
+
+        assertEquals(AppScreenDataScope.PUBLIC, loader.recordedScope(one))
+        assertEquals(null, loader.recordedScope(two))
     }
 
     @Test
@@ -71,7 +88,7 @@ class AppScreenLoaderTest {
 
         loader.loadDocument(url)
 
-        assertEquals(AppScreenDataScope.PERSONALIZED, registry.scopeFor("/a/home"))
+        assertEquals(AppScreenDataScope.PERSONALIZED, registry.scopeFor("https://testbench.rover.io/a/home"))
     }
 
     @Test

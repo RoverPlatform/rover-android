@@ -17,14 +17,22 @@
 
 package io.rover.sdk.experiences.appscreens
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.view.ViewGroup
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import io.rover.sdk.core.Rover
+import io.rover.sdk.core.logging.log
 import io.rover.sdk.experiences.appscreens.ui.AppScreensRoot
 import io.rover.sdk.experiences.appscreens.ui.findActivity
 import io.rover.sdk.experiences.rich.compose.ui.Services
@@ -32,7 +40,7 @@ import io.rover.sdk.experiences.rich.compose.ui.Services
 /**
  * The App Screens (Experiences V3) shell root.
  *
- * Entry-point composable for AI-authored HTML App Screens served at `/a/…` URLs. It is intentionally
+ * Entry-point composable for HTML App Screens served at `/a/…` URLs. It is intentionally
  * thin: it resolves the singleton [AppScreenNavigator], starts it at [url] (resetting any prior
  * presentation while preserving warm sessions) and tears it down when it leaves composition, then
  * hands off to [AppScreensRoot] which renders the navigable stack (a NavHost plus an optional
@@ -41,12 +49,16 @@ import io.rover.sdk.experiences.rich.compose.ui.Services
  * [onDismissButtonPressed] is non-null when this surface is presented full-screen and dismissable
  * (its callback performs the dismissal); it drives the root page's close (✕) affordance. Embedded
  * surfaces leave it null and get no close chrome.
+ *
+ * [onOpenURL] is the host override consulted only for the `openURL` bridge message; when null the
+ * SDK default runs (the Rover deep-link router, falling back to an `ACTION_VIEW` intent).
  */
 @Composable
 internal fun AppScreen(
     url: Uri,
     modifier: Modifier = Modifier,
-    onDismissButtonPressed: (() -> Unit)? = null
+    onDismissButtonPressed: (() -> Unit)? = null,
+    onOpenURL: ((Uri) -> Unit)? = null
 ) {
     // Deep links arrive with the app's custom scheme (rv-myapp://<associated-domain>/a/…);
     // normalize to https before the navigator consumes the URL literally (bridge origin rules,
@@ -71,6 +83,11 @@ internal fun AppScreen(
         // no longer reads the config itself; the value is threaded to it per surface below.
         val forcedDark = forcedDark(LocalAppScreenColorSchemeOverride.current)
 
+        // The external-link handler registered below is long-lived (keyed only on surfaceToken), so
+        // capture the latest host callbacks through rememberUpdatedState rather than re-registering.
+        val currentOnOpenURL by rememberUpdatedState(onOpenURL)
+        val currentOnDismiss by rememberUpdatedState(onDismissButtonPressed)
+
         DisposableEffect(surfaceToken, screenUrl) {
             // Record the host decor view for the DecorAttached prewarm strategy hedge.
             navigator.setCurrentDecorView(
@@ -92,6 +109,40 @@ internal fun AppScreen(
             navigator.updateSurfaceAppearance(surfaceToken, forcedDark)
         }
 
+        // Register this surface's external-link executor with the singleton navigator. Registration
+        // is long-lived (keyed on surfaceToken alone), so the handler reads the host callbacks via
+        // the rememberUpdatedState snapshots above rather than being re-created on each change.
+        DisposableEffect(surfaceToken) {
+            navigator.registerExternalLinkHandler(
+                surfaceToken,
+                object : AppScreenExternalLinkHandler {
+                    override fun openURL(uri: Uri, dismiss: Boolean) {
+                        val override = currentOnOpenURL
+                        if (override != null) {
+                            override(uri)
+                        } else {
+                            defaultOpenUrl(context, services.rover, uri)
+                        }
+                        if (dismiss) {
+                            val dismissHandler = currentOnDismiss
+                            if (dismissHandler != null) {
+                                dismissHandler()
+                            } else {
+                                log.w("App Screen openURL requested dismiss but this surface has no dismiss handler; ignoring")
+                            }
+                        }
+                    }
+
+                    override fun presentWebsite(uri: Uri) {
+                        presentWebsiteInCustomTab(context, uri)
+                    }
+                }
+            )
+            onDispose {
+                navigator.unregisterExternalLinkHandler(surfaceToken)
+            }
+        }
+
         // Only the surface the navigator currently regards as active binds the shared WebView; a
         // covered surface renders a neutral placeholder so it never contends for the WebView.
         val active = navigator.activeSurfaceToken.value === surfaceToken
@@ -105,8 +156,45 @@ internal fun AppScreen(
 }
 
 /**
- * The phase surfaced to the App Screen host for its reveal/skeleton/error logic. The gray→green
- * phase *banner* is drawn by the HTML runtime itself; this native phase only governs whether the
+ * The SDK default for an `openURL` bridge message with no host override: route [uri] through the
+ * Rover deep-link router when it can handle it, otherwise fall back to an `ACTION_VIEW` intent.
+ * Launched from the surface's Activity when one is available (mirrors the V2 [ActionHandler]).
+ */
+private fun defaultOpenUrl(context: Context, rover: Rover, uri: Uri) {
+    val activity = context.findActivity()
+    val activityContext = activity ?: context
+    val intent = rover.intentForLink(uri) ?: Intent(Intent.ACTION_VIEW, uri)
+    // A non-Activity context (e.g. an application context behind an embedded ComposeView) requires
+    // FLAG_ACTIVITY_NEW_TASK, or startActivity throws AndroidRuntimeException and crashes the host.
+    if (activity == null) {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    try {
+        activityContext.startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        context.log.w("App Screen openURL: no activity found to handle $uri")
+    }
+}
+
+/** Present [uri] in an in-app browser (a Chrome Custom Tab), launched from the surface's Activity. */
+private fun presentWebsiteInCustomTab(context: Context, uri: Uri) {
+    val activity = context.findActivity()
+    val activityContext = activity ?: context
+    val customTabsIntent = CustomTabsIntent.Builder().build()
+    // A non-Activity context (e.g. an application context behind an embedded ComposeView) requires
+    // FLAG_ACTIVITY_NEW_TASK, or startActivity throws AndroidRuntimeException and crashes the host.
+    if (activity == null) {
+        customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    try {
+        customTabsIntent.launchUrl(activityContext, uri)
+    } catch (e: ActivityNotFoundException) {
+        context.log.w("App Screen presentWebsite: no browser found to present $uri")
+    }
+}
+
+/**
+ * The phase surfaced to the App Screen host for its reveal/skeleton/error logic. This governs whether the
  * WebView is hidden, revealed, or replaced by the error state.
  */
 internal sealed interface AppScreenPhase {

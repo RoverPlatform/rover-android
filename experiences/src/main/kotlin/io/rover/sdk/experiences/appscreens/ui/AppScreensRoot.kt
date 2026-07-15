@@ -141,6 +141,21 @@ internal fun AppScreensRoot(
         }
     }
 
+    // A device whose installed System WebView lacks the WEB_MESSAGE_LISTENER feature cannot host the
+    // App Screen bridge, so the navigator can build no session at all and gates [present] before
+    // touching its model (see [AppScreenNavigator.bridgeUnsupported]). There is therefore no session
+    // whose phase could carry an [AppScreenPhase.Error], so the load-error visual is answered here at
+    // the presentation level — reusing the same [ErrorState] the per-screen failure shows. Retry
+    // re-runs the (static per-device) capability gate; it recovers only if the WebView gains the
+    // feature, but keeps the affordance consistent with every other App Screens failure.
+    if (navigator.bridgeUnsupported.value) {
+        val background = if (resolvedDark) Color(0xFF0B0B0B) else Color(0xFFF1F2F4)
+        Box(modifier = modifier.fillMaxSize().background(background)) {
+            ErrorState(dark = resolvedDark, onRetry = navigator::retryPresent)
+        }
+        return
+    }
+
     if (!active) {
         val background = if (resolvedDark) Color(0xFF0B0B0B) else Color(0xFFF1F2F4)
         Box(modifier = modifier.fillMaxSize().background(background))
@@ -348,7 +363,7 @@ private val RootAffordanceSize = 48.dp
 
 /**
  * The horizontal padding between the safe-area edge and an overlay capsule: wider than the vertical
- * [RootAffordancePadding] because the M3 [Badge] overhangs the 48dp container's top-end corner and
+ * [RootAffordancePadding] because the Material 3 [Badge] overhangs the 48dp container's top-end corner and
  * would otherwise crowd the screen edge (matches the iOS bar item's bumped horizontal padding).
  */
 private val RootAffordanceHorizontalPadding = 20.dp
@@ -396,7 +411,7 @@ internal fun appScreenEntryTopInset(
  * reads below the status bar/cutout and inside the horizontal safe area regardless of the page
  * content beneath it. A caller whose surface never underlaps some system UI passes the same narrowed
  * insets it hands `AppScreenHost` (the sheet excludes the top), keeping capsule and injected band in
- * exact agreement. The container is pinned to [RootAffordanceSize] (rather than relying on M3's
+ * exact agreement. The container is pinned to [RootAffordanceSize] (rather than relying on Material 3's
  * implicit minimum interactive size, which could drift across Material versions) so
  * [OverlayAffordanceTopBand] stays exact.
  */

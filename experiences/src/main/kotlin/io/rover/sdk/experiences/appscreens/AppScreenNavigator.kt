@@ -42,6 +42,21 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 
 /**
+ * The composable-layer executor for external-link bridge messages (`openURL`/`presentWebsite`),
+ * registered per surface with the navigator and invoked on the main thread. The singleton navigator
+ * holds only an application [Context], but intent and Custom-Tab launches (and the host dismiss)
+ * need the surface's Activity-backed context, so the composable supplies this handler for its
+ * active presentation rather than the navigator launching anything itself.
+ */
+internal interface AppScreenExternalLinkHandler {
+    /** Open [uri] externally (host override or SDK default); when [dismiss], also tear the surface down. */
+    fun openURL(uri: Uri, dismiss: Boolean)
+
+    /** Present [uri] in the in-app browser (a Chrome Custom Tab). */
+    fun presentWebsite(uri: Uri)
+}
+
+/**
  * Owns the App Screens navigation session model: the warm-session pool, the root/sheet stacks, and
  * the per-screen load pipelines. Registered as a process singleton and driven entirely from the main
  * thread (all public methods, and the pipelines, run on [Dispatchers.Main]); network legs suspend
@@ -62,17 +77,28 @@ import kotlin.time.Duration.Companion.seconds
 internal class AppScreenNavigator(
     private val appContext: Context,
     private val loader: AppScreenLoader,
-    private val scopeRegistry: AppScreenScopeRegistry
+    private val scopeRegistry: AppScreenScopeRegistry,
+    /**
+     * The app's associated domains (already lower-cased at assembly, matching PresentExperienceRoute).
+     * Every bridge-navigation and prewarm target is gated to a `/a/...` path on one of these hosts via
+     * [AppScreensDecisions.authorizeNavigationTarget], so a screen cannot steer the navigator to fetch
+     * and render an arbitrary origin (or leak the device identifiers the `.json` fetch attaches).
+     */
+    private val associatedDomains: Set<String>
 ) {
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
-    private val model = NavigatorModel<AppScreenSession> { templatePath -> createSession(templatePath) }
+    private val model = NavigatorModel<AppScreenSession> { templateKey -> createSession(templateKey) }
 
     /** In-flight pipeline job per entry, so a pop can cancel exactly that screen's work. */
     private val jobs = HashMap<String, Job>()
 
-    /** Origin(s) the bridge trusts; set from the entry URL in [start] (single associated host). */
-    private var allowedOrigins: Set<String> = emptySet()
+    /**
+     * The per-surface external-link executor, keyed by surface token (main-thread-only, like [jobs]).
+     * Each composed [AppScreen] registers one so external-link bridge messages route to the active
+     * presentation's Activity-backed context.
+     */
+    private val externalLinkHandlers = HashMap<Any, AppScreenExternalLinkHandler>()
 
     /**
      * Whether prewarming from `links` hints is active. Defaults on; disabled per-presentation by a
@@ -88,10 +114,10 @@ internal class AppScreenNavigator(
     /** Boots runtimes ahead of a tap from the `links` hints the runtime posts after each render. */
     private val prewarmer = AppScreenPrewarmer(
         scope = scope,
-        createSession = { templatePath -> createSession(templatePath) },
+        createSession = { templateKey -> createSession(templateKey) },
         loadDocument = { url -> loader.loadDocument(url) },
         loadShell = { session, href, html -> loadShell(session, href, html) },
-        registerWarm = { templatePath, session ->
+        registerWarm = { templateKey, session ->
             // Claim guard at prewarm promotion: a surface change or appearance flip during the boot
             // cancels in-flight prewarms (establish / onActiveAppearanceChanged both cancelAll), but
             // settle any race by refusing to pool a session whose scheme no longer matches the active
@@ -99,10 +125,10 @@ internal class AppScreenNavigator(
             if (session.forcedDark != activeForcedDark) {
                 false
             } else {
-                model.registerWarm(templatePath, session)
+                model.registerWarm(templateKey, session)
             }
         },
-        isTemplateKnown = { templatePath -> model.isTemplateKnown(templatePath) },
+        isTemplateKnown = { templateKey -> model.isTemplateKnown(templateKey) },
         decorViewProvider = { currentDecorView.get() }
     )
 
@@ -149,6 +175,24 @@ internal class AppScreenNavigator(
     val activeSurfaceToken: State<Any?> get() = activeSurfaceTokenState
     private val activeSurfaceTokenState = mutableStateOf<Any?>(null)
 
+    /**
+     * True when this device's installed System WebView lacks the [WebViewFeature.WEB_MESSAGE_LISTENER]
+     * feature the App Screen bridge is built on. Compose state read by [AppScreensRoot] to render the
+     * presentation-level load-error state.
+     *
+     * This has to be answered at the presentation level, not as an [AppScreenPhase.Error] on a
+     * session's phase, because without the bridge NO session can be built at all: [buildWebView] would
+     * throw from [AppScreenBridge.install], and the first such throw is [present]'s own — which runs
+     * synchronously during composition and crashes the host. So [present] gates on this before it ever
+     * touches the model, and the UI observes the flag instead of a (non-existent) session.
+     */
+    val bridgeUnsupported: State<Boolean> get() = bridgeUnsupportedState
+    private val bridgeUnsupportedState = mutableStateOf(false)
+
+    /** Retained [present] arguments so the bridge-unavailable error state's retry can re-run the gate. */
+    private var lastPresentArgs: PresentArgs? = null
+    private class PresentArgs(val token: Any, val entryUrl: Uri, val forcedDark: Boolean?)
+
     // region public navigation surface (main thread)
 
     /**
@@ -165,10 +209,40 @@ internal class AppScreenNavigator(
      * carried into every session the presentation builds.
      */
     fun present(token: Any, entryUrl: Uri, forcedDark: Boolean?) {
+        lastPresentArgs = PresentArgs(token, entryUrl, forcedDark)
+        // Gate before touching the model: on a device whose installed System WebView lacks
+        // WEB_MESSAGE_LISTENER the bridge can never be installed, so every session build would throw
+        // from [buildWebView]. The first such throw is THIS present()'s (it builds the master session
+        // synchronously during composition), so an escaping exception crashes the host; the later
+        // navigate/prewarm/recovery paths can only run after a successful present and so are already
+        // fenced off here. Surface the presentation-level error state instead. The probe is a cheap
+        // static per-device capability check, so a retry simply re-runs it.
+        if (!AppScreenBridge.isSupported()) {
+            if (!bridgeUnsupportedState.value) {
+                log.e(
+                    "App Screen cannot present: this device's System WebView lacks the " +
+                        "WEB_MESSAGE_LISTENER feature the bridge requires; showing load-error state"
+                )
+            }
+            bridgeUnsupportedState.value = true
+            return
+        }
+        bridgeUnsupportedState.value = false
         surfaces.removeAll { it.token === token }
         surfaces.addLast(Surface(token, entryUrl, forcedDark))
         activeSurfaceTokenState.value = token
         establish(entryUrl)
+    }
+
+    /**
+     * Re-attempt the last [present] from the bridge-unavailable error state's retry. Re-runs the
+     * capability gate: if the System WebView has since gained the feature (e.g. a WebView update the
+     * process picked up) the presentation proceeds normally, otherwise the error state persists.
+     * No-op if nothing was ever presented.
+     */
+    fun retryPresent() {
+        val args = lastPresentArgs ?: return
+        present(args.token, args.entryUrl, args.forcedDark)
     }
 
     /**
@@ -234,9 +308,8 @@ internal class AppScreenNavigator(
         // network requests.
         val effectiveUrl = consumePrewarmSwitch(entryUrl)
 
-        allowedOrigins = originOf(effectiveUrl)
-        val templatePath = AppScreensDecisions.templatePath(effectiveUrl)
-        val outcome = model.start(templatePath, effectiveUrl.toString(), optimisticDataJson = null)
+        val templateKey = AppScreensDecisions.templateKey(effectiveUrl)
+        val outcome = model.start(templateKey, effectiveUrl.toString(), optimisticDataJson = null)
         val session = outcome.entry.session
         stealForNewHost(session)
         logPushed(outcome)
@@ -314,17 +387,31 @@ internal class AppScreenNavigator(
             log.w("App Screen navigate: unresolvable href '${message.href}' from ${fromSession.currentHref}")
             return
         }
-        val templatePath = AppScreensDecisions.templatePath(resolved)
+        // Authorization gate: refuse a navigation whose target is not a `/a/...` App Screen path on an
+        // associated domain over http(s). resolveHref lets a fully-qualified absolute href through
+        // unchanged, so without this a hostile screen could navigate to an arbitrary origin — which we
+        // would fetch a document from and render in-app, and issue an identifier-bearing `.json` fetch
+        // to. Log and ignore. We deliberately do NOT hand off to an external browser or the Rover
+        // router here; that is a deferred product decision.
+        val authorized = AppScreensDecisions.authorizeNavigationTarget(resolved, associatedDomains)
+        if (authorized == null) {
+            log.w(
+                "App Screen navigate: refusing unauthorized target '${message.href}' " +
+                    "(resolved=$resolved) — not a /a/ path on an associated domain over http(s); ignoring"
+            )
+            return
+        }
+        val templateKey = AppScreensDecisions.templateKey(authorized)
         // Claim guard (surface crossing): a warm-idle session pooled under a different surface's
         // scheme must not be reused for the active surface — its WebView carries the wrong appearance.
         // Discard it here so this navigation falls through to a fresh cold load against the active
         // scheme (rebuild-in-place is only wired for composed sessions; an idle one is cheapest as a
         // cold load). No-op when the pooled session already matches or none exists.
-        discardMismatchedWarmIdle(templatePath)
+        discardMismatchedWarmIdle(templateKey)
         val fromSheet = sheetStack.any { it.session === fromSession }
         val outcome = model.navigate(
-            templatePath = templatePath,
-            href = resolved.toString(),
+            templatePath = templateKey,
+            href = authorized.toString(),
             optimisticDataJson = message.optimisticData,
             transition = message.transition,
             fromSheet = fromSheet
@@ -342,11 +429,69 @@ internal class AppScreenNavigator(
         val base = Uri.parse(fromSession.currentHref)
         val candidates = message.hrefs.mapNotNull { href ->
             val resolved = AppScreensDecisions.resolveHref(base, href) ?: return@mapNotNull null
-            if (!AppScreensDecisions.isAppScreenUrl(resolved)) return@mapNotNull null
-            AppScreensDecisions.templatePath(resolved) to resolved.toString()
+            // Same authorization gate as onBridgeNavigate: only prewarm `/a/...` targets on an
+            // associated domain over http(s). Hints are best-effort, so a non-authorized href is
+            // silently dropped (no log) rather than surfaced.
+            val authorized = AppScreensDecisions.authorizeNavigationTarget(resolved, associatedDomains)
+                ?: return@mapNotNull null
+            AppScreensDecisions.templateKey(authorized) to authorized.toString()
         }
         if (candidates.isEmpty()) return
         prewarmer.hint(candidates)
+    }
+
+    /** Handle an `openURL` bridge message that arrived from [fromSession]'s runtime. */
+    fun onBridgeOpenURL(fromSession: AppScreenSession, message: BridgeMessage.OpenURL) {
+        val target = AppScreensDecisions.resolveExternalHref(Uri.parse(fromSession.currentHref), message.href)
+        if (target == null) {
+            log.w("App Screen openURL: unresolvable href '${message.href}'; dropping")
+            return
+        }
+        // Deliberately NOT authorizeNavigationTarget: openURL targets arbitrary external URLs and
+        // deep links (opaque schemes included), so the associated-domain gate that guards in-app
+        // render + identifier-bearing `.json` fetches does not apply. The bridge's main-frame/origin
+        // guard already authenticated the sender.
+        val handler = handlerForActivePresentation(fromSession, "openURL") ?: return
+        handler.openURL(target, message.dismiss)
+    }
+
+    /** Handle a `presentWebsite` bridge message that arrived from [fromSession]'s runtime. */
+    fun onBridgePresentWebsite(fromSession: AppScreenSession, message: BridgeMessage.PresentWebsite) {
+        val target = AppScreensDecisions.resolveExternalHref(Uri.parse(fromSession.currentHref), message.href)
+        if (target == null) {
+            log.w("App Screen presentWebsite: unresolvable href '${message.href}'; dropping")
+            return
+        }
+        val web = AppScreensDecisions.coerceWebPresentationUrl(target)
+        if (web == null) {
+            log.w("App Screen presentWebsite: '${message.href}' is not presentable in a browser tab; dropping")
+            return
+        }
+        val handler = handlerForActivePresentation(fromSession, "presentWebsite") ?: return
+        handler.presentWebsite(web)
+    }
+
+    /**
+     * The external-link executor for the active presentation, or null (logged) when [fromSession]
+     * is off-stack or no handler is registered for the active surface. The message must originate
+     * from a session on the root or sheet stack (a live presentation), and is dispatched to the
+     * handler the active surface registered.
+     */
+    private fun handlerForActivePresentation(
+        fromSession: AppScreenSession,
+        kind: String
+    ): AppScreenExternalLinkHandler? {
+        val onStack = rootStack.any { it.session === fromSession } || sheetStack.any { it.session === fromSession }
+        if (!onStack) {
+            log.w("App Screen $kind: message from an off-stack session template=${fromSession.templateKey}; dropping")
+            return null
+        }
+        val handler = externalLinkHandlers[activeSurfaceTokenState.value]
+        if (handler == null) {
+            log.w("App Screen $kind: no external-link handler registered for the active surface; dropping")
+            return null
+        }
+        return handler
     }
 
     /** Record the current host's decor view (for the DecorAttached prewarm strategy hedge). */
@@ -354,6 +499,16 @@ internal class AppScreenNavigator(
         if (currentDecorView.get() !== decorView) {
             currentDecorView = java.lang.ref.WeakReference(decorView)
         }
+    }
+
+    /** Register the external-link executor for the surface identified by [token]. Main thread. */
+    fun registerExternalLinkHandler(token: Any, handler: AppScreenExternalLinkHandler) {
+        externalLinkHandlers[token] = handler
+    }
+
+    /** Unregister the external-link executor for [token] (its surface left composition). Main thread. */
+    fun unregisterExternalLinkHandler(token: Any) {
+        externalLinkHandlers.remove(token)
     }
 
     /** Reconcile a NavHost-committed root pop: release the removed entries. */
@@ -374,7 +529,7 @@ internal class AppScreenNavigator(
     }
 
     /**
-     * Retry a failed screen by re-running its cold pipeline from scratch. Clears the M6 one-attempt
+     * Retry a failed screen by re-running its cold pipeline from scratch. Clears the one-attempt
      * recovery flag (so a fresh crash-and-recover cycle is allowed) and the dead flag. When the
      * failure came from a renderer crash the WebView was already rebuilt live at classification
      * time, so the cold pipeline reloads into a healthy WebView.
@@ -413,7 +568,22 @@ internal class AppScreenNavigator(
         val job = scope.launch {
             when (selection) {
                 AppScreensDecisions.SessionSelection.Reuse ->
-                    runWarmReuse(session, entry.href, entry.optimisticDataJson, tapAt, selection)
+                    // The pure model selects Reuse purely on pool presence + on-stack; it is opaque
+                    // over the session type, so it cannot know whether the runtime actually booted. A
+                    // non-ephemeral session that was popped/dismissed before its runtime reported
+                    // `loaded` stays warm with a half-loaded (or blank) WebView — a warm reuse would
+                    // `show` against a runtime that never booted (rejection or timeout → error). Its
+                    // WebView is healthy though, so route to the cold pipeline, which reloads the shell,
+                    // awaits `loaded`, and shows (same safe pattern as the establish claim guard).
+                    if (session.runtimeLoaded) {
+                        runWarmReuse(session, entry.href, entry.optimisticDataJson, tapAt, selection)
+                    } else {
+                        log.i(
+                            "App Screen reuse: pooled session template=${session.templateKey} was " +
+                                "reclaimed before its runtime booted; cold-loading instead of warm reuse"
+                        )
+                        runColdPipeline(session, entry.href, entry.optimisticDataJson, tapAt, selection)
+                    }
                 AppScreensDecisions.SessionSelection.Create,
                 AppScreensDecisions.SessionSelection.Ephemeral ->
                     runColdPipeline(session, entry.href, entry.optimisticDataJson, tapAt, selection)
@@ -429,11 +599,11 @@ internal class AppScreenNavigator(
     private fun logTapToPainted(
         tapAt: Long?,
         selection: AppScreensDecisions.SessionSelection,
-        templatePath: String
+        templateKey: String
     ) {
         if (tapAt == null) return
         val elapsed = SystemClock.uptimeMillis() - tapAt
-        log.i("App Screen tap→painted ${elapsed}ms (selection=$selection, template=$templatePath)")
+        log.i("App Screen tap→painted ${elapsed}ms (selection=$selection, template=$templateKey)")
     }
 
     private fun releaseEntries(entries: List<NavigatorModel.Entry<AppScreenSession>>, reason: String) {
@@ -496,18 +666,18 @@ internal class AppScreenNavigator(
 
     // region session factory
 
-    private fun createSession(templatePath: String): AppScreenSession {
+    private fun createSession(templateKey: String): AppScreenSession {
         // Resolve the forced scheme at build time (covers prewarm, which uses the same factory): the
         // construction context is what the WebView resolves prefers-color-scheme through until its
         // first attach (prewarm, warm pool, initial load), so the active surface's HOST-provided
         // override must be applied now for the page to boot in the right scheme.
         val resolvedForcedDark = activeForcedDark
-        val (webView, bridge) = buildWebView(resolvedForcedDark)
+        val (webView, bridge) = buildWebView(originForKey(templateKey), resolvedForcedDark)
         // The factory constructs the WebView over a MutableContextWrapper whose base is a neutral
         // (Activity-free) themed context; capture it so the host can swap back to it on detach.
         val themed = (webView.context as MutableContextWrapper).baseContext
         val session = AppScreenSession(
-            templatePath = templatePath,
+            templateKey = templateKey,
             initialWebView = webView,
             initialBridge = bridge,
             initialAppThemedContext = themed,
@@ -518,30 +688,47 @@ internal class AppScreenNavigator(
     }
 
     /**
-     * Build a fresh WebView (factory-installed clients) with its construction context forced to
-     * [forcedDark] (null = follow the device), and the bridge installed on it.
+     * The bridge origin rule(s) for a session serving [templateKey]. The key embeds its normalized
+     * origin ([AppScreensDecisions.templateKey]), so re-parsing it and re-running
+     * [AppScreensDecisions.originOf] recovers exactly that origin. This is what makes each session's
+     * bridge trust ITS OWN associated domain rather than the presentation's entry origin, so a
+     * bridge-navigate across associated domains gets a bridge scoped to the domain it actually loads.
      */
-    private fun buildWebView(forcedDark: Boolean?): Pair<WebView, AppScreenBridge> {
+    private fun originForKey(templateKey: String): Set<String> =
+        setOf(AppScreensDecisions.originOf(Uri.parse(templateKey)))
+
+    /**
+     * Build a fresh WebView (factory-installed clients) with its construction context forced to
+     * [forcedDark] (null = follow the device), and the bridge installed on it restricted to
+     * [origin] (the session's own origin, from [originForKey]).
+     */
+    private fun buildWebView(origin: Set<String>, forcedDark: Boolean?): Pair<WebView, AppScreenBridge> {
         val webView = AppScreenWebViewFactory.create(appContext, forcedDark)
-        val bridge = AppScreenBridge.install(webView, allowedOrigins)
+        // Defensive backstop only: [present] gates on [AppScreenBridge.isSupported] before any session
+        // is built, so on an unsupported device the presentation shows the load-error state and this is
+        // never reached. Kept as a throw so a future caller that skips the gate fails loudly rather than
+        // running with a null bridge.
+        val bridge = AppScreenBridge.install(webView, origin)
             ?: throw IllegalStateException("WebView message-listener feature unavailable")
         return webView to bridge
     }
 
     /**
      * Wire the current WebView's bridge and renderer-death client to route to [session]. Re-run
-     * after a recovery swap so the fresh WebView reports back to the same session (M6).
+     * after a recovery swap so the fresh WebView reports back to the same session.
      */
     private fun wireSession(session: AppScreenSession) {
         session.bridge.onNavigate = { message -> onBridgeNavigate(session, message) }
         session.bridge.onLinks = { message -> onBridgeLinks(session, message) }
+        session.bridge.onOpenURL = { message -> onBridgeOpenURL(session, message) }
+        session.bridge.onPresentWebsite = { message -> onBridgePresentWebsite(session, message) }
         (session.webView.webViewClient as? AppScreenWebViewClient)?.onRenderProcessGone =
             { view, didCrash -> onRenderProcessGone(session, view, didCrash) }
     }
 
     // endregion
 
-    // region renderer-death recovery (M6)
+    // region renderer-death recovery
 
     /**
      * A WebView renderer died — routed here (main thread) per affected session, so this runs once
@@ -555,28 +742,28 @@ internal class AppScreenNavigator(
         view: WebView,
         didCrash: Boolean
     ) {
-        log.w("App Screen renderer gone (didCrash=$didCrash) template=${deadSession.templatePath}")
+        log.w("App Screen renderer gone (didCrash=$didCrash) template=${deadSession.templateKey}")
 
         if (deadSession.isDestroyed) {
-            log.i("App Screen renderer-gone ignored: session already destroyed (template=${deadSession.templatePath})")
+            log.i("App Screen renderer-gone ignored: session already destroyed (template=${deadSession.templateKey})")
             return
         }
         if (view !== deadSession.webView) {
-            log.i("App Screen renderer-gone ignored: stale callback for an already-replaced WebView (template=${deadSession.templatePath})")
+            log.i("App Screen renderer-gone ignored: stale callback for an already-replaced WebView (template=${deadSession.templateKey})")
             return
         }
 
         // A still-prewarming session isn't on any stack yet and has no user-facing surface: cancel
         // its boot and discard it. A later links hint may re-prewarm the template.
         if (prewarmer.ownsSession(deadSession)) {
-            log.i("App Screen renderer-gone: classify=Prewarming → discard (template=${deadSession.templatePath})")
+            log.i("App Screen renderer-gone: classify=Prewarming → discard (template=${deadSession.templateKey})")
             prewarmer.discard(deadSession)
             return
         }
 
         val liveness = model.livenessOf(deadSession)
         val action = AppScreensDecisions.recoveryAction(liveness, deadSession.didAttemptRecovery)
-        log.i("App Screen renderer-gone: classify=$liveness attempted=${deadSession.didAttemptRecovery} → $action (template=${deadSession.templatePath})")
+        log.i("App Screen renderer-gone: classify=$liveness attempted=${deadSession.didAttemptRecovery} → $action (template=${deadSession.templateKey})")
         when (action) {
             AppScreensDecisions.RecoveryAction.RecoverNow -> {
                 val entry = entryFor(deadSession) ?: return
@@ -593,14 +780,14 @@ internal class AppScreenNavigator(
     }
 
     /**
-     * A live-but-broken page rejected a `show` (M2's [ShowRejectedException]). Treated as the same
-     * liveness signal as a renderer crash and funnelled through the one-attempt recovery policy,
-     * rather than going straight to the error state.
+     * A live-but-broken page rejected a `show` (the `show` contract's [ShowRejectedException]).
+     * Treated as the same liveness signal as a renderer crash and funnelled through the one-attempt
+     * recovery policy, rather than going straight to the error state.
      */
     private fun onShowRejected(session: AppScreenSession, cause: ShowRejectedException) {
         val liveness = model.livenessOf(session)
         val action = AppScreensDecisions.recoveryAction(liveness, session.didAttemptRecovery)
-        log.w("App Screen show rejected: classify=$liveness attempted=${session.didAttemptRecovery} → $action (template=${session.templatePath})")
+        log.w("App Screen show rejected: classify=$liveness attempted=${session.didAttemptRecovery} → $action (template=${session.templateKey})")
         when (action) {
             AppScreensDecisions.RecoveryAction.RecoverNow -> {
                 val entry = entryFor(session) ?: run { setError(session, cause); return }
@@ -616,9 +803,12 @@ internal class AppScreenNavigator(
 
     /**
      * Recover [entry]'s session: (re)build its WebView unless [alreadyRebuilt], reset to the loading
-     * phase, and launch the recovery pipeline (replay of [AppScreenSession.lastShowPayload], or a
-     * fresh cold load when nothing was ever shown). Sets the one-attempt flag; a clean run through
-     * reveal clears it.
+     * phase, and launch the recovery pipeline. Replays [AppScreenSession.lastShowPayload] only when
+     * it is complete — i.e. the data morph already resolved and recorded its responseJson
+     * ([AppScreensDecisions.isReplayablePayload]). Otherwise (nothing was ever shown, or the crash
+     * landed in the hydrate→morph window leaving a hydrate-only payload) a full cold load is the
+     * recovery, since the replay path never refetches the `.json` data and would leave the page
+     * permanently unhydrated. Sets the one-attempt flag; a clean run through reveal clears it.
      */
     private fun recoverSession(entry: NavigatorModel.Entry<AppScreenSession>, alreadyRebuilt: Boolean) {
         val session = entry.session
@@ -628,13 +818,16 @@ internal class AppScreenNavigator(
         session.phase.value = AppScreenPhase.Loading
         session.state = AppScreenSession.State.LoadingDocument
         jobs.remove(entry.entryId)?.cancel()
-        log.i("App Screen recovery starting template=${session.templatePath} href=${entry.href} replay=${session.lastShowPayload != null}")
+        val replayable = AppScreensDecisions.isReplayablePayload(session.lastShowPayload)
+        log.i("App Screen recovery starting template=${session.templateKey} href=${entry.href} replay=$replayable")
         jobs[entry.entryId] = scope.launch {
-            if (session.lastShowPayload != null) {
+            if (replayable) {
                 runRecoveryPipeline(session, entry)
             } else {
-                // Nothing was ever shown (crash during the very first load): a full cold load is the
-                // recovery. Reveal clears didAttemptRecovery like any clean pipeline.
+                // Nothing was ever shown (crash during the very first load), or only the hydrate had
+                // landed (crash in the hydrate→morph window): a full cold load is the recovery, as
+                // the replay path never refetches the `.json` data. Reveal clears didAttemptRecovery
+                // like any clean pipeline.
                 runColdPipeline(session, entry.href, entry.optimisticDataJson)
             }
         }
@@ -646,6 +839,12 @@ internal class AppScreenNavigator(
      * replay the last successful show in one call (repainting the full pre-crash content) and
      * re-reveal. If the retained payload's templateHash no longer matches the refetched document
      * (a rebake since the crash), the normal one-shot revalidation handshake runs first.
+     *
+     * Assumes a COMPLETE payload: [recoverSession] routes here only when
+     * [AppScreensDecisions.isReplayablePayload] holds (a non-null payload whose morph already
+     * resolved, so responseJson is present). This pipeline does NOT refetch the `.json` data, so
+     * replaying a hydrate-only payload would leave the page unhydrated — that case cold-loads
+     * instead. The [payload] guard below is a loud backstop, not a recoverable branch.
      */
     private suspend fun runRecoveryPipeline(
         session: AppScreenSession,
@@ -683,11 +882,11 @@ internal class AppScreenNavigator(
             session.state = AppScreenSession.State.Ready
             session.phase.value = AppScreenPhase.Revealed
             session.didAttemptRecovery = false
-            log.i("App Screen recovery SUCCEEDED template=${session.templatePath}")
+            log.i("App Screen recovery SUCCEEDED template=${session.templateKey}")
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Exception) {
-            log.e("App Screen recovery FAILED template=${session.templatePath}: $error")
+            log.e("App Screen recovery FAILED template=${session.templateKey}: $error")
             session.state = AppScreenSession.State.Failed
             session.phase.value = AppScreenPhase.Error(error)
         }
@@ -705,8 +904,10 @@ internal class AppScreenNavigator(
         dead.destroy()
         // Rebuild over the session's current forced scheme: unchanged for a crash recovery, and the
         // already-updated new scheme when a host appearance change drove the rebuild
-        // ([onActiveAppearanceChanged], or the surface-crossing claim guard in [establish]).
-        val (webView, bridge) = buildWebView(session.forcedDark)
+        // ([onActiveAppearanceChanged], or the surface-crossing claim guard in [establish]). The
+        // bridge is re-restricted to the session's OWN origin (from its template key), never the
+        // presentation's — a rebuilt cross-domain session keeps trusting the domain it loads.
+        val (webView, bridge) = buildWebView(originForKey(session.templateKey), session.forcedDark)
         session.replaceWebView(webView, bridge)
         wireSession(session)
         session.runtimeLoaded = false
@@ -725,23 +926,23 @@ internal class AppScreenNavigator(
         rebuildWebView(session)
         session.phase.value = AppScreenPhase.Loading
         session.dead.value = true
-        log.i("App Screen marked DEAD (off-screen) template=${session.templatePath}; will lazy-recover on reveal")
+        log.i("App Screen marked DEAD (off-screen) template=${session.templateKey}; will lazy-recover on reveal")
     }
 
     /**
      * Claim guard for a warm-idle session about to be reused by the active surface. Warm sessions
      * survive across surfaces (a standalone presentation over the still-composed Hub), so the session
-     * pooled for [templatePath] may carry a DIFFERENT surface's forced scheme than the one now active.
+     * pooled for [templateKey] may carry a DIFFERENT surface's forced scheme than the one now active.
      * A warm-idle WebView carrying the wrong appearance can't be re-themed in place (that machinery is
      * wired only for composed sessions), so discard it — destroy + forget — and let the caller's
      * navigation fall through to a fresh cold load against the active scheme. No-op when the pooled
      * session already matches the active scheme (the common single-surface case) or none is idle.
      */
-    private fun discardMismatchedWarmIdle(templatePath: String) {
-        val warm = model.warmIdleSessionFor(templatePath) ?: return
+    private fun discardMismatchedWarmIdle(templateKey: String) {
+        val warm = model.warmIdleSessionFor(templateKey) ?: return
         if (warm.forcedDark == activeForcedDark) return
         log.i(
-            "App Screen claim guard: discarding warm-idle session template=$templatePath " +
+            "App Screen claim guard: discarding warm-idle session template=$templateKey " +
                 "(scheme ${warm.forcedDark} != active $activeForcedDark) so it cold-loads for this surface"
         )
         discardWarm(warm)
@@ -755,7 +956,7 @@ internal class AppScreenNavigator(
         val dead = session.webView
         (dead.parent as? ViewGroup)?.removeView(dead)
         dead.destroy()
-        log.i("App Screen discarded warm-idle session on renderer-gone template=${session.templatePath}")
+        log.i("App Screen discarded warm-idle session on renderer-gone template=${session.templateKey}")
     }
 
     private fun setError(session: AppScreenSession, cause: Throwable) {
@@ -770,7 +971,7 @@ internal class AppScreenNavigator(
 
     /**
      * Run the deferred recovery for a session marked dead while off-screen, invoked by the host when
-     * it becomes visible again (M6). No-op if the entry is gone or the session is no longer dead
+     * it becomes visible again. No-op if the entry is gone or the session is no longer dead
      * (already recovered / re-entered), making repeated host calls safe.
      */
     fun lazyRecover(entryId: String) {
@@ -778,7 +979,7 @@ internal class AppScreenNavigator(
             ?: sheetStack.firstOrNull { it.entryId == entryId }
             ?: return
         if (!entry.session.dead.value) return
-        log.i("App Screen lazy recovery at reveal template=${entry.session.templatePath}")
+        log.i("App Screen lazy recovery at reveal template=${entry.session.templateKey}")
         recoverSession(entry, alreadyRebuilt = true)
     }
 
@@ -835,6 +1036,16 @@ internal class AppScreenNavigator(
      * show(morph). If the scope is already known (session or registry), the `.json` fetch is fired
      * concurrently with the document load; otherwise it waits until the scope is read off the
      * document.
+     *
+     * When an eager `.json` fetch is fired against a known-up-front scope, that scope can be stale
+     * (a template's scope may have changed between loads). Once the document lands and the
+     * effective scope is known, the eager fetch is reconciled against it
+     * ([AppScreensDecisions.shouldRestartEagerFetch]): on a mismatch the eager [Deferred] is
+     * cancelled and a fresh fetch is started under the effective scope, so a stale PUBLIC fetch
+     * never leaves unpersonalized data on a personalized screen and a stale PERSONALIZED fetch
+     * never leaks identifiers/auth to a now-public endpoint. On a match the eager fetch is kept.
+     * The restart costs at most one wasted request (the morph awaits the data well after this
+     * point).
      */
     private suspend fun runColdPipeline(
         session: AppScreenSession,
@@ -850,7 +1061,7 @@ internal class AppScreenNavigator(
             val url = Uri.parse(href)
 
             coroutineScope {
-                val knownScope = session.dataScope ?: scopeRegistry.scopeFor(session.templatePath)
+                val knownScope = session.dataScope ?: scopeRegistry.scopeFor(session.templateKey)
                 val eagerData: Deferred<io.rover.sdk.experiences.appscreens.network.AppScreenDataEnvelope>? =
                     if (knownScope != null) {
                         log.i("App Screen cold: scope known ($knownScope) — firing .json concurrently for $href")
@@ -873,8 +1084,22 @@ internal class AppScreenNavigator(
                 // A reload wiped the injected inline safe-area properties; re-apply the last known.
                 session.reinjectInsets()
 
-                val dataDeferred = eagerData ?: async {
-                    withTimeout(JSON_TIMEOUT) { loader.loadScreenData(url, effectiveScope) }
+                // Reconcile the eager fetch (fired under a possibly-stale up-front scope) with the
+                // scope just read off the document. On a mismatch, cancel it and refetch under the
+                // effective scope; otherwise keep the in-flight eager result.
+                val dataDeferred = if (eagerData != null &&
+                    AppScreensDecisions.shouldRestartEagerFetch(knownScope, effectiveScope)
+                ) {
+                    log.i(
+                        "App Screen cold: scope changed since eager .json fetch " +
+                            "(eager=$knownScope, effective=$effectiveScope) — cancelling and refetching for $href"
+                    )
+                    eagerData.cancel()
+                    async { withTimeout(JSON_TIMEOUT) { loader.loadScreenData(url, effectiveScope) } }
+                } else {
+                    eagerData ?: async {
+                        withTimeout(JSON_TIMEOUT) { loader.loadScreenData(url, effectiveScope) }
+                    }
                 }
 
                 // Optimistic paint / hydrate gates the reveal.
@@ -886,7 +1111,7 @@ internal class AppScreenNavigator(
                 session.state = AppScreenSession.State.Ready
                 session.phase.value = AppScreenPhase.Revealed
                 session.didAttemptRecovery = false
-                logTapToPainted(tapAt, selection, session.templatePath)
+                logTapToPainted(tapAt, selection, session.templateKey)
 
                 // Morph show updates in place once data has landed and reconciled.
                 val envelope = dataDeferred.await()
@@ -929,7 +1154,7 @@ internal class AppScreenNavigator(
             session.currentHref = href
             val url = Uri.parse(href)
             val scopeForData = session.dataScope
-                ?: scopeRegistry.scopeFor(session.templatePath)
+                ?: scopeRegistry.scopeFor(session.templateKey)
                 ?: AppScreensDecisions.effectiveScope(null)
 
             coroutineScope {
@@ -944,7 +1169,7 @@ internal class AppScreenNavigator(
                 session.state = AppScreenSession.State.Ready
                 session.phase.value = AppScreenPhase.Revealed
                 session.didAttemptRecovery = false
-                logTapToPainted(tapAt, selection, session.templatePath)
+                logTapToPainted(tapAt, selection, session.templateKey)
 
                 val envelope = dataDeferred.await()
                 val reconciled = loader.reconcileScreenData(envelope, session.documentETag) {
@@ -998,19 +1223,6 @@ internal class AppScreenNavigator(
                 "selection=${outcome.selection} stack=${if (outcome.toSheet) "sheet" else "root"} " +
                 "optimisticData=${outcome.entry.optimisticDataJson != null}"
         )
-    }
-
-    private fun originOf(url: Uri): Set<String> {
-        val origin = buildString {
-            append(url.scheme)
-            append("://")
-            append(url.host)
-            if (url.port != -1) {
-                append(":")
-                append(url.port)
-            }
-        }
-        return setOf(origin)
     }
 
     companion object {

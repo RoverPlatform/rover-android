@@ -23,7 +23,7 @@ package io.rover.sdk.experiences.appscreens
  *
  * [PUBLIC] documents contain no personalized data and may be cached/shared. [PERSONALIZED]
  * documents are specific to the current identity and must never be treated as public. When the
- * scope is missing or unknown it is treated as [PERSONALIZED] (fail safe); see
+ * scope is missing or unknown it is treated as [PERSONALIZED] (fail-safe); see
  * [AppScreensDecisions.effectiveScope].
  */
 internal enum class AppScreenDataScope {

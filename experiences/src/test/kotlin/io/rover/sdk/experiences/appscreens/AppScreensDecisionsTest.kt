@@ -20,6 +20,8 @@ package io.rover.sdk.experiences.appscreens
 import android.net.Uri
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -114,21 +116,82 @@ class AppScreensDecisionsTest {
 
     // endregion
 
-    // region templatePath
+    // region templateKey
 
     @Test
-    fun `templatePath strips query`() {
+    fun `templateKey composes origin and path`() {
         assertEquals(
-            "/a/player-detail",
-            AppScreensDecisions.templatePath(Uri.parse("https://testbench.rover.io/a/player-detail?id=12"))
+            "https://testbench.rover.io/a/standings",
+            AppScreensDecisions.templateKey(Uri.parse("https://testbench.rover.io/a/standings"))
         )
     }
 
     @Test
-    fun `templatePath without query`() {
+    fun `templateKey excludes query and fragment`() {
         assertEquals(
-            "/a/standings",
-            AppScreensDecisions.templatePath(Uri.parse("https://testbench.rover.io/a/standings"))
+            "https://testbench.rover.io/a/player-detail",
+            AppScreensDecisions.templateKey(Uri.parse("https://testbench.rover.io/a/player-detail?id=12#top"))
+        )
+    }
+
+    @Test
+    fun `templateKey lower-cases scheme and host`() {
+        assertEquals(
+            "https://testbench.rover.io/a/home",
+            AppScreensDecisions.templateKey(Uri.parse("HTTPS://TestBench.Rover.IO/a/home"))
+        )
+    }
+
+    @Test
+    fun `templateKey preserves the path case verbatim`() {
+        assertEquals(
+            "https://testbench.rover.io/a/Player-Detail",
+            AppScreensDecisions.templateKey(Uri.parse("https://testbench.rover.io/a/Player-Detail"))
+        )
+    }
+
+    @Test
+    fun `templateKey preserves an explicit port`() {
+        assertEquals(
+            "https://testbench.rover.io:8443/a/home",
+            AppScreensDecisions.templateKey(Uri.parse("https://testbench.rover.io:8443/a/home"))
+        )
+    }
+
+    @Test
+    fun `templateKey omits an absent (default) port`() {
+        assertEquals(
+            "https://testbench.rover.io/a/home",
+            AppScreensDecisions.templateKey(Uri.parse("https://testbench.rover.io/a/home"))
+        )
+    }
+
+    @Test
+    fun `templateKey distinguishes the same path on different hosts`() {
+        val one = AppScreensDecisions.templateKey(Uri.parse("https://one.example/a/home"))
+        val two = AppScreensDecisions.templateKey(Uri.parse("https://two.example/a/home"))
+        assertEquals("https://one.example/a/home", one)
+        assertEquals("https://two.example/a/home", two)
+        assertNotEquals(one, two)
+    }
+
+    // endregion
+
+    // region originOf
+
+    @Test
+    fun `originOf normalizes scheme and host and omits default port`() {
+        assertEquals(
+            "https://testbench.rover.io",
+            AppScreensDecisions.originOf(Uri.parse("HTTPS://TestBench.Rover.IO/a/home?id=12"))
+        )
+    }
+
+    @Test
+    fun `originOf keeps an explicit port`() {
+        assertEquals(
+            "https://testbench.rover.io:8443",
+            AppScreensDecisions.originOf(Uri.parse("https://testbench.rover.io:8443/a/home"))
         )
     }
 
@@ -296,6 +359,64 @@ class AppScreensDecisionsTest {
 
     // endregion
 
+    // region shouldRestartEagerFetch
+
+    @Test
+    fun `shouldRestartEagerFetch matching scopes keep`() {
+        assertFalse(
+            AppScreensDecisions.shouldRestartEagerFetch(
+                eagerScope = AppScreenDataScope.PUBLIC,
+                effectiveScope = AppScreenDataScope.PUBLIC
+            )
+        )
+        assertFalse(
+            AppScreensDecisions.shouldRestartEagerFetch(
+                eagerScope = AppScreenDataScope.PERSONALIZED,
+                effectiveScope = AppScreenDataScope.PERSONALIZED
+            )
+        )
+    }
+
+    @Test
+    fun `shouldRestartEagerFetch stale public to personalized restarts`() {
+        assertTrue(
+            AppScreensDecisions.shouldRestartEagerFetch(
+                eagerScope = AppScreenDataScope.PUBLIC,
+                effectiveScope = AppScreenDataScope.PERSONALIZED
+            )
+        )
+    }
+
+    @Test
+    fun `shouldRestartEagerFetch stale personalized to public restarts`() {
+        assertTrue(
+            AppScreensDecisions.shouldRestartEagerFetch(
+                eagerScope = AppScreenDataScope.PERSONALIZED,
+                effectiveScope = AppScreenDataScope.PUBLIC
+            )
+        )
+    }
+
+    @Test
+    fun `shouldRestartEagerFetch null eager scope has nothing to reconcile`() {
+        // No eager fetch was ever started (scope unknown up front), so neither effective scope
+        // triggers a restart.
+        assertFalse(
+            AppScreensDecisions.shouldRestartEagerFetch(
+                eagerScope = null,
+                effectiveScope = AppScreenDataScope.PERSONALIZED
+            )
+        )
+        assertFalse(
+            AppScreensDecisions.shouldRestartEagerFetch(
+                eagerScope = null,
+                effectiveScope = AppScreenDataScope.PUBLIC
+            )
+        )
+    }
+
+    // endregion
+
     // region resolveHref
 
     @Test
@@ -353,6 +474,248 @@ class AppScreensDecisionsTest {
 
     // endregion
 
+    // region resolveExternalHref
+
+    private val externalBase = Uri.parse("https://testbench.rover.io/a/home")
+
+    @Test
+    fun `resolveExternalHref absolute http passes through`() {
+        assertEquals(
+            "https://other.example.com/page",
+            AppScreensDecisions.resolveExternalHref(externalBase, "https://other.example.com/page")
+                .toString()
+        )
+    }
+
+    @Test
+    fun `resolveExternalHref preserves an opaque mailto`() {
+        // Unlike resolveHref, opaque absolute URIs survive: openURL/presentWebsite target them.
+        assertEquals(
+            "mailto:x@y.com",
+            AppScreensDecisions.resolveExternalHref(externalBase, "mailto:x@y.com").toString()
+        )
+    }
+
+    @Test
+    fun `resolveExternalHref preserves a custom deep-link scheme`() {
+        assertEquals(
+            "tel:+15555550123",
+            AppScreensDecisions.resolveExternalHref(externalBase, "tel:+15555550123").toString()
+        )
+    }
+
+    @Test
+    fun `resolveExternalHref trims whitespace`() {
+        // The WHATWG parser strips leading/trailing whitespace; java.net.URI does not,
+        // so the decision function trims before parsing.
+        assertEquals(
+            "https://example.com",
+            AppScreensDecisions.resolveExternalHref(externalBase, "  https://example.com  ")
+                .toString()
+        )
+    }
+
+    @Test
+    fun `resolveExternalHref root-relative path resolves onto the document domain`() {
+        // Browser <a href> semantics — this is what lets openURL reach other experiences by path.
+        assertEquals(
+            "https://testbench.rover.io/promo",
+            AppScreensDecisions.resolveExternalHref(externalBase, "/promo").toString()
+        )
+    }
+
+    @Test
+    fun `resolveExternalHref protocol-relative inherits the document scheme`() {
+        assertEquals(
+            "https://example.com/path",
+            AppScreensDecisions.resolveExternalHref(externalBase, "//example.com/path").toString()
+        )
+    }
+
+    @Test
+    fun `resolveExternalHref bare hostname resolves as a relative path`() {
+        // Per the URL standard a scheme-less www.example.com is a relative path, not a
+        // host — deliberately no address-bar-style host guessing.
+        assertEquals(
+            "https://testbench.rover.io/a/www.example.com",
+            AppScreensDecisions.resolveExternalHref(externalBase, "www.example.com").toString()
+        )
+    }
+
+    @Test
+    fun `resolveExternalHref blank returns null`() {
+        assertNull(AppScreensDecisions.resolveExternalHref(externalBase, "   "))
+    }
+
+    @Test
+    fun `resolveExternalHref garbage returns null`() {
+        assertNull(AppScreensDecisions.resolveExternalHref(externalBase, "ht tp://\\bad url"))
+    }
+
+    @Test
+    fun `resolveExternalHref unencoded space is malformed and drops`() {
+        // A WHATWG-only leniency: java.net.URI (RFC 3986) rejects the unencoded space, so the
+        // href is treated as malformed and dropped rather than resolved.
+        assertNull(AppScreensDecisions.resolveExternalHref(externalBase, "/a b"))
+    }
+
+    @Test
+    fun `resolveExternalHref backslash path is malformed and drops`() {
+        // Backslashes as path separators are a WHATWG-only leniency; java.net.URI rejects them,
+        // so the href is dropped.
+        assertNull(AppScreensDecisions.resolveExternalHref(externalBase, "\\evil.example\\path"))
+    }
+
+    // endregion
+
+    // region coerceWebPresentationUrl
+
+    @Test
+    fun `coerceWebPresentationUrl passes http through unchanged`() {
+        assertEquals(
+            Uri.parse("http://example.com/x"),
+            AppScreensDecisions.coerceWebPresentationUrl(Uri.parse("http://example.com/x"))
+        )
+    }
+
+    @Test
+    fun `coerceWebPresentationUrl passes https through unchanged`() {
+        assertEquals(
+            Uri.parse("https://example.com/x"),
+            AppScreensDecisions.coerceWebPresentationUrl(Uri.parse("https://example.com/x"))
+        )
+    }
+
+    @Test
+    fun `coerceWebPresentationUrl upgrades a custom hierarchical scheme with a host to https`() {
+        assertEquals(
+            Uri.parse("https://example.com/x"),
+            AppScreensDecisions.coerceWebPresentationUrl(Uri.parse("rv-app://example.com/x"))
+        )
+    }
+
+    @Test
+    fun `coerceWebPresentationUrl rejects an opaque uri`() {
+        assertNull(AppScreensDecisions.coerceWebPresentationUrl(Uri.parse("mailto:x@y.com")))
+    }
+
+    @Test
+    fun `coerceWebPresentationUrl rejects an opaque https uri`() {
+        // An opaque, hostless https URI must not slip through the http(s) fast path into a tab.
+        assertNull(AppScreensDecisions.coerceWebPresentationUrl(Uri.parse("https:foo")))
+    }
+
+    @Test
+    fun `coerceWebPresentationUrl rejects an opaque http uri`() {
+        assertNull(AppScreensDecisions.coerceWebPresentationUrl(Uri.parse("http:foo")))
+    }
+
+    @Test
+    fun `coerceWebPresentationUrl rejects a hostless uri`() {
+        assertNull(AppScreensDecisions.coerceWebPresentationUrl(Uri.parse("rv-app:/path")))
+    }
+
+    @Test
+    fun `coerceWebPresentationUrl rejects a javascript uri`() {
+        assertNull(AppScreensDecisions.coerceWebPresentationUrl(Uri.parse("javascript:alert(1)")))
+    }
+
+    @Test
+    fun `coerceWebPresentationUrl rejects a file uri`() {
+        // file:/// has an empty authority — coercion must not yield an https URL.
+        assertNull(AppScreensDecisions.coerceWebPresentationUrl(Uri.parse("file:///etc/passwd")))
+    }
+
+    @Test
+    fun `coerceWebPresentationUrl rejects a data uri`() {
+        assertNull(AppScreensDecisions.coerceWebPresentationUrl(Uri.parse("data:text/html,hello")))
+    }
+
+    // endregion
+
+    // region authorizeNavigationTarget
+
+    private val domains = setOf("testbench.rover.io", "myapp.rover.io")
+
+    @Test
+    fun `authorizeNavigationTarget accepts an a path on an associated domain`() {
+        assertEquals(
+            Uri.parse("https://testbench.rover.io/a/standings"),
+            AppScreensDecisions.authorizeNavigationTarget(
+                Uri.parse("https://testbench.rover.io/a/standings"),
+                domains
+            )
+        )
+    }
+
+    @Test
+    fun `authorizeNavigationTarget upgrades http to https and accepts`() {
+        assertEquals(
+            Uri.parse("https://testbench.rover.io/a/home"),
+            AppScreensDecisions.authorizeNavigationTarget(
+                Uri.parse("http://testbench.rover.io/a/home"),
+                domains
+            )
+        )
+    }
+
+    @Test
+    fun `authorizeNavigationTarget rejects a foreign host`() {
+        assertNull(
+            AppScreensDecisions.authorizeNavigationTarget(
+                Uri.parse("https://attacker.example/a/home"),
+                domains
+            )
+        )
+    }
+
+    @Test
+    fun `authorizeNavigationTarget rejects a custom scheme`() {
+        assertNull(
+            AppScreensDecisions.authorizeNavigationTarget(
+                Uri.parse("rv-developer://testbench.rover.io/a/home"),
+                domains
+            )
+        )
+    }
+
+    @Test
+    fun `authorizeNavigationTarget rejects a non-a path on an associated domain`() {
+        assertNull(
+            AppScreensDecisions.authorizeNavigationTarget(
+                Uri.parse("https://testbench.rover.io/about"),
+                domains
+            )
+        )
+    }
+
+    @Test
+    fun `authorizeNavigationTarget matches host case-insensitively`() {
+        // A mixed-case host on an associated domain is accepted; the returned URL's origin
+        // (scheme+host) lower-cases via templateKey/originOf downstream, so only acceptance matters.
+        val authorized = AppScreensDecisions.authorizeNavigationTarget(
+            Uri.parse("https://TestBench.Rover.IO/a/home"),
+            domains
+        )
+        assertNotNull(authorized)
+        assertEquals(
+            "https://testbench.rover.io/a/home",
+            AppScreensDecisions.templateKey(authorized!!)
+        )
+    }
+
+    @Test
+    fun `authorizeNavigationTarget does NOT match a subdomain of an associated domain`() {
+        assertNull(
+            AppScreensDecisions.authorizeNavigationTarget(
+                Uri.parse("https://evil.testbench.rover.io/a/home"),
+                domains
+            )
+        )
+    }
+
+    // endregion
+
     // region selectSession
 
     @Test
@@ -381,7 +744,7 @@ class AppScreensDecisionsTest {
 
     // endregion
 
-    // region recoveryAction (M6 renderer-death policy)
+    // region recoveryAction (renderer-death policy)
 
     @Test
     fun `recoveryAction visible with no prior attempt recovers now`() {
@@ -490,6 +853,50 @@ class AppScreensDecisionsTest {
     @Test
     fun `fromHeader blank is null`() {
         assertNull(AppScreenDataScope.fromHeader("   "))
+    }
+
+    // endregion
+
+    // region isReplayablePayload
+
+    @Test
+    fun `isReplayablePayload false for null payload`() {
+        assertFalse(AppScreensDecisions.isReplayablePayload(null))
+    }
+
+    @Test
+    fun `isReplayablePayload false for hydrate-only payload`() {
+        // Recorded in the hydrate to morph window: responseJson is null, so the replay pipeline
+        // would leave the page unhydrated. Must cold-load instead.
+        val payload = ShowPayload(
+            href = "https://testbench.rover.io/a/home",
+            optimisticDataJson = null,
+            responseJson = null,
+            templateHash = null
+        )
+        assertFalse(AppScreensDecisions.isReplayablePayload(payload))
+    }
+
+    @Test
+    fun `isReplayablePayload false for hydrate-only payload with optimistic data`() {
+        val payload = ShowPayload(
+            href = "https://testbench.rover.io/a/home",
+            optimisticDataJson = "{\"optimistic\":true}",
+            responseJson = null,
+            templateHash = null
+        )
+        assertFalse(AppScreensDecisions.isReplayablePayload(payload))
+    }
+
+    @Test
+    fun `isReplayablePayload true once morph resolved`() {
+        val payload = ShowPayload(
+            href = "https://testbench.rover.io/a/home",
+            optimisticDataJson = null,
+            responseJson = "{\"data\":{}}",
+            templateHash = "abc123"
+        )
+        assertTrue(AppScreensDecisions.isReplayablePayload(payload))
     }
 
     // endregion

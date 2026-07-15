@@ -327,8 +327,14 @@ fun Hub(
                     val isOnPostDetailRoute = currentRoute?.startsWith("postDetail/") == true
                     val isOnConversationDetailRoute = currentRoute?.startsWith("conversationDetail/") == true
 
-                    // Look up app bar config from registry based on current route
-                    val experienceAppBarConfig = currentRoute?.let { appBarRegistry.get(it) }
+                    // Look up app bar config from registry based on current route.
+                    // Exception (one-chrome rule): for an App Screens (V3) home, ignore any app-bar
+                    // config still registered by a previous V2 home. App Screens never registers or
+                    // clears its own entry, so the stale V2 config would otherwise draw the Hub's app
+                    // bar (title/background/actions) over the V3 page, which renders its own top chrome.
+                    val experienceAppBarConfig = currentRoute
+                        ?.takeUnless { it == "home" && isV3Home }
+                        ?.let { appBarRegistry.get(it) }
 
                     // Extract post ID and fetch post for app bar title
                     val postId = if (isOnPostDetailRoute) {

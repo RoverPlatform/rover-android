@@ -40,6 +40,9 @@ internal class NavigatorModel<S : Any>(
         val href: String,
         val templatePath: String,
         val optimisticDataJson: String?,
+        /**
+         * See [AppScreensDecisions.SessionSelection.Ephemeral].
+         */
         val isEphemeral: Boolean,
         val session: S
     )
@@ -245,7 +248,7 @@ internal class NavigatorModel<S : Any>(
     }
 
     /**
-     * Classify where [session] sits relative to the visible surfaces (M6 recovery).
+     * Classify where [session] sits relative to the visible surfaces (renderer-death recovery).
      *
      * The visible session is the top of the sheet stack when a sheet is presented, else the top of
      * the root stack. A session on a stack that is not that visible one — including the root top

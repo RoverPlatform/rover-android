@@ -111,6 +111,67 @@ class AppScreenBridgeMessageTest {
     }
 
     @Test
+    fun `openURL with dismiss true`() {
+        val message = parse("""{"type":"openURL","href":"https://example.com","dismiss":true}""")
+        assertTrue(message is BridgeMessage.OpenURL)
+        message as BridgeMessage.OpenURL
+        assertEquals("https://example.com", message.href)
+        assertTrue(message.dismiss)
+    }
+
+    @Test
+    fun `openURL with dismiss false`() {
+        val message = parse("""{"type":"openURL","href":"https://example.com","dismiss":false}""")
+        assertTrue(message is BridgeMessage.OpenURL)
+        message as BridgeMessage.OpenURL
+        assertFalse(message.dismiss)
+    }
+
+    @Test
+    fun `openURL with dismiss absent defaults to false`() {
+        val message = parse("""{"type":"openURL","href":"https://example.com"}""")
+        assertTrue(message is BridgeMessage.OpenURL)
+        message as BridgeMessage.OpenURL
+        assertFalse(message.dismiss)
+    }
+
+    @Test
+    fun `openURL with non-bool dismiss defaults to false`() {
+        val message = parse("""{"type":"openURL","href":"https://example.com","dismiss":"maybe"}""")
+        assertTrue(message is BridgeMessage.OpenURL)
+        message as BridgeMessage.OpenURL
+        assertFalse(message.dismiss)
+    }
+
+    @Test
+    fun `openURL with blank href is null`() {
+        assertNull(parse("""{"type":"openURL","href":"   "}"""))
+    }
+
+    @Test
+    fun `openURL without href is null`() {
+        assertNull(parse("""{"type":"openURL","dismiss":true}"""))
+    }
+
+    @Test
+    fun `presentWebsite parses href`() {
+        val message = parse("""{"type":"presentWebsite","href":"https://example.com/page"}""")
+        assertTrue(message is BridgeMessage.PresentWebsite)
+        message as BridgeMessage.PresentWebsite
+        assertEquals("https://example.com/page", message.href)
+    }
+
+    @Test
+    fun `presentWebsite with blank href is null`() {
+        assertNull(parse("""{"type":"presentWebsite","href":""}"""))
+    }
+
+    @Test
+    fun `presentWebsite without href is null`() {
+        assertNull(parse("""{"type":"presentWebsite"}"""))
+    }
+
+    @Test
     fun `unknown type is null`() {
         assertNull(parse("""{"type":"somethingElse"}"""))
     }

@@ -21,23 +21,24 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
  * In-memory, process-lifetime record of the last-observed [AppScreenDataScope] for each App Screen
- * template path (see [AppScreensDecisions.templatePath]).
+ * template key (see [AppScreensDecisions.templateKey]).
  *
- * Recording a scope lets subsequent loads of the same template skip the cold sequential fetch and
- * load concurrently (see [AppScreensDecisions.loadOrdering]). This is a cache, not a source of
- * truth: it is never persisted and is discarded when the process ends. Backed by a
+ * Keys are origin-qualified, so the same path served from two associated domains records two
+ * independent scopes. Recording a scope lets subsequent loads of the same template skip the cold
+ * sequential fetch and load concurrently (see [AppScreensDecisions.loadOrdering]). This is a cache,
+ * not a source of truth: it is never persisted and is discarded when the process ends. Backed by a
  * [ConcurrentHashMap] so it is safe to read and write from multiple threads.
  */
 internal class AppScreenScopeRegistry {
     private val scopes = ConcurrentHashMap<String, AppScreenDataScope>()
 
-    /** The last-recorded scope for [templatePath], or null if none has been observed. */
-    fun scopeFor(templatePath: String): AppScreenDataScope? {
-        return scopes[templatePath]
+    /** The last-recorded scope for [templateKey], or null if none has been observed. */
+    fun scopeFor(templateKey: String): AppScreenDataScope? {
+        return scopes[templateKey]
     }
 
-    /** Records the observed [scope] for [templatePath], replacing any previous value. */
-    fun record(templatePath: String, scope: AppScreenDataScope) {
-        scopes[templatePath] = scope
+    /** Records the observed [scope] for [templateKey], replacing any previous value. */
+    fun record(templateKey: String, scope: AppScreenDataScope) {
+        scopes[templateKey] = scope
     }
 }

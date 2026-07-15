@@ -60,13 +60,13 @@ internal class AppScreenLoader(
     ): AppScreenDocument {
         val document = documentClient.fetchDocument(url, policy)
         val scope = AppScreensDecisions.effectiveScope(document.dataScope)
-        scopeRegistry.record(AppScreensDecisions.templatePath(url), scope)
+        scopeRegistry.record(AppScreensDecisions.templateKey(url), scope)
         return document
     }
 
     /** The last-recorded scope for [url]'s template, or null if never observed. */
     fun recordedScope(url: Uri): AppScreenDataScope? =
-        scopeRegistry.scopeFor(AppScreensDecisions.templatePath(url))
+        scopeRegistry.scopeFor(AppScreensDecisions.templateKey(url))
 
     /**
      * Fetch the `.json` data document for [url] under [effectiveScope]. The one-shot

@@ -33,12 +33,12 @@ import kotlin.time.Duration
 
 /**
  * Thrown when the runtime rejects a down-call (a `callResult` with `ok:false`). Surfaces as a
- * liveness signal that M6 funnels into the same one-attempt recovery path as a renderer crash.
+ * liveness signal funnelled into the same one-attempt recovery path as a renderer crash.
  */
 internal class ShowRejectedException(message: String?) : Exception(message)
 
 /**
- * Completes every pending down-call when the WebView renderer dies (M6). Raised into any caller
+ * Completes every pending down-call when the WebView renderer dies. Raised into any caller
  * suspended in [AppScreenBridge.call] so it fails fast instead of waiting out the full timeout; the
  * navigator then rebuilds the WebView and bridge.
  */
@@ -88,7 +88,7 @@ internal sealed class BridgeMessage {
     object Loaded : BridgeMessage()
 
     /**
-     * A navigation request (M4). [optimisticData] is kept as raw JSON text so it can be spliced back
+     * A navigation request. [optimisticData] is kept as raw JSON text so it can be spliced back
      * byte-perfect into a later `show` call; it is null when the runtime omitted it.
      */
     data class Navigate(
@@ -97,7 +97,7 @@ internal sealed class BridgeMessage {
         val transition: String?
     ) : BridgeMessage()
 
-    /** A batch of prefetch hints (M5). */
+    /** A batch of prefetch hints. */
     data class Links(val hrefs: List<String>) : BridgeMessage()
 
     /**
@@ -110,6 +110,19 @@ internal sealed class BridgeMessage {
         val result: String?,
         val error: String?
     ) : BridgeMessage()
+
+    /**
+     * An external-link request: [href] is handed to the OS (or the host's `onOpenURL` override) to
+     * open. When [dismiss] is set, the enclosing Experience presentation is also torn down after the
+     * link is handed off.
+     */
+    data class OpenURL(val href: String, val dismiss: Boolean) : BridgeMessage()
+
+    /**
+     * A request to present [href] in an in-app browser (a Chrome Custom Tab). Never overridable by
+     * the host — unlike [OpenURL] it always opens in the in-app browser.
+     */
+    data class PresentWebsite(val href: String) : BridgeMessage()
 
     companion object {
         /**
@@ -143,6 +156,14 @@ internal sealed class BridgeMessage {
                         result = json.opt("result")?.toString(),
                         error = json.opt("error")?.toString()
                     )
+                }
+                "openURL" -> {
+                    val href = json.optString("href", "").takeIf { it.isNotBlank() } ?: return null
+                    OpenURL(href = href, dismiss = json.optBoolean("dismiss", false))
+                }
+                "presentWebsite" -> {
+                    val href = json.optString("href", "").takeIf { it.isNotBlank() } ?: return null
+                    PresentWebsite(href = href)
                 }
                 else -> null
             }
@@ -184,6 +205,20 @@ internal class AppScreenBridge private constructor() {
      */
     @Volatile
     var onLinks: ((BridgeMessage.Links) -> Unit)? = null
+
+    /**
+     * Invoked on the main thread for every `openURL` message from the runtime. Set by the navigator
+     * when it creates the session; null until then (messages are logged and dropped).
+     */
+    @Volatile
+    var onOpenURL: ((BridgeMessage.OpenURL) -> Unit)? = null
+
+    /**
+     * Invoked on the main thread for every `presentWebsite` message from the runtime. Set by the
+     * navigator when it creates the session; null until then (messages are logged and dropped).
+     */
+    @Volatile
+    var onPresentWebsite: ((BridgeMessage.PresentWebsite) -> Unit)? = null
 
     /** Suspends until the runtime reports it has booted (`{type:'loaded'}`). */
     suspend fun awaitLoaded() {
@@ -272,6 +307,24 @@ internal class AppScreenBridge private constructor() {
                     handler(message)
                 }
             }
+            is BridgeMessage.OpenURL -> {
+                log.d("App Screen bridge: openURL href=${message.href} dismiss=${message.dismiss}")
+                val handler = onOpenURL
+                if (handler == null) {
+                    log.d("App Screen bridge: openURL with no handler installed, dropping")
+                } else {
+                    handler(message)
+                }
+            }
+            is BridgeMessage.PresentWebsite -> {
+                log.d("App Screen bridge: presentWebsite href=${message.href}")
+                val handler = onPresentWebsite
+                if (handler == null) {
+                    log.d("App Screen bridge: presentWebsite with no handler installed, dropping")
+                } else {
+                    handler(message)
+                }
+            }
             is BridgeMessage.CallResult -> {
                 val deferred = pending[message.id]
                 if (deferred == null) {
@@ -324,6 +377,20 @@ internal class AppScreenBridge private constructor() {
                         isMainFrame: Boolean,
                         replyProxy: JavaScriptReplyProxy
                     ) {
+                        // allowedOrigins restricts which origins see the injected object, but
+                        // Chromium injects it into every *frame* on a permitted origin —
+                        // including same-origin iframes. Only the main frame may drive the
+                        // bridge: a subframe message would otherwise be routed as if it came
+                        // from the page and, worse, its replyProxy would be captured by
+                        // onMessage, hijacking subsequent down-calls (show) into the iframe.
+                        // Mirrors the main-frame gate in the iOS bridgeMessageAllowed check.
+                        if (!isMainFrame) {
+                            log.w(
+                                "App Screen bridge: dropping message from non-main frame " +
+                                    "(origin=$sourceOrigin)"
+                            )
+                            return
+                        }
                         message.data?.let { bridge.onMessage(replyProxy, it) }
                     }
                 }

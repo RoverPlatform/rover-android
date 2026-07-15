@@ -113,7 +113,7 @@ internal class AppScreenPrewarmer(
 
     /**
      * In-flight prewarm sessions mapped to their job, so the navigator can recognise a renderer
-     * death on a still-prewarming session (M6) and cancel + discard exactly it. Main-thread only.
+     * death on a still-prewarming session and cancel + discard exactly it. Main-thread only.
      */
     private val prewarmSessions = HashMap<AppScreenSession, Job>()
 
@@ -151,7 +151,7 @@ internal class AppScreenPrewarmer(
 
     private fun launchPrewarm(request: Request) {
         attempts[request.templatePath] = (attempts[request.templatePath] ?: 0) + 1
-        // Create the session up front (main thread) so it can be tracked for M6 renderer-death
+        // Create the session up front (main thread) so it can be tracked for renderer-death
         // classification while its document/runtime boot is still in flight.
         val session = createSession(request.templatePath)
         session.currentHref = request.href
@@ -239,14 +239,14 @@ internal class AppScreenPrewarmer(
     fun ownsSession(session: AppScreenSession): Boolean = prewarmSessions.containsKey(session)
 
     /**
-     * Discard a still-prewarming [session] whose renderer just died (M6): cancel its job, which
+     * Discard a still-prewarming [session] whose renderer just died: cancel its job, which
      * resumes the suspended boot with a [kotlinx.coroutines.CancellationException] so
      * [runPrewarm]'s handler destroys the dead WebView and clears the bookkeeping. No-op if it is
      * not (or no longer) a prewarm session.
      */
     fun discard(session: AppScreenSession) {
         val job = prewarmSessions[session] ?: return
-        log.i("App Screen prewarm discarded on renderer-gone template=${session.templatePath}")
+        log.i("App Screen prewarm discarded on renderer-gone template=${session.templateKey}")
         job.cancel()
     }
 

@@ -86,6 +86,10 @@ import org.json.JSONObject
  * callback performs the dismissal (e.g. `finish()`). Leave unset when embedding. Only the App Screens
  * (V3) path acts on it (adding a root-page close affordance); the V1/V2 paths ignore it in this
  * iteration.
+ *
+ * @param onOpenURL Host override consulted only for the `openURL` bridge message from an App Screens
+ * (V3) experience; the V1/V2 paths ignore it. When null the SDK opens the URL itself (the Rover
+ * deep-link router, falling back to an `ACTION_VIEW` intent).
  */
 @Composable
 internal fun Experience(
@@ -94,7 +98,8 @@ internal fun Experience(
     onCanceled: (() -> Unit)? = null,
     defaultColorSchemeDark: Boolean? = null,
     navigationMode: NavigationMode = NavigationMode.Standalone,
-    onDismissButtonPressed: (() -> Unit)? = null
+    onDismissButtonPressed: (() -> Unit)? = null,
+    onOpenURL: ((Uri) -> Unit)? = null
 ) {
     Services.Inject { services ->
         // security check, verify that URL domain is what is configured in Rover (to prevent
@@ -108,7 +113,12 @@ internal fun Experience(
         // App Screens (Experiences V3): AI-authored HTML screens served at /a/… URLs render
         // through a separate WebView-based shell rather than the V1/V2 experience pipeline below.
         if (AppScreensDecisions.isAppScreenUrl(url)) {
-            AppScreen(url = url, modifier = modifier, onDismissButtonPressed = onDismissButtonPressed)
+            AppScreen(
+                url = url,
+                modifier = modifier,
+                onDismissButtonPressed = onDismissButtonPressed,
+                onOpenURL = onOpenURL
+            )
             return@Inject
         }
 

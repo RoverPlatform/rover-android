@@ -25,7 +25,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Exercises the fail-fast bookkeeping [AppScreenBridge.fail] delegates to on a renderer death (M6):
+ * Exercises the fail-fast bookkeeping [AppScreenBridge.fail] delegates to on a renderer death:
  * every pending down-call must complete exceptionally so no caller waits out its timeout. Framework
  * free (no WebView / reply proxy), so it runs as a plain JVM test.
  */

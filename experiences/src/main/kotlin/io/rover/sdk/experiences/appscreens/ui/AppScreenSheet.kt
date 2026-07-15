@@ -78,7 +78,7 @@ private const val SHEET_HEIGHT_FRACTION = 0.94f
  * Native chrome floats over the sheet's NavHost in the safe-area top band, crossfading as depth
  * changes so exactly one capsule shows: a close (✕) button (TopEnd) on the sheet root, and a back
  * button (TopStart) on in-sheet pushes (iOS parity — the xmark lives on the root and pushing swaps
- * it for back). Close runs the M3 hide animation before releasing the stack; back pops the sheet's
+ * it for back). Close runs the sheet hide animation before releasing the stack; back pops the sheet's
  * own NavHost, reconciling via [StackSync] like a swipe/back. Because every sheet entry always
  * carries chrome, the sheet folds [OverlayAffordanceTopBand] into its injected top inset
  * unconditionally.
@@ -209,7 +209,7 @@ private fun BoxScope.SheetChrome(
             icon = Icons.Default.Close,
             badgeText = null,
             contentDescription = stringResource(R.string.rover_app_screen_close_button),
-            // Dismiss WITH the M3 slide-down: hide() animates the sheet away, then the completion
+            // Dismiss WITH the sheet slide-down: hide() animates the sheet away, then the completion
             // releases the stack. Calling onSheetDismissed() directly would empty sheetStack and yank
             // the sheet from composition with no animation.
             onTap = {

@@ -27,11 +27,11 @@ block.
 ```groovy
 dependencies {
     // ...
-    implementation "io.rover.sdk:core:4.7.0"
-    implementation "io.rover.sdk:notifications:4.7.0"
-    implementation "io.rover.sdk:location:4.7.0"
-    implementation "io.rover.sdk:debug:4.7.0"
-    implementation "io.rover.sdk:experiences:4.7.0"
+    implementation "io.rover.sdk:core:4.15.0-rc1"
+    implementation "io.rover.sdk:notifications:4.15.0-rc1"
+    implementation "io.rover.sdk:location:4.15.0-rc1"
+    implementation "io.rover.sdk:debug:4.15.0-rc1"
+    implementation "io.rover.sdk:experiences:4.15.0-rc1"
 }
 ```
 

@@ -18,6 +18,7 @@
 package io.rover.sdk.experiences.appscreens
 
 import android.webkit.RenderProcessGoneDetail
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.webkit.WebViewCompat
@@ -27,8 +28,9 @@ import androidx.webkit.WebViewRenderProcessClient
 import io.rover.sdk.core.logging.log
 
 /**
- * The [WebViewClient] installed on every App Screen WebView (M6). Its sole job is to intercept
- * renderer death via [onRenderProcessGone] and route it to the navigator.
+ * The [WebViewClient] installed on every App Screen WebView. It intercepts renderer death via
+ * [onRenderProcessGone] and routes it to the navigator, and it enforces the main-frame navigation
+ * policy via [shouldOverrideUrlLoading] (page-driven main-frame navigations are always blocked).
  *
  * Returning `true` from [onRenderProcessGone] is mandatory: the default returns `false`, which makes
  * the framework kill the whole app process when the renderer dies. All WebViews in a process usually
@@ -49,6 +51,29 @@ internal class AppScreenWebViewClient : WebViewClient() {
      */
     @Volatile
     var onRenderProcessGone: ((view: WebView, didCrash: Boolean) -> Unit)? = null
+
+    /**
+     * Main-frame navigation policy. Invoked ONLY for page-driven navigations (link taps, JS
+     * `location.href` changes, server redirects) — never for the app's own `loadDataWithBaseURL`
+     * document loads, which the framework does not route through here.
+     *
+     * Invariant: every legitimate App Screen document load is a native `loadDataWithBaseURL` call, so
+     * ANY main-frame callback here is a page attempting to steer the WebView somewhere while it sits
+     * inside an App Screen host — which is never allowed (the navigator drives all screen transitions
+     * via the bridge, gated by [AppScreensDecisions.authorizeNavigationTarget]). Block it by returning
+     * `true` (we "handled" it by doing nothing). Subframe requests (iframes) are part of normal
+     * document rendering and are allowed through (`false`).
+     *
+     * We deliberately do NOT hand a blocked navigation off to an external browser or the Rover router
+     * here; that is a deferred product decision. Log and ignore.
+     */
+    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+        if (!request.isForMainFrame) {
+            return false
+        }
+        log.w("App Screen WebView blocked a page-driven main-frame navigation to ${request.url}")
+        return true
+    }
 
     override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
         val didCrash = detail.didCrash()

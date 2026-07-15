@@ -38,7 +38,7 @@ import io.rover.sdk.core.logging.log
  * 1. The DayNight theme lets the WebView resolve `prefers-color-scheme` from this context's
  *    appearance (its theme's `android:isLightTheme`, falling back to the context's
  *    `Configuration.uiMode`) without leaking an [android.app.Activity] into a long-lived view.
- * 2. The [MutableContextWrapper] base means M4 can swap in the hosting Activity's context at
+ * 2. The [MutableContextWrapper] base means navigation can swap in the hosting Activity's context at
  *    attach time (for correct window/IME behaviour) without recreating the WebView, then swap it
  *    back out on detach to avoid an Activity leak.
  *
@@ -57,8 +57,8 @@ import io.rover.sdk.core.logging.log
  * a pass-through — the application context flows unchanged, so the query resolves from the device
  * appearance exactly as before this parameter existed.
  *
- * For M2/M3 the WebView lives inside a single composition, so this factory is invoked once per
- * screen load.
+ * For the initial single-screen render and sheet presentation the WebView lives inside a single
+ * composition, so this factory is invoked once per screen load.
  */
 internal object AppScreenWebViewFactory {
 
@@ -93,7 +93,7 @@ internal object AppScreenWebViewFactory {
             displayZoomControls = false
         }
 
-        // Install the renderer-death client (M6). It MUST be present on every App Screen WebView:
+        // Install the renderer-death client. It MUST be present on every App Screen WebView:
         // its onRenderProcessGone returns true, without which a renderer crash kills the app
         // process. The navigator wires its handler once the owning session exists. A log-only
         // render-process (un)responsiveness client is added where the platform supports it.

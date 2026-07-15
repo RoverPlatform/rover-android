@@ -177,7 +177,11 @@ class ExperiencesAssembler(
             AppScreenNavigator(
                 appContext = resolver.resolveSingletonOrFail(Context::class.java),
                 loader = resolver.resolveSingletonOrFail(AppScreenLoader::class.java),
-                scopeRegistry = resolver.resolveSingletonOrFail(AppScreenScopeRegistry::class.java)
+                scopeRegistry = resolver.resolveSingletonOrFail(AppScreenScopeRegistry::class.java),
+                // Gate bridge navigate/prewarm targets to the app's associated domains (already
+                // lower-cased by CoreAssembler, matching PresentExperienceRoute's comparison).
+                associatedDomains = resolver.resolveSingletonOrFail(UrlSchemes::class.java)
+                    .associatedDomains.map { it.lowercase() }.toSet()
             )
         }
     }

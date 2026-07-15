@@ -47,6 +47,9 @@ import io.rover.sdk.experiences.rich.compose.ui.Environment
  * V1/V2 rendering paths ignore it. The Hub and other embedders leave it null (embedded experiences
  * get no SDK-injected close chrome). By convention a host supplies either this handler (full-screen
  * presenters) or the root affordance (Hub envelope), never both.
+ * @param onOpenURL Consulted only for the `openURL` bridge message from an App Screens (V3)
+ * experience — never for `presentWebsite`, and not for V1/V2 experiences. When null the SDK opens
+ * the URL itself (the Rover deep-link router, falling back to an `ACTION_VIEW` intent).
  */
 @Composable
 fun ExperienceComposable(
@@ -56,6 +59,7 @@ fun ExperienceComposable(
     defaultColorSchemeDark: Boolean? = null,
     manageStatusBar: Boolean = true,
     onDismissButtonPressed: (() -> Unit)? = null,
+    onOpenURL: ((Uri) -> Unit)? = null,
 ) {
     CompositionLocalProvider(Environment.LocalManageStatusBar provides manageStatusBar) {
         Experience(
@@ -63,7 +67,59 @@ fun ExperienceComposable(
             modifier = modifier,
             navigationMode = navigationMode,
             defaultColorSchemeDark = defaultColorSchemeDark,
-            onDismissButtonPressed = onDismissButtonPressed
+            onDismissButtonPressed = onDismissButtonPressed,
+            onOpenURL = onOpenURL
         )
     }
+}
+
+/**
+ * Binary-compatibility overload retaining the signature published before [onOpenURL] was added, for
+ * callers compiled against those versions. New code should call the full-parameter
+ * [ExperienceComposable].
+ */
+@Deprecated(
+    message = "Retained for binary compatibility only; use the full-parameter ExperienceComposable.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun ExperienceComposable(
+    url: Uri,
+    modifier: Modifier = Modifier,
+    navigationMode: NavigationMode = NavigationMode.Standalone,
+    defaultColorSchemeDark: Boolean? = null,
+    manageStatusBar: Boolean = true,
+    onDismissButtonPressed: (() -> Unit)? = null,
+) {
+    ExperienceComposable(
+        url = url,
+        modifier = modifier,
+        navigationMode = navigationMode,
+        defaultColorSchemeDark = defaultColorSchemeDark,
+        manageStatusBar = manageStatusBar,
+        onDismissButtonPressed = onDismissButtonPressed,
+    )
+}
+
+/**
+ * Binary-compatibility overload retaining the signature published by SDK &le; 4.14.x, for callers
+ * compiled against those versions. New code should call the full-parameter [ExperienceComposable].
+ */
+@Deprecated(
+    message = "Retained for binary compatibility only; use the full-parameter ExperienceComposable.",
+    level = DeprecationLevel.HIDDEN,
+)
+@Composable
+fun ExperienceComposable(
+    url: Uri,
+    modifier: Modifier = Modifier,
+    navigationMode: NavigationMode = NavigationMode.Standalone,
+    defaultColorSchemeDark: Boolean? = null,
+) {
+    ExperienceComposable(
+        url = url,
+        modifier = modifier,
+        navigationMode = navigationMode,
+        defaultColorSchemeDark = defaultColorSchemeDark,
+    )
 }

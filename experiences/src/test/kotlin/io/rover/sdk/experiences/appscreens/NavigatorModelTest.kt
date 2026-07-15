@@ -252,7 +252,7 @@ class NavigatorModelTest {
         assertTrue(m.isTemplateKnown(detail))
     }
 
-    // region livenessOf (M6 renderer-death classification)
+    // region livenessOf (renderer-death classification)
 
     @Test
     fun `livenessOf top of root stack is visible`() {

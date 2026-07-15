@@ -125,7 +125,7 @@ internal fun AppScreenHost(
         context.findActivity()?.withForcedNightModeTheme(session.forcedDark)
     }
 
-    // Lazy recovery (M6): a session marked dead while off-screen recovers the moment it becomes
+    // Lazy recovery: a session marked dead while off-screen recovers the moment it becomes
     // visible again. This host is composed only for the visible entry, so re-entering composition
     // after a pop-to / sheet dismissal — i.e. this effect running with dead == true — is exactly the
     // "became visible" signal. The navigator's lazyRecover is idempotent against repeat calls.
@@ -284,7 +284,7 @@ private fun Skeleton(dark: Boolean, windowInsets: WindowInsets, additionalTopIns
 
 /** The failure state: a short message and a retry button. */
 @Composable
-private fun ErrorState(dark: Boolean, onRetry: () -> Unit) {
+internal fun ErrorState(dark: Boolean, onRetry: () -> Unit) {
     val textColor = if (dark) Color(0xFFECECEC) else Color(0xFF1A1A1A)
     Column(
         modifier = Modifier.fillMaxSize(),

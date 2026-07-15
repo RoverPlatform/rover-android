@@ -86,7 +86,7 @@ class AppScreenShowArgsTest {
         assertEquals("""https://x/a/x?q="v"""", parsed.getString("href"))
     }
 
-    // region ShowPayload replay fidelity (M6 lastShowPayload)
+    // region ShowPayload replay fidelity (lastShowPayload)
 
     @Test
     fun `hydrate payload replays to href plus optimisticData with no response`() {

@@ -30,14 +30,20 @@ import androidx.compose.runtime.setValue
  * channels.
  *
  * A session is the unit the navigator ([AppScreenNavigator]) owns and pools. A warm session (one per
- * [templatePath]) has a loaded runtime and can be re-shown with a new href in place; ephemeral
+ * [templateKey]) has a loaded runtime and can be re-shown with a new href in place; ephemeral
  * sessions are one-offs destroyed on pop. The [WebView] is created once (over a
  * [android.content.MutableContextWrapper], see [AppScreenWebViewFactory]) and re-parented as it
  * moves between navigation slots; [appThemedContext] is the neutral (Activity-free) context its
  * wrapper is swapped back to on detach to avoid leaking a host Activity into the warm pool.
  */
 internal class AppScreenSession(
-    val templatePath: String,
+    /**
+     * The origin-qualified template identity this session serves (see
+     * [AppScreensDecisions.templateKey]): `scheme://host[:port]/path`. The pool keys warm sessions
+     * by it, and the session's bridge origin is derived from the origin embedded in it — so a
+     * session built for one associated domain never carries a bridge trusting a different one.
+     */
+    val templateKey: String,
     initialWebView: WebView,
     initialBridge: AppScreenBridge,
     initialAppThemedContext: Context,
@@ -88,7 +94,7 @@ internal class AppScreenSession(
 
     /**
      * The live [WebView] rendering this session. Backed by Compose state so the host re-attaches
-     * automatically when M6 recovery swaps in a fresh WebView after a renderer death (the old
+     * automatically when recovery swaps in a fresh WebView after a renderer death (the old
      * instance is dead and cannot be reloaded — unlike iOS). Main thread only.
      */
     var webView: WebView by mutableStateOf(initialWebView)
@@ -99,7 +105,7 @@ internal class AppScreenSession(
         private set
 
     /**
-     * Swap in a freshly-built [WebView] and [AppScreenBridge] after the previous renderer died (M6)
+     * Swap in a freshly-built [WebView] and [AppScreenBridge] after the previous renderer died
      * or a config colorScheme flip forced a rebuild. The caller is responsible for detaching +
      * destroying the old WebView and re-wiring the new bridge's handlers. The detach-time
      * [appThemedContext] follows the new WebView's own wrapper base (the factory layering is a
@@ -138,7 +144,7 @@ internal class AppScreenSession(
     var runtimeLoaded: Boolean = false
 
     /**
-     * The args of the LAST successfully-delivered `show` (hydrate or morph). M6 recovery replays
+     * The args of the LAST successfully-delivered `show` (hydrate or morph). Renderer-death recovery replays
      * this after rebuilding the WebView to repaint the full pre-crash content in one call. Updated
      * on every successful show; a morph's payload (which carries the response) supersedes its
      * hydrate. Null until the first show resolves. Main thread only.
@@ -147,7 +153,7 @@ internal class AppScreenSession(
     var lastShowPayload: ShowPayload? = null
 
     /**
-     * The one-attempt guard for renderer-death recovery (M6). Set when a recovery attempt begins;
+     * The one-attempt guard for renderer-death recovery. Set when a recovery attempt begins;
      * cleared only when a pipeline runs clean through reveal. A second liveness failure while this
      * is set lands the (visible) session in the error state, so a crash-loop settles after exactly
      * one retry. The error state's Retry clears it. Main thread only.
@@ -165,7 +171,7 @@ internal class AppScreenSession(
 
     /**
      * Observed by the host: true when the renderer died while this session was on a stack but not
-     * visible (M6). The host, on becoming visible again (a pop-to / sheet dismissal re-composes it),
+     * visible. The host, on becoming visible again (a pop-to / sheet dismissal re-composes it),
      * triggers lazy recovery. Compose state so that reappearance drives the recovery.
      */
     val dead = mutableStateOf(false)
@@ -199,8 +205,8 @@ internal class AppScreenSession(
 }
 
 /**
- * A snapshot of the arguments of a successfully-delivered `show`, retained per session so M6
- * recovery can replay it against a freshly-built WebView (see [AppScreenSession.lastShowPayload]).
+ * A snapshot of the arguments of a successfully-delivered `show`, retained per session so
+ * renderer-death recovery can replay it against a freshly-built WebView (see [AppScreenSession.lastShowPayload]).
  *
  * [href], [optimisticDataJson], and [responseJson] are the exact inputs to [AppScreenShowArgs.build] — the
  * raw JSON crosses the bridge byte-perfect on replay. [templateHash] is the hash the response was

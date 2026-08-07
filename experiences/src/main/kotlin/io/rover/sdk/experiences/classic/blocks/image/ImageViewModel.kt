@@ -28,6 +28,7 @@ import io.rover.sdk.experiences.classic.assets.ImageOptimizationService
 import io.rover.sdk.experiences.classic.concerns.MeasuredSize
 import io.rover.sdk.experiences.classic.dpAsPx
 import org.reactivestreams.Publisher
+import org.reactivestreams.Subscription
 import java.util.concurrent.TimeUnit
 
 internal class ImageViewModel(
@@ -51,10 +52,16 @@ internal class ImageViewModel(
 
     private var fadeInNeeded = false
 
+    private var timeoutSubscription: Subscription? = null
+
     override val imageUpdates: Publisher<ImageViewModelInterface.ImageUpdate> = Publishers.merge(
         prefetchMeasurementsSubject.imageFetchTransform(),
         measurementsSubject
             .flatMap {
+                // a new fetch cycle is beginning; any fade-in decision made for a prior
+                // cycle no longer applies.
+                fadeInNeeded = false
+                timeoutSubscription?.cancel()
                 Publishers.just(it)
                     .imageFetchTransform()
                     .share()
@@ -63,13 +70,14 @@ internal class ImageViewModel(
                             .subscribe(
                                 { },
                                 { error ->
-                                    log.v("Fade in needed, because $error")
+                                    log.v("Fade in needed for image ${image.url}, because $error")
                                     fadeInNeeded = true
-                                }
+                                },
+                                { subscription -> timeoutSubscription = subscription }
                             )
                     }
             }
-    ).shareHotAndReplay(0).observeOn(mainScheduler) // shareHot because this chain is responsible for side-effect of pre-warming cache, even before subscribed.
+    ).shareHotAndReplay(0).observeOn(mainScheduler) // shareHot because this chain is responsible for side-effect of pre-warming cache, even before subscribed.  NB. deliberately no replay: a replay buffer here would strongly retain a Bitmap for every block view model for as long as the (application-scoped) asset service retains the chain, bypassing the bounded bitmap cache.
 
     override val isDecorative: Boolean = image.isDecorative
 

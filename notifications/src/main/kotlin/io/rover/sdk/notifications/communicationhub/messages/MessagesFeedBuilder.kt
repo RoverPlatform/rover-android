@@ -19,6 +19,7 @@ package io.rover.sdk.notifications.communicationhub.messages
 
 import io.rover.sdk.notifications.communicationhub.conversations.ConversationEntity
 import io.rover.sdk.notifications.communicationhub.conversations.ParticipantEntity
+import io.rover.sdk.notifications.communicationhub.conversations.isUnread
 import io.rover.sdk.notifications.communicationhub.conversations.ReplyContentBlock
 import io.rover.sdk.notifications.communicationhub.conversations.ReplyEntity
 import io.rover.sdk.notifications.communicationhub.posts.PostWithSubscription
@@ -66,9 +67,6 @@ internal object MessagesFeedBuilder {
                 ?.let(participantsById::get)
             val preview = resolvePreviewText(latestReply)
                 .ifBlank { conversation.lastReplyPreview?.trim().orEmpty() }
-            val unreadTimestamp = conversation.lastIncomingReplyAt ?: conversation.lastReplyAt
-            val lastReadAt = conversation.lastReadAt
-            val isUnread = lastReadAt == null || unreadTimestamp > lastReadAt
 
             MessageFeedRow.Conversation(
                 id = conversation.id,
@@ -77,7 +75,7 @@ internal object MessagesFeedBuilder {
                 subject = conversation.subject?.trim()?.ifBlank { null },
                 preview = preview,
                 timestamp = latestReply?.createdAt ?: conversation.lastReplyAt,
-                isUnread = isUnread,
+                isUnread = conversation.isUnread,
             )
         }
 

@@ -53,7 +53,4 @@ interface PostsDao {
 
     @Query("UPDATE posts SET isRead = 1 WHERE id = :postId")
     suspend fun markPostAsRead(postId: String)
-
-    @Query("SELECT COUNT(*) FROM posts WHERE isRead = 0")
-    suspend fun getUnreadCount(): Int
 }

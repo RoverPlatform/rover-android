@@ -21,15 +21,20 @@ import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import io.rover.sdk.core.data.sync.SyncCoordinatorInterface
 import io.rover.sdk.core.streams.Publishers
+import io.rover.sdk.notifications.communicationhub.InMemoryLocalStorage
+import io.rover.sdk.notifications.communicationhub.InboxSeenWatermark
 import io.rover.sdk.notifications.communicationhub.conversations.ConversationEntity
+import io.rover.sdk.notifications.communicationhub.conversations.ConversationTestFixtures
 import io.rover.sdk.notifications.communicationhub.conversations.ConversationsDataSource
 import io.rover.sdk.notifications.communicationhub.conversations.ConversationsHistorySync
 import io.rover.sdk.notifications.communicationhub.conversations.ParticipantEntity
 import io.rover.sdk.notifications.communicationhub.conversations.ReplyEntity
+import io.rover.sdk.notifications.communicationhub.posts.PostEntity
 import io.rover.sdk.notifications.communicationhub.posts.PostsDataSource
 import io.rover.sdk.notifications.communicationhub.posts.PostWithSubscription
 
 import java.net.ConnectException
+import java.time.Instant
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +42,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -73,6 +79,7 @@ class MessagesListViewModelTest {
             conversationsRepository = FakeConversationsDataSource(),
             conversationsSync = conversationsSync,
             syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = InboxSeenWatermark(InMemoryLocalStorage()),
         )
 
         advanceUntilIdle()
@@ -93,6 +100,7 @@ class MessagesListViewModelTest {
             conversationsRepository = FakeConversationsDataSource(),
             conversationsSync = conversationsSync,
             syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = InboxSeenWatermark(InMemoryLocalStorage()),
         )
         val stateCollectionJob = backgroundScope.launch {
             viewModel.uiState.collect { }
@@ -118,6 +126,7 @@ class MessagesListViewModelTest {
             conversationsRepository = FakeConversationsDataSource(),
             conversationsSync = conversationsSync,
             syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = InboxSeenWatermark(InMemoryLocalStorage()),
         )
         val stateCollectionJob = backgroundScope.launch {
             viewModel.uiState.collect { }
@@ -148,6 +157,7 @@ class MessagesListViewModelTest {
             conversationsRepository = FakeConversationsDataSource(),
             conversationsSync = FakeConversationsHistorySync(),
             syncCoordinator = syncCoordinator,
+            inboxSeenWatermark = InboxSeenWatermark(InMemoryLocalStorage()),
         )
         val stateCollectionJob = backgroundScope.launch {
             viewModel.uiState.collect { }
@@ -176,6 +186,7 @@ class MessagesListViewModelTest {
             conversationsRepository = FakeConversationsDataSource(),
             conversationsSync = FakeConversationsHistorySync(),
             syncCoordinator = syncCoordinator,
+            inboxSeenWatermark = InboxSeenWatermark(InMemoryLocalStorage()),
         )
         val stateCollectionJob = backgroundScope.launch {
             viewModel.uiState.collect { }
@@ -197,6 +208,7 @@ class MessagesListViewModelTest {
             conversationsRepository = FakeConversationsDataSource(),
             conversationsSync = conversationsSync,
             syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = InboxSeenWatermark(InMemoryLocalStorage()),
             pollingIntervalMs = 10_000L,
         )
         advanceUntilIdle()
@@ -225,6 +237,7 @@ class MessagesListViewModelTest {
             conversationsRepository = FakeConversationsDataSource(),
             conversationsSync = conversationsSync,
             syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = InboxSeenWatermark(InMemoryLocalStorage()),
             pollingIntervalMs = 10_000L,
         )
         advanceUntilIdle()
@@ -250,6 +263,7 @@ class MessagesListViewModelTest {
             conversationsRepository = FakeConversationsDataSource(),
             conversationsSync = conversationsSync,
             syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = InboxSeenWatermark(InMemoryLocalStorage()),
             pollingIntervalMs = 10_000L,
         )
         val stateCollectionJob = backgroundScope.launch {
@@ -278,6 +292,7 @@ class MessagesListViewModelTest {
             conversationsRepository = FakeConversationsDataSource(),
             conversationsSync = conversationsSync,
             syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = InboxSeenWatermark(InMemoryLocalStorage()),
             pollingIntervalMs = 10_000L,
         )
         advanceUntilIdle()
@@ -291,20 +306,451 @@ class MessagesListViewModelTest {
         viewModel.stopForwardPolling()
     }
 
-    private class FakePostsDataSource : PostsDataSource {
-        override fun getPostsFlow(): Flow<List<PostWithSubscription>> = flowOf(emptyList())
+    @Test
+    fun onMessagesListConcealedMarksSeenAgainWithoutConsultingTheDeviceClock() = runTest(timeout = 10.seconds) {
+        var clock = Instant.parse("2026-08-10T12:00:00Z")
+        val newestReceivedAt = Instant.parse("2026-08-10T12:30:00Z")
+        val watermark = InboxSeenWatermark(InMemoryLocalStorage(), now = { clock })
+        val viewModel = MessagesListViewModel(
+            postsRepository = FakePostsDataSource(
+                posts = listOf(post("newest", newestReceivedAt.toEpochMilli())),
+            ),
+            conversationsRepository = FakeConversationsDataSource(),
+            conversationsSync = FakeConversationsHistorySync(),
+            syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = watermark,
+        )
+        viewModel.onMessagesListRevealed()
+        viewModel.awaitFirstPostsEmission()
+
+        // Leaving the list marks seen a second time, but the watermark only records observed item
+        // timestamps: the device clock has moved on to 14:00 and must be ignored, otherwise a
+        // post stamped between the newest stored item and "now" would be suppressed unseen.
+        clock = Instant.parse("2026-08-10T14:00:00Z")
+        viewModel.onMessagesListConcealed()
+        advanceUntilIdle()
+
+        assertThat(watermark.seenAt.value, equalTo(newestReceivedAt.toEpochMilli()))
+    }
+
+    @Test
+    fun onMessagesListForegroundedAdvancesTheWatermarkWithoutTriggeringBackfill() = runTest(timeout = 10.seconds) {
+        val clock = Instant.parse("2026-08-10T12:00:00Z")
+        val newestReceivedAt = Instant.parse("2026-08-10T13:00:00Z")
+        val watermark = InboxSeenWatermark(InMemoryLocalStorage(), now = { clock })
+        val conversationsSync = FakeConversationsHistorySync()
+        val viewModel = MessagesListViewModel(
+            postsRepository = FakePostsDataSource(
+                posts = listOf(post("newest", newestReceivedAt.toEpochMilli())),
+            ),
+            conversationsRepository = FakeConversationsDataSource(),
+            conversationsSync = conversationsSync,
+            syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = watermark,
+        )
+        viewModel.awaitFirstPostsEmission()
+
+        // The user backgrounded the app on the list and came back: a post that arrived in between
+        // must stop badging, but the history backfill must not re-run on every foreground.
+        viewModel.onMessagesListForegrounded()
+        advanceUntilIdle()
+
+        assertThat(watermark.seenAt.value, equalTo(newestReceivedAt.toEpochMilli()))
+        assertThat(conversationsSync.backfillTriggerCount, equalTo(0))
+    }
+
+    @Test
+    fun onMessagesListRevealedAdvancesTheWatermarkToTheNewestPostReceivedAt() = runTest(timeout = 10.seconds) {
+        // The watermark takes the newest receivedAt in the store, not the device clock (which is
+        // running behind the posts here) and not just any post in the emission.
+        val clock = Instant.parse("2026-08-10T12:00:00Z")
+        val newestReceivedAt = Instant.parse("2026-08-10T13:30:00Z")
+        val watermark = InboxSeenWatermark(InMemoryLocalStorage(), now = { clock })
+        val viewModel = MessagesListViewModel(
+            postsRepository = FakePostsDataSource(
+                posts = listOf(
+                    post("older", Instant.parse("2026-08-10T13:00:00Z").toEpochMilli()),
+                    post("newest", newestReceivedAt.toEpochMilli()),
+                ),
+            ),
+            conversationsRepository = FakeConversationsDataSource(),
+            conversationsSync = FakeConversationsHistorySync(),
+            syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = watermark,
+        )
+        viewModel.awaitFirstPostsEmission()
+
+        viewModel.onMessagesListRevealed()
+        advanceUntilIdle()
+
+        assertThat(watermark.seenAt.value, equalTo(newestReceivedAt.toEpochMilli()))
+    }
+
+    @Test
+    fun onMessagesListConcealedAdvancesTheWatermarkToTheNewestPostReceivedAt() = runTest(timeout = 10.seconds) {
+        val clock = Instant.parse("2026-08-10T12:00:00Z")
+        val newestReceivedAt = Instant.parse("2026-08-10T13:30:00Z")
+        val watermark = InboxSeenWatermark(InMemoryLocalStorage(), now = { clock })
+        val viewModel = MessagesListViewModel(
+            postsRepository = FakePostsDataSource(
+                posts = listOf(post("newest", newestReceivedAt.toEpochMilli())),
+            ),
+            conversationsRepository = FakeConversationsDataSource(),
+            conversationsSync = FakeConversationsHistorySync(),
+            syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = watermark,
+        )
+        viewModel.awaitFirstPostsEmission()
+
+        viewModel.onMessagesListConcealed()
+        advanceUntilIdle()
+
+        assertThat(watermark.seenAt.value, equalTo(newestReceivedAt.toEpochMilli()))
+    }
+
+    @Test
+    fun revealBeforeTheFirstPostsEmissionLeavesTheWatermarkAlone() = runTest(timeout = 10.seconds) {
+        val seed = Instant.parse("2026-08-10T12:00:00Z")
+        var clock = seed
+        val watermark = InboxSeenWatermark(InMemoryLocalStorage(), now = { clock })
+        val viewModel = MessagesListViewModel(
+            postsRepository = FakePostsDataSource(
+                posts = listOf(post("newest", Instant.parse("2026-08-10T13:30:00Z").toEpochMilli())),
+            ),
+            conversationsRepository = FakeConversationsDataSource(),
+            conversationsSync = FakeConversationsHistorySync(),
+            syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = watermark,
+        )
+
+        // No feed emission has arrived yet, so there is no item timestamp to record — and the
+        // device clock (which has run on to 13:00) must not stand in for one.
+        clock = Instant.parse("2026-08-10T13:00:00Z")
+        viewModel.onMessagesListRevealed()
+
+        assertThat(watermark.seenAt.value, equalTo(seed.toEpochMilli()))
+    }
+
+    @Test
+    fun aPostArrivingWhileTheListIsRevealedAdvancesTheWatermark() = runTest(timeout = 10.seconds) {
+        val clock = Instant.parse("2026-08-10T12:00:00Z")
+        val alreadyThere = Instant.parse("2026-08-10T12:30:00Z")
+        val arrivedWhileOpen = Instant.parse("2026-08-10T13:30:00Z")
+        val watermark = InboxSeenWatermark(InMemoryLocalStorage(), now = { clock })
+        val postsRepository = FakePostsDataSource(
+            posts = listOf(post("already-there", alreadyThere.toEpochMilli())),
+        )
+        val viewModel = MessagesListViewModel(
+            postsRepository = postsRepository,
+            conversationsRepository = FakeConversationsDataSource(),
+            conversationsSync = FakeConversationsHistorySync(),
+            syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = watermark,
+        )
+        viewModel.awaitFirstPostsEmission()
+        viewModel.onMessagesListRevealed()
+        advanceUntilIdle()
+        assertThat(watermark.seenAt.value, equalTo(alreadyThere.toEpochMilli()))
+
+        // A post syncs in underneath the open list. The user is looking straight at it, so it must
+        // be absorbed as it arrives rather than badging over the list until they navigate away.
+        postsRepository.emit(
+            listOf(
+                post("already-there", alreadyThere.toEpochMilli()),
+                post("arrived", arrivedWhileOpen.toEpochMilli()),
+            ),
+        )
+        viewModel.awaitPostsEmission(rowCount = 2)
+
+        assertThat(watermark.seenAt.value, equalTo(arrivedWhileOpen.toEpochMilli()))
+    }
+
+    @Test
+    fun aPostArrivingWhileTheListIsConcealedDoesNotAdvanceTheWatermark() = runTest(timeout = 10.seconds) {
+        val clock = Instant.parse("2026-08-10T12:00:00Z")
+        val alreadyThere = Instant.parse("2026-08-10T12:30:00Z")
+        val arrivedAfterLeaving = Instant.parse("2026-08-10T13:30:00Z")
+        val watermark = InboxSeenWatermark(InMemoryLocalStorage(), now = { clock })
+        val postsRepository = FakePostsDataSource(
+            posts = listOf(post("already-there", alreadyThere.toEpochMilli())),
+        )
+        val viewModel = MessagesListViewModel(
+            postsRepository = postsRepository,
+            conversationsRepository = FakeConversationsDataSource(),
+            conversationsSync = FakeConversationsHistorySync(),
+            syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = watermark,
+        )
+        viewModel.onMessagesListRevealed()
+        viewModel.awaitFirstPostsEmission()
+        viewModel.onMessagesListConcealed()
+        advanceUntilIdle()
+
+        // The user has left the list; a post arriving now has not been seen and must badge.
+        postsRepository.emit(
+            listOf(
+                post("already-there", alreadyThere.toEpochMilli()),
+                post("arrived", arrivedAfterLeaving.toEpochMilli()),
+            ),
+        )
+        viewModel.awaitPostsEmission(rowCount = 2)
+
+        assertThat(watermark.seenAt.value, equalTo(alreadyThere.toEpochMilli()))
+    }
+
+    @Test
+    fun onMessagesListRevealedAdvancesTheWatermarkToTheNewestConversationActivity() = runTest(timeout = 10.seconds) {
+        // Conversations badge by the same watermark rule as posts, so the visit must absorb their
+        // activity too: here the newest item in the store is a conversation reply, not a post.
+        val clock = Instant.parse("2026-08-10T12:00:00Z")
+        val postReceivedAt = Instant.parse("2026-08-10T13:00:00Z")
+        val conversationReplyAt = Instant.parse("2026-08-10T13:30:00Z")
+        val watermark = InboxSeenWatermark(InMemoryLocalStorage(), now = { clock })
+        val viewModel = MessagesListViewModel(
+            postsRepository = FakePostsDataSource(
+                posts = listOf(post("post", postReceivedAt.toEpochMilli())),
+            ),
+            conversationsRepository = FakeConversationsDataSource(
+                conversations = listOf(
+                    conversation("convo", lastReplyAt = conversationReplyAt.toEpochMilli()),
+                ),
+            ),
+            conversationsSync = FakeConversationsHistorySync(),
+            syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = watermark,
+        )
+        viewModel.awaitFirstPostsEmission()
+
+        viewModel.onMessagesListRevealed()
+        advanceUntilIdle()
+
+        assertThat(watermark.seenAt.value, equalTo(conversationReplyAt.toEpochMilli()))
+    }
+
+    @Test
+    fun theWatermarkAbsorbsAnIncomingReplyTimestampNewerThanLastReplyAt() = runTest(timeout = 10.seconds) {
+        // The push path can leave the newest activity on lastIncomingReplyAt alone; the watermark
+        // must absorb the same inbound-only timestamp the badge compares, or the conversation
+        // could never be cleared by a visit.
+        val clock = Instant.parse("2026-08-10T12:00:00Z")
+        val lastReplyAt = Instant.parse("2026-08-10T12:30:00Z")
+        val incomingReplyAt = Instant.parse("2026-08-10T13:30:00Z")
+        val watermark = InboxSeenWatermark(InMemoryLocalStorage(), now = { clock })
+        val viewModel = MessagesListViewModel(
+            postsRepository = FakePostsDataSource(),
+            conversationsRepository = FakeConversationsDataSource(
+                conversations = listOf(
+                    conversation(
+                        "convo",
+                        lastReplyAt = lastReplyAt.toEpochMilli(),
+                        lastIncomingReplyAt = incomingReplyAt.toEpochMilli(),
+                    ),
+                ),
+            ),
+            conversationsSync = FakeConversationsHistorySync(),
+            syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = watermark,
+        )
+        viewModel.awaitFirstPostsEmission()
+
+        viewModel.onMessagesListRevealed()
+        advanceUntilIdle()
+
+        assertThat(watermark.seenAt.value, equalTo(incomingReplyAt.toEpochMilli()))
+    }
+
+    @Test
+    fun anOutboundReplyDoesNotAdvanceTheWatermark() = runTest(timeout = 10.seconds) {
+        val watermarkInstant = Instant.parse("2026-08-10T12:30:00Z")
+        val outboundReplyAt = Instant.parse("2026-08-10T13:30:00Z")
+        val watermark = InboxSeenWatermark(
+            InMemoryLocalStorage(),
+            now = { watermarkInstant },
+        )
+        val conversationsRepository = FakeConversationsDataSource(
+            conversations = listOf(
+                conversation(
+                    "convo",
+                    lastReplyAt = watermarkInstant.toEpochMilli(),
+                    lastIncomingReplyAt = watermarkInstant.toEpochMilli(),
+                ),
+            ),
+        )
+        val viewModel = MessagesListViewModel(
+            postsRepository = FakePostsDataSource(),
+            conversationsRepository = conversationsRepository,
+            conversationsSync = FakeConversationsHistorySync(),
+            syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = watermark,
+        )
+        viewModel.awaitFirstPostsEmission()
+        viewModel.onMessagesListRevealed()
+        advanceUntilIdle()
+
+        // A confirmed fan reply advances the direction-agnostic lastReplyAt. It must not move the
+        // watermark beyond the inbound activity used by the badge.
+        conversationsRepository.emit(
+            listOf(
+                conversation(
+                    "convo",
+                    lastReplyAt = outboundReplyAt.toEpochMilli(),
+                    lastIncomingReplyAt = watermarkInstant.toEpochMilli(),
+                ),
+            ),
+        )
+        viewModel.uiState.first { state ->
+            (state.rows.singleOrNull() as? MessageFeedRow.Conversation)?.timestamp ==
+                outboundReplyAt.toEpochMilli()
+        }
+
+        assertThat(watermark.seenAt.value, equalTo(watermarkInstant.toEpochMilli()))
+    }
+
+    @Test
+    fun aConversationReplyArrivingWhileTheListIsRevealedAdvancesTheWatermark() = runTest(timeout = 10.seconds) {
+        val clock = Instant.parse("2026-08-10T12:00:00Z")
+        val alreadyThere = Instant.parse("2026-08-10T12:30:00Z")
+        val arrivedWhileOpen = Instant.parse("2026-08-10T13:30:00Z")
+        val watermark = InboxSeenWatermark(InMemoryLocalStorage(), now = { clock })
+        val conversationsRepository = FakeConversationsDataSource(
+            conversations = listOf(conversation("convo", lastReplyAt = alreadyThere.toEpochMilli())),
+        )
+        val viewModel = MessagesListViewModel(
+            postsRepository = FakePostsDataSource(),
+            conversationsRepository = conversationsRepository,
+            conversationsSync = FakeConversationsHistorySync(),
+            syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = watermark,
+        )
+        viewModel.awaitFirstPostsEmission()
+        viewModel.onMessagesListRevealed()
+        advanceUntilIdle()
+        assertThat(watermark.seenAt.value, equalTo(alreadyThere.toEpochMilli()))
+
+        // A reply syncs in on the open list: the conversation row updates in front of the user, so
+        // its new activity is absorbed on arrival rather than badging over the list.
+        conversationsRepository.emit(
+            listOf(
+                conversation("convo", lastReplyAt = alreadyThere.toEpochMilli()),
+                conversation("convo-2", lastReplyAt = arrivedWhileOpen.toEpochMilli()),
+            ),
+        )
+        viewModel.awaitPostsEmission(rowCount = 2)
+
+        assertThat(watermark.seenAt.value, equalTo(arrivedWhileOpen.toEpochMilli()))
+    }
+
+    @Test
+    fun aConversationReplyArrivingWhileTheListIsConcealedDoesNotAdvanceTheWatermark() = runTest(timeout = 10.seconds) {
+        val clock = Instant.parse("2026-08-10T12:00:00Z")
+        val alreadyThere = Instant.parse("2026-08-10T12:30:00Z")
+        val arrivedAfterLeaving = Instant.parse("2026-08-10T13:30:00Z")
+        val watermark = InboxSeenWatermark(InMemoryLocalStorage(), now = { clock })
+        val conversationsRepository = FakeConversationsDataSource(
+            conversations = listOf(conversation("convo", lastReplyAt = alreadyThere.toEpochMilli())),
+        )
+        val viewModel = MessagesListViewModel(
+            postsRepository = FakePostsDataSource(),
+            conversationsRepository = conversationsRepository,
+            conversationsSync = FakeConversationsHistorySync(),
+            syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = watermark,
+        )
+        viewModel.onMessagesListRevealed()
+        viewModel.awaitFirstPostsEmission()
+        viewModel.onMessagesListConcealed()
+        advanceUntilIdle()
+
+        // The user has left the list; a conversation reply arriving now has not been seen and must
+        // badge.
+        conversationsRepository.emit(
+            listOf(
+                conversation("convo", lastReplyAt = alreadyThere.toEpochMilli()),
+                conversation("convo-2", lastReplyAt = arrivedAfterLeaving.toEpochMilli()),
+            ),
+        )
+        viewModel.awaitPostsEmission(rowCount = 2)
+
+        assertThat(watermark.seenAt.value, equalTo(alreadyThere.toEpochMilli()))
+    }
+
+    /**
+     * Suspends until the feed has produced its first non-empty emission.
+     *
+     * The feed pipeline hops through `Dispatchers.Default`, which the test scheduler doesn't
+     * control, so `advanceUntilIdle()` alone isn't enough to guarantee the posts emission (and
+     * therefore the watermark write) has landed.
+     */
+    private suspend fun MessagesListViewModel.awaitFirstPostsEmission() {
+        uiState.first { it.rows.isNotEmpty() }
+    }
+
+    /**
+     * Suspends until the feed has produced an emission carrying exactly [rowCount] rows.
+     *
+     * Same reasoning as [awaitFirstPostsEmission]; used to await a *subsequent* emission after
+     * pushing new posts through the repository fake. The view model writes the watermark before it
+     * publishes the rows, so observing the rows means the watermark write has already happened.
+     */
+    private suspend fun MessagesListViewModel.awaitPostsEmission(rowCount: Int) {
+        uiState.first { it.rows.size == rowCount }
+    }
+
+    private fun conversation(
+        id: String,
+        lastReplyAt: Long,
+        lastIncomingReplyAt: Long? = lastReplyAt,
+    ): ConversationEntity = ConversationTestFixtures.conversation(
+        id = id,
+        lastReplyAt = lastReplyAt,
+        lastIncomingReplyAt = lastIncomingReplyAt,
+    )
+
+    private fun post(id: String, receivedAt: Long): PostWithSubscription = PostWithSubscription(
+        post = PostEntity(
+            id = id,
+            subject = "Post $id",
+            previewText = "Preview $id",
+            receivedAt = receivedAt,
+            url = null,
+            isRead = false,
+            coverImageURL = null,
+            subscriptionId = null,
+        ),
+        subscription = null,
+    )
+
+    private class FakePostsDataSource(
+        posts: List<PostWithSubscription> = emptyList(),
+    ) : PostsDataSource {
+        private val postsFlow = MutableStateFlow(posts)
+
+        /** Pushes a new posts emission, standing in for a sync writing to the store. */
+        fun emit(posts: List<PostWithSubscription>) {
+            postsFlow.value = posts
+        }
+
+        override fun getPostsFlow(): Flow<List<PostWithSubscription>> = postsFlow
 
         override suspend fun markPostAsRead(postId: String) {
             Unit
         }
     }
 
-    private class FakeConversationsDataSource : ConversationsDataSource {
+    private class FakeConversationsDataSource(
+        conversations: List<ConversationEntity> = emptyList(),
+    ) : ConversationsDataSource {
         val resetVersionFlow = MutableStateFlow(0L)
+        private val conversationsFlow = MutableStateFlow(conversations)
+
+        /** Pushes a new conversations emission, standing in for a sync writing to the store. */
+        fun emit(conversations: List<ConversationEntity>) {
+            conversationsFlow.value = conversations
+        }
 
         override suspend fun hasConversation(conversationId: String): Boolean = true
 
-        override fun getConversationsFlow(): Flow<List<ConversationEntity>> = flowOf(emptyList())
+        override fun getConversationsFlow(): Flow<List<ConversationEntity>> = conversationsFlow
 
         override fun getParticipantsFlow(): Flow<List<ParticipantEntity>> = flowOf(emptyList())
 

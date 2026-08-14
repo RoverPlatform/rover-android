@@ -30,7 +30,6 @@ import io.rover.sdk.notifications.communicationhub.conversations.ConversationTes
 import io.rover.sdk.notifications.communicationhub.conversations.ConversationTestFixtures.T7
 import io.rover.sdk.notifications.communicationhub.conversations.ConversationTestFixtures.T8
 import io.rover.sdk.notifications.communicationhub.data.RoverEngageTestBase
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -107,54 +106,6 @@ class ConversationsDaoTest : RoverEngageTestBase() {
         )
 
         assertThat(dao.getAllConversations().map { it.id }, equalTo(listOf("conversation-late", "conversation-early")))
-    }
-
-    @Test
-    fun unreadConversationCountIncludesConversationWithoutHydratedReplies() = runBlocking {
-        val dao = database!!.conversationsDao()
-
-        dao.upsertConversation(
-            ConversationTestFixtures.conversation(
-                id = "conversation-unread",
-                lastReplyAt = T3,
-                lastIncomingReplyAt = T2,
-                lastReadAt = null,
-            )
-        )
-
-        assertThat(dao.getUnreadConversationCountFlow().first(), equalTo(1))
-    }
-
-    @Test
-    fun unreadConversationCountExcludesReadConversation() = runBlocking {
-        val dao = database!!.conversationsDao()
-
-        dao.upsertConversation(
-            ConversationTestFixtures.conversation(
-                id = "conversation-read",
-                lastReplyAt = T3,
-                lastIncomingReplyAt = T2,
-                lastReadAt = T2,
-            )
-        )
-
-        assertThat(dao.getUnreadConversationCountFlow().first(), equalTo(0))
-    }
-
-    @Test
-    fun unreadConversationCountFallsBackToLastReplyAtWhenIncomingTimestampMissing() = runBlocking {
-        val dao = database!!.conversationsDao()
-
-        dao.upsertConversation(
-            ConversationTestFixtures.conversation(
-                id = "conversation-fallback",
-                lastReplyAt = T3,
-                lastIncomingReplyAt = null,
-                lastReadAt = T2,
-            )
-        )
-
-        assertThat(dao.getUnreadConversationCountFlow().first(), equalTo(1))
     }
 
 }

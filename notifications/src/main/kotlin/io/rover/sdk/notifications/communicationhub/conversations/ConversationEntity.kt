@@ -34,3 +34,23 @@ internal data class ConversationEntity(
     val participantIDs: List<String>?,
     val updatedAt: Long,
 )
+
+/**
+ * Whether the conversation has activity the user has not read yet, preferring the incoming-reply
+ * timestamp so the user's own outgoing replies never mark a conversation unread.
+ */
+internal val ConversationEntity.isUnread: Boolean
+    get() {
+        val unreadTimestamp = lastIncomingReplyAt ?: lastReplyAt
+        return lastReadAt == null || unreadTimestamp > lastReadAt
+    }
+
+/**
+ * The newest conversation activity that can contribute to the inbox badge.
+ *
+ * `lastReplyAt` includes the fan's own replies, so using it here would badge an outbound send.
+ * `lastIncomingReplyAt` is the direction-specific signal maintained by conversation sync and the
+ * push merge. A missing value cannot safely be inferred as incoming and therefore does not badge.
+ */
+internal val ConversationEntity.badgeActivityAt: Long?
+    get() = lastIncomingReplyAt

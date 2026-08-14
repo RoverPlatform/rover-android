@@ -26,6 +26,8 @@ import com.natpryce.hamkrest.equalTo
 import io.rover.sdk.core.data.sync.SyncResetRequiredException
 import io.rover.sdk.notifications.communicationhub.AndroidDeliveredHubNotificationClearer
 import io.rover.sdk.notifications.communicationhub.HubPushKind
+import io.rover.sdk.notifications.communicationhub.InMemoryLocalStorage
+import io.rover.sdk.notifications.communicationhub.InboxSeenWatermark
 import io.rover.sdk.notifications.communicationhub.HubPushNotification
 import io.rover.sdk.notifications.communicationhub.conversations.ConversationEntity
 import io.rover.sdk.notifications.communicationhub.conversations.ParticipantEntity
@@ -133,6 +135,34 @@ class HubSyncCoordinatorTest : RoverEngageTestBase() {
         assertThat(remainingTags, equalTo(listOf("classic-notif")))
     }
 
+    /**
+     * The refetched post history after a 410 arrives with its original `receivedAt` timestamps, so
+     * a watermark from the previous identity must not suppress the new identity's content.
+     */
+    @Test
+    fun resetAfter410ResetsTheInboxSeenWatermark() = runTest {
+        var clock = java.time.Instant.parse("2026-08-10T12:00:00Z")
+        val watermark = InboxSeenWatermark(InMemoryLocalStorage(), now = { clock })
+        val coordinator = buildHubSyncCoordinator(HubCoordinator(), inboxSeenWatermark = watermark)
+        seedEngageData()
+
+        doReturn(Response.error<okhttp3.ResponseBody>(410, "gone".toResponseBody(null)))
+            .whenever(mockEngageApiService)
+            .getConversations(include = "participants", cursor = null, before = null)
+
+        clock = java.time.Instant.parse("2026-08-10T13:00:00Z")
+        val resetRequired = try {
+            coordinator.getConversations(cursor = null, before = null)
+            fail("Expected SyncResetRequiredException")
+            return@runTest
+        } catch (error: SyncResetRequiredException) {
+            error
+        }
+        resetRequired.resetHandler.resetAfterSyncCancellation()
+
+        assertThat(watermark.seenAt.value, equalTo(clock.toEpochMilli()))
+    }
+
     @Test
     fun stale410FromOldGenerationDoesNotResetFreshData() = runTest {
         val hubCoordinator = HubCoordinator()
@@ -233,6 +263,7 @@ class HubSyncCoordinatorTest : RoverEngageTestBase() {
     private fun buildHubSyncCoordinator(
         hubCoordinator: HubCoordinator,
         engageApiService: EngageApiService = mockEngageApiService,
+        inboxSeenWatermark: InboxSeenWatermark? = null,
     ): HubSyncCoordinator {
         val database = database!!
         return HubSyncCoordinator(
@@ -248,6 +279,7 @@ class HubSyncCoordinatorTest : RoverEngageTestBase() {
             deliveredHubNotificationClearer = AndroidDeliveredHubNotificationClearer(
                 ApplicationProvider.getApplicationContext()
             ),
+            inboxSeenWatermark = inboxSeenWatermark,
         )
     }
 

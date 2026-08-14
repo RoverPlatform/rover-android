@@ -38,11 +38,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -54,8 +58,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,6 +89,7 @@ import io.rover.sdk.notifications.communicationhub.messages.formatReplyClockTime
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.scan
 import java.util.Date
 
 internal fun initialsFor(name: String?): String =
@@ -97,7 +104,7 @@ internal fun initialsFor(name: String?): String =
 @Composable
 internal fun ConversationDetail(
     uiState: ConversationDetailUiState,
-    onComposerTextChanged: (String) -> Unit,
+    composerState: TextFieldState,
     onLoadOlderRequested: () -> Unit,
     onSendTapped: () -> Unit,
     modifier: Modifier = Modifier,
@@ -146,17 +153,49 @@ internal fun ConversationDetail(
     val listState = rememberLazyListState()
     val currentUiState by rememberUpdatedState(uiState)
 
-    // In reversed layout, index 0 is the visual bottom. When a new message arrives
-    // and the user is already at the bottom, scroll to keep them pinned there.
-    val newestRenderedRowSignature = uiState.threadRows.lastOrNull()?.signature()
-    LaunchedEffect(newestRenderedRowSignature) {
-        if (newestRenderedRowSignature != null && listState.firstVisibleItemIndex <= 1) {
-            listState.animateScrollToItem(0)
+    val density = LocalDensity.current
+    val thresholdPx = with(density) { 200.dp.toPx() }
+    val nearBottomThresholdPx = with(density) { 40.dp.toPx() }
+
+    // In reversed layout, index 0 is the visual bottom. Bottom-proximity is cached and updated
+    // only while a scroll is in progress, so it always reflects the position *before* a data
+    // change shifts the layout — a new insert can never corrupt it. 40.dp matches iOS's
+    // bottomThreshold. Our own animateScrollToItem also reports isScrollInProgress, so it
+    // re-arms nearBottom on completion. Keyboard/composer resizes don't move the anchored item
+    // in reversed layout, so the cached value stays valid across them.
+    var nearBottom by remember { mutableStateOf(true) }
+    LaunchedEffect(listState) {
+        snapshotFlow {
+            Triple(
+                listState.isScrollInProgress,
+                listState.firstVisibleItemIndex,
+                listState.firstVisibleItemScrollOffset,
+            )
+        }.collect { (scrolling, index, offset) ->
+            if (scrolling) nearBottom = index == 0 && offset <= nearBottomThresholdPx
         }
     }
 
-    val density = LocalDensity.current
-    val thresholdPx = with(density) { 200.dp.toPx() }
+    // Reveal newly-arrived tail replies: outgoing sends always scroll to the bottom, incoming
+    // replies only when already near it, and history prepends/sync-state flips never scroll.
+    // The decision is made on the replies transition — not thread rows — because a single send
+    // can insert zero, one, or two rows (day-boundary sends add a divider plus a new group).
+    // The scroll target is positional (index 0 is the newest row in reversed layout), immune
+    // to the optimistic→confirmed id churn.
+    LaunchedEffect(listState) {
+        snapshotFlow { currentUiState.replies }
+            .distinctUntilChanged()
+            .scan(emptyList<ConversationReplyRow>() to emptyList<ConversationReplyRow>()) { (_, previous), current ->
+                previous to current
+            }
+            .collect { (previous, current) ->
+                when (decideRevealAction(previous, current)) {
+                    RevealAction.ForceScroll -> listState.animateScrollToItem(0)
+                    RevealAction.ScrollIfNearBottom -> if (nearBottom) listState.animateScrollToItem(0)
+                    RevealAction.None -> Unit
+                }
+            }
+    }
 
     LaunchedEffect(listState) {
         snapshotFlow {
@@ -208,7 +247,8 @@ internal fun ConversationDetail(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
-                        .background(MaterialTheme.colorScheme.surfaceContainerLowest),
+                        .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                        .testTag("conversation-thread-list"),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -243,8 +283,7 @@ internal fun ConversationDetail(
             }
 
             Composer(
-                text = uiState.composerText,
-                onTextChanged = onComposerTextChanged,
+                state = composerState,
                 onSendTapped = onSendTapped,
                 isSending = uiState.isSending,
             )
@@ -488,12 +527,6 @@ private fun threadRowKey(row: ConversationThreadRow): String = when (row) {
     is ConversationThreadRow.MessageGroup -> "group:${row.id}"
 }
 
-private fun ConversationThreadRow.signature(): String = when (this) {
-    is ConversationThreadRow.DayDivider -> "day:${dayStartMillis}"
-    is ConversationThreadRow.MessageGroup ->
-        replies.joinToString(separator = ",", prefix = "group:${id}:") { "${it.id}:${it.syncState.orEmpty()}" }
-}
-
 // region Previews
 
 @Preview(name = "AvatarCircle — initials")
@@ -603,19 +636,19 @@ private fun MessageGroupRowPreview() {
 @Preview(name = "Composer — empty")
 @Composable
 private fun ComposerEmptyPreview() {
-    MaterialTheme { Composer(text = "", onTextChanged = {}, onSendTapped = {}, isSending = false) }
+    MaterialTheme { Composer(state = rememberTextFieldState(), onSendTapped = {}, isSending = false) }
 }
 
 @Preview(name = "Composer — with text")
 @Composable
 private fun ComposerWithTextPreview() {
-    MaterialTheme { Composer(text = "I need help with my order", onTextChanged = {}, onSendTapped = {}, isSending = false) }
+    MaterialTheme { Composer(state = rememberTextFieldState("I need help with my order"), onSendTapped = {}, isSending = false) }
 }
 
 @Preview(name = "Composer — sending")
 @Composable
 private fun ComposerSendingPreview() {
-    MaterialTheme { Composer(text = "I need help with my order", onTextChanged = {}, onSendTapped = {}, isSending = true) }
+    MaterialTheme { Composer(state = rememberTextFieldState("I need help with my order"), onSendTapped = {}, isSending = true) }
 }
 
 @Preview(name = "ConversationDetail — loading")
@@ -626,7 +659,7 @@ private fun ConversationDetailLoadingPreview() {
             uiState = ConversationDetailUiState(
                 isLoading = true,
             ),
-            onComposerTextChanged = {},
+            composerState = rememberTextFieldState(),
             onLoadOlderRequested = {},
             onSendTapped = {},
         )
@@ -654,7 +687,7 @@ private fun ConversationDetailThreadPreview() {
             uiState = ConversationDetailUiState(
                 threadRows = buildConversationThreadRows(replies),
             ),
-            onComposerTextChanged = {},
+            composerState = rememberTextFieldState(),
             onLoadOlderRequested = {},
             onSendTapped = {},
         )
@@ -680,10 +713,10 @@ private fun previewReply(
 
 // endregion
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Composer(
-    text: String,
-    onTextChanged: (String) -> Unit,
+    state: TextFieldState,
     onSendTapped: () -> Unit,
     isSending: Boolean,
 ) {
@@ -697,14 +730,17 @@ private fun Composer(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            // A fully-rounded (pill) composer clips text near its curved ends, so
+            // horizontally inset the text content by the corner radius. Using a fixed
+            // radius (rather than the percent-based pill) keeps that inset stable as the
+            // field grows to multiple lines. 28.dp matches the single-line pill radius.
+            val cornerRadius = 28.dp
             TextField(
-                value = text,
-                onValueChange = onTextChanged,
+                state = state,
                 modifier = Modifier.weight(1f),
-                minLines = 1,
-                maxLines = 4,
+                lineLimits = TextFieldLineLimits.MultiLine(minHeightInLines = 1, maxHeightInLines = 4),
                 placeholder = { Text("Write a reply") },
-                shape = RoundedCornerShape(50),
+                shape = RoundedCornerShape(cornerRadius),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -716,10 +752,14 @@ private fun Composer(
                     disabledIndicatorColor = Color.Transparent,
                     errorIndicatorColor = Color.Transparent,
                 ),
+                contentPadding = TextFieldDefaults.contentPaddingWithoutLabel(
+                    start = cornerRadius,
+                    end = cornerRadius,
+                ),
             )
             FilledIconButton(
                 onClick = onSendTapped,
-                enabled = text.isNotBlank() && !isSending,
+                enabled = state.text.isNotBlank() && !isSending,
             ) {
                 if (isSending) {
                     CircularProgressIndicator(

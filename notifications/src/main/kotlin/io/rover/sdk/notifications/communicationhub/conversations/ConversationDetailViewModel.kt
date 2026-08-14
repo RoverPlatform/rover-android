@@ -17,6 +17,8 @@
 
 package io.rover.sdk.notifications.communicationhub.conversations
 
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.rover.sdk.core.logging.log
@@ -50,7 +52,7 @@ internal class ConversationDetailViewModel(
         NoOpConversationPushNotificationPresenter,
 ) : ViewModel() {
     private val activeConversationId: String = conversationId
-    private val _composerText = MutableStateFlow("")
+    val composerTextState: TextFieldState = TextFieldState()
     private val _isLoadingOlder = MutableStateFlow(false)
     private val _isSending = MutableStateFlow(false)
     private val _error = MutableStateFlow<String?>(null)
@@ -64,33 +66,30 @@ internal class ConversationDetailViewModel(
     val effects: Flow<ConversationDetailEffect> = _effects.receiveAsFlow()
 
     val uiState: StateFlow<ConversationDetailUiState> = combine(
-        _composerText,
         _isLoadingOlder,
         _isSending,
         _error,
         _lastReadReplyId,
-    ) { composerText, isLoadingOlder, isSending, error, lastReadReplyId ->
-        QuintState(
-            composerText = composerText,
+    ) { isLoadingOlder, isSending, error, lastReadReplyId ->
+        QuadState(
             isLoadingOlder = isLoadingOlder,
             isSending = isSending,
             error = error,
             lastReadReplyId = lastReadReplyId,
         )
-    }.combine(_threadData) { quint, threadData ->
+    }.combine(_threadData) { quad, threadData ->
             ConversationDetailUiState(
                 title = threadData.title,
                 participantAvatarUrl = threadData.participantAvatarUrl,
                 participantBio = threadData.participantBio,
                 replies = threadData.replies,
                 threadRows = threadData.threadRows,
-                composerText = quint.composerText,
                 isLoading = threadData.isLoading,
-                isLoadingOlder = quint.isLoadingOlder,
+                isLoadingOlder = quad.isLoadingOlder,
                 canLoadOlder = threadData.beforeCursor != null,
-                isSending = quint.isSending,
-            error = quint.error,
-            lastReadReplyId = quint.lastReadReplyId,
+                isSending = quad.isSending,
+            error = quad.error,
+            lastReadReplyId = quad.lastReadReplyId,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -151,10 +150,6 @@ internal class ConversationDetailViewModel(
         }
     }
 
-    fun onComposerTextChanged(value: String) {
-        _composerText.value = value
-    }
-
     fun revealed() {
         viewModelScope.launch {
             try {
@@ -168,7 +163,7 @@ internal class ConversationDetailViewModel(
     }
 
     fun onSendTapped() {
-        val message = _composerText.value.trim()
+        val message = composerTextState.text.toString().trim()
         if (message.isEmpty() || _isSending.value) return
 
         viewModelScope.launch {
@@ -182,10 +177,10 @@ internal class ConversationDetailViewModel(
                     message = message,
                     externalId = externalId,
                 )
-                _composerText.value = ""
+                composerTextState.clearText()
             } catch (throwable: Throwable) {
                 if (throwable is kotlinx.coroutines.CancellationException) throw throwable
-                _composerText.value = ""
+                composerTextState.clearText()
                 _error.value = throwable.message
             } finally {
                 _isSending.value = false
@@ -392,8 +387,7 @@ internal class ConversationDetailViewModel(
         }
     }
 
-    private data class QuintState(
-        val composerText: String,
+    private data class QuadState(
         val isLoadingOlder: Boolean,
         val isSending: Boolean,
         val error: String?,
@@ -436,7 +430,6 @@ internal data class ConversationDetailUiState(
     val participantBio: String? = null,
     val replies: List<ConversationReplyRow> = emptyList(),
     val threadRows: List<ConversationThreadRow> = emptyList(),
-    val composerText: String = "",
     val isLoading: Boolean = false,
     val isLoadingOlder: Boolean = false,
     val canLoadOlder: Boolean = false,

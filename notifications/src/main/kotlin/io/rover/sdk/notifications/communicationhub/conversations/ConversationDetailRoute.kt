@@ -98,7 +98,7 @@ internal fun ConversationDetailRoute(
     ) {
         ConversationDetail(
             uiState = uiState,
-            onComposerTextChanged = viewModel::onComposerTextChanged,
+            composerState = viewModel.composerTextState,
             onLoadOlderRequested = viewModel::onLoadOlderRequested,
             onSendTapped = viewModel::onSendTapped,
             onOpenUrl = { url -> linkOpen?.openLink(url, context) },

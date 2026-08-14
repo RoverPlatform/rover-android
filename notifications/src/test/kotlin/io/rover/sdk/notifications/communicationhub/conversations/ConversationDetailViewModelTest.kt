@@ -17,6 +17,7 @@
 
 package io.rover.sdk.notifications.communicationhub.conversations
 
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 
@@ -435,12 +436,12 @@ class ConversationDetailViewModelTest {
             conversationId = "conversation-1",
         )
 
-        viewModel.onComposerTextChanged("Hello")
+        viewModel.composerTextState.setTextAndPlaceCursorAtEnd("Hello")
         viewModel.onSendTapped()
         advanceUntilIdle()
 
         assertThat(viewModel.uiState.value.error, equalTo("Failed to connect to /10.0.2.2:8080"))
-        assertThat(viewModel.uiState.value.composerText, equalTo(""))
+        assertThat(viewModel.composerTextState.text.toString(), equalTo(""))
         assertThat(viewModel.uiState.value.isSending, equalTo(false))
     }
 

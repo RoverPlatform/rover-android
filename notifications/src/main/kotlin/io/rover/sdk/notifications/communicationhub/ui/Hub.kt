@@ -131,6 +131,7 @@ import io.rover.sdk.notifications.conversationPushNotificationPresenter
 import io.rover.sdk.notifications.conversationsRepository
 import io.rover.sdk.notifications.conversationsSync
 import io.rover.sdk.notifications.hubCoordinator
+import io.rover.sdk.notifications.inboxSeenWatermark
 import io.rover.sdk.notifications.postsRepository
 import io.rover.sdk.notifications.roverBadge
 
@@ -227,12 +228,31 @@ fun Hub(
         }
     }
 
+    // Has the home URL question been *answered* yet? This is deliberately distinct from
+    // `experienceURL != null`: a null URL means either "not fetched yet" or "fetched, and there is
+    // no home", and those two must not render the same thing. Treating the in-flight null as "no
+    // home" transiently composes the inbox fallback inside HomeRoute, whose reveal hook advances the
+    // inbox seen watermark past every stored post and silently zeroes the badge — without the user
+    // ever having seen the inbox. Keyed on isHomeViewEnabled alongside the fetch effect below, so
+    // the two always agree: false (home off) means resolved immediately, since the inbox fallback is
+    // then the real, permanent destination.
+    var homeURLResolved by remember(isHomeViewEnabled) { mutableStateOf(!isHomeViewEnabled) }
+
     // Fetch home view URL when enabled
     LaunchedEffect(isHomeViewEnabled) {
         if (isHomeViewEnabled) {
             log.d("refreshHubExperienceURL start")
-            rover.refreshHubExperienceURL()
+            try {
+                rover.refreshHubExperienceURL()
+            } finally {
+                // Resolved on success *and* failure: a failed or empty fetch legitimately falls back
+                // to the inbox exactly as before, and revealing it there is honest — that is what the
+                // user actually ends up looking at.
+                homeURLResolved = true
+            }
             log.d("refreshHubExperienceURL complete")
+        } else {
+            homeURLResolved = true
         }
     }
 
@@ -543,6 +563,7 @@ fun Hub(
                                 HomeRoute(
                                     isHomeViewEnabled = isHomeViewEnabled,
                                     isInboxEnabled = isInboxEnabled,
+                                    homeURLResolved = homeURLResolved,
                                     isV3Home = isV3Home,
                                     inboxBadgeText = badgeText,
                                     experienceURL = experienceURL,
@@ -703,12 +724,58 @@ private tailrec fun Context.findActivityWindow(): Window? =
     }
 
 /**
+ * What the Hub's "home" route should render right now.
+ *
+ * Split out of [HomeRoute] as a pure value so the in-flight case can be pinned by a plain unit test:
+ * the difference between [Pending] and [Inbox] is the difference between an intact badge and one
+ * silently zeroed by the inbox's reveal hook.
+ */
+internal enum class HomeRouteContent {
+    /** The home experience, at a known URL. */
+    Home,
+
+    /** The inbox, either as the configured destination or as the settled fallback. */
+    Inbox,
+
+    /** Neither home nor inbox is available: an empty themed surface. */
+    Empty,
+
+    /**
+     * The home URL fetch is still in flight, so we do not yet know whether there is a home. Render
+     * something neutral and report NO route visibility — in particular do not compose the inbox,
+     * whose reveal advances the seen watermark past every stored post.
+     */
+    Pending,
+}
+
+/**
+ * Decide what the home route shows, distinguishing "the home URL has not come back yet"
+ * ([homeURLResolved] false) from "it came back and there is no home" (resolved, null URL).
+ *
+ * A cached URL from a previous run short-circuits this: [experienceURL] is non-null on the very
+ * first composition and home renders immediately, so [homeURLResolved] only ever gates the
+ * null-URL fallback.
+ */
+internal fun resolveHomeRouteContent(
+    isHomeViewEnabled: Boolean,
+    isInboxEnabled: Boolean,
+    experienceURL: String?,
+    homeURLResolved: Boolean,
+): HomeRouteContent = when {
+    isHomeViewEnabled && experienceURL != null -> HomeRouteContent.Home
+    isHomeViewEnabled && !homeURLResolved -> HomeRouteContent.Pending
+    isInboxEnabled -> HomeRouteContent.Inbox
+    else -> HomeRouteContent.Empty
+}
+
+/**
  * Home route that conditionally displays home view experience or falls back to inbox.
  */
 @Composable
 private fun HomeRoute(
     isHomeViewEnabled: Boolean,
     isInboxEnabled: Boolean,
+    homeURLResolved: Boolean,
     isV3Home: Boolean,
     inboxBadgeText: String?,
     experienceURL: String?,
@@ -721,18 +788,28 @@ private fun HomeRoute(
     linkOpen: LinkOpenInterface?
 ) {
     val navController = LocalExternalNavController.current
-    val navigationState = if (isHomeViewEnabled && experienceURL != null) {
-        HubNavigationState.ShowingHome
-    } else if (isInboxEnabled) {
-        HubNavigationState.ShowingInbox
-    } else {
-        HubNavigationState.ShowingHome
+    val content = resolveHomeRouteContent(
+        isHomeViewEnabled = isHomeViewEnabled,
+        isInboxEnabled = isInboxEnabled,
+        experienceURL = experienceURL,
+        homeURLResolved = homeURLResolved,
+    )
+    // No state while pending: the route is not showing home *or* inbox yet, so reporting either
+    // would be a lie to anything observing hub visibility (push suppression, conversation reveal).
+    val navigationState = when (content) {
+        HomeRouteContent.Home, HomeRouteContent.Empty -> HubNavigationState.ShowingHome
+        HomeRouteContent.Inbox -> HubNavigationState.ShowingInbox
+        HomeRouteContent.Pending -> null
     }
-    val routeVisibilityModifier = Modifier.reportHubRouteVisibility(hubCoordinator, navigationState)
-    ClearHubRouteVisibilityOnDispose(hubCoordinator, navigationState)
+    val routeVisibilityModifier = navigationState
+        ?.let { Modifier.reportHubRouteVisibility(hubCoordinator, it) }
+        ?: Modifier
+    if (navigationState != null) {
+        ClearHubRouteVisibilityOnDispose(hubCoordinator, navigationState)
+    }
 
-    when {
-        isHomeViewEnabled && experienceURL != null -> {
+    when (content) {
+        HomeRouteContent.Home -> {
             // One-inset rule for the App Screens (V3) home: the embedded page owns its own top chrome
             // by injecting the real status-bar inset as safe-area padding, and its full-bleed
             // background paints behind the (transparent, edge-to-edge) status bar. So the Hub must NOT
@@ -791,7 +868,7 @@ private fun HomeRoute(
                 homeExperience()
             }
         }
-        isInboxEnabled -> {
+        HomeRouteContent.Inbox -> {
             // Fallback to inbox if home view not available but inbox is enabled
             MessagesComponent(
                 displayTitle = "Messages",
@@ -803,7 +880,16 @@ private fun HomeRoute(
                 contentPadding = contentPadding
             )
         }
-        else -> {
+        HomeRouteContent.Pending -> {
+            // Home URL fetch still in flight: hold a plain themed surface (same paint as the
+            // no-content case above) rather than briefly composing the inbox, which would reveal
+            // it — and clear the badge — behind the user's back.
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {}
+        }
+        HomeRouteContent.Empty -> {
             // Neither home view nor inbox enabled - show empty surface
             Surface(
                 modifier = routeVisibilityModifier.fillMaxSize(),
@@ -882,6 +968,7 @@ private fun MessagesComponent(
             conversationsRepository = conversationsRepository,
             conversationsSync = conversationsSync,
             syncCoordinator = Rover.shared.resolveSingletonOrFail(SyncCoordinatorInterface::class.java),
+            inboxSeenWatermark = Rover.shared.inboxSeenWatermark,
         )
     }
 
@@ -894,12 +981,42 @@ private fun MessagesComponent(
     // Poll the conversations forward sync while the list is on screen. Bounded by both
     // composition (stops when navigating away, since the destination leaves composition)
     // and lifecycle STARTED (stops while the app is in the background).
+    //
+    // The same two boundaries also advance the inbox seen watermark a second time, so posts that
+    // arrived while the user was looking at the list don't badge once they leave it.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, viewModel) {
+        // Tracks whether this observer has seen an ON_STOP, so the foreground hook below only
+        // fires on a genuine background/foreground round trip. A freshly added observer receives a
+        // catch-up ON_START immediately when the owner is already started, which would otherwise
+        // duplicate the LaunchedEffect reveal at first composition.
+        var wasStopped = false
+        var concealed = false
+        fun concealOnce() {
+            if (!concealed) {
+                concealed = true
+                viewModel.onMessagesListConcealed()
+            }
+        }
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_START -> viewModel.startForwardPolling()
-                Lifecycle.Event.ON_STOP -> viewModel.stopForwardPolling()
+                Lifecycle.Event.ON_START -> {
+                    viewModel.startForwardPolling()
+                    if (wasStopped) {
+                        wasStopped = false
+                        concealed = false
+                        // Returning to the foreground with the list still composed: the reveal
+                        // effect won't re-run, so a post that arrived while backgrounded would
+                        // badge over the open list. Scoped to the watermark/tray only — the
+                        // history backfill must not re-run on every foreground.
+                        viewModel.onMessagesListForegrounded()
+                    }
+                }
+                Lifecycle.Event.ON_STOP -> {
+                    wasStopped = true
+                    viewModel.stopForwardPolling()
+                    concealOnce()
+                }
                 else -> Unit
             }
         }
@@ -907,6 +1024,7 @@ private fun MessagesComponent(
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
             viewModel.stopForwardPolling()
+            concealOnce()
         }
     }
 

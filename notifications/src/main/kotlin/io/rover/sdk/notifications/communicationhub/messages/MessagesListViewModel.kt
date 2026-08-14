@@ -20,8 +20,10 @@ package io.rover.sdk.notifications.communicationhub.messages
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.rover.sdk.core.data.sync.SyncCoordinatorInterface
+import io.rover.sdk.notifications.communicationhub.InboxSeenWatermark
 import io.rover.sdk.notifications.communicationhub.conversations.ConversationsDataSource
 import io.rover.sdk.notifications.communicationhub.conversations.ConversationsHistorySync
+import io.rover.sdk.notifications.communicationhub.conversations.badgeActivityAt
 import io.rover.sdk.notifications.communicationhub.posts.PostsDataSource
 import io.rover.sdk.core.logging.log
 import kotlinx.coroutines.CancellationException
@@ -42,9 +44,34 @@ internal class MessagesListViewModel(
     private val conversationsRepository: ConversationsDataSource,
     private val conversationsSync: ConversationsHistorySync,
     private val syncCoordinator: SyncCoordinatorInterface,
+    private val inboxSeenWatermark: InboxSeenWatermark,
     private val pollingIntervalMs: Long = 10_000L,
 ) : ViewModel() {
     private var pollingJob: Job? = null
+
+    /**
+     * Newest item activity seen in the most recent feed emission — the max over posts' `receivedAt`
+     * and conversations' inbound-only `badgeActivityAt` — or null before the first emission.
+     *
+     * This is the value written to the seen watermark; see [InboxSeenWatermark.markSeen]. Tracked
+     * separately from [_rows] because rows are search filtered, and a value derived from a filtered
+     * list would under-report.
+     */
+    @Volatile
+    private var newestActivityAt: Long? = null
+
+    /**
+     * Whether the messages list is currently in front of the user.
+     *
+     * Set on reveal and on a return to the foreground, cleared when the list is concealed —
+     * mirroring the lifecycle hooks the Hub UI drives (see `Hub.kt`: first composition reveals,
+     * ON_STOP/dispose conceals once, and an ON_START after an ON_STOP foregrounds).
+     *
+     * Volatile because it is written from the main-thread lifecycle callbacks and read by the feed
+     * collector.
+     */
+    @Volatile
+    private var isRevealed: Boolean = false
     private val _rows = MutableStateFlow<List<MessageFeedRow>>(emptyList())
     private val _searchQuery = MutableStateFlow("")
     private val _isExpanded = MutableStateFlow(false)
@@ -96,12 +123,18 @@ internal class MessagesListViewModel(
                 conversationsRepository.getRepliesFlow(),
                 _searchQuery,
             ) { posts, conversations, participants, replies, searchQuery ->
-                MessagesFeedBuilder.buildRows(
-                    posts = posts,
-                    conversations = conversations,
-                    participants = participants,
-                    replies = replies,
-                    searchQuery = searchQuery,
+                MessagesFeedSnapshot(
+                    rows = MessagesFeedBuilder.buildRows(
+                        posts = posts,
+                        conversations = conversations,
+                        participants = participants,
+                        replies = replies,
+                        searchQuery = searchQuery,
+                    ),
+                    newestActivityAt = listOfNotNull(
+                        posts.maxOfOrNull { it.post.receivedAt },
+                        conversations.mapNotNull { it.badgeActivityAt }.maxOrNull(),
+                    ).maxOrNull(),
                 )
             }
                 .flowOn(Dispatchers.Default)
@@ -109,8 +142,25 @@ internal class MessagesListViewModel(
                     _isLoading.value = false
                     _error.value = exception.message
                 }
-                .collect { rows ->
-                    _rows.value = rows
+                .collect { snapshot ->
+                    newestActivityAt = snapshot.newestActivityAt
+                    if (isRevealed) {
+                        // Mark on arrival: the user is looking at the list right now, so a post or
+                        // conversation update that syncs in underneath them has been seen the
+                        // moment it appears.
+                        //
+                        // The watermark only moves when it is handed an observed timestamp, so it
+                        // cannot be pushed to "now" on reveal to cover items that land during the
+                        // visit; absorbing them has to happen explicitly, here, as the store
+                        // changes. Without this an item arriving mid-view would badge over the
+                        // open list until the user navigated away — the same problem the
+                        // foreground hook solves for the background/return case.
+                        //
+                        // markSeen is monotonic and null-tolerant, so a repeated or stale value
+                        // costs nothing.
+                        inboxSeenWatermark.markSeen(snapshot.newestActivityAt)
+                    }
+                    _rows.value = snapshot.rows
                     _isLoading.value = false
                     // note: deliberately not clearing _error here; rows re-emit on any database
                     // change, which would silently dismiss a refresh/backfill error. The error
@@ -148,6 +198,9 @@ internal class MessagesListViewModel(
     }
 
     fun onMessagesListRevealed() {
+        isRevealed = true
+        markInboxSeen()
+
         viewModelScope.launch {
             try {
                 conversationsSync.triggerEagerBackwardHistoryBackfill()
@@ -157,6 +210,45 @@ internal class MessagesListViewModel(
                 _error.value = exception.message ?: "Failed to load conversation history"
             }
         }
+    }
+
+    /**
+     * The messages list has stopped being visible (backgrounded, or navigated away from).
+     *
+     * The watermark is advanced once more here to absorb the final feed emission, and the flag is
+     * cleared so items arriving after the user has left badge normally.
+     */
+    fun onMessagesListConcealed() {
+        isRevealed = false
+        markInboxSeen()
+    }
+
+    /**
+     * The messages list has come back into the foreground after an ON_STOP, without ever leaving
+     * composition (the user backgrounded the app on the list and returned to it).
+     *
+     * [onMessagesListRevealed] does not re-run in this situation (it is bound to first
+     * composition), so an item that arrived while backgrounded would badge over the open list
+     * until the user navigated away. Deliberately narrower than the reveal handler: it advances the
+     * watermark only, and must not re-trigger the conversations history backfill on every app
+     * foreground.
+     */
+    fun onMessagesListForegrounded() {
+        isRevealed = true
+        markInboxSeen()
+    }
+
+    /**
+     * Advances the inbox seen watermark, zeroing the badge.
+     *
+     * The watermark is set to the newest item activity we've observed — post `receivedAt` or
+     * conversation inbound-only `badgeActivityAt` — because those are the same timestamps the
+     * badge compares. It is null before the first feed emission (e.g. reveal racing the first
+     * query) or when the inbox has no badgeable activity, in which case there is nothing to absorb
+     * and the watermark stays put — the device clock is never written here.
+     */
+    private fun markInboxSeen() {
+        inboxSeenWatermark.markSeen(newestActivityAt)
     }
 
     /**
@@ -207,6 +299,16 @@ internal class MessagesListViewModel(
         _error.value = null
     }
 }
+
+/**
+ * One emission of the combined messages feed: the rows to display, plus the newest item activity
+ * in that emission (before search filtering) — max over posts' `receivedAt` and conversations'
+ * inbound-only `badgeActivityAt`.
+ */
+private data class MessagesFeedSnapshot(
+    val rows: List<MessageFeedRow>,
+    val newestActivityAt: Long?,
+)
 
 internal data class MessagesListUiState(
     val rows: List<MessageFeedRow> = emptyList(),

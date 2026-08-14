@@ -274,8 +274,6 @@ internal class ConversationsRepository(
         return resetVersion.asStateFlow()
     }
 
-    fun getUnreadConversationCountFlow(): Flow<Int> = conversationsDao.getUnreadConversationCountFlow()
-
     override fun getRepliesBackwardCursorFlow(conversationId: String): Flow<String?> {
         return syncStateDao.getBackwardCursorFlow(repliesSyncKey(conversationId))
     }

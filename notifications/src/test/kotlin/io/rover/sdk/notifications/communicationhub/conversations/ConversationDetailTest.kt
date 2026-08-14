@@ -17,10 +17,10 @@
 
 package io.rover.sdk.notifications.communicationhub.conversations
 
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -32,12 +32,15 @@ import io.rover.sdk.notifications.communicationhub.messages.formatReplyClockTime
 
 
 
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.util.TimeZone
 import java.util.concurrent.atomic.AtomicInteger
 
 @RunWith(RobolectricTestRunner::class)
@@ -45,6 +48,20 @@ import java.util.concurrent.atomic.AtomicInteger
 class ConversationDetailTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    private val originalTimeZone = TimeZone.getDefault()
+
+    @Before
+    fun setUp() {
+        // Day-divider placement in buildConversationThreadRows depends on the default time
+        // zone; pin it so the day-boundary tests are deterministic.
+        TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"))
+    }
+
+    @After
+    fun tearDown() {
+        TimeZone.setDefault(originalTimeZone)
+    }
 
     @Test
     fun participantInfoNotRenderedInComposableBodyWhenAvatarMissing() {
@@ -58,7 +75,7 @@ class ConversationDetailTest {
                         participantAvatarUrl = null,
                         participantBio = "Concert concierge",
                     ),
-                    onComposerTextChanged = {},
+                    composerState = rememberTextFieldState(),
                     onLoadOlderRequested = {},
                     onSendTapped = {},
                 )
@@ -82,7 +99,7 @@ class ConversationDetailTest {
                         participantAvatarUrl = "https://example.com/avatar.jpg",
                         participantBio = "   ",
                     ),
-                    onComposerTextChanged = {},
+                    composerState = rememberTextFieldState(),
                     onLoadOlderRequested = {},
                     onSendTapped = {},
                 )
@@ -106,7 +123,7 @@ class ConversationDetailTest {
                             testReply("1", "Hello"),
                         ),
                     ),
-                    onComposerTextChanged = {},
+                    composerState = rememberTextFieldState(),
                     onLoadOlderRequested = {},
                     onSendTapped = {},
                 )
@@ -128,7 +145,7 @@ class ConversationDetailTest {
                             testReply("1", "Hello"),
                         ),
                     ),
-                    onComposerTextChanged = {},
+                    composerState = rememberTextFieldState(),
                     onLoadOlderRequested = {},
                     onSendTapped = {},
                 )
@@ -163,7 +180,7 @@ class ConversationDetailTest {
                             ),
                         ),
                     ),
-                    onComposerTextChanged = {},
+                    composerState = rememberTextFieldState(),
                     onLoadOlderRequested = {},
                     onSendTapped = {},
                 )
@@ -200,7 +217,7 @@ class ConversationDetailTest {
                             )
                         ),
                     ),
-                    onComposerTextChanged = {},
+                    composerState = rememberTextFieldState(),
                     onLoadOlderRequested = {},
                     onSendTapped = {},
                 )
@@ -235,7 +252,7 @@ class ConversationDetailTest {
                             )
                         ),
                     ),
-                    onComposerTextChanged = {},
+                    composerState = rememberTextFieldState(),
                     onLoadOlderRequested = {},
                     onSendTapped = {},
                 )
@@ -278,7 +295,7 @@ class ConversationDetailTest {
                             )
                         ),
                     ),
-                    onComposerTextChanged = {},
+                    composerState = rememberTextFieldState(),
                     onLoadOlderRequested = {},
                     onSendTapped = {},
                 )
@@ -315,7 +332,7 @@ class ConversationDetailTest {
                             )
                         ),
                     ),
-                    onComposerTextChanged = {},
+                    composerState = rememberTextFieldState(),
                     onLoadOlderRequested = {},
                     onSendTapped = {},
                 )
@@ -351,7 +368,7 @@ class ConversationDetailTest {
                             )
                         ),
                     ),
-                    onComposerTextChanged = {},
+                    composerState = rememberTextFieldState(),
                     onLoadOlderRequested = {},
                     onSendTapped = {},
                 )
@@ -373,7 +390,7 @@ class ConversationDetailTest {
                             testReply("1", "Hello"),
                         ),
                     ),
-                    onComposerTextChanged = {},
+                    composerState = rememberTextFieldState(),
                     onLoadOlderRequested = {},
                     onSendTapped = {},
                 )
@@ -398,7 +415,7 @@ class ConversationDetailTest {
             MaterialTheme {
                 ConversationDetail(
                     uiState = uiState.value,
-                    onComposerTextChanged = {},
+                    composerState = rememberTextFieldState(),
                     onLoadOlderRequested = { loadOlderCount.incrementAndGet() },
                     onSendTapped = {},
                 )
@@ -409,7 +426,7 @@ class ConversationDetailTest {
             uiState.value = uiState.value.copy(canLoadOlder = true)
         }
 
-        composeRule.onNode(hasScrollAction()).performScrollToIndex(29)
+        composeRule.onNodeWithTag("conversation-thread-list").performScrollToIndex(29)
 
         composeRule.waitUntil(5_000) {
             loadOlderCount.get() == 1
@@ -423,6 +440,9 @@ class ConversationDetailTest {
         val uiState = mutableStateOf(
             baseUiState.copy(
                 isLoading = false,
+                replies = buildRepliesForAutoScrollTest(
+                    newestReplies = listOf("Newest reply"),
+                ),
                 threadRows = buildRowsForAutoScrollTest(
                     newestReplies = listOf("Newest reply"),
                 ),
@@ -433,17 +453,20 @@ class ConversationDetailTest {
             MaterialTheme {
                 ConversationDetail(
                     uiState = uiState.value,
-                    onComposerTextChanged = {},
+                    composerState = rememberTextFieldState(),
                     onLoadOlderRequested = {},
                     onSendTapped = {},
                 )
             }
         }
 
-        composeRule.onNode(hasScrollAction()).performScrollToIndex(1)
+        composeRule.onNodeWithTag("conversation-thread-list").performScrollToIndex(1)
 
         composeRule.runOnIdle {
             uiState.value = uiState.value.copy(
+                replies = buildRepliesForAutoScrollTest(
+                    newestReplies = listOf("Newest reply", "Appended reply"),
+                ),
                 threadRows = buildRowsForAutoScrollTest(
                     newestReplies = listOf("Newest reply", "Appended reply"),
                 ),
@@ -457,11 +480,114 @@ class ConversationDetailTest {
         composeRule.onNodeWithText("Appended reply").assertIsDisplayed()
     }
 
+    @Test
+    fun scrollsToRevealOutgoingReplyThatStartsANewDay() {
+        // The repro shape: the newest message is from an earlier day, so the send inserts TWO
+        // rows — a DayDivider plus a new MessageGroup — and the previously-newest row shifts
+        // from index 0 to index 2 (the key-anchored scroll position follows it off-screen).
+        val history = viewportFillingHistory(dayStart = ConversationTestFixtures.T0)
+        val uiState = mutableStateOf(
+            baseUiState.copy(
+                isLoading = false,
+                replies = history,
+                threadRows = buildConversationThreadRows(history),
+            )
+        )
+
+        composeRule.setContent {
+            MaterialTheme {
+                ConversationDetail(
+                    uiState = uiState.value,
+                    composerState = rememberTextFieldState(),
+                    onLoadOlderRequested = {},
+                    onSendTapped = {},
+                )
+            }
+        }
+
+        composeRule.runOnIdle {
+            val withSend = history + outgoingSend(sentAt = ConversationTestFixtures.T1 + TWELVE_HOURS_MILLIS)
+            uiState.value = uiState.value.copy(
+                replies = withSend,
+                threadRows = buildConversationThreadRows(withSend),
+            )
+        }
+
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Fresh outgoing reply").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onNodeWithText("Fresh outgoing reply").assertIsDisplayed()
+    }
+
+    @Test
+    fun scrollsToRevealOutgoingReplySentOnTheSameDay() {
+        // Same-day send: only one new row (a new MessageGroup, no divider).
+        val history = viewportFillingHistory(dayStart = ConversationTestFixtures.T0)
+        val uiState = mutableStateOf(
+            baseUiState.copy(
+                isLoading = false,
+                replies = history,
+                threadRows = buildConversationThreadRows(history),
+            )
+        )
+
+        composeRule.setContent {
+            MaterialTheme {
+                ConversationDetail(
+                    uiState = uiState.value,
+                    composerState = rememberTextFieldState(),
+                    onLoadOlderRequested = {},
+                    onSendTapped = {},
+                )
+            }
+        }
+
+        composeRule.runOnIdle {
+            val withSend = history + outgoingSend(sentAt = ConversationTestFixtures.T0 + SIXTEEN_HOURS_MILLIS)
+            uiState.value = uiState.value.copy(
+                replies = withSend,
+                threadRows = buildConversationThreadRows(withSend),
+            )
+        }
+
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Fresh outgoing reply").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.onNodeWithText("Fresh outgoing reply").assertIsDisplayed()
+    }
+
     private companion object {
         val baseUiState = ConversationDetailUiState(
             isLoading = false,
             canLoadOlder = false,
-            composerText = "",
+        )
+
+        const val THREE_MINUTES_MILLIS = 3 * 60 * 1000L
+        const val TWELVE_HOURS_MILLIS = 12 * 60 * 60 * 1000L
+        const val SIXTEEN_HOURS_MILLIS = 16 * 60 * 60 * 1000L
+
+        // 30 incoming replies spaced >2 minutes apart, so each forms its own MessageGroup —
+        // more than enough rows to overflow the test viewport. Starting mid-day keeps every
+        // reply (and the same-day send four hours later) on one local calendar day.
+        fun viewportFillingHistory(dayStart: Long): List<ConversationReplyRow> = (1..30).map { index ->
+            ConversationTestFixtures.replyRow(
+                id = "history-$index",
+                text = "History reply #$index",
+                isOutgoing = false,
+                sentAt = dayStart + TWELVE_HOURS_MILLIS + index * THREE_MINUTES_MILLIS,
+            )
+        }
+
+        fun outgoingSend(sentAt: Long) = ConversationTestFixtures.replyRow(
+            id = "sent-local",
+            text = "Fresh outgoing reply",
+            senderId = null,
+            senderName = null,
+            isOutgoing = true,
+            sentAt = sentAt,
+            syncState = ReplyEntity.SYNC_STATE_QUEUED,
         )
 
         fun testReply(
@@ -498,6 +624,11 @@ class ConversationDetailTest {
                 ),
             )
         }
+
+        fun buildRepliesForAutoScrollTest(newestReplies: List<String>): List<ConversationReplyRow> =
+            listOf(testReply("older", "Older reply")) + newestReplies.mapIndexed { index, text ->
+                testReply(id = "newest-${index + 1}", text = text)
+            }
 
         fun buildRowsForAutoScrollTest(newestReplies: List<String>): List<ConversationThreadRow> {
             val olderGroup = ConversationThreadRow.MessageGroup(

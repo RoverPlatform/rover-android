@@ -33,19 +33,6 @@ internal interface ConversationsDao {
     @Query("SELECT * FROM conversations WHERE id = :conversationId")
     suspend fun getConversationById(conversationId: String): ConversationEntity?
 
-    @Query(
-        """
-        SELECT COUNT(*) FROM conversations
-        WHERE
-            COALESCE(lastIncomingReplyAt, lastReplyAt) IS NOT NULL
-            AND (
-                lastReadAt IS NULL
-                OR COALESCE(lastIncomingReplyAt, lastReplyAt) > lastReadAt
-            )
-        """
-    )
-    fun getUnreadConversationCountFlow(): Flow<Int>
-
     @Upsert
     suspend fun upsertConversation(conversation: ConversationEntity)
 

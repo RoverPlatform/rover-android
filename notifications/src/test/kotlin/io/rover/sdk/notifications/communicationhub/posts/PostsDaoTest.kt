@@ -49,15 +49,17 @@ class PostsDaoTest : RoverEngageTestBase() {
     }
 
     @Test
-    fun postsMarkAsReadUpdatesUnreadCount() = runBlocking {
+    fun postsMarkAsReadUpdatesReadState() = runBlocking {
         val dao = database!!.postsDao()
         val p1 = PostEntity("p1", "S1", "P1", 1L, null, false, null, null)
         val p2 = PostEntity("p2", "S2", "P2", 2L, null, true, null, null)
         dao.upsertPosts(listOf(p1, p2))
 
-        assertThat(dao.getUnreadCount(), equalTo(1))
+        assertThat(dao.getPostById("p1")?.isRead, equalTo(false))
         dao.markPostAsRead("p1")
-        assertThat(dao.getUnreadCount(), equalTo(0))
+        assertThat(dao.getPostById("p1")?.isRead, equalTo(true))
+        // untouched posts keep their state
+        assertThat(dao.getPostById("p2")?.isRead, equalTo(true))
     }
 
     @Test

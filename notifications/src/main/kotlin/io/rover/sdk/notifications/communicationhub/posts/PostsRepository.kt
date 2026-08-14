@@ -75,10 +75,6 @@ internal class PostsRepository(
         postsDao.markPostAsRead(postId)
     }
 
-    suspend fun getBadgeCount(): Int = withContext(Dispatchers.IO) {
-        postsDao.getUnreadCount()
-    }
-
     suspend fun savePostFromPush(postItem: PostItem): Unit = withContext(Dispatchers.IO) {
         try {
             log.i("Saving post from push notification: ${postItem.id}")

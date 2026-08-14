@@ -562,6 +562,8 @@ class ConversationsRepositoryFakeSyncTest : RoverEngageTestBase() {
             .whenever(mockEngageApiService)
             .sendConversationReply(eq("conversation-1"), any())
 
+        val conversationBeforeSend = database!!.conversationsDao()
+            .getConversationById("conversation-1")
         val externalId = conversationsRepository.sendReply(
             conversationId = "conversation-1",
             message = "Hello"
@@ -581,6 +583,12 @@ class ConversationsRepositoryFakeSyncTest : RoverEngageTestBase() {
         assertThat(replies.first().senderType, equalTo("fan"))
         assertThat(replies.first().participantID, equalTo(null as String?))
         assertThat(replies.first().externalID, equalTo(externalId))
+        // The optimistic insert is a reply-row change only. In particular, it does not advance
+        // lastReplyAt on the conversation row that the badge observes.
+        assertThat(
+            database!!.conversationsDao().getConversationById("conversation-1"),
+            equalTo(conversationBeforeSend),
+        )
         assertThat(replies.first().content, equalTo(listOf(io.rover.sdk.notifications.communicationhub.conversations.ReplyContentBlock(
             type = io.rover.sdk.notifications.communicationhub.conversations.ReplyContentBlock.TYPE_TEXT,
             text = "Hello",

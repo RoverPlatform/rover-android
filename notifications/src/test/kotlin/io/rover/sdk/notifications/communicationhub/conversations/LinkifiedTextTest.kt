@@ -99,6 +99,82 @@ class LinkifiedTextTest {
     }
 
     @Test
+    fun detectsCustomSchemeDeepLink() {
+        val text = "Open rv-product-support://testbench.rover.io/default-variant now"
+        val annotated = linkify(text)
+
+        assertThat(annotated.text, equalTo(text))
+        val links = annotated.links()
+        assertThat(links.size, equalTo(1))
+        val expectedUrl = "rv-product-support://testbench.rover.io/default-variant"
+        assertThat(links[0].first, equalTo(expectedUrl))
+        val expectedStart = text.indexOf(expectedUrl)
+        assertThat(
+            links[0].second,
+            equalTo(expectedStart until expectedStart + expectedUrl.length),
+        )
+    }
+
+    @Test
+    fun customSchemeDeepLinkAsEntireMessage() {
+        val text = "rv-product-support://testbench.rover.io/default-variant"
+        val annotated = linkify(text)
+
+        val links = annotated.links()
+        assertThat(links.size, equalTo(1))
+        assertThat(links[0].first, equalTo(text))
+    }
+
+    @Test
+    fun retainsBalancedParenthesesInUrl() {
+        val text = "See https://en.wikipedia.org/wiki/Rover_(disambiguation) here"
+        val annotated = linkify(text)
+
+        val links = annotated.links()
+        assertThat(links.size, equalTo(1))
+        assertThat(
+            links[0].first,
+            equalTo("https://en.wikipedia.org/wiki/Rover_(disambiguation)"),
+        )
+    }
+
+    @Test
+    fun stripsTrailingClosingParenWhenUnbalanced() {
+        val text = "Open (rv-product-support://testbench.rover.io/default-variant) now"
+        val annotated = linkify(text)
+
+        val links = annotated.links()
+        assertThat(links.size, equalTo(1))
+        assertThat(
+            links[0].first,
+            equalTo("rv-product-support://testbench.rover.io/default-variant"),
+        )
+    }
+
+    @Test
+    fun stripsTrailingAngleBracket() {
+        val text = "Link <https://example.com/page>"
+        val annotated = linkify(text)
+
+        val links = annotated.links()
+        assertThat(links.size, equalTo(1))
+        assertThat(links[0].first, equalTo("https://example.com/page"))
+    }
+
+    @Test
+    fun stripsTrailingSentencePunctuationFromDeepLink() {
+        val text = "Go to rv-product-support://testbench.rover.io/default-variant."
+        val annotated = linkify(text)
+
+        val links = annotated.links()
+        assertThat(links.size, equalTo(1))
+        assertThat(
+            links[0].first,
+            equalTo("rv-product-support://testbench.rover.io/default-variant"),
+        )
+    }
+
+    @Test
     fun textWithoutLinksHasNoAnnotations() {
         val text = "Hello there, how are you?"
         val annotated = linkify(text)

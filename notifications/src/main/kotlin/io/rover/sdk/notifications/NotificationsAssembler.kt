@@ -78,6 +78,7 @@ import io.rover.sdk.notifications.communicationhub.conversations.ParticipantsSyn
 import io.rover.sdk.notifications.communicationhub.posts.PostsSync
 import io.rover.sdk.notifications.communicationhub.posts.SubscriptionsSync
 import io.rover.sdk.notifications.communicationhub.AndroidDeliveredHubNotificationClearer
+import io.rover.sdk.notifications.communicationhub.InboxSeenWatermark
 import io.rover.sdk.notifications.communicationhub.navigation.HubCoordinator
 import io.rover.sdk.notifications.communicationhub.sync.HubSyncCoordinator
 import io.rover.sdk.notifications.communicationhub.conversations.AndroidConversationPushNotificationPresenter
@@ -368,6 +369,15 @@ class NotificationsAssembler @JvmOverloads constructor(
         
         container.register(
             Scope.Singleton,
+            InboxSeenWatermark::class.java
+        ) { resolver ->
+            InboxSeenWatermark(
+                localStorage = resolver.resolveSingletonOrFail(LocalStorage::class.java),
+            )
+        }
+
+        container.register(
+            Scope.Singleton,
             HubSyncCoordinator::class.java
         ) { resolver ->
             val database = resolver.resolveSingletonOrFail(RoverEngageDatabase::class.java)
@@ -382,6 +392,7 @@ class NotificationsAssembler @JvmOverloads constructor(
                 transactionRunner = RoomConversationsTransactionRunner(database),
                 hubCoordinator = resolver.resolveSingletonOrFail(HubCoordinator::class.java),
                 deliveredHubNotificationClearer = AndroidDeliveredHubNotificationClearer(applicationContext),
+                inboxSeenWatermark = resolver.resolveSingletonOrFail(InboxSeenWatermark::class.java),
             )
         }
 
@@ -507,6 +518,8 @@ class NotificationsAssembler @JvmOverloads constructor(
             RoverBadge(
                 postsRepository = resolver.resolveSingletonOrFail(PostsRepository::class.java),
                 conversationsRepository = resolver.resolveSingletonOrFail(ConversationsRepository::class.java),
+                inboxSeenWatermark = resolver.resolveSingletonOrFail(InboxSeenWatermark::class.java),
+                configManager = resolver.resolveSingletonOrFail(ConfigManager::class.java),
             )
         }
         
@@ -647,6 +660,9 @@ internal val Rover.conversationsRepository: ConversationsRepository
 
 internal val Rover.conversationsSync: ConversationsSync
     get() = this.resolve(ConversationsSync::class.java) ?: throw missingDependencyError("ConversationsSync")
+
+internal val Rover.inboxSeenWatermark: InboxSeenWatermark
+    get() = this.resolve(InboxSeenWatermark::class.java) ?: throw missingDependencyError("InboxSeenWatermark")
 
 private fun missingDependencyError(name: String): Throwable {
     throw RuntimeException("Dependency not registered: $name.  Did you include NotificationsAssembler() in the assembler list?")

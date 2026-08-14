@@ -21,6 +21,7 @@ import io.rover.sdk.core.data.sync.SyncResetHandler
 import io.rover.sdk.core.data.sync.SyncResetRequiredException
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.notifications.communicationhub.DeliveredHubNotificationClearer
+import io.rover.sdk.notifications.communicationhub.InboxSeenWatermark
 import io.rover.sdk.notifications.communicationhub.conversations.ConversationsDao
 import io.rover.sdk.notifications.communicationhub.conversations.ConversationsTransactionRunner
 import io.rover.sdk.notifications.communicationhub.conversations.ParticipantsDao
@@ -167,6 +168,7 @@ internal class HubSyncCoordinator(
     private val transactionRunner: ConversationsTransactionRunner? = null,
     private val hubCoordinator: HubCoordinator = HubCoordinator(),
     private val deliveredHubNotificationClearer: DeliveredHubNotificationClearer? = null,
+    private val inboxSeenWatermark: InboxSeenWatermark? = null,
 ) : SyncResetHandler {
     private val generation = AtomicLong(0L)
     private val resetMutex = Mutex()
@@ -322,6 +324,11 @@ internal class HubSyncCoordinator(
                 } else {
                     log.w("Hub reset requested without database dependencies; only generation and observers will be updated.")
                 }
+
+                // The watermark belongs to the previous identity, and the post and conversation
+                // history is about to be refetched from scratch. Resetting it to now keeps that
+                // refetched history from badging as new content.
+                inboxSeenWatermark?.resetToNow()
 
                 // Cancel any Hub push notifications still sitting in the tray. They predate the
                 // identity change that triggered the 410 and now point at content that was just

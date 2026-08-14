@@ -17,8 +17,12 @@
 
 package io.rover.sdk.notifications.communicationhub.badge
 
+import io.rover.sdk.core.data.config.ConfigManager
 import io.rover.sdk.core.logging.log
-import io.rover.sdk.notifications.communicationhub.conversations.ConversationsRepository
+import io.rover.sdk.notifications.communicationhub.InboxSeenWatermark
+import io.rover.sdk.notifications.communicationhub.conversations.ConversationsDataSource
+import io.rover.sdk.notifications.communicationhub.conversations.badgeActivityAt
+import io.rover.sdk.notifications.communicationhub.conversations.isUnread
 import io.rover.sdk.notifications.communicationhub.posts.PostsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,10 +42,18 @@ import org.reactivestreams.Publisher
  *
  * This class observes the Rover Engage API repository for changes and provides
  * reactive badge count information that can be consumed by Jetpack Compose or traditional Views.
+ *
+ * Posts and conversations contribute by the same rule: an item counts when it is *both* unread
+ * *and* has activity after the [InboxSeenWatermark] (the last time the user looked at the inbox) —
+ * `receivedAt` for posts, [badgeActivityAt] for conversations. Conversation activity is
+ * inbound-only so sending a reply cannot badge the user's own activity. See [InboxSeenWatermark]
+ * for why the watermark is needed on top of read state.
  */
 internal class RoverBadge(
     private val postsRepository: PostsRepository,
-    private val conversationsRepository: ConversationsRepository,
+    private val conversationsRepository: ConversationsDataSource,
+    private val inboxSeenWatermark: InboxSeenWatermark,
+    private val configManager: ConfigManager,
 ) : RoverBadgeInterface {
     
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -57,23 +69,47 @@ internal class RoverBadge(
     override fun newBadgePublisher(): Publisher<Int> = _newBadgePublisherFlow.asPublisher(scope.coroutineContext)
     
     private fun observePostsChanges() {
-        postsRepository.getPostsFlow()
-            .combine(conversationsRepository.getUnreadConversationCountFlow()) { postsWithSubscriptions, unreadConversations ->
-                val unreadPosts = postsWithSubscriptions.count { !it.post.isRead }
-                unreadPosts + unreadConversations
+        combine(
+            postsRepository.getPostsFlow(),
+            conversationsRepository.getConversationsFlow(),
+            inboxSeenWatermark.seenAt,
+            configManager.config,
+        ) { postsWithSubscriptions, conversations, seenAtMillis, config ->
+            if (!config.hub.isInboxEnabled) {
+                return@combine 0
             }
+
+            // Strictly greater than: an item delivered in the same millisecond the user opened the
+            // inbox counts as seen. Read items never count, so opening a single post or
+            // conversation from a push tap or deep link removes exactly that item from the badge.
+            val newPosts = postsWithSubscriptions.count {
+                it.post.receivedAt > seenAtMillis && !it.post.isRead
+            }
+            val newConversations = conversations.count {
+                val badgeActivityAt = it.badgeActivityAt
+                it.isUnread && badgeActivityAt != null && badgeActivityAt > seenAtMillis
+            }
+            newPosts + newConversations
+        }
             .distinctUntilChanged()
-            .onEach { unreadCount ->
-                log.v("Rover badge count updated: $unreadCount")
+            .onEach { newCount ->
+                log.v("Rover badge count updated: $newCount")
                 val badgeValue = when {
-                    unreadCount <= 0 -> null
-                    unreadCount > 99 -> "99+"
-                    else -> unreadCount.toString()
+                    newCount <= 0 -> null
+                    newCount > MAX_DISPLAYED_COUNT -> "$MAX_DISPLAYED_COUNT+"
+                    else -> newCount.toString()
                 }
 
-                _newBadgePublisherFlow.value = unreadCount
+                _newBadgePublisherFlow.value = newCount.coerceAtMost(MAX_DISPLAYED_COUNT)
                 _newBadgeFlow.value = badgeValue
             }
             .launchIn(scope)
+    }
+
+    private companion object {
+        /**
+         * Counts above this are displayed as "9+" (and clamped to 9 on the numeric publisher).
+         */
+        const val MAX_DISPLAYED_COUNT = 9
     }
 }

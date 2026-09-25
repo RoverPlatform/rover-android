@@ -17,9 +17,12 @@
 
 package io.rover.sdk.notifications.communicationhub.conversations
 
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import androidx.test.core.app.ApplicationProvider
+import com.natpryce.hamkrest.absent
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import io.rover.sdk.core.data.config.ConfigManager
@@ -32,6 +35,7 @@ import io.rover.sdk.notifications.communicationhub.ui.ShowConversationActivity
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import java.net.URI
 
@@ -61,8 +65,28 @@ class ShowConversationRouteTest {
         return route to hubCoordinator
     }
 
+    /**
+     * Hub coordination is only used when an installed Activity can actually handle the configured
+     * deep link, so tests exercising that path have to register a handler for it.
+     */
+    private fun registerHandlerFor(scheme: String, authority: String) {
+        val hubActivity = ComponentName(context.packageName, "TestHubActivity")
+        shadowOf(context.packageManager).apply {
+            addActivityIfNotPresent(hubActivity)
+            addIntentFilterForActivity(
+                hubActivity,
+                IntentFilter(Intent.ACTION_VIEW).apply {
+                    addCategory(Intent.CATEGORY_DEFAULT)
+                    addDataScheme(scheme)
+                    addDataAuthority(authority, null)
+                }
+            )
+        }
+    }
+
     @Test
     fun hubConfiguredPathReturnsActionViewIntentAndCallsNavigateToConversation() {
+        registerHandlerFor("myapp", "hub")
         val (route, hubCoordinator) = makeRoute(deepLink = "myapp://hub")
 
         val intent = route.resolveUri(URI("rv-myapp://conversations/conversation-123"))
@@ -71,22 +95,42 @@ class ShowConversationRouteTest {
         assertThat(intent?.dataString, equalTo("myapp://hub"))
         assertThat(
             hubCoordinator.pendingNavigation.value,
-            equalTo(HubNavigation.Conversation("conversation-123"))
+            equalTo(HubNavigation.Conversation("conversation-123") as HubNavigation)
         )
     }
 
     @Test
-    fun noHubDeepLinkPathReturnsShowConversationActivityIntentAndCallsNavigateToConversation() {
+    fun noHubDeepLinkPathReturnsShowConversationActivityIntent() {
         val (route, hubCoordinator) = makeRoute(deepLink = null)
 
         val intent = route.resolveUri(URI("rv-myapp://conversations/conversation-456"))
 
         assertThat(intent?.component?.className, equalTo(ShowConversationActivity::class.java.name))
         assertThat(intent?.getStringExtra("conversation_id"), equalTo("conversation-456"))
-        assertThat(
-            hubCoordinator.pendingNavigation.value,
-            equalTo(HubNavigation.Conversation("conversation-456"))
-        )
+        // The standalone activity does not consume pending navigation, so queuing it here would
+        // leave the Hub to jump to a conversation the user has already been shown.
+        assertThat(hubCoordinator.pendingNavigation.value, absent())
+    }
+
+    @Test
+    fun unresolvableHubDeepLinkFallsBackToStandaloneConversation() {
+        val (route, hubCoordinator) = makeRoute(deepLink = "unhandled-test-scheme://hub")
+
+        val intent = route.resolveUri(URI("rv-myapp://conversations/conversation-unresolvable"))
+
+        assertThat(intent?.component?.className, equalTo(ShowConversationActivity::class.java.name))
+        assertThat(intent?.getStringExtra("conversation_id"), equalTo("conversation-unresolvable"))
+        assertThat(hubCoordinator.pendingNavigation.value, absent())
+    }
+
+    @Test
+    fun blankHubDeepLinkFallsBackToStandaloneConversation() {
+        val (route, hubCoordinator) = makeRoute(deepLink = "")
+
+        val intent = route.resolveUri(URI("rv-myapp://conversations/conversation-blank"))
+
+        assertThat(intent?.component?.className, equalTo(ShowConversationActivity::class.java.name))
+        assertThat(hubCoordinator.pendingNavigation.value, absent())
     }
 
     @Test
@@ -109,15 +153,13 @@ class ShowConversationRouteTest {
 
     @Test
     fun inboxDisabled_withDeepLinkSet_returnsShowConversationActivityNotActionView() {
+        registerHandlerFor("myapp", "hub")
         val (route, hubCoordinator) = makeRoute(deepLink = "myapp://hub", isInboxEnabled = false)
 
         val intent = route.resolveUri(URI("rv-myapp://conversations/conversation-789"))
 
         assertThat(intent?.component?.className, equalTo(ShowConversationActivity::class.java.name))
         assertThat(intent?.getStringExtra("conversation_id"), equalTo("conversation-789"))
-        assertThat(
-            hubCoordinator.pendingNavigation.value,
-            equalTo(HubNavigation.Conversation("conversation-789"))
-        )
+        assertThat(hubCoordinator.pendingNavigation.value, absent())
     }
 }

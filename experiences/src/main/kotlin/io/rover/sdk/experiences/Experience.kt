@@ -278,18 +278,51 @@ internal class ExperienceFetchViewModel : ViewModel() {
 
     private val commands = MutableStateFlow<Command>(Command.NoneYet)
 
+    private var started = false
+
+    /**
+     * The dependencies the pipeline runs with. Held rather than captured so that a later call to
+     * [start] still takes effect: the composable re-enters composition with a fresh context (a new
+     * activity after a rotation, say) and a fresh services graph, and capturing the first ones
+     * would keep using a destroyed activity for as long as the view model lives.
+     */
+    private lateinit var dependencies: Dependencies
+
+    private class Dependencies(
+        val context: Context,
+        val webService: RoverExperiencesWebService,
+        val fontLoader: FontLoader,
+        val cache: ExperienceCache?
+    )
+
     fun start(
         context: Context,
         webService: RoverExperiencesWebService,
         fontLoader: FontLoader,
         cache: ExperienceCache? = null
     ) {
+        dependencies = Dependencies(context, webService, fontLoader, cache)
+
+        // The composable this view model backs can leave and re-enter composition freely while the
+        // view model itself is retained, and every re-entry calls start() again. Run one pipeline
+        // only: a second collector would not replace the first, it would sit alongside it, and the
+        // next request would fan a whole load out to both.
+        if (started) {
+            return
+        }
+        started = true
+
         // set up command processing pipeline. can handle cancellation, etc.
         viewModelScope.launch {
             commands
                 .filterIsInstance<Command.LoadExperience>()
                 // mapLatest allows us to cancel any in-flight request if new load command is issued
                 .collectLatest { loadExperienceCommand ->
+                    val context = dependencies.context
+                    val webService = dependencies.webService
+                    val fontLoader = dependencies.fontLoader
+                    val cache = dependencies.cache
+
                     // replace any non-HTTP scheme with HTTPS, to support deep linking setups.
                     val url = loadExperienceCommand.uri.buildUpon().scheme(
                         "https"
@@ -528,7 +561,7 @@ private fun NetworkExperience(
 
         fun readUserInfo(): Map<String, Any> = Rover.shared.resolve(
             UserInfoInterface::class.java
-        )?.currentUserInfo ?: emptyMap()
+        )?.reportedUserInfo ?: emptyMap()
 
         val deviceContext = remember {
             Rover.shared.resolve(ContextProviderService::class.java)?.context ?: DeviceContext.blank()

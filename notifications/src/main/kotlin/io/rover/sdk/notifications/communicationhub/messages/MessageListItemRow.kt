@@ -39,8 +39,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import java.util.Date
@@ -111,7 +113,7 @@ internal fun MessageListItemRow(
                 }
             }
 
-            Avatar(
+            MessageAvatar(
                 senderName = senderName,
                 avatarUrl = avatarUrl,
                 shape = avatarShape,
@@ -174,11 +176,18 @@ internal fun MessageListItemRow(
     }
 }
 
+/**
+ * The image-or-initial avatar used by every message row, and reused by the
+ * search token chip and suggestions so a subscription or sender looks the
+ * same everywhere it appears.
+ */
 @Composable
-private fun Avatar(
+internal fun MessageAvatar(
     senderName: String?,
     avatarUrl: String?,
     shape: MessageAvatarShape,
+    size: Dp = 40.dp,
+    textStyle: TextStyle? = null,
 ) {
     val avatarShape = when (shape) {
         MessageAvatarShape.Participant -> CircleShape
@@ -193,7 +202,7 @@ private fun Avatar(
 
     Box(
         modifier = Modifier
-            .size(40.dp)
+            .size(size)
             .clip(avatarShape)
             .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center,
@@ -209,7 +218,7 @@ private fun Avatar(
             Text(
                 text = placeholder,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.titleMedium,
+                style = textStyle ?: MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
             )
         }

@@ -33,7 +33,9 @@ class UserInfoContextProvider(
 ) : ContextProvider {
     override fun captureContext(deviceContext: DeviceContext): DeviceContext {
         return deviceContext.copy(
-            userInfo = userInfo.currentUserInfo
+            // the reported view, so that identity keys are withheld while tracking is
+            // anonymized without ever being erased from storage.
+            userInfo = userInfo.reportedUserInfo
         )
     }
 }

@@ -17,11 +17,12 @@
 
 package io.rover.sdk.notifications.communicationhub.posts
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.rover.sdk.core.routing.LinkOpenInterface
@@ -34,7 +35,11 @@ import io.rover.sdk.notifications.communicationhub.ui.reportHubRouteVisibility
 import androidx.compose.ui.platform.LocalContext
 
 /**
- * Post detail route that fetches a post by ID and displays its details.
+ * Post detail route inside the Hub, for both its posts and inbox routes. Renders through the id overload of
+ * [PostDetail], the same path the standalone [io.rover.sdk.notifications.communicationhub.ui.ShowPostActivity]
+ * uses, so a post that is not in Room yet (a deep link or push tap on a fresh install, or a push
+ * without a bundled post) shows a spinner while a sync fetches it, then the post, or a "could not
+ * be found" dialog whose dismissal pops back to the list. Matches the iOS detail screen.
  */
 @Composable
 internal fun PostDetailRoute(
@@ -50,20 +55,21 @@ internal fun PostDetailRoute(
     val routeVisibilityModifier = Modifier.reportHubRouteVisibility(hubCoordinator, navigationState)
     ClearHubRouteVisibilityOnDispose(hubCoordinator, navigationState)
 
-    val post by androidx.compose.runtime.produceState<PostWithSubscription?>(
-        initialValue = null,
-        key1 = postId
+    // The lease lives on this wrapper, not on PostDetail's own modifier: the id overload applies
+    // that modifier to its spinner and content but not to its error dialog, and the route must
+    // keep reporting itself visible while the dialog is up.
+    Box(
+        modifier = routeVisibilityModifier
+            .fillMaxSize()
+            .padding(contentPadding)
+            .consumeWindowInsets(contentPadding)
     ) {
-        value = postsRepository.getPostWithSubscriptionById(postId)
-    }
-
-    post?.let { postWithSubscription ->
         PostDetail(
-            post = postWithSubscription,
+            postId = postId,
             postsRepository = postsRepository,
             onBackClick = { navController?.popBackStack() },
             onOpenUrl = { url -> linkOpen?.openLink(url, context) },
-            modifier = routeVisibilityModifier.padding(contentPadding).consumeWindowInsets(contentPadding)
+            onErrorDismiss = { navController?.popBackStack() },
         )
     }
 }

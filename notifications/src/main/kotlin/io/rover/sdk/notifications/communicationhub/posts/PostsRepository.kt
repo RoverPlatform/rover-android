@@ -70,6 +70,11 @@ internal class PostsRepository(
         postsDao.getPostWithSubscriptionById(postId)
     }
 
+    /** Room-backed: null until the post exists, then the row, re-emitting on change. */
+    fun observePostWithSubscriptionById(postId: String): Flow<PostWithSubscription?> {
+        return postsDao.observePostWithSubscriptionById(postId)
+    }
+
     override suspend fun markPostAsRead(postId: String) = withContext(Dispatchers.IO) {
         log.d("Marking post as read: $postId")
         postsDao.markPostAsRead(postId)

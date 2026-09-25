@@ -26,10 +26,12 @@ import com.natpryce.hamkrest.equalTo
 
 
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -413,7 +415,7 @@ class ConversationDetailViewModelTest {
 
         // The error should be surfaced in the UI state, not crash the app
         assertThat(viewModel.uiState.value.error, equalTo("Failed to sync replies. HTTP 502"))
-        assertThat(viewModel.uiState.value.isLoading, equalTo(false))
+        assertThat(viewModel.uiState.value.phase, equalTo(ConversationDetailPhase.Thread))
     }
 
     @Test
@@ -543,8 +545,8 @@ class ConversationDetailViewModelTest {
             conversationId = "conversation-missing",
         )
 
-        // isLoading should be true before the coroutine completes
-        assertThat(viewModel.uiState.value.isLoading, equalTo(true))
+        // The screen must show a spinner, and no composer, until the backfill reports back.
+        assertThat(viewModel.uiState.value.phase, equalTo(ConversationDetailPhase.Loading))
 
         advanceUntilIdle()
 
@@ -589,10 +591,235 @@ class ConversationDetailViewModelTest {
 
         advanceUntilIdle()
 
-        assertThat(viewModel.uiState.value.isLoading, equalTo(false))
+        assertThat(viewModel.uiState.value.phase, equalTo(ConversationDetailPhase.NotFound))
         assertThat(viewModel.uiState.value.error, equalTo("Conversation not found"))
         // Polling must NOT be started when conversation is not found
         assertThat(conversationsDataSource.startPollingCalls, equalTo(emptyList()))
+    }
+
+    @Test
+    fun conversationArrivingAfterNotFound_showsTheThreadAndStartsTheScreenOnce() = runTest {
+        val conversationsDataSource = object : FakeConversationsDataSource() {
+            override suspend fun hasConversation(conversationId: String): Boolean = false
+        }
+        val conversationsSync = object : ConversationsHistorySync {
+            override suspend fun triggerEagerBackwardHistoryBackfill() = Unit
+
+            override suspend fun syncForward() = Unit
+        }
+
+        val viewModel = ConversationDetailViewModel(
+            conversationsRepository = conversationsDataSource,
+            conversationsSync = conversationsSync,
+            conversationId = "conversation-late",
+        )
+
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.phase, equalTo(ConversationDetailPhase.NotFound))
+
+        // A push or a later sync writes the conversation while the screen is up.
+        conversationsDataSource.conversationsFlow.value = listOf(
+            ConversationTestFixtures.conversation(
+                id = "conversation-late",
+                subject = "Late arrival",
+                lastReplyAt = 1000L,
+                createdAt = 0L,
+            )
+        )
+
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.phase, equalTo(ConversationDetailPhase.Thread))
+        assertThat(viewModel.uiState.value.error, equalTo(null))
+        assertThat(conversationsDataSource.bootstrapCalls, equalTo(listOf("conversation-late")))
+        assertThat(conversationsDataSource.startPollingCalls, equalTo(listOf("conversation-late")))
+    }
+
+    @Test
+    fun lookupThrowing_reportsALoadFailureRatherThanClaimingTheConversationIsMissing() = runTest {
+        val conversationsDataSource = object : FakeConversationsDataSource() {
+            override suspend fun hasConversation(conversationId: String): Boolean =
+                throw IllegalStateException("lookup blew up")
+        }
+
+        val viewModel = ConversationDetailViewModel(
+            conversationsRepository = conversationsDataSource,
+            conversationId = "conversation-1",
+        )
+
+        advanceUntilIdle()
+
+        // Nothing here established that the conversation is absent. The lookup never answered.
+        assertThat(viewModel.uiState.value.phase, equalTo(ConversationDetailPhase.LoadFailed))
+    }
+
+    @Test
+    fun lookupThrowingAfterTheObservationDied_doesNotDowngradeToClaimingItIsMissing() = runTest {
+        val allowLookupToThrow = CompletableDeferred<Unit>()
+        val conversationsDataSource = object : FakeConversationsDataSource() {
+            override fun getConversationsFlow(): Flow<List<ConversationEntity>> =
+                flow { throw IllegalStateException("Room went away") }
+
+            override suspend fun hasConversation(conversationId: String): Boolean {
+                allowLookupToThrow.await()
+                throw IllegalStateException("lookup blew up")
+            }
+        }
+
+        val viewModel = ConversationDetailViewModel(
+            conversationsRepository = conversationsDataSource,
+            conversationId = "conversation-1",
+        )
+
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.phase, equalTo(ConversationDetailPhase.LoadFailed))
+
+        allowLookupToThrow.complete(Unit)
+        advanceUntilIdle()
+
+        // Two failures, neither of which looked for the conversation and failed to find it.
+        assertThat(viewModel.uiState.value.phase, equalTo(ConversationDetailPhase.LoadFailed))
+    }
+
+    @Test
+    fun conversationArrivingAfterTheLookupThrew_stillStartsTheScreen() = runTest {
+        val conversation = ConversationTestFixtures.conversation(
+            id = "conversation-late",
+            subject = "Late arrival",
+            lastReplyAt = 1000L,
+            createdAt = 0L,
+        )
+        val conversationsDataSource = object : FakeConversationsDataSource() {
+            override suspend fun hasConversation(conversationId: String): Boolean =
+                throw IllegalStateException("lookup blew up")
+        }
+
+        val viewModel = ConversationDetailViewModel(
+            conversationsRepository = conversationsDataSource,
+            conversationId = "conversation-late",
+        )
+
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.phase, equalTo(ConversationDetailPhase.LoadFailed))
+
+        // A failed attempt is not a dead screen: the observation is still live, so an arrival
+        // recovers. This is what keeps that state distinct from a dead collector.
+        conversationsDataSource.conversationsFlow.value = listOf(conversation)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.phase, equalTo(ConversationDetailPhase.Thread))
+        assertThat(viewModel.uiState.value.error, equalTo(null))
+        assertThat(conversationsDataSource.startPollingCalls, equalTo(listOf("conversation-late")))
+    }
+
+    @Test
+    fun threadObservationFailingBeforeTheConversationArrives_reportsALoadFailureRatherThanSpinning() = runTest {
+        val conversationsDataSource = object : FakeConversationsDataSource() {
+            override fun getConversationsFlow(): Flow<List<ConversationEntity>> =
+                flow { throw IllegalStateException("Room went away") }
+        }
+
+        val viewModel = ConversationDetailViewModel(
+            conversationsRepository = conversationsDataSource,
+            conversationId = "conversation-1",
+        )
+
+        advanceUntilIdle()
+
+        // catch completes the collector, so nothing can rescue the screen later: an endless
+        // spinner is the one outcome it must not settle on. Nor may it claim the conversation
+        // does not exist — this one was never looked for, only failed to load.
+        assertThat(viewModel.uiState.value.phase, equalTo(ConversationDetailPhase.LoadFailed))
+        assertThat(viewModel.uiState.value.error, equalTo("Room went away"))
+    }
+
+    @Test
+    fun threadObservationFailingBeforeTheLookupReturns_staysAReportedLoadFailure() = runTest {
+        // The two coroutines can finish in either order, and the failing one finishing first is
+        // the dangerous order: the collector is dead by the time the lookup says the conversation
+        // is there, so nothing can ever fill the thread the screen would settle on waiting for.
+        val allowLookupToReturn = CompletableDeferred<Unit>()
+        val conversationsDataSource = object : FakeConversationsDataSource() {
+            override fun getConversationsFlow(): Flow<List<ConversationEntity>> =
+                flow { throw IllegalStateException("Room went away") }
+
+            override suspend fun hasConversation(conversationId: String): Boolean {
+                allowLookupToReturn.await()
+                return true
+            }
+        }
+
+        val viewModel = ConversationDetailViewModel(
+            conversationsRepository = conversationsDataSource,
+            conversationId = "conversation-1",
+        )
+
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.phase, equalTo(ConversationDetailPhase.LoadFailed))
+
+        allowLookupToReturn.complete(Unit)
+        advanceUntilIdle()
+
+        // The lookup confirms the conversation exists, and the screen still cannot show it: the
+        // collector that would have filled the thread is gone. What it must not do is fall back to
+        // the spinner, or start claiming the conversation is missing.
+        assertThat(viewModel.uiState.value.phase, equalTo(ConversationDetailPhase.LoadFailed))
+    }
+
+    @Test
+    fun threadObservationFailingAfterTheConversationArrives_keepsTheThreadOnScreen() = runTest {
+        val conversation = ConversationTestFixtures.conversation(
+            id = "conversation-1",
+            subject = "Support",
+            lastReplyAt = 2000L,
+            createdAt = 1000L,
+        )
+        val conversationsDataSource = object : FakeConversationsDataSource() {
+            override fun getConversationsFlow(): Flow<List<ConversationEntity>> = flow {
+                emit(listOf(conversation))
+                throw IllegalStateException("Room went away")
+            }
+        }
+
+        val viewModel = ConversationDetailViewModel(
+            conversationsRepository = conversationsDataSource,
+            conversationId = "conversation-1",
+        )
+
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.phase, equalTo(ConversationDetailPhase.Thread))
+        assertThat(viewModel.uiState.value.error, equalTo("Room went away"))
+    }
+
+    @Test
+    fun conversationPresentThroughout_startsThePollOnlyOnce() = runTest {
+        val conversationsDataSource = FakeConversationsDataSource()
+        val conversation = ConversationTestFixtures.conversation(
+            id = "conversation-1",
+            subject = "Present",
+            lastReplyAt = 1000L,
+            createdAt = 0L,
+        )
+        conversationsDataSource.conversationsFlow.value = listOf(conversation)
+
+        val viewModel = ConversationDetailViewModel(
+            conversationsRepository = conversationsDataSource,
+            conversationId = "conversation-1",
+        )
+
+        advanceUntilIdle()
+
+        // A second emission of the same conversation must not restart the poll the first started.
+        conversationsDataSource.conversationsFlow.value = listOf(conversation.copy(lastReplyAt = 2000L))
+
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.phase, equalTo(ConversationDetailPhase.Thread))
+        assertThat(conversationsDataSource.bootstrapCalls, equalTo(listOf("conversation-1")))
+        assertThat(conversationsDataSource.startPollingCalls, equalTo(listOf("conversation-1")))
     }
 
     @Test

@@ -53,6 +53,8 @@ android {
 
         buildConfigField("String", "VERSION_NAME", "\"${roverSdkVersion}\"")
         buildConfigField("int", "API_VERSION", "2")
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -137,11 +139,14 @@ dependencies {
 
     // region Test
     testImplementation(libs.junit)
+    testImplementation(libs.hamkrest)
     testImplementation(libs.compose.ui.test.junit4)
     testImplementation(libs.compose.ui.test.manifest)
     testImplementation(libs.robolectric)
     testImplementation(libs.mockwebserver)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.bundles.android.testing)
+    androidTestImplementation(libs.compose.ui.test.junit4)
     // endregion Test
 
     // region Square

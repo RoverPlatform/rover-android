@@ -25,8 +25,11 @@ import java.net.URI
 
 interface Router {
     /**
-     * Map the given [uri] to an Intent as per the relevant registered [Route].  If nothing in the
-     * currently installed Rover SDK modules can provide an Intent for the URI, returns null.
+     * Map the given [uri] to an Intent as per the registered [Route]s. Routes are consulted in
+     * registration order and the first to return an Intent wins; later routes are not consulted.
+     * A route that throws an Exception is logged and skipped, so a failure in one route costs only
+     * that route.
+     * If no route can provide an Intent for the URI, returns null.
      *
      * @param inbound This parameter is unused.
      */
@@ -41,9 +44,9 @@ interface Router {
 
 interface Route {
     /**
-     * Return an [Intent] for the given URI if this route is capable of handling it.
-     *
-     * Note; these do not check the Schema.
+     * Return an [Intent] for the given URI if this route is capable of handling it, and null
+     * otherwise. The router does not check the URI's scheme on a route's behalf, so a route that
+     * only owns certain schemes must check them itself.
      */
     fun resolveUri(uri: URI?): Intent?
 }

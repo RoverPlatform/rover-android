@@ -209,6 +209,7 @@ class AppScreenLoaderTest {
         override fun update(builder: (attributes: HashMap<String, Any>) -> Unit) {}
         override fun clear() {}
         override val currentUserInfo: Attributes = emptyMap()
+        override val reportedUserInfo: Attributes = emptyMap()
     }
 
     private object FakeDevice : DeviceIdentificationInterface {

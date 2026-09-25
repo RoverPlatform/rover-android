@@ -90,18 +90,40 @@ internal interface HubResetCancellable {
 }
 
 /**
+ * Turnstile a Hub sync passes through as it starts.
+ *
+ * A sync reads its cursors first and writes them back last, so it must never begin part-way
+ * through a reset: it would read a cursor the reset is about to delete and write it, plus the page
+ * it names, back after the delete transaction had already run. Enlisting under the gate means a
+ * starting sync either registers in time for the reset to cancel and join it, or waits and starts
+ * afterwards against the cleared database.
+ *
+ * The gate is held only across the enlistment, never for the life of the sync, so work that is
+ * being cancelled and joined by a reset can never be holding it.
+ */
+internal fun interface HubSyncStartGate {
+    /**
+     * Runs [enlist] once no gated reset is in progress, holding one off until it returns.
+     */
+    suspend fun enlistStartingSync(enlist: () -> Unit)
+}
+
+/**
  * Tracks active coroutine jobs that should be cancelled and joined when Hub data is invalidated.
  */
 internal class HubResetJobTracker(
     private val cancellationMessage: String,
+    private val syncStartGate: HubSyncStartGate,
 ) : HubResetCancellable {
     private val lock = Any()
     private val activeJobs = mutableSetOf<Job>()
 
     suspend fun <T> track(block: suspend () -> T): T {
         val job = currentCoroutineContext().job
-        synchronized(lock) {
-            activeJobs.add(job)
+        syncStartGate.enlistStartingSync {
+            synchronized(lock) {
+                activeJobs.add(job)
+            }
         }
 
         try {
@@ -169,9 +191,20 @@ internal class HubSyncCoordinator(
     private val hubCoordinator: HubCoordinator = HubCoordinator(),
     private val deliveredHubNotificationClearer: DeliveredHubNotificationClearer? = null,
     private val inboxSeenWatermark: InboxSeenWatermark? = null,
-) : SyncResetHandler {
+) : SyncResetHandler, HubSyncStartGate {
     private val generation = AtomicLong(0L)
     private val resetMutex = Mutex()
+
+    /**
+     * Closed for the duration of a reset that nothing else holds sync off for.
+     *
+     * A 410 reset gets that for free: `SyncCoordinator` observes the exception, and its own
+     * in-flight flag keeps another app-level sync from starting until the reset it then runs has
+     * returned. [resetHubDataOnDemand] has no sync around it to inherit that from — the operator
+     * presses the button whenever — so it closes this gate itself. The 410 path can take the same
+     * lock if the coordinator ever needs to stop relying on `SyncCoordinator` for it.
+     */
+    private val syncStartGate = Mutex()
     private val lock = Any()
     private val resetObservers = mutableSetOf<HubResetObserver>()
     private val resetCancellables = mutableSetOf<HubResetCancellable>()
@@ -235,6 +268,12 @@ internal class HubSyncCoordinator(
     }
 
     fun currentGeneration(): Long = generation.get()
+
+    override suspend fun enlistStartingSync(enlist: () -> Unit) {
+        syncStartGate.withLock {
+            enlist()
+        }
+    }
 
     /**
      * Verifies that a caller can still persist a response captured at [expectedGeneration].
@@ -300,64 +339,111 @@ internal class HubSyncCoordinator(
                 resetCancellables.toList() to resetObservers.toList()
             }
 
-            withContext(NonCancellable) {
-                val newGeneration = generation.incrementAndGet()
-                log.i("Resetting Hub data after server-driven reset. New generation: $newGeneration")
-
-                cancellables.forEach { cancellable ->
-                    try {
-                        cancellable.cancelAndJoinHubResetInvalidatedWork()
-                    } catch (error: Exception) {
-                        log.w("Hub reset cancellation hook failed: ${error.message}")
-                    }
-                }
-
-                if (resetsDatabase) {
-                    transactionRunner!!.withTransaction {
-                        repliesDao!!.deleteAllReplies()
-                        conversationsDao!!.deleteAllConversations()
-                        participantsDao!!.deleteAllParticipants()
-                        postsDao!!.deleteAllPosts()
-                        subscriptionsDao!!.clearAllSubscriptions()
-                        syncStateDao!!.deleteAllSyncStates()
-                    }
-                } else {
-                    log.w("Hub reset requested without database dependencies; only generation and observers will be updated.")
-                }
-
-                // The watermark belongs to the previous identity, and the post and conversation
-                // history is about to be refetched from scratch. Resetting it to now keeps that
-                // refetched history from badging as new content.
-                inboxSeenWatermark?.resetToNow()
-
-                // Cancel any Hub push notifications still sitting in the tray. They predate the
-                // identity change that triggered the 410 and now point at content that was just
-                // dropped; selection is by payload marker, independent of the (now-cleared) Room
-                // rows, so both posts and conversations are covered. Runs regardless of
-                // [resetsDatabase] since it does not depend on the DAOs.
-                try {
-                    deliveredHubNotificationClearer?.clearDeliveredHubNotifications()
-                } catch (cancelled: CancellationException) {
-                    throw cancelled
-                } catch (error: Exception) {
-                    log.w("Failed to clear delivered Hub notifications on reset: ${error.message}")
-                }
-
-                observers.forEach { observer ->
-                    try {
-                        observer.onHubReset()
-                    } catch (cancelled: CancellationException) {
-                        throw cancelled
-                    } catch (error: Exception) {
-                        log.w("Hub reset observer failed: ${error.message}")
-                    }
-                }
-                hubCoordinator.navigateToHome()
-            }
+            performReset(cancellables, observers, "after server-driven reset")
 
             synchronized(lock) {
                 resetCompleted = true
             }
+        }
+    }
+
+    /**
+     * Drops every locally stored Hub row on request, without a server-driven 410 behind it.
+     *
+     * The same coordinated reset as [resetAfterSyncCancellation] — new generation, cancel and join
+     * invalidated work, one delete transaction, clear the tray, tell the observers — but without
+     * that method's invalidation gate, which only opens for a 410 the coordinator has actually
+     * seen. Nothing about the reset itself depends on *why* it was asked for, so the two entry
+     * points differ only in what they check on the way in.
+     *
+     * This exists for the Bench apps: a process that keeps running afterwards, and so needs the
+     * live database cleared rather than its files deleted out from under an open connection.
+     *
+     * The reset also closes [syncStartGate] for its duration. Cancelling the syncs that are already
+     * running is not enough on its own: one that starts a moment later, after its own cancellation
+     * hook has been and gone, would read a cursor the delete transaction has not reached yet and
+     * write it back once the transaction had, under a generation the reset had already advanced to.
+     * A sync arriving mid-reset therefore waits and starts against the cleared database instead.
+     *
+     * @see io.rover.sdk.notifications.benchsupport.RoverHubBenchSupport
+     */
+    suspend fun resetHubDataOnDemand() {
+        syncStartGate.withLock {
+            resetMutex.withLock {
+                val (cancellables, observers) = synchronized(lock) {
+                    resetCancellables.toList() to resetObservers.toList()
+                }
+
+                performReset(cancellables, observers, "on request")
+            }
+        }
+    }
+
+    /**
+     * The reset itself, shared by both entry points. Callers hold [resetMutex].
+     *
+     * Runs in [NonCancellable] because the reset must complete even if the coroutine that asked
+     * for it — the one that observed the 410, or the UI scope the Bench launched it from — is
+     * cancelled part-way through.
+     */
+    private suspend fun performReset(
+        cancellables: List<HubResetCancellable>,
+        observers: List<HubResetObserver>,
+        reason: String,
+    ) {
+        withContext(NonCancellable) {
+            val newGeneration = generation.incrementAndGet()
+            log.i("Resetting Hub data $reason. New generation: $newGeneration")
+
+            cancellables.forEach { cancellable ->
+                try {
+                    cancellable.cancelAndJoinHubResetInvalidatedWork()
+                } catch (error: Exception) {
+                    log.w("Hub reset cancellation hook failed: ${error.message}")
+                }
+            }
+
+            if (resetsDatabase) {
+                transactionRunner!!.withTransaction {
+                    repliesDao!!.deleteAllReplies()
+                    conversationsDao!!.deleteAllConversations()
+                    participantsDao!!.deleteAllParticipants()
+                    postsDao!!.deleteAllPosts()
+                    subscriptionsDao!!.clearAllSubscriptions()
+                    syncStateDao!!.deleteAllSyncStates()
+                }
+            } else {
+                log.w("Hub reset requested without database dependencies; only generation and observers will be updated.")
+            }
+
+            // The watermark belongs to whatever came before the reset, and the post and
+            // conversation history is about to be refetched from scratch. Resetting it to now
+            // keeps that refetched history from badging as new content.
+            inboxSeenWatermark?.resetToNow()
+
+            // Cancel any Hub push notifications still sitting in the tray. They predate whatever
+            // asked for the reset — an identity change behind a 410, or an operator on the Bench —
+            // and now point at content that was just dropped; selection is by payload marker,
+            // independent of the (now-cleared) Room rows, so both posts and conversations are
+            // covered. Runs regardless of [resetsDatabase] since it does not depend on the DAOs.
+            try {
+                deliveredHubNotificationClearer?.clearDeliveredHubNotifications()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                log.w("Failed to clear delivered Hub notifications on reset: ${error.message}")
+            }
+
+            observers.forEach { observer ->
+                try {
+                    observer.onHubReset()
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    log.w("Hub reset observer failed: ${error.message}")
+                }
+            }
+            hubCoordinator.navigateToHome()
         }
     }
 

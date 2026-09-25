@@ -17,10 +17,18 @@
 
 package io.rover.sdk.notifications.communicationhub.navigation
 
+import com.natpryce.hamkrest.absent
 import com.natpryce.hamkrest.assertion.assertThat
 import com.natpryce.hamkrest.equalTo
 import org.junit.Test
 
+/**
+ * Covers the two concerns of [HubCoordinator]:
+ *
+ * - the informational visibility state;
+ * - [HubCoordinator.clearPendingNavigation] taking a consumed value, which the Hub calls once it
+ *   has executed a navigation, and which must not erase a request queued while it was executing.
+ */
 class HubCoordinatorTest {
     @Test
     fun visibleRouteIsPublished() {
@@ -59,5 +67,45 @@ class HubCoordinatorTest {
         hubCoordinator.updateNavigationVisibility(first, isVisible = false)
 
         assertThat(hubCoordinator.navigationState.value, equalTo(second))
+    }
+
+    @Test
+    fun clearingAConsumedNavigationRemovesIt() {
+        val coordinator = HubCoordinator()
+        coordinator.navigateToInbox()
+
+        coordinator.clearPendingNavigation(HubNavigation.Inbox)
+
+        assertThat(coordinator.pendingNavigation.value, absent())
+    }
+
+    @Test
+    fun clearingAConsumedNavigationDoesNotEraseANewerOne() {
+        val coordinator = HubCoordinator()
+        coordinator.navigateToPost("post-1")
+
+        // The Hub consumed Post("post-1"), but before it clears, a newer navigation is queued
+        // (e.g. from a background sync or a second push tap).
+        coordinator.navigateToConversation("conv-1")
+        coordinator.clearPendingNavigation(HubNavigation.Post("post-1"))
+
+        assertThat(
+            coordinator.pendingNavigation.value,
+            equalTo<HubNavigation?>(HubNavigation.Conversation("conv-1")),
+        )
+    }
+
+    @Test
+    fun anIdenticalReRequestIsSatisfiedByTheConsumedNavigation() {
+        val coordinator = HubCoordinator()
+        coordinator.navigateToPost("post-1")
+
+        // A second identical request (e.g. tapping the same push twice) is conflated by the
+        // StateFlow and considered satisfied by the in-flight navigation to that destination,
+        // so the consumed clear removes it rather than navigating to the same screen twice.
+        coordinator.navigateToPost("post-1")
+        coordinator.clearPendingNavigation(HubNavigation.Post("post-1"))
+
+        assertThat(coordinator.pendingNavigation.value, absent())
     }
 }

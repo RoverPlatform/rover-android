@@ -215,6 +215,8 @@ class AppScreensDataClientTest {
         override fun clear() {}
         override val currentUserInfo: Attributes
             get() = userIdentifier?.let { mapOf("userID" to it) } ?: emptyMap()
+        override val reportedUserInfo: Attributes
+            get() = currentUserInfo
     }
 
     private class FakeDeviceIdentification(

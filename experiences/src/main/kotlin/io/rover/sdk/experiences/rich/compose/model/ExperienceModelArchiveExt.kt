@@ -19,6 +19,7 @@ package io.rover.sdk.experiences.rich.compose.model
 
 import android.content.Context
 import android.util.Log
+import io.rover.sdk.core.logging.log
 import io.rover.sdk.experiences.rich.compose.data.JsonParser
 import io.rover.sdk.experiences.rich.compose.data.LocalFolder
 import io.rover.sdk.experiences.rich.compose.model.values.ExperienceModel
@@ -61,64 +62,25 @@ internal fun ExperienceModel.Companion.fromZipStream(context: Context, zipInputS
 
         if (zipEntry.name.startsWith("images/") && imageCache != null) {
             try {
-                val imageName = zipEntry.name.removePrefix("images/")
-                val imageFile = File(imageCache, imageName)
-
-                BufferedOutputStream(FileOutputStream(imageFile)).use { outputFileStream ->
-                    // Data is read into this buffer.
-                    val auxBuffer = ByteArray(1024)
-                    var currentByteArrayPosition = zipInputStream.read(auxBuffer)
-
-                    // -1 means end of file.
-                    while (currentByteArrayPosition != -1) {
-                        outputFileStream.write(auxBuffer)
-                        currentByteArrayPosition = zipInputStream.read(auxBuffer)
-                    }
-                }
+                zipInputStream.extractCurrentEntryTo(imageCache, zipEntry.name.removePrefix("images/"))
             } catch (e: Exception) {
-                Log.e("ExperienceViewModel", "Failed to read embedded image ${zipEntry.name} and save it into cache.")
+                log.e("Failed to read embedded image ${zipEntry.name} and save it into cache: $e")
             }
         }
 
         if (zipEntry.name.startsWith("media/") && mediaCache != null) {
             try {
-                val mediaName = zipEntry.name.removePrefix("media/")
-                val mediaFile = File(mediaCache, mediaName)
-
-                BufferedOutputStream(FileOutputStream(mediaFile)).use { outputFileStream ->
-                    // Data is read into this buffer.
-                    val auxBuffer = ByteArray(1024)
-                    var currentByteArrayPosition = zipInputStream.read(auxBuffer)
-
-                    // -1 means end of file.
-                    while (currentByteArrayPosition != -1) {
-                        outputFileStream.write(auxBuffer)
-                        currentByteArrayPosition = zipInputStream.read(auxBuffer)
-                    }
-                }
+                zipInputStream.extractCurrentEntryTo(mediaCache, zipEntry.name.removePrefix("media/"))
             } catch (e: Exception) {
-                Log.e("ExperienceViewModel", "Failed to read embedded media ${zipEntry.name} and save it into cache.")
+                log.e("Failed to read embedded media ${zipEntry.name} and save it into cache: $e")
             }
         }
 
         if (zipEntry.name.startsWith("fonts/") && fontCache != null) {
             try {
-                val fontFileName = zipEntry.name.removePrefix("fonts/")
-                val fontFile = File(fontCache, fontFileName)
-
-                BufferedOutputStream(FileOutputStream(fontFile)).use { outputFileStream ->
-                    // Data is read into this buffer.
-                    val auxBuffer = ByteArray(1024)
-                    var currentByteArrayPosition = zipInputStream.read(auxBuffer)
-
-                    // -1 means end of file.
-                    while (currentByteArrayPosition != -1) {
-                        outputFileStream.write(auxBuffer)
-                        currentByteArrayPosition = zipInputStream.read(auxBuffer)
-                    }
-                }
+                zipInputStream.extractCurrentEntryTo(fontCache, zipEntry.name.removePrefix("fonts/"))
             } catch (e: Exception) {
-                Log.e("ExperienceViewModel", "Failed to read embedded font ${zipEntry.name} and save it into cache.")
+                log.e("Failed to read embedded font ${zipEntry.name} and save it into cache: $e")
             }
         }
 
@@ -126,4 +88,38 @@ internal fun ExperienceModel.Companion.fromZipStream(context: Context, zipInputS
     }
 
     return experience!!
+}
+
+/**
+ * Copies the current zip entry into [folder] under [name].
+ *
+ * The bytes go to a temporary sibling first and are renamed into place once complete, because
+ * these cache folders are shared with the remote asset loaders, which trust any file they find
+ * under a content-addressed name. A reader must never observe a half-written asset.
+ *
+ * Entry names come from the archive, so a name that resolves outside [folder] is refused.
+ */
+internal fun ZipInputStream.extractCurrentEntryTo(folder: File, name: String) {
+    val target = File(folder, name)
+    if (target.canonicalFile.parentFile != folder.canonicalFile) {
+        throw java.io.IOException("Refusing to unpack asset outside its cache folder: $name")
+    }
+    val tempFile = File.createTempFile("rover-unpack-", ".tmp", folder)
+    try {
+        BufferedOutputStream(FileOutputStream(tempFile)).use { output ->
+            val buffer = ByteArray(8 * 1024)
+            var read = read(buffer)
+            while (read != -1) {
+                output.write(buffer, 0, read)
+                read = read(buffer)
+            }
+        }
+        if (!tempFile.renameTo(target)) {
+            throw java.io.IOException("Could not move unpacked asset into place at $target")
+        }
+    } finally {
+        if (tempFile.exists()) {
+            tempFile.delete()
+        }
+    }
 }

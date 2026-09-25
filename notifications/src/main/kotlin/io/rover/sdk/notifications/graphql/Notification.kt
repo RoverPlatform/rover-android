@@ -18,11 +18,9 @@
 package io.rover.sdk.notifications.graphql
 
 import io.rover.sdk.core.data.graphql.getDate
-import io.rover.sdk.core.data.graphql.getStringIterable
 import io.rover.sdk.core.data.graphql.putProp
 import io.rover.sdk.core.data.graphql.safeGetString
 import io.rover.sdk.core.data.graphql.safeGetUri
-import io.rover.sdk.core.data.graphql.safeOptArray
 import io.rover.sdk.core.data.graphql.safeOptDate
 import io.rover.sdk.core.data.graphql.safeOptString
 import io.rover.sdk.core.platform.DateFormattingInterface
@@ -102,7 +100,12 @@ internal fun Notification.Companion.decodeJson(json: JSONObject, dateFormatting:
             tapBehavior = Notification.TapBehavior.decodeJson(json.getJSONObject("tapBehavior")),
             attachment = if (json.has("attachment") && !json.isNull("attachment")) NotificationAttachment.decodeJson(json.getJSONObject("attachment")) else null,
             campaignId = json.safeGetString("campaignID"),
-            conversionTags = json.safeOptArray("conversionTags")?.getStringIterable()?.toList(),
+            conversionTags = if (json.isNull("conversionTags")) null else json.getJSONArray("conversionTags").let { tags ->
+                List(tags.length()) { index ->
+                    tags.get(index) as? String
+                        ?: throw JSONException("conversionTags element $index is not a string")
+                }
+            },
     )
 }
 

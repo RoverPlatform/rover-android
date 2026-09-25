@@ -211,6 +211,11 @@ class NotificationDispatcher(
                     }
                 }
 
+                if (!NotificationPermission.canPost(applicationContext, describedAs = notification.id)) {
+                    return@doOnNext
+                }
+
+                @Suppress("MissingPermission") // Checked by NotificationPermission.canPost above.
                 notificationManager.notify(
                     notification.id,
                     // "ROVR" in ascii.  just to further avoid collision with any non-Rover notifications.

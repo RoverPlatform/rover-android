@@ -57,13 +57,17 @@ internal class ConversationPushHandler(
         .build()
         .adapter(ConversationPushPayload::class.java)
 
-    fun handleCommunicationHubPush(roverJson: String) {
+    /**
+     * Returns whether the push was accepted: the payload decoded and the save was started. The
+     * save itself completes off this thread, so a failure there is logged rather than reported.
+     */
+    fun handleCommunicationHubPush(roverJson: String): Boolean {
         val payload = try {
             pushPayloadAdapter.fromJson(roverJson)
         } catch (e: Exception) {
             log.w("Invalid conversation push received: '${e.message}'")
             null
-        } ?: return
+        } ?: return false
 
         coroutineScope.launch {
             try {
@@ -90,6 +94,8 @@ internal class ConversationPushHandler(
                 log.e("Failed to process conversation push: ${e.message}")
             }
         }
+
+        return true
     }
 
     private fun resolveReplyPreview(reply: ReplyItem): String {

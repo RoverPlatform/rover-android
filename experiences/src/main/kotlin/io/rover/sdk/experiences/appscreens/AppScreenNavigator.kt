@@ -30,6 +30,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
+import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.experiences.appscreens.network.AppScreenDocument
 import io.rover.sdk.experiences.appscreens.network.AppScreensDocumentClient
@@ -88,7 +89,9 @@ internal class AppScreenNavigator(
      * [AppScreensDecisions.authorizeNavigationTarget], so a screen cannot steer the navigator to fetch
      * and render an arbitrary origin (or leak the device identifiers the `.json` fetch attaches).
      */
-    private val associatedDomains: Set<String>
+    private val associatedDomains: Set<String>,
+    /** Sink for the two App Screens analytics events (see [AppScreenEvents]). */
+    private val eventQueueService: EventQueueServiceInterface
 ) {
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
@@ -109,6 +112,14 @@ internal class AppScreenNavigator(
      * its own entry on completion.
      */
     private val refreshJobs = HashMap<String, Job>()
+
+    /**
+     * WHICH screen counts as viewed, and when (main-thread-only, like [jobs]). The pure decision
+     * state — the last reported entry, the exposed-push gate and the reveal path's idempotence —
+     * lives in [AppScreenViewTracker]; this class supplies the exposed top from the live stacks and
+     * emits the events the tracker asks for.
+     */
+    private val viewTracker = AppScreenViewTracker()
 
     /**
      * The per-surface external-link executor, keyed by surface token (main-thread-only, like [jobs]).
@@ -343,6 +354,7 @@ internal class AppScreenNavigator(
         val session = outcome.entry.session
         stealForNewHost(session)
         logPushed(outcome)
+        trackAppScreenViewedIfExposed(outcome.entry, reason = "presented")
 
         // Claim guard (surface crossing): warm sessions survive across surfaces, so the master this
         // presentation just reused may carry a DIFFERENT surface's forced scheme than the one now
@@ -409,6 +421,18 @@ internal class AppScreenNavigator(
 
     /** Handle a `navigate` bridge message that arrived from [fromSession]'s runtime. */
     fun onBridgeNavigate(fromSession: AppScreenSession, message: BridgeMessage.Navigate) {
+        // Liveness gate, the same rule the external-link paths apply via
+        // [handlerForActivePresentation]: the message must come from a session on a live stack. A
+        // popped non-ephemeral session stays in the warm pool with its bridge callbacks still wired,
+        // so a delayed navigate from it (a runtime timer, or a tap that raced the pop) would
+        // otherwise push into whatever presentation is now active — and record a click and a view
+        // for screens the user never interacted with. A session that is on the root stack but
+        // covered by a sheet is still on a stack and still allowed; its push simply lands hidden
+        // (see [trackAppScreenViewedIfExposed]).
+        if (!isOnAnyStack(fromSession)) {
+            log.w("App Screen navigate: message from an off-stack session template=${fromSession.templateKey}; dropping")
+            return
+        }
         // Timestamp the tap the instant it lands, to measure tap→painted latency.
         val tapAt = SystemClock.uptimeMillis()
         val base = Uri.parse(fromSession.currentHref)
@@ -431,6 +455,9 @@ internal class AppScreenNavigator(
             )
             return
         }
+        // The tap is accepted: count the click before the push, so a screen's click and the resulting
+        // screen's view land in that order. Emitted for the authorized target (what we navigate to).
+        trackAppScreenLinkClicked(fromSession, authorized.toString(), kind = "navigate")
         val templateKey = AppScreensDecisions.templateKey(authorized)
         // Claim guard (surface crossing): a warm-idle session pooled under a different surface's
         // scheme must not be reused for the active surface — its WebView carries the wrong appearance.
@@ -447,6 +474,7 @@ internal class AppScreenNavigator(
             fromSheet = fromSheet
         )
         logPushed(outcome)
+        trackAppScreenViewedIfExposed(outcome.entry, reason = "pushed")
         launchPipeline(outcome, tapAt = tapAt)
     }
 
@@ -482,6 +510,7 @@ internal class AppScreenNavigator(
         // render + identifier-bearing `.json` fetches does not apply. The bridge's main-frame/origin
         // guard already authenticated the sender.
         val handler = handlerForActivePresentation(fromSession, "openURL") ?: return
+        trackAppScreenLinkClicked(fromSession, target.toString(), kind = "openURL")
         handler.openURL(target, message.dismiss)
     }
 
@@ -498,6 +527,9 @@ internal class AppScreenNavigator(
             return
         }
         val handler = handlerForActivePresentation(fromSession, "presentWebsite") ?: return
+        // The coerced URL is what is actually presented (a hierarchical deep-link-style target has
+        // its scheme swapped for https), so that is the link reported.
+        trackAppScreenLinkClicked(fromSession, web.toString(), kind = "presentWebsite")
         handler.presentWebsite(web)
     }
 
@@ -594,8 +626,7 @@ internal class AppScreenNavigator(
         fromSession: AppScreenSession,
         kind: String
     ): AppScreenExternalLinkHandler? {
-        val onStack = rootStack.any { it.session === fromSession } || sheetStack.any { it.session === fromSession }
-        if (!onStack) {
+        if (!isOnAnyStack(fromSession)) {
             log.w("App Screen $kind: message from an off-stack session template=${fromSession.templateKey}; dropping")
             return null
         }
@@ -627,12 +658,14 @@ internal class AppScreenNavigator(
     /** Reconcile a NavHost-committed root pop: release the removed entries. */
     fun onPopped(entryIds: List<String>) {
         releaseEntries(model.onPopped(entryIds), reason = "popped")
+        trackExposedTopViewed()
         refreshExposedTopIfLive()
     }
 
     /** Reconcile an in-sheet pop. */
     fun onSheetPopped(entryIds: List<String>) {
         releaseEntries(model.onSheetPopped(entryIds), reason = "sheet-popped")
+        trackExposedTopViewed()
         refreshExposedTopIfLive()
     }
 
@@ -641,6 +674,7 @@ internal class AppScreenNavigator(
         val removed = model.onSheetDismissed()
         log.i("App Screen sheet dismissed, releasing ${removed.size} entr${if (removed.size == 1) "y" else "ies"}")
         releaseEntries(removed, reason = "sheet-dismissed")
+        trackExposedTopViewed()
         refreshExposedTopIfLive()
     }
 
@@ -681,6 +715,10 @@ internal class AppScreenNavigator(
     private fun teardown() {
         surfaces.clear()
         activeSurfaceTokenState.value = null
+        // Nothing is on screen any more, so no entry is the "last viewed" one. (Not load-bearing —
+        // the next presentation's root entry carries a fresh id and is reported regardless — but it
+        // keeps the tracker from holding an id for a screen that no longer exists.)
+        viewTracker.reset()
         prewarmer.cancelAll()
         releaseEntries(model.teardown(), reason = "teardown")
         // Belt-and-braces: destroy any ephemeral parked for deferred disposal whose host never
@@ -1103,6 +1141,18 @@ internal class AppScreenNavigator(
             ?: sheetStack.firstOrNull { it.session === session }
 
     /**
+     * Whether [session] is on a live stack (root or sheet) — i.e. it backs a screen of the current
+     * presentation rather than sitting idle in the warm pool or still prewarming.
+     *
+     * This is the single liveness rule EVERY bridge tap path applies before acting on a message
+     * ([onBridgeNavigate], and [handlerForActivePresentation] for `openURL`/`presentWebsite`), so a
+     * message from a session the user has navigated away from is dropped rather than steering the
+     * active presentation. Note it does NOT require the session to be the visible one: a root entry
+     * covered by a sheet is still live.
+     */
+    private fun isOnAnyStack(session: AppScreenSession): Boolean = entryFor(session) != null
+
+    /**
      * Run the deferred recovery for a session marked dead while off-screen, invoked by the host when
      * it becomes visible again. No-op if the entry is gone or the session is no longer dead
      * (already recovered / re-entered), making repeated host calls safe.
@@ -1416,6 +1466,109 @@ internal class AppScreenNavigator(
         session.runtimeLoaded = true
         session.reinjectInsets()
         return refetched
+    }
+
+    // endregion
+
+    // region analytics
+
+    /**
+     * The entry the user can actually see: the top of the sheet stack when a sheet is presented,
+     * else the top of the root stack — the same visibility rule as [NavigatorModel.livenessOf].
+     * Null when nothing is on either stack.
+     */
+    private fun exposedTopEntry(): NavigatorModel.Entry<AppScreenSession>? =
+        sheetStack.lastOrNull() ?: rootStack.lastOrNull()
+
+    /** The view-tracking identity of an entry: its id, and the URL reported for it. */
+    private fun NavigatorModel.Entry<AppScreenSession>.asView(): AppScreenView =
+        AppScreenView(entryId = entryId, screenURL = href)
+
+    /**
+     * Emit `App Screen Viewed` for a just-pushed [entry], but ONLY when that push actually put it on
+     * screen — the gate is [AppScreenViewTracker.viewedIfExposed], fed with the live stacks' exposed
+     * top.
+     *
+     * A push is not always an appearance: [NavigatorModel.navigate] places a non-`sheet` navigation
+     * from a ROOT-stack session onto the root stack even while a sheet is presented, so a `navigate`
+     * that arrives from the covered root (a queued message, or a tap that landed as the sheet opened)
+     * lands BEHIND the sheet. A hidden push emits nothing and leaves the tracker's last-reported
+     * entry untouched; the reveal path ([trackExposedTopViewed], from [onSheetPopped]/
+     * [onSheetDismissed]) reports it when the sheet goes away and it really does appear. [establish]
+     * always pushes onto freshly-cleared stacks, so its entry is exposed by construction and this is
+     * a no-op guard there.
+     */
+    private fun trackAppScreenViewedIfExposed(
+        entry: NavigatorModel.Entry<AppScreenSession>,
+        reason: String
+    ) {
+        val view = viewTracker.viewedIfExposed(entry.asView(), exposedTopEntry()?.asView())
+        if (view == null) {
+            log.d(
+                "App Screen push landed hidden (behind a presented sheet); deferring " +
+                    "$APP_SCREEN_VIEWED_EVENT_NAME to its reveal entry=${entry.entryId} url=${entry.href}"
+            )
+            return
+        }
+        trackAppScreenViewed(view, reason)
+    }
+
+    /**
+     * Emit `App Screen Viewed` for an entry the tracker has just decided became visible — the ONE
+     * place the event is tracked from, fed by the two explicit "entry became visible" signals: an
+     * EXPOSED push ([trackAppScreenViewedIfExposed], from [establish]/[onBridgeNavigate]) and a
+     * reveal ([trackExposedTopViewed], where a pop/dismissal exposes the entry below).
+     *
+     * It is deliberately driven by the navigation model rather than by host composition, so it is
+     * unaffected by recomposition, by a covered surface's hosts being disposed and re-composed, and
+     * by the runtime's own `loaded`/`refresh` bridge traffic. A prewarmed session is never on a stack,
+     * so it can never reach here.
+     *
+     * The URL reported is the entry's href — the URL the navigator actually navigated to, with the
+     * internal `roverPrewarm` switch already stripped by [consumePrewarmSwitch].
+     */
+    private fun trackAppScreenViewed(view: AppScreenView, reason: String) {
+        eventQueueService.trackEvent(
+            appScreenViewedEvent(view.screenURL),
+            APP_SCREEN_EVENT_NAMESPACE
+        )
+        log.d("Tracked $APP_SCREEN_VIEWED_EVENT_NAME ($reason) entry=${view.entryId} url=${view.screenURL}")
+    }
+
+    /**
+     * After a pop / sheet dismissal, the entry it exposed is on screen again: emit `App Screen
+     * Viewed` for it. No-op when nothing is exposed, or when the exposed entry is already the one
+     * last reported (a reconciliation that removed nothing visible). This is also what reports a
+     * push that landed hidden behind a sheet (see [trackAppScreenViewedIfExposed]).
+     */
+    private fun trackExposedTopViewed() {
+        val view = viewTracker.revealed(exposedTopEntry()?.asView()) ?: return
+        trackAppScreenViewed(view, reason = "revealed")
+    }
+
+    /**
+     * Emit `App Screen Link Clicked` for a tapped link on [fromSession]'s screen. Called by each
+     * bridge handler once the tap is accepted and about to be acted on — after the navigate
+     * authorization gate, and after an external target has resolved and found a handler — so a
+     * refused or undeliverable link is not counted as a click. NOT called for `links` (prewarm
+     * hints), which are not taps at all.
+     *
+     * [kind] is the bridge message that carried the tap (`navigate`/`openURL`/`presentWebsite`),
+     * used ONLY for the log line below — the event itself reports the two URLs and nothing else.
+     */
+    private fun trackAppScreenLinkClicked(
+        fromSession: AppScreenSession,
+        linkURL: String,
+        kind: String
+    ) {
+        eventQueueService.trackEvent(
+            appScreenLinkClickedEvent(fromSession.currentHref, linkURL),
+            APP_SCREEN_EVENT_NAMESPACE
+        )
+        log.d(
+            "Tracked $APP_SCREEN_LINK_CLICKED_EVENT_NAME ($kind) " +
+                "screen=${fromSession.currentHref} link=$linkURL"
+        )
     }
 
     // endregion

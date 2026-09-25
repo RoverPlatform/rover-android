@@ -45,8 +45,11 @@ internal class PostPushHandler(
 
     /**
      * Process a Post push notification.
+     *
+     * Returns whether the push was accepted: the payload decoded and the save was started. The
+     * save itself completes off this thread, so a failure there is logged rather than reported.
      */
-    fun handleCommunicationHubPush(roverJson: String) {
+    fun handleCommunicationHubPush(roverJson: String): Boolean {
         try {
             val jsonObject = JSONObject(roverJson)
             val postData = jsonObject.getJSONObject("post")
@@ -65,6 +68,7 @@ internal class PostPushHandler(
                 }
             }
 
+            return true
         } catch (e: JSONException) {
             log.w("Invalid Post push notification received: '${e.message}'")
             log.w("... contents were: $roverJson")
@@ -74,5 +78,7 @@ internal class PostPushHandler(
         } catch (e: Exception) {
             log.e("Error processing Post push notification: ${e.message}")
         }
+
+        return false
     }
 }

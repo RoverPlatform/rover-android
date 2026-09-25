@@ -18,6 +18,7 @@
 package io.rover.sdk.core.data.config
 
 import com.squareup.moshi.Moshi
+import io.rover.sdk.core.benchsupport.BenchSupportOverrideStore
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.LocalStorage
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,15 +46,37 @@ internal class HomeViewManager(
     private val moshi = Moshi.Builder().build()
     private val adapter = moshi.adapter(HomeViewResponse::class.java)
 
-    private val _experienceURL = MutableStateFlow(loadCachedResponse()?.experienceURL)
+    /**
+     * Guards the backend value and the publication derived from it. See [publishExperienceURL].
+     */
+    private val publicationLock = Any()
+
+    /**
+     * The most recent fetched (or cached) URL, before the Bench override. This is what gets
+     * cached; the override is never written to storage.
+     *
+     * Only read or written while holding [publicationLock], after construction.
+     */
+    private var backendExperienceURL = loadCachedResponse()?.experienceURL
+
+    private val _experienceURL = MutableStateFlow(
+        BenchSupportOverrideStore.applyToHomeExperienceURL(backendExperienceURL)
+    )
 
     /**
      * The currently available home view experience URL.
      *
      * Returns the most recent successful fetch result or the cached value loaded from
-     * SharedPreferences during initialization. A `null` value indicates no home view.
+     * SharedPreferences during initialization, with any Bench override layered on top. A
+     * `null` value indicates no home view.
      */
     val experienceURL: StateFlow<String?> = _experienceURL.asStateFlow()
+
+    init {
+        // The override is a layer over whatever the backend last gave us, so a change to it
+        // re-publishes against the current fetched URL rather than replacing it.
+        BenchSupportOverrideStore.addChangeListener { publishExperienceURL() }
+    }
 
     companion object {
         internal const val STORAGE_KEY = "io.rover.homeView.response"
@@ -76,8 +99,9 @@ internal class HomeViewManager(
                     val homeViewResponse = adapter.fromJson(responseBody)
                     
                     if (homeViewResponse != null) {
-                        if (_experienceURL.value != homeViewResponse.experienceURL) {
-                            _experienceURL.value = homeViewResponse.experienceURL
+                        synchronized(publicationLock) {
+                            backendExperienceURL = homeViewResponse.experienceURL
+                            publishExperienceURL()
                         }
                         saveToCache(homeViewResponse)
                         log.d("Home view URL fetched successfully")
@@ -94,6 +118,18 @@ internal class HomeViewManager(
             // Silent failure - preserve cached URL
             log.e("Failed to fetch home view URL: ${e.message}")
         }
+    }
+
+    /**
+     * Publishes the effective URL: the last fetched value with the current Bench override
+     * layered on top.
+     *
+     * Locked for the same reason as [ConfigManager.config]'s publication: [fetch] completes on
+     * the IO dispatcher while a Bench override change re-publishes on whichever thread set it,
+     * and unserialized read-compute-assign steps let an older snapshot land last.
+     */
+    private fun publishExperienceURL() = synchronized(publicationLock) {
+        _experienceURL.value = BenchSupportOverrideStore.applyToHomeExperienceURL(backendExperienceURL)
     }
 
     private fun loadCachedResponse(): HomeViewResponse? {

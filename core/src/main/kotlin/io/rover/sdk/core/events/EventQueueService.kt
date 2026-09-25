@@ -207,13 +207,14 @@ class EventQueueService(
     private fun removeEvents(eventsToRemove: List<EventSnapshot>) {
         val idsToRemove = eventsToRemove.associateBy { it.id }
         serialQueueExecutor.execute {
+            val countBefore = eventQueue.count()
+            val remainingEvents = eventQueue.filter { existingEvent ->
+                !idsToRemove.containsKey(existingEvent.id)
+            }
             eventQueue.clear()
-            eventQueue.addAll(
-                eventQueue.filter { existingEvent ->
-                    !idsToRemove.containsKey(existingEvent.id)
-                }
-            )
-            log.v("Removed ${eventsToRemove.count()} event(s) from the queue -- it now contains ${eventQueue.count()} event(s).")
+            eventQueue.addAll(remainingEvents)
+            val removedCount = countBefore - eventQueue.count()
+            log.v("Removed $removedCount event(s) from the queue -- it now contains ${eventQueue.count()} event(s).")
             persistEvents()
         }
     }

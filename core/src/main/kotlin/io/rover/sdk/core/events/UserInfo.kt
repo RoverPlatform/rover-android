@@ -22,20 +22,45 @@ import io.rover.sdk.core.data.graphql.operations.data.encodeJson
 import io.rover.sdk.core.data.graphql.operations.data.toAttributesHash
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.LocalStorage
+import io.rover.sdk.core.privacy.PrivacyService
 import org.json.JSONObject
 
 class UserInfo(
-    localStorage: LocalStorage
-) : UserInfoInterface {
+    localStorage: LocalStorage,
+    private val privacyService: PrivacyService
+) : UserInfoInterface, PrivacyService.TrackingEnabledChangedListener {
     private val store = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
     override fun update(builder: (attributes: HashMap<String, Any>) -> Unit) {
         val mutableDraft = HashMap(currentUserInfo)
         builder(mutableDraft)
         currentUserInfo = mutableDraft
+        reportedUserInfoMayHaveChanged()
     }
 
     override fun clear() {
         currentUserInfo = hashMapOf()
+        reportedUserInfoMayHaveChanged()
+    }
+
+    override val reportedUserInfo: Attributes
+        get() = filterUserInfoForPrivacy(currentUserInfo, privacyService.trackingMode)
+
+    /**
+     * The stored user info is never touched by a tracking mode change, but the reported view of
+     * it just gained or lost its sensitive keys.
+     */
+    override fun onTrackingModeChanged(trackingMode: PrivacyService.TrackingMode) {
+        reportedUserInfoMayHaveChanged()
+    }
+
+    /**
+     * Called whenever [reportedUserInfo] may have changed, either because the stored value was
+     * updated or because the tracking mode moved. Whether it actually changed is up to whoever
+     * cares; this is deliberately called even when nothing moved, because both the tracking mode
+     * setter and listener registration notify unconditionally.
+     */
+    private fun reportedUserInfoMayHaveChanged() {
+        log.v("Reported user info may have changed.")
     }
 
     override var currentUserInfo: Attributes = try {

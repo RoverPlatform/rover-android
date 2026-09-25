@@ -21,6 +21,7 @@ import android.content.Context
 import android.net.Uri
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.roverUserAgent
+import io.rover.sdk.core.testing.RoverNetworkTestHook
 import io.rover.sdk.experiences.appscreens.AppScreenDataScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -79,6 +80,11 @@ internal open class AppScreensDocumentClient(
                         .build()
                 )
             }
+            // Last application interceptor, so a test harness observes the fully-decorated request
+            // and can short-circuit it before DNS (and before the cache above). Always null in
+            // production — and inert even if assigned there, since the hook only answers a
+            // debuggable app.
+            .apply { RoverNetworkTestHook.interceptorFor(context)?.let { addInterceptor(it) } }
             .build()
     }
 

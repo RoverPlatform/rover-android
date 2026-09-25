@@ -36,18 +36,26 @@ interface PushReceiverInterface {
      * was sufficient to display the push, then this callback may not happen at all unless the app
      * is in the foreground).
      *
+     * Returns whether Rover handled the push, so you can fall through to your own handling
+     * without inspecting the payload yourself. It is true when a Communication Hub post or
+     * conversation was accepted, or when a campaign notification reached the dispatcher; a push that is not
+     * Rover's, or one addressed to Rover that could not be decoded, is false. The value may be
+     * discarded.
+     *
      * In Kotlin, it may look something like this:
      *
      * ```
      * class MyAppCustomFirebaseReceiver: FirebaseMessagingService() {
      *     override fun onMessageReceived(remoteMessage: RemoteMessage) {
      *         val pushReceiver = Rover.sharedInstance.pushReceiver
-     *         pushReceiver.onMessageReceivedData(remoteMessage.data)
+     *         if (!pushReceiver.onMessageReceivedData(remoteMessage.data)) {
+     *             // the push was not Rover's; handle it yourself.
+     *         }
      *     }
      * }
      * ```
      */
-    fun onMessageReceivedData(parameters: Map<String, String>)
+    fun onMessageReceivedData(parameters: Map<String, String>): Boolean
 
     /**
      * Equivalent to [onMessageReceivedData], but accepts a Bundle instead of a Map.
@@ -55,7 +63,7 @@ interface PushReceiverInterface {
      * This version is appropriate for use with GCM in lieu of FCM.  See `README.legacy-gcm.md` for
      * details.
      */
-    fun onMessageReceivedDataAsBundle(parameters: Bundle)
+    fun onMessageReceivedDataAsBundle(parameters: Bundle): Boolean
 
     /**
      * Handle an already decoded Rover [Notification].

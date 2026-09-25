@@ -181,7 +181,9 @@ class ExperiencesAssembler(
                 // Gate bridge navigate/prewarm targets to the app's associated domains (already
                 // lower-cased by CoreAssembler, matching PresentExperienceRoute's comparison).
                 associatedDomains = resolver.resolveSingletonOrFail(UrlSchemes::class.java)
-                    .associatedDomains.map { it.lowercase() }.toSet()
+                    .associatedDomains.map { it.lowercase() }.toSet(),
+                // Sink for the App Screen Viewed / App Screen Link Clicked analytics events.
+                eventQueueService = resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java)
             )
         }
     }

@@ -61,6 +61,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -109,6 +110,7 @@ internal fun ConversationDetail(
     onSendTapped: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenUrl: (String) -> Unit = {},
+    onLatestReplyVisible: (String) -> Unit = {},
 ) {
     // Compose's imePadding() requires the window to NOT resize for the keyboard — it is the
     // sole mechanism for shifting the layout. Modern host activities already guarantee this
@@ -163,7 +165,15 @@ internal fun ConversationDetail(
     // bottomThreshold. Our own animateScrollToItem also reports isScrollInProgress, so it
     // re-arms nearBottom on completion. Keyboard/composer resizes don't move the anchored item
     // in reversed layout, so the cached value stays valid across them.
-    var nearBottom by remember { mutableStateOf(true) }
+    // Saveable because rememberLazyListState restores the scroll position across configuration
+    // and process recreation: a screen recreated while scrolled up must not come back claiming
+    // to be at the bottom, or the read-marking gate would mark the newest unseen reply.
+    var nearBottom by rememberSaveable { mutableStateOf(true) }
+    MarkConversationReadEffect(
+        latestReplyId = uiState.replies.lastOrNull()?.id,
+        nearBottom = nearBottom,
+        markRead = onLatestReplyVisible,
+    )
     LaunchedEffect(listState) {
         snapshotFlow {
             Triple(
@@ -231,8 +241,8 @@ internal fun ConversationDetail(
                 .fillMaxSize()
                 .imePadding(),
         ) {
-            if (uiState.isLoading) {
-                Box(
+            when (uiState.phase) {
+                ConversationDetailPhase.Loading -> Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
@@ -240,54 +250,95 @@ internal fun ConversationDetail(
                 ) {
                     CircularProgressIndicator()
                 }
-            } else {
-                LazyColumn(
-                    state = listState,
-                    reverseLayout = true,
+
+                ConversationDetailPhase.NotFound -> ConversationUnavailable(
+                    message = "This conversation could not be found.",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
-                        .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-                        .testTag("conversation-thread-list"),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    val newestGroupId = uiState.threadRows
-                        .lastOrNull { it is ConversationThreadRow.MessageGroup }
-                        ?.let { (it as ConversationThreadRow.MessageGroup).id }
-                    items(uiState.threadRows.asReversed(), key = { threadRowKey(it) }) { row ->
-                        when (row) {
-                            is ConversationThreadRow.DayDivider -> DayDividerRow(row)
-                            is ConversationThreadRow.MessageGroup ->
-                                MessageGroupRow(row = row, isMostRecentGroup = row.id == newestGroupId, onOpenUrl = onOpenUrl)
-                        }
-                    }
+                        .weight(1f),
+                )
 
-                    if (uiState.isLoadingOlder) {
-                        item(key = "loading-older-spinner") {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 12.dp)
-                                    .testTag("loading-older-spinner"),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(14.dp),
-                                    strokeWidth = 2.dp,
-                                )
+                ConversationDetailPhase.LoadFailed -> ConversationUnavailable(
+                    message = "This conversation could not be loaded.",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                )
+
+                ConversationDetailPhase.Thread -> {
+                    LazyColumn(
+                        state = listState,
+                        reverseLayout = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                            .testTag("conversation-thread-list"),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        val newestGroupId = uiState.threadRows
+                            .lastOrNull { it is ConversationThreadRow.MessageGroup }
+                            ?.let { (it as ConversationThreadRow.MessageGroup).id }
+                        items(uiState.threadRows.asReversed(), key = { threadRowKey(it) }) { row ->
+                            when (row) {
+                                is ConversationThreadRow.DayDivider -> DayDividerRow(row)
+                                is ConversationThreadRow.MessageGroup ->
+                                    MessageGroupRow(row = row, isMostRecentGroup = row.id == newestGroupId, onOpenUrl = onOpenUrl)
+                            }
+                        }
+
+                        if (uiState.isLoadingOlder) {
+                            item(key = "loading-older-spinner") {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 12.dp)
+                                        .testTag("loading-older-spinner"),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(14.dp),
+                                        strokeWidth = 2.dp,
+                                    )
+                                }
                             }
                         }
                     }
+
+                    // The composer belongs to the thread, and only to the thread: a reply must not be
+                    // typed into a conversation that is not in the store.
+                    Composer(
+                        state = composerState,
+                        onSendTapped = onSendTapped,
+                        isSending = uiState.isSending,
+                    )
                 }
             }
-
-            Composer(
-                state = composerState,
-                onSendTapped = onSendTapped,
-                isSending = uiState.isSending,
-            )
         }
+    }
+}
+
+/**
+ * Shown in place of the thread when there is no thread to show, whether because the conversation
+ * is nowhere to be found or because it could not be loaded.
+ *
+ * Content rather than a dialog, so the screen always says something: the outcome is derived from
+ * the store and cannot be dropped the way a transient presentation can.
+ */
+@Composable
+private fun ConversationUnavailable(message: String, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.padding(24.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.testTag("conversation-unavailable"),
+        )
     }
 }
 
@@ -657,7 +708,38 @@ private fun ConversationDetailLoadingPreview() {
     MaterialTheme {
         ConversationDetail(
             uiState = ConversationDetailUiState(
-                isLoading = true,
+                phase = ConversationDetailPhase.Loading,
+            ),
+            composerState = rememberTextFieldState(),
+            onLoadOlderRequested = {},
+            onSendTapped = {},
+        )
+    }
+}
+
+@Preview(name = "ConversationDetail — load failed")
+@Composable
+private fun ConversationDetailLoadFailedPreview() {
+    MaterialTheme {
+        ConversationDetail(
+            uiState = ConversationDetailUiState(
+                phase = ConversationDetailPhase.LoadFailed,
+            ),
+            composerState = rememberTextFieldState(),
+            onLoadOlderRequested = {},
+            onSendTapped = {},
+        )
+    }
+}
+
+@Preview(name = "ConversationDetail — not found")
+@Preview(name = "ConversationDetail — not found (dark)", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun ConversationDetailNotFoundPreview() {
+    MaterialTheme {
+        ConversationDetail(
+            uiState = ConversationDetailUiState(
+                phase = ConversationDetailPhase.NotFound,
             ),
             composerState = rememberTextFieldState(),
             onLoadOlderRequested = {},

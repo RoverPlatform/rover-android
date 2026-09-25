@@ -23,11 +23,9 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.rover.sdk.core.Rover
 import io.rover.sdk.core.container.Assembler
 import io.rover.sdk.core.container.Container
-import io.rover.sdk.core.container.Resolver
 import io.rover.sdk.core.container.Scope
 import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.core.platform.LocalStorage
-import io.rover.sdk.core.privacy.PrivacyService
 
 class SeatGeekAssembler : Assembler {
     override fun assemble(container: Container) {
@@ -45,15 +43,8 @@ class SeatGeekAssembler : Assembler {
             SeatGeekManager(
                 resolver.resolveSingletonOrFail(UserInfoInterface::class.java),
                 resolver.resolveSingletonOrFail(LocalStorage::class.java),
-                resolver.resolveSingletonOrFail(PrivacyService::class.java),
             )
         }
-    }
-
-    override fun afterAssembly(resolver: Resolver) {
-        resolver.resolveSingletonOrFail(PrivacyService::class.java).registerTrackingEnabledChangedListener(
-            resolver.resolveSingletonOrFail(SeatGeekManager::class.java)
-        )
     }
 }
 

@@ -23,6 +23,7 @@ import io.rover.sdk.notifications.communicationhub.conversations.isUnread
 import io.rover.sdk.notifications.communicationhub.conversations.ReplyContentBlock
 import io.rover.sdk.notifications.communicationhub.conversations.ReplyEntity
 import io.rover.sdk.notifications.communicationhub.posts.PostWithSubscription
+import java.text.Collator
 import java.util.Locale
 
 internal sealed class MessageFeedRow {
@@ -42,6 +43,7 @@ internal sealed class MessageFeedRow {
         val preview: String,
         override val timestamp: Long,
         val isUnread: Boolean,
+        val participantIDs: List<String> = emptyList(),
     ) : MessageFeedRow()
 }
 
@@ -52,6 +54,7 @@ internal object MessagesFeedBuilder {
         participants: List<ParticipantEntity>,
         replies: List<ReplyEntity>,
         searchQuery: String,
+        searchToken: HubSearchToken? = null,
     ): List<MessageFeedRow> {
         val participantsById = participants.associateBy { it.id }
         val latestReplyByConversation = replies
@@ -76,32 +79,125 @@ internal object MessagesFeedBuilder {
                 preview = preview,
                 timestamp = latestReply?.createdAt ?: conversation.lastReplyAt,
                 isUnread = conversation.isUnread,
+                participantIDs = conversation.participantIDs.orEmpty(),
             )
         }
 
         val allRows = (postRows + conversationRows).sortedByDescending { it.timestamp }
-        return filterRows(allRows, searchQuery)
+        return filterRows(allRows, searchQuery, searchToken)
     }
 
-    private fun filterRows(rows: List<MessageFeedRow>, query: String): List<MessageFeedRow> {
-        if (query.isBlank()) return rows
+    /**
+     * Builds token suggestions from the currently loaded items, so every
+     * offered token is guaranteed to produce at least one result. Candidates
+     * with blank ids or blank names (placeholder subscriptions that have not
+     * synced yet) are skipped. Subscriptions are ordered before senders;
+     * within each group names sort locale-aware with an id tie-break for
+     * determinism.
+     */
+    fun buildSuggestions(
+        posts: List<PostWithSubscription>,
+        conversations: List<ConversationEntity>,
+        participants: List<ParticipantEntity>,
+        searchQuery: String,
+    ): List<HubSearchToken> {
+        if (searchQuery.isBlank()) return emptyList()
+
+        val loweredQuery = searchQuery.lowercase(Locale.getDefault())
+        fun String.matchesQuery() = lowercase(Locale.getDefault()).contains(loweredQuery)
+
+        val subscriptionTokensById = mutableMapOf<String, HubSearchToken.Subscription>()
+        posts.forEach { postWithSubscription ->
+            val subscription = postWithSubscription.subscription ?: return@forEach
+            if (subscription.id.isBlank() || subscription.name.isBlank()) return@forEach
+            if (!subscription.name.matchesQuery()) return@forEach
+            subscriptionTokensById[subscription.id] = HubSearchToken.Subscription(
+                id = subscription.id,
+                name = subscription.name,
+                imageUrl = subscription.logoURL?.trim()?.ifBlank { null },
+            )
+        }
+
+        val participantsById = participants.associateBy { it.id }
+        val senderTokensById = mutableMapOf<String, HubSearchToken.Sender>()
+        conversations.forEach { conversation ->
+            conversation.participantIDs.orEmpty().forEach participant@{ participantId ->
+                val participant = participantsById[participantId] ?: return@participant
+                val name = participant.name?.trim().orEmpty()
+                if (participant.id.isBlank() || name.isBlank()) return@participant
+                if (!name.matchesQuery()) return@participant
+                senderTokensById[participant.id] = HubSearchToken.Sender(
+                    participantID = participant.id,
+                    name = name,
+                    imageUrl = participant.avatarUrl?.trim()?.ifBlank { null },
+                )
+            }
+        }
+
+        val collator = Collator.getInstance()
+        val subscriptionTokens = subscriptionTokensById.values
+            .sortedWith(compareBy(collator, HubSearchToken.Subscription::name).thenBy(HubSearchToken.Subscription::id))
+        val senderTokens = senderTokensById.values
+            .sortedWith(compareBy(collator, HubSearchToken.Sender::name).thenBy(HubSearchToken.Sender::participantID))
+        return subscriptionTokens + senderTokens
+    }
+
+    private fun filterRows(
+        rows: List<MessageFeedRow>,
+        query: String,
+        token: HubSearchToken?,
+    ): List<MessageFeedRow> {
+        if (token == null && query.isBlank()) return rows
 
         val loweredQuery = query.lowercase(Locale.getDefault())
         return rows.filter { row ->
-            when (row) {
-                is MessageFeedRow.Post -> {
-                    row.postWithSubscription.post.subject.lowercase(Locale.getDefault()).contains(loweredQuery) ||
-                        row.postWithSubscription.post.previewText.lowercase(Locale.getDefault()).contains(loweredQuery) ||
-                        row.postWithSubscription.subscription?.name
-                            ?.lowercase(Locale.getDefault())
-                            ?.contains(loweredQuery) == true
-                }
+            when (token) {
+                null -> matchesFreeText(row, loweredQuery)
 
-                is MessageFeedRow.Conversation -> {
-                    row.senderName?.lowercase(Locale.getDefault())?.contains(loweredQuery) == true ||
-                        row.subject?.lowercase(Locale.getDefault())?.contains(loweredQuery) == true ||
-                        row.preview.lowercase(Locale.getDefault()).contains(loweredQuery)
-                }
+                is HubSearchToken.Subscription ->
+                    row is MessageFeedRow.Post &&
+                        row.postWithSubscription.post.subscriptionId == token.id &&
+                        (query.isBlank() || matchesContentFields(row, loweredQuery))
+
+                is HubSearchToken.Sender ->
+                    row is MessageFeedRow.Conversation &&
+                        token.participantID in row.participantIDs &&
+                        (query.isBlank() || matchesContentFields(row, loweredQuery))
+            }
+        }
+    }
+
+    private fun matchesFreeText(row: MessageFeedRow, loweredQuery: String): Boolean {
+        return when (row) {
+            is MessageFeedRow.Post -> {
+                matchesContentFields(row, loweredQuery) ||
+                    row.postWithSubscription.subscription?.name
+                        ?.lowercase(Locale.getDefault())
+                        ?.contains(loweredQuery) == true
+            }
+
+            is MessageFeedRow.Conversation -> {
+                matchesContentFields(row, loweredQuery) ||
+                    row.senderName?.lowercase(Locale.getDefault())?.contains(loweredQuery) == true
+            }
+        }
+    }
+
+    /**
+     * Content-only matching used within a token's scope: subject and preview,
+     * never the subscription or sender name — otherwise typing part of the
+     * token's own name would match everything in scope.
+     */
+    private fun matchesContentFields(row: MessageFeedRow, loweredQuery: String): Boolean {
+        return when (row) {
+            is MessageFeedRow.Post -> {
+                row.postWithSubscription.post.subject.lowercase(Locale.getDefault()).contains(loweredQuery) ||
+                    row.postWithSubscription.post.previewText.lowercase(Locale.getDefault()).contains(loweredQuery)
+            }
+
+            is MessageFeedRow.Conversation -> {
+                row.subject?.lowercase(Locale.getDefault())?.contains(loweredQuery) == true ||
+                    row.preview.lowercase(Locale.getDefault()).contains(loweredQuery)
             }
         }
     }

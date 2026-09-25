@@ -22,15 +22,13 @@ import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.LocalStorage
 import io.rover.sdk.core.platform.whenNotNull
-import io.rover.sdk.core.privacy.PrivacyService
 import org.json.JSONException
 import org.json.JSONObject
 
 class SeatGeekManager(
     private val userInfo: UserInfoInterface,
     localStorage: LocalStorage,
-    private val privacyService: PrivacyService,
-) : SeatGeekAuthorizer, PrivacyService.TrackingEnabledChangedListener {
+) : SeatGeekAuthorizer {
     private val storage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
 
     companion object {
@@ -45,10 +43,6 @@ class SeatGeekManager(
         "Use setSeatGeekIDs instead"
     )
     override fun setSeatGeekId(crmID: String) {
-        if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
-            log.i("SeatGeek IDs set while privacy is in anonymous/anonymized mode, ignored")
-            return
-        }
         seatGeekID = crmID
         seatGeekClientID = null
         updateUserInfoWithMemberAttributes()
@@ -56,10 +50,6 @@ class SeatGeekManager(
     }
 
     override fun setSeatGeekIDs(clientID: String, crmID: String) {
-        if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
-            log.i("SeatGeek IDs set while privacy is in anonymous/anonymized mode, ignored")
-            return
-        }
         seatGeekID = crmID
         this.seatGeekClientID = clientID
         updateUserInfoWithMemberAttributes()
@@ -136,11 +126,5 @@ class SeatGeekManager(
         seatGeekID.whenNotNull { propertiesMap.put(SEATGEEK_ID_KEY, it) }
         seatGeekClientID.whenNotNull { propertiesMap.put(CLIENT_ID_KEY, it) }
         return propertiesMap
-    }
-
-    override fun onTrackingModeChanged(trackingMode: PrivacyService.TrackingMode) {
-        if (trackingMode != PrivacyService.TrackingMode.Default) {
-            clearCredentials()
-        }
     }
 }

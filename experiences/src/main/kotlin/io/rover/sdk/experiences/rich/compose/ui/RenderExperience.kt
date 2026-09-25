@@ -27,6 +27,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import io.rover.sdk.experiences.NavigationMode
+import io.rover.sdk.experiences.rich.compose.model.nodes.AppBar
 import io.rover.sdk.experiences.rich.compose.model.nodes.Screen
 import io.rover.sdk.experiences.rich.compose.model.values.ExperienceModel
 import io.rover.sdk.experiences.rich.compose.ui.graphics.enterTransition
@@ -178,8 +179,32 @@ private fun RenderExperienceStandalone(
 }
 
 /**
+ * Captures the current values of the experience-scoped composition locals, so a destination
+ * registered with the host's NavHost — which composes outside the experience's provider
+ * subtree — can re-provide them to its content with `CompositionLocalProvider(*captured)`.
+ *
+ * Reading `.current` inside the registered destination itself would yield the locals' defaults,
+ * because by then composition is happening in the host's subtree. Capture must happen here,
+ * where the experience's providers are still in scope.
+ */
+@Composable
+internal fun capturedExperienceLocals(): Array<ProvidedValue<*>> = arrayOf(
+    Environment.LocalAssetContext provides Environment.LocalAssetContext.current,
+    Environment.LocalTypefaceMapping provides Environment.LocalTypefaceMapping.current,
+    Environment.LocalUserInfo provides Environment.LocalUserInfo.current,
+    Environment.LocalUrlParameters provides Environment.LocalUrlParameters.current,
+    Environment.LocalDeviceContext provides Environment.LocalDeviceContext.current,
+    Environment.LocalExperienceUrl provides Environment.LocalExperienceUrl.current,
+    Environment.LocalExperienceSourceUrl provides Environment.LocalExperienceSourceUrl.current,
+    Environment.LocalExperienceId provides Environment.LocalExperienceId.current,
+    Environment.LocalExperienceName provides Environment.LocalExperienceName.current,
+    Environment.LocalAuthorizerHandler provides Environment.LocalAuthorizerHandler.current,
+    Environment.LocalManageStatusBar provides Environment.LocalManageStatusBar.current
+)
+
+/**
  * Renders an experience in pluggable mode, integrating with an external NavHost.
- * 
+ *
  * This mode:
  * - Registers child screens into the parent's NavHost via LocalNavDestinationRegistry
  * - Renders the root screen inline
@@ -213,9 +238,10 @@ private fun RenderExperiencePluggable(
     // they apply/restore the host's status-bar tint against a single captured baseline.
     val systemBarController = rememberSystemBarController()
     // Registered destinations are invoked later by the host's NavHost, outside this composition
-    // subtree, so composition locals set above us (e.g. by ExperienceComposable) do not reach them.
-    // Capture the manage-status-bar flag here so it can be re-injected into each destination.
-    val manageStatusBar = Environment.LocalManageStatusBar.current
+    // subtree, so composition locals set above us (e.g. by NetworkExperience or
+    // ExperienceComposable) do not reach them. Capture the experience-scoped locals here, where
+    // they are still in scope, so each destination can re-provide them.
+    val capturedLocals = capturedExperienceLocals()
 
     // We need to hold Environment.LocalData information for passing it into child screens.
     val localDataByScreenId: MutableMap<String, Any?> = remember { mutableMapOf() }
@@ -247,8 +273,12 @@ private fun RenderExperiencePluggable(
             // batch to avoid triggering multiple recompositions of the parent NavHost.
             navRegistry?.registerAll(
                 screens.filter { it.id != initialScreen.id }.map { screen ->
-                    RegisteredDestination(screen.id) {
+                    RegisteredDestination(
+                        route = screen.id,
+                        hasAppBar = screen.children.any { it is AppBar },
+                    ) {
                         CompositionLocalProvider(
+                            *capturedLocals,
                             LocalAppBarConfigSink provides { config ->
                                 appBarRegistry?.register(screen.id, config)
                             },
@@ -275,14 +305,7 @@ private fun RenderExperiencePluggable(
                             Environment.LocalAuthenticationContext provides services.authenticationContext,
                             Environment.LocalData provides localDataByScreenId[screen.id],
                             Environment.LocalServices provides services,
-                            Environment.LocalUserInfo provides Environment.LocalUserInfo.current,
-                            Environment.LocalUrlParameters provides Environment.LocalUrlParameters.current,
-                            Environment.LocalDeviceContext provides Environment.LocalDeviceContext.current,
-                            Environment.LocalExperienceId provides Environment.LocalExperienceId.current,
-                            Environment.LocalExperienceName provides Environment.LocalExperienceName.current,
-                            Environment.LocalExperienceUrl provides Environment.LocalExperienceUrl.current,
-                            Environment.LocalSystemBarController provides systemBarController,
-                            Environment.LocalManageStatusBar provides manageStatusBar
+                            Environment.LocalSystemBarController provides systemBarController
                         ) {
                             ScreenContent(
                                 node = screen,

@@ -52,8 +52,10 @@ internal open class PushReceiver(
      * Process an the parameters from an incoming notification.
      *
      * Note that this is running in the context of a 10 second wallclock execution time restriction.
+     *
+     * Returns whether Rover handled the push.
      */
-    override fun onMessageReceivedData(parameters: Map<String, String>) {
+    override fun onMessageReceivedData(parameters: Map<String, String>): Boolean {
         // if we have been called, then:
         // a) the notification does not have a display message component; OR
         // b) the app is running in foreground.
@@ -63,46 +65,52 @@ internal open class PushReceiver(
             // clear influenced open data so we don't take credit for an influenced open for a
             // notification we did not receive.
             influenceTrackerService.nonRoverPushReceived()
-            return
+            return false
         }
 
         log.v("Received a push notification. Raw parameters: $parameters")
 
-        val notificationJson = parameters["rover"] ?: return
-        handleRoverNotificationObject(notificationJson)
+        val notificationJson = parameters["rover"] ?: return false
+        return handleRoverNotificationObject(notificationJson)
     }
 
-    override fun onMessageReceivedDataAsBundle(parameters: Bundle) {
-        val rover = parameters.getString("rover") ?: return
-        handleRoverNotificationObject(rover)
+    override fun onMessageReceivedDataAsBundle(parameters: Bundle): Boolean {
+        val rover = parameters.getString("rover") ?: return false
+        return handleRoverNotificationObject(rover)
     }
 
-    private fun handleRoverNotificationObject(roverJson: String) {
+    /**
+     * Returns whether the payload was taken on: a Hub push was decoded and accepted, or a
+     * notification reached the dispatcher.
+     */
+    private fun handleRoverNotificationObject(roverJson: String): Boolean {
         val jsonObject = try {
             JSONObject(roverJson)
         } catch (e: JSONException) {
-            log.w("Invalid push notification action received, because: '${e.message}'. Ignoring. (payload size: ${roverJson.length} bytes)")
-            return
+            skipMalformedPayload("rover payload", e, roverJson)
+            return false
         }
 
         // Classify once using the shared predicate. The same classification decides what to insert
         // here and, via the marker stamped on the notification we post, what a 410 reset later
         // clears from the tray — keeping insert and clear from drifting apart.
         val hubPushKind = HubPushNotification.kind(jsonObject)
-        when (hubPushKind) {
-            HubPushKind.POST -> postPushHandler?.handleCommunicationHubPush(roverJson)
+        val hubPushHandled = when (hubPushKind) {
+            HubPushKind.POST -> postPushHandler?.handleCommunicationHubPush(roverJson) ?: false
             HubPushKind.CONVERSATION ->
                 // The predicate keys on the `conversation` object alone; only actually process a
                 // conversation whose reply/participant siblings are also present.
                 if (isConversationPushPayload(jsonObject)) {
-                    conversationPushHandler?.handleCommunicationHubPush(roverJson)
+                    conversationPushHandler?.handleCommunicationHubPush(roverJson) ?: false
+                } else {
+                    false
                 }
-            null -> { /* not a Hub push */ }
+            null -> false
         }
 
         val notification = try {
             if (!jsonObject.has("notification")) {
-                return
+                return hubPushHandled
             }
 
             val notificationJsonObject = jsonObject.getJSONObject("notification")
@@ -112,15 +120,26 @@ internal open class PushReceiver(
                 dateFormatting
             )
         } catch (e: MalformedURLException) {
-            log.w("Invalid push notification action received, because: '${e.message}'. Ignoring.")
-            log.w("... contents were: $roverJson")
-            return
+            skipMalformedPayload("rover.notification object", e, roverJson)
+            return hubPushHandled
+        } catch (e: JSONException) {
+            skipMalformedPayload("rover.notification object", e, roverJson)
+            return hubPushHandled
         }
 
         // Pass the Hub kind through so the dispatched tray notification carries the marker a 410
         // reset uses to clear it. For a post push this marks the post's notification; classic
         // campaign pushes classify as null and stay unmarked (and untouched by reset).
         notificationDispatcher.ingest(notification, hubPushKind)
+        return true
+    }
+
+    /**
+     * Logs a skipped malformed payload. Neither the payload nor the exception message is included:
+     * both carry payload values, which can be tokens or user identifiers.
+     */
+    private fun skipMalformedPayload(what: String, exception: Exception, roverJson: String) {
+        log.w("Malformed $what received (${exception.javaClass.simpleName}). Ignoring. (payload length: ${roverJson.length})")
     }
 
     private fun isConversationPushPayload(jsonObject: JSONObject): Boolean {

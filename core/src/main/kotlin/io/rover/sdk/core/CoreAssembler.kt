@@ -298,7 +298,8 @@ class CoreAssembler @JvmOverloads constructor(
 
         container.register(Scope.Singleton, UserInfoInterface::class.java) { resolver ->
             UserInfo(
-                resolver.resolveSingletonOrFail(LocalStorage::class.java)
+                resolver.resolveSingletonOrFail(LocalStorage::class.java),
+                resolver.resolveSingletonOrFail(PrivacyService::class.java)
             )
         }
 
@@ -538,6 +539,14 @@ class CoreAssembler @JvmOverloads constructor(
 
     override fun afterAssembly(resolver: Resolver) {
         val eventQueue = resolver.resolveSingletonOrFail(EventQueueServiceInterface::class.java)
+
+        // The reported (privacy filtered) view of user info changes whenever the tracking mode
+        // does, even though the stored value does not.
+        val userInfo = resolver.resolveSingletonOrFail(UserInfoInterface::class.java)
+        if (userInfo is PrivacyService.TrackingEnabledChangedListener) {
+            resolver.resolveSingletonOrFail(PrivacyService::class.java)
+                .registerTrackingEnabledChangedListener(userInfo)
+        }
 
         listOf(
             resolver.resolveSingletonOrFail(PrivacyService::class.java),

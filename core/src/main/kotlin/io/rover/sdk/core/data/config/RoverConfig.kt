@@ -39,8 +39,8 @@ data class HubConfig(
  * Remotely configurable configuration for Rover, including Hub features and appearance.
  *
  * This data class defines the configuration options available for Hub, including
- * feature flags, UI customization, and navigation settings. The configuration can be provided
- * by the backend API or overridden locally for development/testing purposes.
+ * feature flags, UI customization, and navigation settings. The configuration is provided by
+ * the backend API.
  *
  * As of the backend API update in commit cafabdceb96519ea298e580763fbc708a236227a,
  * hub-related configuration properties are nested under a `hub` object with renamed properties.
@@ -49,7 +49,7 @@ data class HubConfig(
  * @property colorScheme Color scheme preference (dark, light, or auto)
  * @property accentColor Optional accent color for theming
  *
- * @see ConfigManager for managing configuration sources and override mode
+ * @see ConfigManager for the caching and publication of the active configuration
  */
 @JsonClass(generateAdapter = true)
 public data class RoverConfig(

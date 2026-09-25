@@ -22,8 +22,14 @@ import com.natpryce.hamkrest.equalTo
 import io.rover.sdk.notifications.communicationhub.posts.PostEntity
 import io.rover.sdk.notifications.communicationhub.posts.SubscriptionEntity
 import io.rover.sdk.notifications.communicationhub.data.RoverEngageTestBase
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Test
 
 class PostsDaoTest : RoverEngageTestBase() {
@@ -37,6 +43,31 @@ class PostsDaoTest : RoverEngageTestBase() {
 
         val list = dao.getAllPosts().first()
         assertThat(list.map { it.id }, equalTo(listOf("p2", "p1")))
+    }
+
+    @Test
+    fun observingAPostByIdEmitsNullUntilItArrivesThenTheRow() = runBlocking {
+        val dao = database!!.postsDao()
+
+        // One continuous subscription, started before the row exists, so the test proves Room
+        // re-emits into an existing collector (what a screen opened before a sync relies on),
+        // not merely that a fresh query after the insert finds the row. The collector itself
+        // signals its first emission, so the insert cannot race ahead of it.
+        val firstEmission = CompletableDeferred<Unit>()
+        val emissions = async {
+            dao.observePostWithSubscriptionById("p1")
+                .onEach { firstEmission.complete(Unit) }
+                .take(2)
+                .toList()
+        }
+        withTimeout(5_000) { firstEmission.await() }
+
+        val p = PostEntity("p1", "S", "P", 1L, "https://example.com", false, null, null)
+        dao.upsertPost(p)
+
+        val (before, after) = withTimeout(5_000) { emissions.await() }
+        assertThat(before, equalTo(null as PostWithSubscription?))
+        assertThat(after?.post, equalTo(p))
     }
 
     @Test

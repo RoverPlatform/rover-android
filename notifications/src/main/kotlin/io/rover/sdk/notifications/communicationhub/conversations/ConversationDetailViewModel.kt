@@ -57,6 +57,7 @@ internal class ConversationDetailViewModel(
     private val _isSending = MutableStateFlow(false)
     private val _error = MutableStateFlow<String?>(null)
     private val _lastReadReplyId = MutableStateFlow<String?>(null)
+    private val _loadState = MutableStateFlow(ConversationLoadState.Loading)
     private val _threadData = MutableStateFlow(ThreadData.empty())
     private val _effects = Channel<ConversationDetailEffect>(Channel.BUFFERED)
     // Tracks the last replyId argument processed by onLatestReplyVisible to deduplicate calls.
@@ -70,33 +71,36 @@ internal class ConversationDetailViewModel(
         _isSending,
         _error,
         _lastReadReplyId,
-    ) { isLoadingOlder, isSending, error, lastReadReplyId ->
-        QuadState(
+        _loadState,
+    ) { isLoadingOlder, isSending, error, lastReadReplyId, loadState ->
+        ScreenState(
             isLoadingOlder = isLoadingOlder,
             isSending = isSending,
             error = error,
             lastReadReplyId = lastReadReplyId,
+            loadState = loadState,
         )
-    }.combine(_threadData) { quad, threadData ->
+    }.combine(_threadData) { screen, threadData ->
             ConversationDetailUiState(
                 title = threadData.title,
                 participantAvatarUrl = threadData.participantAvatarUrl,
                 participantBio = threadData.participantBio,
                 replies = threadData.replies,
                 threadRows = threadData.threadRows,
-                isLoading = threadData.isLoading,
-                isLoadingOlder = quad.isLoadingOlder,
+                phase = ConversationDetailPhase.from(
+                    hasConversation = threadData.conversationExists,
+                    loadState = screen.loadState,
+                ),
+                isLoadingOlder = screen.isLoadingOlder,
                 canLoadOlder = threadData.beforeCursor != null,
-                isSending = quad.isSending,
-            error = quad.error,
-            lastReadReplyId = quad.lastReadReplyId,
+                isSending = screen.isSending,
+            error = screen.error,
+            lastReadReplyId = screen.lastReadReplyId,
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = ConversationDetailUiState(
-            isLoading = true,
-        )
+        initialValue = ConversationDetailUiState()
     )
 
     init {
@@ -105,27 +109,102 @@ internal class ConversationDetailViewModel(
         observeThread(activeConversationId)
         viewModelScope.launch {
             try {
-                val conversationExists = conversationsRepository.hasConversation(activeConversationId)
-                if (!conversationExists) {
+                if (!conversationsRepository.hasConversation(activeConversationId)) {
                     conversationsSync.triggerEagerBackwardHistoryBackfill()
-                    // Check again after backfill; surface error if still missing
-                    val existsAfterBackfill = conversationsRepository.hasConversation(activeConversationId)
-                    if (!existsAfterBackfill) {
-                        _threadData.value = ThreadData.empty(isLoading = false)
-                        _error.value = "Conversation not found"
+                    // Check again after backfill; report it missing if it is still not there.
+                    if (!conversationsRepository.hasConversation(activeConversationId)) {
+                        reportNotFound("Conversation not found")
                         return@launch
                     }
                 }
+                startShowingIfNeeded()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log.e("Failed to look up conversation: ${e.message}")
+                reportLoadFailed(e.message ?: "Failed to load messages")
+            }
+        }
+    }
+
+    /**
+     * Bootstraps the replies and starts the forward poll, once per conversation.
+     *
+     * Every state but two starts: an answer that has arrived is worth acting on however the
+     * previous attempt ended. [ConversationLoadState.Showing] is already started, and the init
+     * lookup and a late arrival can both reach here for one conversation, where a second
+     * [ConversationsDataSource.startRepliesForwardPolling] would cancel the poll the first
+     * started. [ConversationLoadState.Disconnected] is terminal: the store can no longer reach the
+     * screen, so starting work against it would only settle the screen on a spinner nothing can
+     * clear.
+     */
+    private fun startShowingIfNeeded() {
+        when (_loadState.value) {
+            ConversationLoadState.Showing, ConversationLoadState.Disconnected -> return
+            ConversationLoadState.Loading,
+            ConversationLoadState.NotFound,
+            ConversationLoadState.Failed -> Unit
+        }
+        _loadState.value = ConversationLoadState.Showing
+        // The store has since answered the question the error was reporting on.
+        _error.value = null
+        viewModelScope.launch {
+            try {
                 conversationsRepository.bootstrapLatestReplies(activeConversationId)
                 conversationsRepository.startRepliesForwardPolling(activeConversationId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 log.e("Failed to bootstrap conversation replies: ${e.message}")
-                _threadData.value = _threadData.value.copy(isLoading = false)
                 _error.value = e.message ?: "Failed to load messages"
             }
         }
+    }
+
+    /**
+     * The conversation was looked for and is not there.
+     *
+     * The strongest of the three outcomes below, and the only one entitled to tell the user the
+     * conversation does not exist, so it is the only one that needs the lookup to have finished.
+     */
+    private fun reportNotFound(message: String) {
+        reportLookupOutcome(ConversationLoadState.NotFound, message)
+    }
+
+    /**
+     * An attempt threw. Says nothing about whether the conversation exists, and leaves the screen
+     * able to recover: the store's flow is still live and an arrival still starts the screen.
+     */
+    private fun reportLoadFailed(message: String) {
+        reportLookupOutcome(ConversationLoadState.Failed, message)
+    }
+
+    /**
+     * The store's flow to this screen has failed, which nothing can undo.
+     *
+     * Recorded whether or not a conversation is on screen, unlike the two below: it is not a
+     * statement about obtaining the conversation, which a conversation already here would settle,
+     * but about the thread that is here no longer being able to change.
+     */
+    private fun reportDisconnected(message: String?) {
+        _loadState.value = ConversationLoadState.Disconnected
+        _error.value = message
+    }
+
+    /**
+     * How the attempt to obtain the conversation ended: not there, or it threw.
+     *
+     * Two things both callers need and neither should have to remember. A conversation in the
+     * store outranks either, since the phase reads the store first and one that arrived while the
+     * attempt was failing is the newer answer. And [ConversationLoadState.Disconnected] is
+     * terminal: a later failure describes the same broken screen and must not downgrade it to a
+     * claim the earlier one did not make.
+     */
+    private fun reportLookupOutcome(outcome: ConversationLoadState, message: String?) {
+        if (_threadData.value.conversationExists) return
+        if (_loadState.value == ConversationLoadState.Disconnected) return
+        _loadState.value = outcome
+        _error.value = message
     }
 
     private fun observeThread(conversationId: String) {
@@ -140,12 +219,18 @@ internal class ConversationDetailViewModel(
             }
                 .catch { throwable ->
                     log.e("Failed to observe thread: ${throwable.message}")
-                    _threadData.value = ThreadData.empty(isLoading = false)
-                    _error.value = throwable.message
+                    // The thread stands as it was: catch completes the collector, so discarding
+                    // what is on screen would leave the phase reading an empty store with nothing
+                    // able to fill it again. A screen that never got that far reports a load
+                    // failure instead of spinning forever.
+                    reportDisconnected(throwable.message)
                 }
                 .collect { data ->
-                    _threadData.value = data.copy(isLoading = false)
+                    _threadData.value = data
                     _lastReadReplyId.value = data.lastReadReplyId
+                    // Whatever brings the conversation in — this screen's own backfill, a later
+                    // sync, or a push — the screen starts when it lands.
+                    if (data.conversationExists) startShowingIfNeeded()
                 }
         }
     }
@@ -339,7 +424,7 @@ internal class ConversationDetailViewModel(
             threadRows = threadRows,
             beforeCursor = beforeCursor,
             lastReadReplyId = conversation?.lastReadReplyID,
-            isLoading = false,
+            conversationExists = conversation != null,
         )
     }
 
@@ -369,10 +454,10 @@ internal class ConversationDetailViewModel(
         val threadRows: List<ConversationThreadRow>,
         val beforeCursor: String?,
         val lastReadReplyId: String?,
-        val isLoading: Boolean,
+        val conversationExists: Boolean,
     ) {
         companion object {
-            fun empty(isLoading: Boolean = true): ThreadData {
+            fun empty(): ThreadData {
                 return ThreadData(
                     title = "Conversation",
                     participantAvatarUrl = null,
@@ -381,17 +466,18 @@ internal class ConversationDetailViewModel(
                     threadRows = emptyList(),
                     beforeCursor = null,
                     lastReadReplyId = null,
-                    isLoading = isLoading,
+                    conversationExists = false,
                 )
             }
         }
     }
 
-    private data class QuadState(
+    private data class ScreenState(
         val isLoadingOlder: Boolean,
         val isSending: Boolean,
         val error: String?,
         val lastReadReplyId: String?,
+        val loadState: ConversationLoadState,
     )
 
     private object NoOpConversationPushNotificationPresenter : ConversationPushNotificationPresenter {
@@ -430,7 +516,7 @@ internal data class ConversationDetailUiState(
     val participantBio: String? = null,
     val replies: List<ConversationReplyRow> = emptyList(),
     val threadRows: List<ConversationThreadRow> = emptyList(),
-    val isLoading: Boolean = false,
+    val phase: ConversationDetailPhase = ConversationDetailPhase.Loading,
     val isLoadingOlder: Boolean = false,
     val canLoadOlder: Boolean = false,
     val isSending: Boolean = false,

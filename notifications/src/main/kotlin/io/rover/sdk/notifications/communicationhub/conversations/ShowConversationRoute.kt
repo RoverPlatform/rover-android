@@ -19,12 +19,12 @@ package io.rover.sdk.notifications.communicationhub.conversations
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.core.net.toUri
 import io.rover.sdk.core.data.config.ConfigManager
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.routing.Route
 import io.rover.sdk.notifications.communicationhub.navigation.HubCoordinator
+import io.rover.sdk.notifications.communicationhub.navigation.HubDeepLink
 import io.rover.sdk.notifications.communicationhub.ui.ShowConversationActivity
 import java.net.URI
 
@@ -62,36 +62,38 @@ internal class ShowConversationRoute(
         val conversationId = pathSegments.first()
         val androidUri = uri.toString().toUri()
 
-        return revealConversationInHub(conversationId, configManager, hubCoordinator)
+        return revealConversationInHub(conversationId, context, configManager, hubCoordinator)
             ?: run {
-                log.v("Conversations: Using standalone activity for conversation $conversationId")
-                hubCoordinator.navigateToConversation(conversationId)
+                log.v("Using standalone activity for conversation $conversationId")
                 ShowConversationActivity.makeIntent(context, androidUri, conversationId)
             }
     }
 
     companion object {
         /**
-         * If the Reveal Rover hub deep link is configured, queues navigation to [conversationId]
-         * via [HubCoordinator] and returns an ACTION_VIEW intent to request the host app to
-         * reveal the Rover Hub. The returned intent must be dispatched immediately — the
-         * coordinator state has already been updated. Returns null when hub navigation is not
-         * configured; callers should fall back to standalone conversation display.
+         * If the host app's Hub deep link is configured and an installed Activity can handle it,
+         * queues navigation to [conversationId] via [HubCoordinator] and returns an ACTION_VIEW
+         * intent asking the host app to reveal the Rover Hub.
+         *
+         * The returned intent must be dispatched immediately, because the coordinator state has
+         * already been updated. Queueing here rather than at dispatch is best-effort; see SDK-379.
+         *
+         * Returns null when hub navigation is unavailable; callers should fall back to standalone
+         * conversation display. Navigation is deliberately *not* queued in that case, since the
+         * standalone UI does not consume pending navigation.
          */
         internal fun revealConversationInHub(
             conversationId: String,
+            context: Context,
             configManager: ConfigManager,
             hubCoordinator: HubCoordinator,
         ): Intent? {
-            val config = configManager.config.value
-            val hubDeepLink = config.hub.deepLink
-                ?.takeIf { config.hub.isInboxEnabled && it.isNotBlank() }
-                ?: return null
+            val hubIntent = HubDeepLink.revealIntent(configManager, context) ?: return null
+            // This runs in the companion object, so the automatic tag is Rover::Companion rather
+            // than the route. Keep a prefix here so the source stays identifiable.
             log.v("Conversations: Using host app deep link coordination for conversation $conversationId")
             hubCoordinator.navigateToConversation(conversationId)
-            return Intent(Intent.ACTION_VIEW, Uri.parse(hubDeepLink)).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
+            return hubIntent
         }
     }
 }

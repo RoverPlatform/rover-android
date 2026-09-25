@@ -72,7 +72,8 @@ internal class PostsSync(
         .build()
     private val postsSyncResponseAdapter = moshi.adapter(PostsSyncResponse::class.java)
     private val activeSyncJobs = HubResetJobTracker(
-        cancellationMessage = "Posts sync cancelled because Hub data was reset."
+        cancellationMessage = "Posts sync cancelled because Hub data was reset.",
+        syncStartGate = hubSyncCoordinator,
     )
 
     override suspend fun sync(): Boolean = activeSyncJobs.track {

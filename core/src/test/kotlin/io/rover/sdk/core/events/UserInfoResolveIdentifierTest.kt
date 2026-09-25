@@ -29,6 +29,7 @@ class UserInfoResolveIdentifierTest {
             override fun update(builder: (attributes: HashMap<String, Any>) -> Unit) = Unit
             override fun clear() = Unit
             override val currentUserInfo get() = attrs
+            override val reportedUserInfo get() = attrs
         }
     }
 

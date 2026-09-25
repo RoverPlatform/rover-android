@@ -25,16 +25,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onLayoutRectChanged
+import androidx.compose.ui.spatial.RelativeLayoutBounds
 import androidx.compose.ui.layout.onVisibilityChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import io.rover.sdk.core.logging.log
 import io.rover.sdk.experiences.rich.compose.model.values.Appearance
 import io.rover.sdk.experiences.rich.compose.model.values.StatusBarStyle
 import io.rover.sdk.experiences.rich.compose.ui.Environment
@@ -57,10 +58,11 @@ import io.rover.sdk.experiences.rich.compose.ui.Environment
  * released (restoring the host's original state) otherwise, on disposal, or when the experience is no
  * longer visible.
  *
- * The overlap test uses the *physical* status-bar height from [ViewCompat.getRootWindowInsets], which
- * reports the real inset in both the edge-to-edge and legacy regimes — unlike the consumed Compose
- * [WindowInsets.statusBars] inset, which reads 0 in the legacy regime because the content is laid out
- * below the opaque bar.
+ * The overlap test is the shared, regime-aware [overlapsStatusBar] predicate (see
+ * StatusBarGeometry.kt), which uses the *physical* status-bar height — the consumed Compose
+ * [WindowInsets.statusBars] inset reads 0 in the legacy regime because the content is laid out
+ * below the opaque bar — and applies a strict `<` boundary under edge-to-edge so content embedded
+ * flush below a `statusBarsPadding()`-applying host does not claim the bar.
  *
  * The status-bar background is only ever set in the legacy (opaque-bar) regime, via
  * `Window.statusBarColor` (through [SystemBarController]); under edge-to-edge enforcement the standalone
@@ -81,10 +83,12 @@ internal fun rememberExperienceStatusBarControl(
     statusBarStyle: StatusBarStyle,
     statusBarBackgroundColor: Color,
     appearance: Appearance,
+    onStatusBarOwnershipChanged: ((Boolean) -> Unit)? = null,
 ): Modifier {
     val manageStatusBar = Environment.LocalManageStatusBar.current
     val controller = Environment.LocalSystemBarController.current
     val view = LocalView.current
+    val currentOwnershipCallback by rememberUpdatedState(onStatusBarOwnershipChanged)
 
     // The consumed Compose inset is > 0 only under edge-to-edge (transparent-bar) enforcement; in the
     // legacy regime the content is laid out below the opaque bar and this reads 0. We use it purely to
@@ -93,9 +97,9 @@ internal fun rememberExperienceStatusBarControl(
     // Compose state.)
     val edgeToEdge = WindowInsets.statusBars.getTop(LocalDensity.current) > 0
 
-    var overlapsStatusBar by remember { mutableStateOf(false) }
+    var overlapsStatusBarBand by remember { mutableStateOf(false) }
     var onScreen by remember { mutableStateOf(false) }
-    val active = manageStatusBar && overlapsStatusBar && onScreen
+    val active = manageStatusBar && overlapsStatusBarBand && onScreen
 
     if (controller != null) {
         val backgroundArgb = statusBarBackgroundColor.toArgb()
@@ -128,18 +132,43 @@ internal fun rememberExperienceStatusBarControl(
     // and video play/pause; using them to drive system-bar appearance is off-label but well-behaved,
     // and gets us close to the iOS "styling follows the content under the bar" model that Android
     // does not yet provide for app content.
-    return Modifier
-        .onLayoutRectChanged { bounds ->
+    // remember-ed so the log tracker below survives recomposition; it is not the state variable,
+    // because the log must record the *first* resolution even when it matches the pessimistic false
+    // seed — an embed that never owns the bar is otherwise invisible in the logs.
+    val onRectChanged: (RelativeLayoutBounds) -> Unit = remember(view, screenId) {
+        var lastLogged: Boolean? = null
+        { bounds ->
             // The physical status bar occupies window-y [0, statusBarBottom]. If the screen's top edge
             // falls within that band it is the top-of-screen content and should own the status bar.
-            // getRootWindowInsets reports the physical inset in both regimes (the consumed Compose
-            // inset would read 0 in legacy). statusBarBottom is 0 when the status bar is hidden, in
-            // which case there is nothing to style.
-            val statusBarBottom = ViewCompat.getRootWindowInsets(view)
-                ?.getInsets(WindowInsetsCompat.Type.statusBars())?.top ?: 0
-            overlapsStatusBar = statusBarBottom > 0 && bounds.boundsInWindow.top <= statusBarBottom
+            // The regime-aware boundary rule (strict < in edge-to-edge, <= in legacy) lives in the
+            // shared predicate — see StatusBarGeometry.kt.
+            val topInWindow = bounds.boundsInWindow.top
+            val ownsStatusBar = overlapsStatusBar(view, topInWindow)
+            if (lastLogged != ownsStatusBar) {
+                lastLogged = ownsStatusBar
+                // This decides whether the host's window styling is overridden, and the top edge is
+                // the number that distinguishes the cases when it goes wrong.
+                ExperienceStatusBar.log.i(
+                    "Experience $screenId status-bar ownership: $ownsStatusBar (top=$topInWindow)"
+                )
+            }
+            overlapsStatusBarBand = ownsStatusBar
+            currentOwnershipCallback?.invoke(ownsStatusBar)
         }
+    }
+
+    return Modifier
+        // debounceMillis = 0: the default is 64ms, which is several frames of visibly wrong chrome
+        // before the first measurement lands — the same reasoning as the Hub's callback in Hub.kt.
+        .onLayoutRectChanged(debounceMillis = 0, callback = onRectChanged)
         .onVisibilityChanged(minFractionVisible = 0.5f) { visible ->
             onScreen = visible
         }
 }
+
+/**
+ * Log-tag holder: the layout callback above is a plain lambda with no receiver, and `log` is an
+ * extension on [Any] whose tag comes from the receiver's class. Logging through this object tags the
+ * lines `Rover::ExperienceStatusBar` rather than after whatever incidental receiver is in scope.
+ */
+private object ExperienceStatusBar

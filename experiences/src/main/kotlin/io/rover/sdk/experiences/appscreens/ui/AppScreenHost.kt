@@ -22,6 +22,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.MutableContextWrapper
 import android.view.ViewGroup
+import android.webkit.WebView
 import android.widget.FrameLayout
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -53,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -63,6 +65,7 @@ import io.rover.sdk.experiences.appscreens.AppScreenInsets
 import io.rover.sdk.experiences.appscreens.AppScreenPhase
 import io.rover.sdk.experiences.appscreens.AppScreenSession
 import io.rover.sdk.experiences.appscreens.rememberAppScreenDarkTheme
+import io.rover.sdk.experiences.appscreens.textZoomFor
 import io.rover.sdk.experiences.appscreens.withForcedNightModeTheme
 import kotlinx.coroutines.delay
 
@@ -160,48 +163,13 @@ internal fun AppScreenHost(
             .fillMaxSize()
             .background(background)
     ) {
-        AndroidView(
+        AppScreenWebViewHost(
+            webView = webView,
+            attachContext = attachContext,
+            neutralContext = session.appThemedContext,
             modifier = Modifier
                 .fillMaxSize()
-                .alpha(if (revealed) 1f else 0f),
-            factory = { factoryContext ->
-                FrameLayout(factoryContext).apply {
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                }
-            },
-            update = { container ->
-                if (container.getChildAt(0) !== webView) {
-                    // Unconditionally detach from any prior slot before re-attaching here.
-                    (webView.parent as? ViewGroup)?.removeView(webView)
-                    container.removeAllViews()
-                    container.addView(
-                        webView,
-                        FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.MATCH_PARENT,
-                            FrameLayout.LayoutParams.MATCH_PARENT
-                        )
-                    )
-                }
-                // Give the attached WebView an Activity-backed context (window token), carrying the
-                // session's forced night-mode bits. Compared by identity to the remembered
-                // [attachContext] so it re-bases only when the Activity/scheme actually changed (a
-                // fresh ConfigurationContext each recomposition would otherwise thrash the wrapper).
-                (webView.context as? MutableContextWrapper)?.let { wrapper ->
-                    if (attachContext != null && wrapper.baseContext !== attachContext) {
-                        wrapper.baseContext = attachContext
-                    }
-                }
-            },
-            onRelease = { container ->
-                // Detach only; never destroy (the navigator owns the WebView lifecycle).
-                (webView.parent as? ViewGroup)?.removeView(webView)
-                container.removeAllViews()
-                // Swap back to the neutral themed context so the warm pool holds no Activity.
-                (webView.context as? MutableContextWrapper)?.baseContext = session.appThemedContext
-            }
+                .alpha(if (revealed) 1f else 0f)
         )
 
         when (currentPhase) {
@@ -217,6 +185,79 @@ internal fun AppScreenHost(
             is AppScreenPhase.Revealed -> Unit
         }
     }
+}
+
+/**
+ * Hosts the session's WebView inside composition. Extracted from
+ * [AppScreenHost] as the single seam through which every displayed session
+ * passes, so the instrumentation test can drive the exact production
+ * attach/update path with a spy WebView.
+ *
+ * The [LocalConfiguration] read is load-bearing on both paths a live
+ * system font-size change can take. Within this SDK no host declares
+ * `fontScale` in `configChanges`, so such a change recreates the Activity;
+ * the session is then re-presented (session.webView is Compose state) and a
+ * fresh composition reads the current `fontScale`, so the WebView gets the
+ * current value before content is shown. The same applies after renderer
+ * recovery. Reading `fontScale` in composition additionally subscribes this
+ * composable to configuration changes, so a host that DOES declare
+ * `fontScale` in `configChanges` recomposes and re-runs [AndroidView]'s
+ * update on the already-attached WebView in place, without recreation.
+ */
+@Composable
+internal fun AppScreenWebViewHost(
+    webView: WebView,
+    attachContext: Context?,
+    neutralContext: Context,
+    modifier: Modifier = Modifier
+) {
+    val fontScale = LocalConfiguration.current.fontScale
+    AndroidView(
+        modifier = modifier,
+        factory = { factoryContext ->
+            FrameLayout(factoryContext).apply {
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
+        },
+        update = { container ->
+            if (container.getChildAt(0) !== webView) {
+                // Unconditionally detach from any prior slot before re-attaching here.
+                (webView.parent as? ViewGroup)?.removeView(webView)
+                container.removeAllViews()
+                container.addView(
+                    webView,
+                    FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT
+                    )
+                )
+            }
+            // A WebView captures fontScale-derived text zoom once at
+            // construction; this prewarmed WebView survives activity
+            // recreation, so the stale value must be overwritten on every
+            // attach/update. Idempotent when unchanged.
+            webView.settings.textZoom = textZoomFor(fontScale)
+            // Give the attached WebView an Activity-backed context (window token), carrying the
+            // session's forced night-mode bits. Compared by identity to the remembered
+            // [attachContext] so it re-bases only when the Activity/scheme actually changed (a
+            // fresh ConfigurationContext each recomposition would otherwise thrash the wrapper).
+            (webView.context as? MutableContextWrapper)?.let { wrapper ->
+                if (attachContext != null && wrapper.baseContext !== attachContext) {
+                    wrapper.baseContext = attachContext
+                }
+            }
+        },
+        onRelease = { container ->
+            // Detach only; never destroy (the navigator owns the WebView lifecycle).
+            (webView.parent as? ViewGroup)?.removeView(webView)
+            container.removeAllViews()
+            // Swap back to the neutral themed context so the warm pool holds no Activity.
+            (webView.context as? MutableContextWrapper)?.baseContext = neutralContext
+        }
+    )
 }
 
 /** Resolve an [Activity] from a Compose [Context], unwrapping [ContextWrapper]s. Null if none. */

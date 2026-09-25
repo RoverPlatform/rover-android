@@ -22,15 +22,13 @@ import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.LocalStorage
 import io.rover.sdk.core.platform.whenNotNull
-import io.rover.sdk.core.privacy.PrivacyService
 import org.json.JSONException
 import org.json.JSONObject
 
 class AdobeExperienceManager(
     private val userInfo: UserInfoInterface,
     localStorage: LocalStorage,
-    private val privacyService: PrivacyService,
-) : AdobeExperienceAuthorizer, PrivacyService.TrackingEnabledChangedListener {
+) : AdobeExperienceAuthorizer {
     private val storage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
 
     companion object {
@@ -39,13 +37,11 @@ class AdobeExperienceManager(
     }
 
     override fun setECID(ecid: String) {
-        if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
-            log.i("Adobe Experience ECID set while privacy is in anonymous/anonymized mode, ignored")
-            return
-        }
         adobeECID = ecid
         updateUserInfoWithMemberAttributes()
-        log.i("Adobe Experience Platform signed in with '$ecid'.")
+        // The identifier itself is deliberately not logged: it is retained on the device in
+        // every tracking mode now, and an anonymized fan's identity should not turn up in logcat.
+        log.i("Adobe Experience Platform signed in.")
     }
 
     private fun updateUserInfoWithMemberAttributes() {
@@ -83,10 +79,4 @@ class AdobeExperienceManager(
                 storage[ADOBE_EXPERIENCE_ECID_KEY] = null
             }
         }
-
-    override fun onTrackingModeChanged(trackingMode: PrivacyService.TrackingMode) {
-        if (trackingMode != PrivacyService.TrackingMode.Default) {
-            clearCredentials()
-        }
-    }
 }

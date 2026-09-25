@@ -109,11 +109,13 @@ import io.rover.sdk.experiences.services.InterpolatedConversionsTrackerService
 @Composable
 internal fun ScreenLayer(node: Screen, appearance: Appearance) {
     val isDarkTheme = Environment.LocalIsDarkTheme.current
+    var ownsStatusBar by remember { mutableStateOf(false) }
     val statusBarModifier = rememberExperienceStatusBarControl(
         screenId = node.id,
         statusBarStyle = node.androidStatusBarStyle,
         statusBarBackgroundColor = node.androidStatusBarBackgroundColor.getComposeColor(isDarkTheme),
-        appearance = appearance
+        appearance = appearance,
+        onStatusBarOwnershipChanged = { ownsStatusBar = it },
     )
 
     val localData = Environment.LocalData.current
@@ -178,7 +180,7 @@ internal fun ScreenLayer(node: Screen, appearance: Appearance) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(backgroundColor) // Ensure that we use the same color as the AppBar
-                                .statusBarsPadding()
+                                .then(if (ownsStatusBar) Modifier.statusBarsPadding() else Modifier)
                         )
                     }
                 }

@@ -24,7 +24,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -64,6 +66,7 @@ import androidx.navigation.compose.rememberNavController
 import io.rover.experiences.R
 import io.rover.sdk.experiences.appscreens.AppScreenNavigator
 import io.rover.sdk.experiences.appscreens.LocalAppScreenRootAffordance
+import io.rover.sdk.experiences.appscreens.LocalAppScreenOwnsStatusBar
 import io.rover.sdk.experiences.appscreens.rememberAppScreenDarkTheme
 import io.rover.sdk.experiences.rich.compose.ui.graphics.enterTransition
 import io.rover.sdk.experiences.rich.compose.ui.graphics.exitTransition
@@ -162,6 +165,11 @@ internal fun AppScreensRoot(
         return
     }
     val master = navigator.rootStack.firstOrNull() ?: return
+    val appScreenWindowInsets = if (LocalAppScreenOwnsStatusBar.current) {
+        WindowInsets.safeDrawing
+    } else {
+        WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+    }
 
     key(master.entryId) {
         val navController = rememberNavController()
@@ -213,6 +221,7 @@ internal fun AppScreensRoot(
                             session = session,
                             onRetry = { navigator.retry(entryId) },
                             onLazyRecover = { navigator.lazyRecover(entryId) },
+                            windowInsets = appScreenWindowInsets,
                             // A floating overlay capsule occupies the top band on this entry; fold that
                             // band into the injected top inset so the page lays out clear of the button
                             // (the Android counterpart of iOS's nav bar contributing to the safe area).
@@ -240,7 +249,8 @@ internal fun AppScreensRoot(
                     badgeText = affordance.badgeText,
                     contentDescription = affordance.contentDescription,
                     onTap = affordance.onTap,
-                    modifier = Modifier.align(Alignment.TopEnd)
+                    modifier = Modifier.align(Alignment.TopEnd),
+                    windowInsets = appScreenWindowInsets
                 )
             }
 
@@ -264,7 +274,8 @@ internal fun AppScreensRoot(
                         icon = Icons.Default.Close,
                         badgeText = null,
                         contentDescription = stringResource(R.string.rover_app_screen_close_button),
-                        onTap = onDismissButtonPressed
+                        onTap = onDismissButtonPressed,
+                        windowInsets = appScreenWindowInsets
                     )
                 }
             }
@@ -289,7 +300,8 @@ internal fun AppScreensRoot(
                     contentDescription = stringResource(R.string.rover_app_screen_back_button),
                     onTap = {
                         if (navController.previousBackStackEntry != null) navController.popBackStack()
-                    }
+                    },
+                    windowInsets = appScreenWindowInsets
                 )
             }
         }

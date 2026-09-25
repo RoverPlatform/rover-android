@@ -131,11 +131,23 @@ interface UserInfoInterface {
     fun clear()
 
     /**
-     * Used by the [UserInfoContextProvider] to determine the current attributes to include
-     * them in outgoing [Event]s.
+     * The user info exactly as stored on the device, in every tracking mode.
+     *
+     * This is what the host app set, and it is never modified by the SDK's privacy settings.
+     * Anything that leaves the SDK should use [reportedUserInfo] instead.
      */
     val currentUserInfo: Attributes
 
+    /**
+     * The view of [currentUserInfo] that the SDK is permitted to report under the current
+     * tracking mode: in [io.rover.sdk.core.privacy.PrivacyService.TrackingMode.Anonymized] the
+     * identity keys in [UserInfoKeys.privacySensitiveKeys] are withheld.
+     *
+     * Used by the [UserInfoContextProvider] to determine the attributes to include in outgoing
+     * [Event]s, by [resolveUserIdentifier] for Engage and App Screens requests, and by
+     * Experiences for interpolation.
+     */
+    val reportedUserInfo: Attributes
 }
 
 interface AppLastSeenInterface {

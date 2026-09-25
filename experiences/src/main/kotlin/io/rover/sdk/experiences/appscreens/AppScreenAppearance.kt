@@ -73,6 +73,16 @@ import io.rover.sdk.core.data.config.CommHubColorScheme
 public val LocalAppScreenColorSchemeOverride = compositionLocalOf<CommHubColorScheme?> { null }
 
 /**
+ * Whether this App Screens surface is currently drawn beneath the system status bar.
+ *
+ * Standalone presentations own the status-bar region by default. The Communication Hub provides
+ * the measured value for its embedded V3 home so App Screens does not inject or reserve a phantom
+ * top inset when the host has already placed the Hub below its own chrome.
+ */
+@get:RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
+public val LocalAppScreenOwnsStatusBar = compositionLocalOf { true }
+
+/**
  * Map a config colorScheme override to whether App Screens should be forced dark:
  * [CommHubColorScheme.DARK] → `true`, [CommHubColorScheme.LIGHT] → `false`,
  * [CommHubColorScheme.AUTO] or `null` (absent) → `null`, meaning "follow the device".

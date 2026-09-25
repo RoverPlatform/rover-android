@@ -54,7 +54,7 @@ internal class MessagesListViewModel(
      * and conversations' inbound-only `badgeActivityAt` — or null before the first emission.
      *
      * This is the value written to the seen watermark; see [InboxSeenWatermark.markSeen]. Tracked
-     * separately from [_rows] because rows are search filtered, and a value derived from a filtered
+     * separately from [_feed] because rows are search filtered, and a value derived from a filtered
      * list would under-report.
      */
     @Volatile
@@ -72,8 +72,12 @@ internal class MessagesListViewModel(
      */
     @Volatile
     private var isRevealed: Boolean = false
-    private val _rows = MutableStateFlow<List<MessageFeedRow>>(emptyList())
+    // Rows and their matching suggestions are published as one value so the
+    // UI can never observe rows from one feed emission paired with
+    // suggestions from another.
+    private val _feed = MutableStateFlow(MessagesFeedContent())
     private val _searchQuery = MutableStateFlow("")
+    private val _searchToken = MutableStateFlow<HubSearchToken?>(null)
     private val _isExpanded = MutableStateFlow(false)
     private val _isLoading = MutableStateFlow(true)
     private val _isRefreshing = MutableStateFlow(false)
@@ -88,16 +92,19 @@ internal class MessagesListViewModel(
      * a single update. Here on Jetpack Compose you are required to arrange for atomicity yourself.)
      */
     val uiState: StateFlow<MessagesListUiState> = combine(
-        _rows,
+        _feed,
         _searchQuery,
+        _searchToken,
         _isExpanded,
         _isLoading,
         _isRefreshing,
         _error
-    ) { rows, searchQuery, isExpanded, isLoading, isRefreshing, error ->
+    ) { feed, searchQuery, searchToken, isExpanded, isLoading, isRefreshing, error ->
         MessagesListUiState(
-            rows = rows,
+            rows = feed.rows,
             searchQuery = searchQuery,
+            searchToken = searchToken,
+            suggestions = feed.suggestions,
             isExpanded = isExpanded,
             isLoading = isLoading,
             isRefreshing = isRefreshing,
@@ -116,13 +123,14 @@ internal class MessagesListViewModel(
 
     private fun observeMessagesList() {
         viewModelScope.launch {
+            val searchState = combine(_searchQuery, _searchToken, ::Pair)
             combine(
                 postsRepository.getPostsFlow(),
                 conversationsRepository.getConversationsFlow(),
                 conversationsRepository.getParticipantsFlow(),
                 conversationsRepository.getRepliesFlow(),
-                _searchQuery,
-            ) { posts, conversations, participants, replies, searchQuery ->
+                searchState,
+            ) { posts, conversations, participants, replies, (searchQuery, searchToken) ->
                 MessagesFeedSnapshot(
                     rows = MessagesFeedBuilder.buildRows(
                         posts = posts,
@@ -130,7 +138,20 @@ internal class MessagesListViewModel(
                         participants = participants,
                         replies = replies,
                         searchQuery = searchQuery,
+                        searchToken = searchToken,
                     ),
+                    // Suggestions are only offered while no token is active: a
+                    // suggestion tap assigns the single token, never appends.
+                    suggestions = if (searchToken == null) {
+                        MessagesFeedBuilder.buildSuggestions(
+                            posts = posts,
+                            conversations = conversations,
+                            participants = participants,
+                            searchQuery = searchQuery,
+                        )
+                    } else {
+                        emptyList()
+                    },
                     newestActivityAt = listOfNotNull(
                         posts.maxOfOrNull { it.post.receivedAt },
                         conversations.mapNotNull { it.badgeActivityAt }.maxOrNull(),
@@ -160,7 +181,7 @@ internal class MessagesListViewModel(
                         // costs nothing.
                         inboxSeenWatermark.markSeen(snapshot.newestActivityAt)
                     }
-                    _rows.value = snapshot.rows
+                    _feed.value = MessagesFeedContent(snapshot.rows, snapshot.suggestions)
                     _isLoading.value = false
                     // note: deliberately not clearing _error here; rows re-emit on any database
                     // change, which would silently dismiss a refresh/backfill error. The error
@@ -291,6 +312,23 @@ internal class MessagesListViewModel(
         _searchQuery.value = query
     }
 
+    /**
+     * Applies a search token from a tapped suggestion, replacing any active
+     * token (never appending — one token at a time) and clearing the typed
+     * text so subsequent typing searches within the token's scope.
+     */
+    fun selectSearchToken(token: HubSearchToken) {
+        _searchToken.value = token
+        _searchQuery.value = ""
+        log.i("Hub message search token selected")
+    }
+
+    /** Removes the active search token, restoring plain free-text search. */
+    fun clearSearchToken() {
+        _searchToken.value = null
+        log.i("Hub message search token cleared")
+    }
+
     fun updateExpanded(expanded: Boolean) {
         _isExpanded.value = expanded
     }
@@ -305,14 +343,26 @@ internal class MessagesListViewModel(
  * in that emission (before search filtering) — max over posts' `receivedAt` and conversations'
  * inbound-only `badgeActivityAt`.
  */
+/**
+ * The feed-derived half of the UI state, published atomically: the rows on
+ * display and the token suggestions computed from the same emission.
+ */
+private data class MessagesFeedContent(
+    val rows: List<MessageFeedRow> = emptyList(),
+    val suggestions: List<HubSearchToken> = emptyList(),
+)
+
 private data class MessagesFeedSnapshot(
     val rows: List<MessageFeedRow>,
+    val suggestions: List<HubSearchToken>,
     val newestActivityAt: Long?,
 )
 
 internal data class MessagesListUiState(
     val rows: List<MessageFeedRow> = emptyList(),
     val searchQuery: String = "",
+    val searchToken: HubSearchToken? = null,
+    val suggestions: List<HubSearchToken> = emptyList(),
     val isExpanded: Boolean = false,
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
@@ -321,26 +371,28 @@ internal data class MessagesListUiState(
 
 
 /**
- * Extension function for combining 6 flows with individual parameters.
+ * Extension function for combining 7 flows with individual parameters.
  *
- * (kotlin coroutines only contains arity 5, and we needed 6.)
+ * (kotlin coroutines only contains arity 5, and we needed 7.)
  */
 @Suppress("UNCHECKED_CAST")
-private fun <T1, T2, T3, T4, T5, T6, R> combine(
+private fun <T1, T2, T3, T4, T5, T6, T7, R> combine(
     flow1: kotlinx.coroutines.flow.Flow<T1>,
     flow2: kotlinx.coroutines.flow.Flow<T2>,
     flow3: kotlinx.coroutines.flow.Flow<T3>,
     flow4: kotlinx.coroutines.flow.Flow<T4>,
     flow5: kotlinx.coroutines.flow.Flow<T5>,
     flow6: kotlinx.coroutines.flow.Flow<T6>,
-    transform: suspend (T1, T2, T3, T4, T5, T6) -> R
-): kotlinx.coroutines.flow.Flow<R> = combine(flow1, flow2, flow3, flow4, flow5, flow6) { flows ->
+    flow7: kotlinx.coroutines.flow.Flow<T7>,
+    transform: suspend (T1, T2, T3, T4, T5, T6, T7) -> R
+): kotlinx.coroutines.flow.Flow<R> = combine(flow1, flow2, flow3, flow4, flow5, flow6, flow7) { flows ->
     transform(
         flows[0] as T1,
         flows[1] as T2,
         flows[2] as T3,
         flows[3] as T4,
         flows[4] as T5,
-        flows[5] as T6
+        flows[5] as T6,
+        flows[6] as T7
     )
 }

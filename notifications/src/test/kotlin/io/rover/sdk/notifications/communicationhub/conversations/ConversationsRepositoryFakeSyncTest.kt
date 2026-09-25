@@ -2684,4 +2684,113 @@ class ConversationsRepositoryFakeSyncTest : RoverEngageTestBase() {
         assertThat(database!!.subscriptionsDao().getSubscriptionById("subscription-1")?.id, equalTo("subscription-1"))
     }
 
+
+    @Test
+    fun secondHistoryBackfillAwaitsTheRunningOneInsteadOfReturningStraightAway() = runTest {
+        val repository = buildConversationsRepository()
+        val firstStarted = CompletableDeferred<Unit>()
+        val releaseFirst = CompletableDeferred<Unit>()
+        var firstFinished = false
+        var secondRanItsOwnBlock = false
+        var firstHadFinishedWhenSecondReturned = false
+
+        val first = launch {
+            repository.runConversationHistoryBackfillLock {
+                firstStarted.complete(Unit)
+                releaseFirst.await()
+                firstFinished = true
+            }
+        }
+        firstStarted.await()
+
+        val second = launch {
+            repository.runConversationHistoryBackfillLock { secondRanItsOwnBlock = true }
+            firstHadFinishedWhenSecondReturned = firstFinished
+        }
+
+        advanceUntilIdle()
+
+        // The caller that lost the race must still be waiting: returning here is what lets a
+        // conversation detail screen conclude "not found" with nothing having been fetched.
+        assertThat(second.isCompleted, equalTo(false))
+
+        releaseFirst.complete(Unit)
+        advanceUntilIdle()
+
+        assertThat(first.isCompleted, equalTo(true))
+        assertThat(second.isCompleted, equalTo(true))
+        assertThat(firstHadFinishedWhenSecondReturned, equalTo(true))
+        // Awaiting the running backfill, not starting a duplicate one.
+        assertThat(secondRanItsOwnBlock, equalTo(false))
+    }
+
+
+    @Test
+    fun backfillOwnerCancelledMidRun_releasesTheWaiterAndFreesTheSlot() = runTest {
+        val repository = buildConversationsRepository()
+        val ownerStarted = CompletableDeferred<Unit>()
+        val neverCompletes = CompletableDeferred<Unit>()
+
+        val owner = launch {
+            repository.runConversationHistoryBackfillLock {
+                ownerStarted.complete(Unit)
+                neverCompletes.await()
+            }
+        }
+        ownerStarted.await()
+
+        val waiter = launch { repository.runConversationHistoryBackfillLock { } }
+        advanceUntilIdle()
+        assertThat(waiter.isCompleted, equalTo(false))
+
+        owner.cancel()
+        advanceUntilIdle()
+
+        // A waiter left joining a deferred nobody will ever complete is a hang, not a slow sync.
+        assertThat(waiter.isCompleted, equalTo(true))
+
+        // And the next caller must be able to run a backfill of its own.
+        var laterCallerRan = false
+        repository.runConversationHistoryBackfillLock { laterCallerRan = true }
+        assertThat(laterCallerRan, equalTo(true))
+    }
+
+    @Test
+    fun backfillOwnerFailing_releasesTheWaiterWithoutFailingIt() = runTest {
+        val repository = buildConversationsRepository()
+        val ownerStarted = CompletableDeferred<Unit>()
+        val releaseOwner = CompletableDeferred<Unit>()
+        var waiterCompletedNormally = false
+        var ownerSawItsOwnFailure = false
+
+        val owner = launch {
+            try {
+                repository.runConversationHistoryBackfillLock {
+                    ownerStarted.complete(Unit)
+                    releaseOwner.await()
+                    throw IllegalStateException("backfill blew up")
+                }
+            } catch (expected: IllegalStateException) {
+                ownerSawItsOwnFailure = true
+            }
+        }
+        ownerStarted.await()
+
+        val waiter = launch {
+            repository.runConversationHistoryBackfillLock { }
+            waiterCompletedNormally = true
+        }
+        advanceUntilIdle()
+
+        releaseOwner.complete(Unit)
+        advanceUntilIdle()
+
+        // The failure belongs to the caller that ran the backfill. Everyone else re-reads the
+        // store and draws its own conclusion.
+        assertThat(ownerSawItsOwnFailure, equalTo(true))
+        assertThat(owner.isCompleted, equalTo(true))
+        assertThat(waiter.isCompleted, equalTo(true))
+        assertThat(waiterCompletedNormally, equalTo(true))
+    }
+
 }

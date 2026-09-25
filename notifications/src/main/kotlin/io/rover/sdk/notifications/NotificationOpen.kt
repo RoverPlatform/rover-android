@@ -24,6 +24,7 @@ import io.rover.sdk.core.Rover
 import io.rover.sdk.core.events.EventQueueService
 import io.rover.sdk.core.events.EventQueueServiceInterface
 import io.rover.sdk.core.events.domain.Event
+import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.DateFormattingInterface
 import io.rover.sdk.core.platform.asAndroidUri
 import io.rover.sdk.core.routing.Router
@@ -33,6 +34,7 @@ import io.rover.sdk.notifications.domain.Notification
 import io.rover.sdk.notifications.domain.events.asAttributeValue
 import io.rover.sdk.notifications.graphql.decodeJson
 import org.json.JSONObject
+import java.net.URI
 
 /**
  * Open a notification by executing its [Notification.TapBehavior].
@@ -55,16 +57,41 @@ open class NotificationOpen(
     private fun intentForNotification(notification: Notification): Intent? {
         return when (notification.tapBehavior) {
             is Notification.TapBehavior.OpenApp -> openAppIntent
-            is Notification.TapBehavior.OpenUri -> router.route(notification.tapBehavior.uri) ?: Intent(Intent.ACTION_VIEW, notification.tapBehavior.uri.asAndroidUri())
+            is Notification.TapBehavior.OpenUri -> routeOrNull(notification.tapBehavior.uri)
+                ?: Intent(Intent.ACTION_VIEW, notification.tapBehavior.uri.asAndroidUri())
             is Notification.TapBehavior.PresentWebsite -> embeddedWebBrowserDisplay.intentForViewingWebsiteViaEmbeddedBrowser(
                 notification.tapBehavior.url.toString()
             )
         }
     }
 
+    /**
+     * The router stops at the first matching [io.rover.sdk.core.routing.Route] and isolates one
+     * that throws, so routing itself should no longer fail. This guard stays as a second line of
+     * defence: a throw escaping the routing layer here would land in the notification
+     * trampoline's Activity lifecycle and crash the app on tap, so treat a failed route as
+     * "no route" and let the caller fall back to a plain ACTION_VIEW.
+     */
+    private fun routeOrNull(uri: URI): Intent? {
+        return try {
+            router.route(uri)
+        } catch (exception: Exception) {
+            log.w("Could not route notification tap URI '$uri': $exception, at ${exception.stackTraceToString()}")
+            null
+        }
+    }
+
     override fun intentForOpeningNotificationFromJson(notificationJson: String): Intent? {
         // side-effect: issue open event.
-        val notification = Notification.decodeJson(JSONObject(notificationJson), dateFormatting)
+        val notification = try {
+            Notification.decodeJson(JSONObject(notificationJson), dateFormatting)
+        } catch (exception: Exception) {
+            // The PendingIntent can outlive the SDK version that created it, so treat its serialized
+            // notification as untrusted input. A stale or malformed notification should close the
+            // trampoline rather than crash the host app during launch.
+            log.w("Could not open notification because its payload was invalid: $exception, at ${exception.stackTraceToString()}")
+            return null
+        }
 
         notification.conversionTags?.let { conversionTags ->
             val conversionTrackerService = Rover.shared.resolve(ConversionsTrackerService::class.java)

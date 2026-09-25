@@ -36,10 +36,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.core.net.toUri
 import io.rover.sdk.core.Rover
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.routing.LinkOpenInterface
+import io.rover.sdk.notifications.communicationhub.openLink
 import io.rover.sdk.notifications.communicationhub.rememberCommHubDarkTheme
 import io.rover.sdk.notifications.communicationhub.posts.PostWithSubscription
 import io.rover.sdk.notifications.postsRepository
@@ -60,7 +60,15 @@ class ShowPostActivity : ComponentActivity() {
 
         if (postId == null) {
             // If no post ID is provided, log an error and finish the activity
-            log.e("ShowPostActivity: No post ID provided in intent extras.")
+            log.e("No post ID provided in intent extras.")
+            finish()
+            return
+        }
+
+        // The system can recreate this activity after process death, so Rover may not be
+        // initialized yet. Bail out rather than throwing out of onCreate.
+        if (Rover.failableShared == null) {
+            log.e("Rover is not initialized, so this post cannot be shown.  Ensure Rover.initialize() is called in Application.onCreate().")
             finish()
             return
         }
@@ -115,13 +123,12 @@ class ShowPostActivity : ComponentActivity() {
                             postId = postId,
                             postsRepository = Rover.shared.postsRepository,
                             onBackClick = { finish() },
+                            // Use the shared helper, as ShowConversationActivity does: it falls
+                            // back to Custom Tabs for a web link the router does not claim, and
+                            // logs rather than crashing when no activity handles the scheme.
                             onOpenUrl = { url ->
-                                val linkOpen = Rover.shared.resolve(LinkOpenInterface::class.java)
-                                // Use Rover's link open interface to handle external links
-                                val uri = url.toUri()
-                                linkOpen?.intentForLink(this, uri)?.let { intent ->
-                                    startActivity(intent)
-                                }
+                                Rover.shared.resolve(LinkOpenInterface::class.java)
+                                    ?.openLink(url, this)
                             },
                             onErrorDismiss = { finish() },
                             modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding).fillMaxSize(),

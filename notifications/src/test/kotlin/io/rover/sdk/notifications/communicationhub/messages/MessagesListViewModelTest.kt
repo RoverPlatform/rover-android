@@ -32,6 +32,7 @@ import io.rover.sdk.notifications.communicationhub.conversations.ReplyEntity
 import io.rover.sdk.notifications.communicationhub.posts.PostEntity
 import io.rover.sdk.notifications.communicationhub.posts.PostsDataSource
 import io.rover.sdk.notifications.communicationhub.posts.PostWithSubscription
+import io.rover.sdk.notifications.communicationhub.posts.SubscriptionEntity
 
 import java.net.ConnectException
 import java.time.Instant
@@ -672,6 +673,90 @@ class MessagesListViewModelTest {
         viewModel.awaitPostsEmission(rowCount = 2)
 
         assertThat(watermark.seenAt.value, equalTo(alreadyThere.toEpochMilli()))
+    }
+
+    @Test
+    fun selectSearchTokenScopesRowsAndClearsQuery() = runTest(timeout = 10.seconds) {
+        val newsPost = PostWithSubscription(
+            post = PostEntity(
+                id = "post-news",
+                subject = "Briefing",
+                previewText = "Markets",
+                receivedAt = 2000L,
+                url = null,
+                isRead = false,
+                coverImageURL = null,
+                subscriptionId = "sub-news",
+            ),
+            subscription = SubscriptionEntity(
+                id = "sub-news",
+                name = "News Daily",
+                description = "",
+                optIn = true,
+                status = "published",
+            ),
+        )
+        val viewModel = MessagesListViewModel(
+            postsRepository = FakePostsDataSource(listOf(newsPost, post(id = "post-other", receivedAt = 1000L))),
+            conversationsRepository = FakeConversationsDataSource(),
+            conversationsSync = FakeConversationsHistorySync(),
+            syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = InboxSeenWatermark(InMemoryLocalStorage()),
+        )
+        val stateCollectionJob = backgroundScope.launch {
+            viewModel.uiState.collect { }
+        }
+        viewModel.awaitPostsEmission(2)
+
+        viewModel.updateSearchQuery("news")
+        viewModel.selectSearchToken(HubSearchToken.Subscription(id = "sub-news", name = "News Daily"))
+
+        // The feed recomputes asynchronously per search-state change, so an
+        // emission for the intermediate query-only state ("news", no token) can
+        // land after the token is set — and it also has exactly one row, with
+        // suggestions. Wait for the fully settled scoped state instead of the
+        // bare row count; the runTest timeout still fails the test if it never
+        // arrives.
+        val state = viewModel.uiState.first {
+            it.rows.size == 1 && it.suggestions.isEmpty() && it.searchQuery.isEmpty() && it.searchToken != null
+        }
+        assertThat((state.rows.single() as MessageFeedRow.Post).postWithSubscription.post.id, equalTo("post-news"))
+        assertThat(state.searchQuery, equalTo(""))
+        assertThat(
+            state.searchToken,
+            equalTo<HubSearchToken?>(HubSearchToken.Subscription(id = "sub-news", name = "News Daily")),
+        )
+        assertThat(state.suggestions.isEmpty(), equalTo(true))
+
+        stateCollectionJob.cancel()
+    }
+
+    @Test
+    fun clearSearchTokenRestoresUnscopedRows() = runTest(timeout = 10.seconds) {
+        val viewModel = MessagesListViewModel(
+            postsRepository = FakePostsDataSource(
+                listOf(post(id = "post-1", receivedAt = 2000L), post(id = "post-2", receivedAt = 1000L)),
+            ),
+            conversationsRepository = FakeConversationsDataSource(),
+            conversationsSync = FakeConversationsHistorySync(),
+            syncCoordinator = FakeSyncCoordinator(),
+            inboxSeenWatermark = InboxSeenWatermark(InMemoryLocalStorage()),
+        )
+        val stateCollectionJob = backgroundScope.launch {
+            viewModel.uiState.collect { }
+        }
+        viewModel.awaitPostsEmission(2)
+
+        // Neither post belongs to this subscription, so the token empties the list.
+        viewModel.selectSearchToken(HubSearchToken.Subscription(id = "sub-missing", name = "Missing"))
+        viewModel.uiState.first { it.rows.isEmpty() }
+
+        viewModel.clearSearchToken()
+        viewModel.awaitPostsEmission(2)
+
+        assertThat(viewModel.uiState.value.searchToken, equalTo<HubSearchToken?>(null))
+
+        stateCollectionJob.cancel()
     }
 
     /**

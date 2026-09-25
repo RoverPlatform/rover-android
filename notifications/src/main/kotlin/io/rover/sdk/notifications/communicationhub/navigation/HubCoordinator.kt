@@ -17,6 +17,7 @@
 
 package io.rover.sdk.notifications.communicationhub.navigation
 
+import io.rover.sdk.core.logging.log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -105,6 +106,22 @@ class HubCoordinator {
      */
     fun clearPendingNavigation() {
         _pendingNavigation.value = null
+    }
+
+    /**
+     * Clears the pending navigation, but only if it is still the one that was consumed.
+     *
+     * The Hub executes a pending navigation across a suspension point (it waits for its
+     * NavController's graph before navigating), so a newer navigation can be queued while a
+     * consumed one is still executing. An unconditional clear would erase that newer request;
+     * this compare-and-set clear leaves it in place to be executed next.
+     */
+    fun clearPendingNavigation(consumed: HubNavigation) {
+        if (_pendingNavigation.compareAndSet(consumed, null)) {
+            log.d("Cleared consumed pending navigation")
+        } else {
+            log.d("Consumed pending navigation was superseded by a newer request; leaving it pending")
+        }
     }
 
     /**

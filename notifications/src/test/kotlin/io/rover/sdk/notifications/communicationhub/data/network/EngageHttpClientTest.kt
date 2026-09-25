@@ -18,19 +18,26 @@
 package io.rover.sdk.notifications.communicationhub.data.network
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import io.rover.sdk.core.data.AuthenticationContextInterface
 import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.core.platform.DeviceIdentificationInterface
+import io.rover.sdk.core.testing.RoverNetworkTestHook
 import io.rover.sdk.notifications.communicationhub.conversations.dto.ReplyContentBlockItem
 import kotlinx.coroutines.test.runTest
+import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -62,9 +69,14 @@ class EngageHttpClientTest {
         whenever(mockContext.packageName).thenReturn("io.rover.test")
         whenever(mockContext.packageManager).thenReturn(mockPackageManager)
         whenever(mockPackageManager.getPackageInfo("io.rover.test", 0)).thenReturn(mockPackageInfo)
+        // RoverNetworkTestHook.interceptorFor reads this: the seam is inert unless the host app is
+        // debuggable, so a test that expects the hook to be consulted has to look like a debug build.
+        whenever(mockContext.applicationInfo).thenReturn(
+            ApplicationInfo().apply { flags = ApplicationInfo.FLAG_DEBUGGABLE },
+        )
 
         mockUserInfo = mock<UserInfoInterface>()
-        whenever(mockUserInfo.currentUserInfo).thenReturn(hashMapOf("userID" to "user-123"))
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(hashMapOf("userID" to "user-123"))
 
         mockDeviceIdentification = mock<DeviceIdentificationInterface>()
         whenever(mockDeviceIdentification.installationIdentifier).thenReturn("device-123")
@@ -86,7 +98,68 @@ class EngageHttpClientTest {
 
     @After
     fun tearDown() {
+        // The hook is process-global: never let it leak into another test.
+        RoverNetworkTestHook.interceptor = null
         mockServer.shutdown()
+    }
+
+    @Test
+    fun `with the network test hook null requests reach the network as before`() = runTest {
+        mockServer.enqueue(MockResponse().setResponseCode(200).setBody("{}"))
+
+        httpClient().client.newCall(
+            Request.Builder()
+                .url(mockServer.url("/conversations"))
+                .get()
+                .build()
+        ).execute().close()
+
+        assertEquals(1, mockServer.requestCount)
+    }
+
+    @Test
+    fun `network test hook short-circuits offline and sees the decorated request`() = runTest {
+        val stub = StubInterceptor()
+        RoverNetworkTestHook.interceptor = stub
+
+        // Built after the hook is installed — the client reads it at construction time, exactly as
+        // the bench installs it before `Rover.initialize`.
+        val response = httpClient().client.newCall(
+            Request.Builder()
+                .url(mockServer.url("/conversations"))
+                .get()
+                .build()
+        ).execute()
+        response.use { assertEquals(200, it.code) }
+
+        // Nothing left the device: the application interceptor ran before DNS and the connection.
+        assertEquals(0, mockServer.requestCount)
+
+        // Added last, so the client's own decoration is already applied.
+        val observed = stub.observed!!
+        assertEquals("device-123", observed.url.queryParameter("deviceIdentifier"))
+        assertEquals("user-123", observed.url.queryParameter("userID"))
+        assertEquals("account-token", observed.header("x-rover-account-token"))
+        assertNotNull(observed.header("User-Agent"))
+    }
+
+    /**
+     * Records the request it observes and answers it without proceeding down the chain.
+     */
+    private class StubInterceptor : Interceptor {
+        var observed: Request? = null
+
+        override fun intercept(chain: Interceptor.Chain): Response {
+            val request = chain.request()
+            observed = request
+            return Response.Builder()
+                .request(request)
+                .protocol(Protocol.HTTP_1_1)
+                .code(200)
+                .message("OK")
+                .body("{}".toResponseBody("application/json".toMediaType()))
+                .build()
+        }
     }
 
     @Test
@@ -206,7 +279,7 @@ class EngageHttpClientTest {
     fun `conversations request skips sdk auth when sdk auth matches domain but userID is missing`() = runTest {
         mockServer.enqueue(MockResponse().setResponseCode(200).setBody("{}"))
 
-        whenever(mockUserInfo.currentUserInfo).thenReturn(hashMapOf("email" to "person@example.com"))
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(hashMapOf("email" to "person@example.com"))
         authenticationContext = FakeAuthenticationContext(
             sdkToken = "account-token",
             idToken = "id-token-123",
@@ -232,7 +305,7 @@ class EngageHttpClientTest {
     fun `conversations request skips sdk auth when sdk auth matches domain but userID is blank`() = runTest {
         mockServer.enqueue(MockResponse().setResponseCode(200).setBody("{}"))
 
-        whenever(mockUserInfo.currentUserInfo).thenReturn(hashMapOf("userID" to "   "))
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(hashMapOf("userID" to "   "))
         authenticationContext = FakeAuthenticationContext(
             sdkToken = "account-token",
             idToken = "id-token-123",
@@ -258,7 +331,7 @@ class EngageHttpClientTest {
     fun `conversations request uses one eligible userID value for decoration and auth`() = runTest {
         mockServer.enqueue(MockResponse().setResponseCode(200).setBody("{}"))
 
-        whenever(mockUserInfo.currentUserInfo).thenReturn(
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(
             hashMapOf("userID" to "user-123"),
             hashMapOf("email" to "person@example.com")
         )
@@ -286,7 +359,7 @@ class EngageHttpClientTest {
     fun `conversations request uses ticketmasterID when no userID and sdk auth enabled`() = runTest {
         mockServer.enqueue(MockResponse().setResponseCode(200).setBody("{}"))
 
-        whenever(mockUserInfo.currentUserInfo).thenReturn(
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(
             hashMapOf("ticketmaster" to hashMapOf("ticketmasterID" to "tm-456"))
         )
         authenticationContext = FakeAuthenticationContext(
@@ -312,7 +385,7 @@ class EngageHttpClientTest {
     fun `conversations request uses seatGeekClientID when no userID or ticketmaster and sdk auth enabled`() = runTest {
         mockServer.enqueue(MockResponse().setResponseCode(200).setBody("{}"))
 
-        whenever(mockUserInfo.currentUserInfo).thenReturn(
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(
             hashMapOf("seatGeek" to hashMapOf("seatGeekClientID" to "sg-client-789"))
         )
         authenticationContext = FakeAuthenticationContext(
@@ -525,6 +598,11 @@ class EngageHttpClientTest {
         whenever(mockContext.packageName).thenReturn("io.rover.test")
         whenever(mockContext.packageManager).thenReturn(mockPackageManager)
         whenever(mockPackageManager.getPackageInfo("io.rover.test", 0)).thenReturn(mockPackageInfo)
+        // RoverNetworkTestHook.interceptorFor reads this: the seam is inert unless the host app is
+        // debuggable, so a test that expects the hook to be consulted has to look like a debug build.
+        whenever(mockContext.applicationInfo).thenReturn(
+            ApplicationInfo().apply { flags = ApplicationInfo.FLAG_DEBUGGABLE },
+        )
 
         return EngageHttpClient(
             context = mockContext,

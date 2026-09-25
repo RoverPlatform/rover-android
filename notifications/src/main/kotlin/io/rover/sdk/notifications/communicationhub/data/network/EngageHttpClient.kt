@@ -24,6 +24,7 @@ import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.core.events.resolveUserIdentifier
 import io.rover.sdk.core.platform.DeviceIdentificationInterface
 import io.rover.sdk.core.platform.roverUserAgent
+import io.rover.sdk.core.testing.RoverNetworkTestHook
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
@@ -61,7 +62,12 @@ internal class EngageHttpClient(
                 }
 
                 chain.proceed(request)
-            }.build()
+            }
+            // Last application interceptor, so a test harness observes the fully-decorated request
+            // and can short-circuit it before DNS. Always null in production — and inert even if
+            // assigned there, since the hook only answers a debuggable app.
+            .apply { RoverNetworkTestHook.interceptorFor(context)?.let { addInterceptor(it) } }
+            .build()
     }
 
     private fun decorateEngageRequest(request: Request, userId: String?): Request {

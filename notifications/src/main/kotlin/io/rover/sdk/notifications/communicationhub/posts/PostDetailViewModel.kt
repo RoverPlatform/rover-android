@@ -24,6 +24,7 @@ import io.rover.sdk.core.logging.log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 internal class PostDetailViewModel(
@@ -35,60 +36,108 @@ internal class PostDetailViewModel(
     private val _uiState = MutableStateFlow(PostDetailUiState())
     val uiState: StateFlow<PostDetailUiState> = _uiState.asStateFlow()
 
+    /** Set once the post is known to be in Room, so a post is marked read exactly once per screen. */
+    private var markedRead = false
+
     init {
-        loadPost()
-        markAsRead()
+        observePost()
+        fetchIfMissing()
     }
 
-    private fun loadPost() {
+    /**
+     * Room is the source of truth for what the screen shows. Whatever brings the row in, the sync
+     * below, a later background sync or a push with a bundled post, the detail fills in when it
+     * lands, and an error shown in the meantime is withdrawn.
+     */
+    private fun observePost() {
+        viewModelScope.launch {
+            postsRepository.observePostWithSubscriptionById(postId)
+                .catch { exception ->
+                    log.e("Observing post $postId failed: $exception")
+                    updateWhileNoPostShown { copy(isLoading = false, error = exception.message ?: LOAD_FAILED) }
+                }
+                .collect { row -> row?.post?.let(::showPost) }
+        }
+    }
+
+    /**
+     * The one place a post reaches the state. Idempotent, and called from both coroutines: the
+     * observer whenever Room emits the row, and the fetch whenever one of its own lookups finds
+     * it, so a fetched post is shown even if the observed flow has failed and completed.
+     */
+    private fun showPost(post: PostEntity) {
+        log.d("Post $postId is in Room, showing it")
+        _uiState.value = _uiState.value.copy(
+            post = post,
+            isLoading = false,
+            error = null,
+        )
+        if (!markedRead) {
+            markedRead = true
+            markAsRead()
+        }
+    }
+
+    /**
+     * A post that is not in Room yet (a deep link or push tap on a fresh install) is fetched by a
+     * full sync. The outcome is judged by whether the post is present afterwards, not by the sync's
+     * aggregate result: a sync reports [SyncCoordinatorInterface.Result.RetryNeeded] when any
+     * participant fails, and the posts participant may well have succeeded in the same run.
+     *
+     * Every write here goes through [updateWhileNoPostShown]: the lookups suspend on IO, and by the
+     * time a continuation resumes here [observePost] may already have shown the post, in which case
+     * a stale "loading" or "not found" conclusion must not overwrite it.
+     */
+    private fun fetchIfMissing() {
         viewModelScope.launch {
             try {
-                // Fast path: check DAO first
-                log.d("Loading post $postId from DAO")
-                val post = postsRepository.getPostById(postId)
-                if (post != null) {
+                postsRepository.getPostById(postId)?.let { post ->
                     log.d("Post $postId found in DAO")
-                    _uiState.value = _uiState.value.copy(
-                        post = post,
-                        isLoading = false
-                    )
-                } else {
-                    // Slow path: trigger sync and retry
-                    log.d("Post $postId not found in DAO, triggering sync")
-                    _uiState.value = _uiState.value.copy(isLoading = true)
+                    showIfNoPostShown(post)
+                    return@launch
+                }
+                log.d("Post $postId not found in DAO, triggering sync")
+                updateWhileNoPostShown { copy(isLoading = true) }
 
-                    val syncSuccess = syncCoordinator.awaitSync() == SyncCoordinatorInterface.Result.Succeeded
-                    if (syncSuccess) {
-                        log.d("Sync completed successfully, retrying DAO lookup for post $postId")
-                        val postAfterSync = postsRepository.getPostById(postId)
-                        if (postAfterSync != null) {
-                            log.d("Post $postId found after sync")
-                            _uiState.value = _uiState.value.copy(
-                                post = postAfterSync,
-                                isLoading = false
-                            )
-                        } else {
-                            log.w("Post $postId still not found after successful sync")
-                            _uiState.value = _uiState.value.copy(
-                                isLoading = false,
-                                error = "Post not found"
-                            )
-                        }
-                    } else {
-                        log.e("Sync failed while trying to load post $postId")
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            error = "Unable to load post. Please check your connection and try again."
-                        )
-                    }
+                val result = syncCoordinator.awaitSync()
+                postsRepository.getPostById(postId)?.let { post ->
+                    log.d("Post $postId found after sync")
+                    showIfNoPostShown(post)
+                    return@launch
+                }
+                if (result == SyncCoordinatorInterface.Result.Succeeded) {
+                    log.w("Post $postId still not found after successful sync")
+                    updateWhileNoPostShown { copy(isLoading = false, error = "Post not found") }
+                } else {
+                    log.w("Sync did not fully succeed while trying to load post $postId")
+                    updateWhileNoPostShown { copy(isLoading = false, error = LOAD_FAILED) }
                 }
             } catch (exception: Exception) {
                 log.e("Exception while loading post $postId: ${exception.message}")
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = exception.message
-                )
+                updateWhileNoPostShown { copy(isLoading = false, error = exception.message ?: LOAD_FAILED) }
             }
+        }
+    }
+
+    /**
+     * The fetch's lookups return a snapshot taken on IO; by the time the continuation resumes here
+     * the observer may have shown the row, possibly a newer one (read state, for instance). The
+     * observer's row wins, so the snapshot is shown only while nothing is on screen yet.
+     */
+    private fun showIfNoPostShown(post: PostEntity) {
+        if (_uiState.value.post == null) {
+            showPost(post)
+        }
+    }
+
+    /**
+     * Check-and-write on the main thread, where both coroutines run, so it is atomic with respect
+     * to [observePost]'s writes: once a post is shown, nothing the fetch concludes can hide it.
+     */
+    private fun updateWhileNoPostShown(update: PostDetailUiState.() -> PostDetailUiState) {
+        val current = _uiState.value
+        if (current.post == null) {
+            _uiState.value = current.update()
         }
     }
 
@@ -104,6 +153,11 @@ internal class PostDetailViewModel(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    private companion object {
+        /** Also the fallback for an exception without a message, so the error branch always renders. */
+        const val LOAD_FAILED = "Unable to load post. Please check your connection and try again."
     }
 }
 

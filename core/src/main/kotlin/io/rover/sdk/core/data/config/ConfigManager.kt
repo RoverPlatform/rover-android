@@ -18,6 +18,7 @@
 package io.rover.sdk.core.data.config
 
 import com.squareup.moshi.Moshi
+import io.rover.sdk.core.benchsupport.BenchSupportOverrideStore
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.LocalStorage
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,14 +39,34 @@ class ConfigManager(
     private val moshi = Moshi.Builder().build()
     private val adapter = moshi.adapter(RoverConfig::class.java)
 
-    private val _config = MutableStateFlow(loadConfig())
-    
+    /**
+     * Guards the backend value and the publication derived from it. See [publishConfig].
+     */
+    private val publicationLock = Any()
+
+    /**
+     * The most recent backend (or cached) configuration, before Bench overrides. This is what
+     * gets persisted; the overrides are never written to storage.
+     *
+     * Only read or written while holding [publicationLock], after construction.
+     */
+    private var backendConfig = loadConfig()
+
+    private val _config = MutableStateFlow(BenchSupportOverrideStore.applyToConfig(backendConfig))
+
     /**
      * The currently active configuration.
      *
-     * Returns the backend configuration if available, otherwise returns a default configuration.
+     * Returns the backend configuration if available, otherwise returns a default configuration,
+     * in either case with any Bench overrides layered on top.
      */
     val config: StateFlow<RoverConfig> = _config.asStateFlow()
+
+    init {
+        // Overrides are a layer over whatever the backend last gave us, so a change to them
+        // re-publishes against the current backend config rather than replacing it.
+        BenchSupportOverrideStore.addChangeListener { publishConfig() }
+    }
 
     companion object {
         private const val STORAGE_KEY = "io.rover.communicationHub.config"
@@ -93,10 +114,27 @@ class ConfigManager(
         try {
             val json = adapter.toJson(newConfig)
             storage[STORAGE_KEY] = json
-            _config.value = newConfig
+            synchronized(publicationLock) {
+                backendConfig = newConfig
+                publishConfig()
+            }
             log.d("Backend config saved and activated")
         } catch (e: Exception) {
             log.w("Failed to encode config: ${e.message}")
         }
+    }
+
+    /**
+     * Publishes the effective config: the last backend value with the current Bench overrides
+     * layered on top.
+     *
+     * Two threads reach this: ConfigSync completes on the IO dispatcher, while a Bench override
+     * change re-publishes on whichever thread set it. The lock covers reading the backend value,
+     * applying the overrides and assigning the flow as one step — otherwise those steps
+     * interleave and an older computed snapshot can be assigned last, reverting freshly synced
+     * fields (or a freshly set override) until the next sync or override change.
+     */
+    private fun publishConfig() = synchronized(publicationLock) {
+        _config.value = BenchSupportOverrideStore.applyToConfig(backendConfig)
     }
 }

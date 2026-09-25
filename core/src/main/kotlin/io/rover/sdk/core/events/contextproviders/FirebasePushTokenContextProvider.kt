@@ -33,25 +33,29 @@ class FirebasePushTokenContextProvider(
     localStorage: LocalStorage
 ) : ContextProvider, PushTokenTransmissionChannel {
     override fun captureContext(deviceContext: DeviceContext): DeviceContext {
-        return deviceContext.copy(
-            pushToken = token.whenNotNull {
-                DeviceContext.PushToken(
-                    it,
-                    timestampAsNeeded()
-                )
-            }
-        )
+        return synchronized(this) {
+            deviceContext.copy(
+                pushToken = token.whenNotNull {
+                    DeviceContext.PushToken(
+                        it,
+                        timestampAsNeeded()
+                    )
+                }
+            )
+        }
     }
 
     override fun setPushToken(token: String?) {
-        if (this.token != token) {
-            this.token = token
-            this.timestamp = null
-            timestampAsNeeded()
-            val elapsed = (Date().time - launchTime.time) / 1000
-            log.v("A new push token set after $elapsed seconds: $token")
-        } else {
-            log.v("Push token update received, token not changed.")
+        synchronized(this) {
+            if (this.token != token) {
+                this.token = token
+                this.timestamp = null
+                timestampAsNeeded()
+                val elapsed = (Date().time - launchTime.time) / 1000
+                log.v("A new push token set after $elapsed seconds: $token")
+            } else {
+                log.v("Push token update received, token not changed.")
+            }
         }
     }
 
@@ -70,11 +74,11 @@ class FirebasePushTokenContextProvider(
         // retrieves the current timestamp value, setting it to now if it's missing (say, if running
         // on an early 2.0 beta install where timestamp was not set).
 
-        if (timestamp == null) {
-            timestamp = (System.currentTimeMillis() / 1000L).toString()
+        val currentTimestamp = timestamp ?: (System.currentTimeMillis() / 1000L).toString().also {
+            timestamp = it
         }
 
-        return Date(timestamp!!.toLong() * 1000)
+        return Date(currentTimestamp.toLong() * 1000)
     }
 
     init {

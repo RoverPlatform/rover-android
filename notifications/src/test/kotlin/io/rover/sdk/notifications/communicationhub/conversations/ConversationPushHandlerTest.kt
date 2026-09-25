@@ -17,6 +17,8 @@
 
 package io.rover.sdk.notifications.communicationhub.conversations
 
+import com.natpryce.hamkrest.assertion.assertThat
+import com.natpryce.hamkrest.equalTo
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -47,7 +49,7 @@ class ConversationPushHandlerTest {
             coroutineScope = testScope,
         )
 
-        handler.handleCommunicationHubPush(
+        val handled = handler.handleCommunicationHubPush(
             """
                 {
                   "conversation": {
@@ -80,6 +82,7 @@ class ConversationPushHandlerTest {
 
         testScope.advanceUntilIdle()
 
+        assertThat(handled, equalTo(true))
         verify(pushRepository).saveConversationPushPayload(any(), any(), any())
         verify(notificationPresenter).presentConversationNotification(
             conversationId = "conversation-1",
@@ -100,9 +103,10 @@ class ConversationPushHandlerTest {
             coroutineScope = testScope,
         )
 
-        handler.handleCommunicationHubPush("{\"conversation\":{\"id\":\"only\"}}")
+        val handled = handler.handleCommunicationHubPush("{\"conversation\":{\"id\":\"only\"}}")
         testScope.advanceUntilIdle()
 
+        assertThat(handled, equalTo(false))
         verify(pushRepository, never()).saveConversationPushPayload(any(), any(), any())
         verify(notificationPresenter, never()).presentConversationNotification(any(), any(), any(), any())
     }
@@ -118,7 +122,7 @@ class ConversationPushHandlerTest {
             coroutineScope = testScope,
         )
 
-        handler.handleCommunicationHubPush(
+        val handled = handler.handleCommunicationHubPush(
             """
                 {
                   "conversation": {
@@ -150,6 +154,7 @@ class ConversationPushHandlerTest {
 
         testScope.advanceUntilIdle()
 
+        assertThat(handled, equalTo(true))
         verify(notificationPresenter).presentConversationNotification(
             conversationId = "conversation-1",
             participantName = null,
@@ -172,7 +177,7 @@ class ConversationPushHandlerTest {
         // This is the real-world push payload format as sent by Bobcat.
         // The updatedAt and createdAt fields are ISO-8601 strings, not epoch millis integers.
         // The reply uses "content" and "createdAt" fields (not "blocks"/"sentAt").
-        handler.handleCommunicationHubPush(
+        val handled = handler.handleCommunicationHubPush(
             """
                 {
                   "conversation": {
@@ -206,6 +211,7 @@ class ConversationPushHandlerTest {
 
         testScope.advanceUntilIdle()
 
+        assertThat(handled, equalTo(true))
         verify(pushRepository).saveConversationPushPayload(any(), any(), any())
         verify(notificationPresenter).presentConversationNotification(
             conversationId = "019cd3da-e9d2-74c0-bc94-1a1bbf298dcd",
@@ -226,7 +232,7 @@ class ConversationPushHandlerTest {
             coroutineScope = testScope,
         )
 
-        handler.handleCommunicationHubPush(
+        val handled = handler.handleCommunicationHubPush(
             """
                 {
                   "conversation": {
@@ -259,6 +265,7 @@ class ConversationPushHandlerTest {
 
         testScope.advanceUntilIdle()
 
+        assertThat(handled, equalTo(true))
         verify(notificationPresenter).presentConversationNotification(
             conversationId = "conversation-1",
             participantName = "  Casey Jones  ",

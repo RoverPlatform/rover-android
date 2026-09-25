@@ -19,25 +19,29 @@ package io.rover.sdk.experiences.rich.compose.ui.fonts
 
 import android.content.Context
 import android.graphics.Typeface
-import android.util.Log
 import io.rover.sdk.experiences.rich.compose.data.ExperiencesHttpClient
 import io.rover.sdk.experiences.rich.compose.data.LocalFolder
 import io.rover.sdk.experiences.rich.compose.model.values.DocumentFont
 import io.rover.sdk.experiences.rich.compose.ui.AssetContext
+import io.rover.sdk.core.logging.log
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Url
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
 internal class FontLoader(
     private val context: Context,
     private val httpClient: ExperiencesHttpClient
 ) {
-    private val tag = FontLoader::class.java.simpleName
-
     interface ResourceAPI {
         @GET
         suspend fun getFile(
@@ -66,52 +70,98 @@ internal class FontLoader(
         context: Context,
         assetContext: AssetContext,
         sources: List<DocumentFont.Source>
-    ): TypeFaceMapping {
-        val result = mutableMapOf<String, Typeface>()
+    ): TypeFaceMapping = withContext(Dispatchers.IO) {
+        // Use ConcurrentHashMap to safely handle concurrent writes from parallel downloads
+        val result = ConcurrentHashMap<String, Typeface>()
 
-        sources.forEach { source ->
-            val sourceUrl = assetContext.uriForFontSource(context, source)
-            if (sourceUrl == null) {
-                Log.e(tag, "Asset context did not yield a source URL for font source $source")
-                return@forEach
-            }
-            val sourceScheme = sourceUrl.scheme?.lowercase() ?: return@forEach
-            // TODO we do not support TTC for now, so only one font name is expected.
-            // TODO: variable fonts (other than default face) also not supported.
-            val fontName = source.fontNames.firstOrNull() ?: return@forEach
-            if (sourceScheme == "file" || sourceScheme == "content") {
-                // local uri
-                val sourcePath = sourceUrl.path ?: return@forEach
-                val localFile = File(sourcePath)
+        // Documents frequently repeat the same asset across several font entries (every
+        // entry listing its whole family), so group by asset and fetch each file only once.
+        sources.groupBy { it.assetName }.values.map { sourcesForAsset ->
+            async {
+                val source = sourcesForAsset.first()
+                runCatching {
+                    val sourceUrl = assetContext.uriForFontSource(context, source)
+                    if (sourceUrl == null) {
+                        log.w("Asset context did not yield a source URL for font source $source")
+                        return@async
+                    }
 
-                val face = Typeface.createFromFile(localFile)
+                    val sourceScheme = sourceUrl.scheme?.lowercase() ?: return@async
 
-                result[fontName] = face
-            } else {
-                // remote uri
-                val response = api.getFile(sourceUrl.toString())
+                    val typeface = when (sourceScheme) {
+                        "file", "content" -> loadLocalFont(sourceUrl)
+                        else -> loadRemoteFont(sourceUrl, source.assetName, context)
+                    } ?: return@async
 
-                val body = response.body()?.bytes()
-
-                // we'll use the same cache folder as we do for local fonts.
-                val cacheFolder = LocalFolder.getFontsCacheFolder(context)
-
-                val file =
-                    File(cacheFolder, source.assetName)
-
-                body?.let { bytes ->
-                    file.writeBytes(bytes)
-
-                    val face = Typeface.createFromFile(file)
-
-                    result.put(fontName, face)
+                    // TODO we do not support TTC for now, so only one font name is expected.
+                    // TODO: variable fonts (other than default face) also not supported.
+                    sourcesForAsset.forEach { s ->
+                        s.fontNames.firstOrNull()?.let { fontName -> result[fontName] = typeface }
+                    }
+                }.onFailure { exception ->
+                    if (exception is CancellationException) {
+                        throw exception
+                    }
+                    log.e("Failed to load font: $source: $exception")
                 }
-
-                file.delete()
             }
+        }.awaitAll()
+
+        log.d("Fonts loaded: $result")
+        TypeFaceMapping(result)
+    }
+
+    private fun loadLocalFont(
+        sourceUrl: android.net.Uri
+    ): Typeface? {
+        val sourcePath = sourceUrl.path ?: return null
+        return Typeface.createFromFile(File(sourcePath))
+    }
+
+    /**
+     * Loads a remotely hosted font, keeping the downloaded file in the fonts cache folder so
+     * later loads of the same asset are served from disk.
+     *
+     * Asset names are content hashes assigned by the authoring tool and the CDN serves them as
+     * immutable, so a file that exists under that name is safe to reuse indefinitely.
+     */
+    private suspend fun loadRemoteFont(
+        sourceUrl: android.net.Uri,
+        assetName: String,
+        context: Context
+    ): Typeface? {
+        val cacheFolder = LocalFolder.getFontsCacheFolder(context) ?: return null
+        val cachedFile = File(cacheFolder, assetName)
+
+        // Asset names come from the document, so refuse anything that resolves outside the folder.
+        if (cachedFile.canonicalFile.parentFile != cacheFolder.canonicalFile) {
+            log.w("Refusing font asset name that escapes the fonts cache folder: $assetName")
+            return null
         }
 
-        Log.d(tag, "Fonts loaded: $result")
-        return TypeFaceMapping(result)
+        if (cachedFile.length() > 0) {
+            runCatching { Typeface.createFromFile(cachedFile) }
+                .onSuccess { return it }
+                .onFailure { log.w("Cached font $assetName unreadable, re-downloading: $it") }
+            cachedFile.delete()
+        }
+
+        val response = api.getFile(sourceUrl.toString())
+        val body = response.body()?.bytes() ?: return null
+
+        // Write to a temp file and rename so a concurrent loader never sees a partial font.
+        val tempFile = File.createTempFile("rover-font-", ".tmp", cacheFolder)
+        try {
+            tempFile.writeBytes(body)
+            if (!tempFile.renameTo(cachedFile) && cachedFile.length() == 0L) {
+                // Rename failed and nobody else won the race; fall back to a one-off load.
+                return Typeface.createFromFile(tempFile)
+            }
+        } finally {
+            if (tempFile.exists()) {
+                tempFile.delete()
+            }
+        }
+        return Typeface.createFromFile(cachedFile)
     }
 }

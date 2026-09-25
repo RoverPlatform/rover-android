@@ -121,7 +121,8 @@ internal class ConversationsSync(
         .adapter(ConversationSyncPage::class.java)
 
     private val activeJobs = HubResetJobTracker(
-        cancellationMessage = "Conversations sync cancelled because Hub data was reset."
+        cancellationMessage = "Conversations sync cancelled because Hub data was reset.",
+        syncStartGate = hubSyncCoordinator,
     )
 
     // Serializes the cursor read → fetch → persist page loops. The coordinator-driven sync(),

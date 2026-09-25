@@ -84,10 +84,6 @@ internal fun ConversationDetailRoute(
 
     ConversationDetailDismissEffect(viewModel.effects) { navController?.popBackStack() }
 
-    LaunchedEffect(uiState.replies.lastOrNull()?.id) {
-        viewModel.onLatestReplyVisible(uiState.replies.lastOrNull()?.id)
-    }
-
     Surface(
         modifier = routeVisibilityModifier
             .then(clearOnRevealModifier)
@@ -102,6 +98,7 @@ internal fun ConversationDetailRoute(
             onLoadOlderRequested = viewModel::onLoadOlderRequested,
             onSendTapped = viewModel::onSendTapped,
             onOpenUrl = { url -> linkOpen?.openLink(url, context) },
+            onLatestReplyVisible = viewModel::onLatestReplyVisible,
         )
     }
 }

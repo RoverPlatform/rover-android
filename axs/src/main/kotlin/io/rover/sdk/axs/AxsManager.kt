@@ -22,15 +22,13 @@ import io.rover.sdk.core.events.UserInfoInterface
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.LocalStorage
 import io.rover.sdk.core.platform.whenNotNull
-import io.rover.sdk.core.privacy.PrivacyService
 import org.json.JSONException
 import org.json.JSONObject
 
 class AxsManager(
     private val userInfo: UserInfoInterface,
     localStorage: LocalStorage,
-    private val privacyService: PrivacyService,
-) : AxsAuthorizer, PrivacyService.TrackingEnabledChangedListener {
+) : AxsAuthorizer {
     private val storage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
 
     companion object {
@@ -46,11 +44,6 @@ class AxsManager(
     }
 
     override fun setUserId(userId: String?, flashMemberId: String?, flashMobileId: String?) {
-        if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
-            log.i("AXS user ID (with flash IDs) set while privacy is in anonymous/anonymized mode, ignored")
-            return
-        }
-
         if (userId == null) {
             clearCredentials()
             return
@@ -61,7 +54,12 @@ class AxsManager(
         this.flashMobileId = flashMobileId
 
         updateUserInfoWithMemberAttributes()
-        log.i("AXS IDs have been set. user ID: $userId, flashMemberID: $flashMemberId, flashMobileID: $flashMobileId")
+        // The identifiers themselves are deliberately not logged: they are retained on the device
+        // in every tracking mode now, and an anonymized fan's identity should not turn up in logcat.
+        log.i(
+            "AXS IDs have been set. flashMemberID supplied: ${flashMemberId != null}, " +
+                "flashMobileID supplied: ${flashMobileId != null}."
+        )
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -165,11 +163,5 @@ class AxsManager(
         flashMemberId.whenNotNull { propertiesMap.put(FLASH_MEMBER_ID_KEY, it)}
         flashMobileId.whenNotNull { propertiesMap.put(FLASH_MOBILE_ID_KEY, it)}
         return propertiesMap
-    }
-
-    override fun onTrackingModeChanged(trackingMode: PrivacyService.TrackingMode) {
-        if (trackingMode != PrivacyService.TrackingMode.Default) {
-            clearCredentials()
-        }
     }
 }

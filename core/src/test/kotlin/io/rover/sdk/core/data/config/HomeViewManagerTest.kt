@@ -75,7 +75,7 @@ class HomeViewManagerTest {
         whenever(localStorage.getKeyValueStorageFor("home-view")).thenReturn(mockStorage)
 
         mockUserInfo = mock<UserInfoInterface>()
-        whenever(mockUserInfo.currentUserInfo).thenReturn(hashMapOf())
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(hashMapOf())
 
         mockDeviceIdentification = mock<DeviceIdentificationInterface>()
         whenever(mockDeviceIdentification.installationIdentifier).thenReturn("test-device-id")
@@ -271,7 +271,7 @@ class HomeViewManagerTest {
     @Test
     fun `fetch passes userID when available`() = runTest {
         whenever(mockStorage.get(HomeViewManager.STORAGE_KEY)).thenReturn(null)
-        whenever(mockUserInfo.currentUserInfo).thenReturn(hashMapOf("userID" to "user-abc"))
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(hashMapOf("userID" to "user-abc"))
 
         val json = """
             { "experienceURL": "https://example.com" }
@@ -298,7 +298,7 @@ class HomeViewManagerTest {
     @Test
     fun `fetch passes ticketmasterID when no direct userID`() = runTest {
         whenever(mockStorage.get(HomeViewManager.STORAGE_KEY)).thenReturn(null)
-        whenever(mockUserInfo.currentUserInfo).thenReturn(
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(
             hashMapOf("ticketmaster" to hashMapOf("ticketmasterID" to "tm-123"))
         )
 
@@ -327,7 +327,7 @@ class HomeViewManagerTest {
     @Test
     fun `fetch passes seatGeekID when no other userID`() = runTest {
         whenever(mockStorage.get(HomeViewManager.STORAGE_KEY)).thenReturn(null)
-        whenever(mockUserInfo.currentUserInfo).thenReturn(
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(
             hashMapOf("seatGeek" to hashMapOf("seatGeekID" to "sg-456"))
         )
 
@@ -356,7 +356,7 @@ class HomeViewManagerTest {
     @Test
     fun `fetch passes seatGeek clientID when no other userID`() = runTest {
         whenever(mockStorage.get(HomeViewManager.STORAGE_KEY)).thenReturn(null)
-        whenever(mockUserInfo.currentUserInfo).thenReturn(
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(
             hashMapOf("seatGeek" to hashMapOf("seatGeekClientID" to "sg-client-123"))
         )
 
@@ -385,7 +385,7 @@ class HomeViewManagerTest {
     @Test
     fun `fetch prefers seatGeek clientID over seatGeekID`() = runTest {
         whenever(mockStorage.get(HomeViewManager.STORAGE_KEY)).thenReturn(null)
-        whenever(mockUserInfo.currentUserInfo).thenReturn(
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(
             hashMapOf("seatGeek" to hashMapOf(
                 "seatGeekClientID" to "sg-client-abc",
                 "seatGeekID" to "sg-crm-xyz",
@@ -417,7 +417,7 @@ class HomeViewManagerTest {
     @Test
     fun `fetch prefers direct userID over ticketmaster`() = runTest {
         whenever(mockStorage.get(HomeViewManager.STORAGE_KEY)).thenReturn(null)
-        whenever(mockUserInfo.currentUserInfo).thenReturn(
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(
             hashMapOf(
                 "userID" to "direct-user",
                 "ticketmaster" to hashMapOf("ticketmasterID" to "tm-123"),
@@ -449,7 +449,7 @@ class HomeViewManagerTest {
     @Test
     fun `fetch passes deviceIdentifier when no userID`() = runTest {
         whenever(mockStorage.get(HomeViewManager.STORAGE_KEY)).thenReturn(null)
-        whenever(mockUserInfo.currentUserInfo).thenReturn(hashMapOf())
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(hashMapOf())
 
         val json = """
             { "experienceURL": "https://example.com" }
@@ -475,7 +475,7 @@ class HomeViewManagerTest {
 
     @Test
     fun `config request includes deviceIdentifier and resolved userID`() = runTest {
-        whenever(mockUserInfo.currentUserInfo).thenReturn(
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(
             hashMapOf("ticketmaster" to hashMapOf("ticketmasterID" to "tm-123"))
         )
 
@@ -494,7 +494,7 @@ class HomeViewManagerTest {
 
     @Test
     fun `config request includes bearer token when sdk auth domain matches and userID resolves`() = runTest {
-        whenever(mockUserInfo.currentUserInfo).thenReturn(
+        whenever(mockUserInfo.reportedUserInfo).thenReturn(
             hashMapOf("ticketmaster" to hashMapOf("ticketmasterID" to "tm-123"))
         )
         authenticationContext.idToken = "id-token-123"

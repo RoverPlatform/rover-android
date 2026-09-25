@@ -65,7 +65,8 @@ internal class ParticipantsSync(
         .build()
         .adapter(ParticipantsSyncResponse::class.java)
     private val activeSyncJobs = HubResetJobTracker(
-        cancellationMessage = "Participants sync cancelled because Hub data was reset."
+        cancellationMessage = "Participants sync cancelled because Hub data was reset.",
+        syncStartGate = hubSyncCoordinator,
     )
 
     override suspend fun sync(): Boolean = activeSyncJobs.track {

@@ -39,6 +39,14 @@ interface PostsDao {
     @Query("SELECT * FROM posts WHERE id = :postId")
     suspend fun getPostWithSubscriptionById(postId: String): PostWithSubscription?
 
+    /**
+     * Emits null while the post is absent and the row once it lands, so a screen that opened
+     * before a sync brought the post in (a deep link on a fresh install) updates when it arrives.
+     */
+    @Transaction
+    @Query("SELECT * FROM posts WHERE id = :postId")
+    fun observePostWithSubscriptionById(postId: String): Flow<PostWithSubscription?>
+
     @Upsert
     suspend fun upsertPost(post: PostEntity)
 

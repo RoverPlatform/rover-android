@@ -20,18 +20,16 @@ package io.rover.sdk.example.fcm
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import io.rover.sdk.core.Rover
-import io.rover.sdk.notifications.PushReceiverInterface
+import io.rover.sdk.notifications.pushReceiver
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
-        Rover.failableShared?.resolve(PushReceiverInterface::class.java)?.onTokenRefresh(
-            token
-        )
+        Rover.shared.pushReceiver.onTokenRefresh(token)
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        Rover.failableShared?.resolve(PushReceiverInterface::class.java)?.onMessageReceivedData(
-            remoteMessage.data
-        )
+        if (Rover.shared.pushReceiver.onMessageReceivedData(remoteMessage.data)) return
+
+        // A push that was not Rover's: handle it here.
     }
 }

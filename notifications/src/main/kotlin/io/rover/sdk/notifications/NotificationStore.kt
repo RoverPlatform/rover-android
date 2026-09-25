@@ -104,18 +104,60 @@ class NotificationStore(
 
     private val actions = PublishSubject<Action>()
 
+    /**
+     * Guards read-modify-write cycles against the notifications cache.  Actions are processed
+     * concurrently on the (multi-threaded) I/O executor, so without this, concurrent updates
+     * (such as several delete() calls in quick succession) would each read the same starting
+     * state and the last write would win, silently dropping the other updates.
+     */
+    private val storageLock = Any()
+
+    private fun readNotificationsFromDisk(): List<Notification> {
+        return try {
+            keyValueStorage[STORE_KEY].whenNotNull { jsonString ->
+                JSONArray(jsonString).getObjectIterable().map { notificationJson ->
+                    Notification.decodeJson(notificationJson, dateFormatting)
+                }
+            } ?: listOf()
+        } catch (e: JSONException) {
+            log.w("Invalid JSON appeared in Notifications cache, so starting fresh: ${e.message}")
+            listOf()
+        }
+    }
+
+    private fun writeNotificationsToDisk(notifications: List<Notification>) {
+        log.v("Updating local storage with ${notifications.size} notifications.")
+        keyValueStorage[STORE_KEY] = JSONArray(notifications.map { it.encodeJson(dateFormatting) }).toString()
+    }
+
     private fun currentNotificationsOnDisk(): Publisher<List<Notification>> {
         return Publishers.defer {
             Publishers.just(
-                try {
-                    keyValueStorage[STORE_KEY].whenNotNull { jsonString ->
-                        JSONArray(jsonString).getObjectIterable().map { notificationJson ->
-                            Notification.decodeJson(notificationJson, dateFormatting)
-                        }
-                    } ?: listOf()
-                } catch (e: JSONException) {
-                    log.w("Invalid JSON appeared in Notifications cache, so starting fresh: ${e.message}")
-                    listOf<Notification>()
+                synchronized(storageLock) { readNotificationsFromDisk() }
+            )
+        }.subscribeOn(ioExecutor)
+    }
+
+    // a rule: things that touch external stuff by I/O must be publishers.  flat functions are only
+    // allowed if they are pure.
+
+    /**
+     * Atomically transform the persisted notifications list on the I/O executor, yielding the
+     * updated list.  The read, transform, and write all occur under [storageLock], so concurrent
+     * updates cannot clobber one another.
+     *
+     * [transform] must remain a pure function of the list: no blocking calls (network, futures,
+     * other locks) and no side effects, otherwise a slow transform stalls every inbox operation
+     * behind the lock.  Perform side effects such as event tracking outside the lock, in a
+     * doOnNext/doOnComplete on the returned publisher.
+     */
+    private fun updateLocalStorage(transform: (List<Notification>) -> List<Notification>): Publisher<List<Notification>> {
+        return Publishers.defer {
+            Publishers.just(
+                synchronized(storageLock) {
+                    val modified = transform(readNotificationsFromDisk())
+                    writeNotificationsToDisk(modified)
+                    modified
                 }
             )
         }.subscribeOn(ioExecutor)
@@ -127,10 +169,9 @@ class NotificationStore(
      * The new list need not be exhaustive; existing non-conflicting records will be kept,
      * up until a cutoff.  That means this method may be used for partial updates.
      */
-    private fun mergeWithLocalStorage(incomingNotifications: List<Notification>): Publisher<out List<Notification>> {
-        return currentNotificationsOnDisk().map { notifications ->
-
-            val notificationsOnDiskById = notifications?.associateBy { it.id } ?: hashMapOf()
+    private fun doMergeNotifications(incomingNotifications: List<Notification>): Publisher<List<Notification>> {
+        return updateLocalStorage { notifications ->
+            val notificationsOnDiskById = notifications.associateBy { it.id }
             val incomingNotificationsById = incomingNotifications.associateBy { it.id }
 
             notificationsOnDiskById.merge(incomingNotificationsById) { existing, incoming ->
@@ -139,18 +180,7 @@ class NotificationStore(
                     isDeleted = incoming.isDeleted || existing.isDeleted
                 )
             }.values.orderNotifications().take(MAX_NOTIFICATIONS_LIMIT)
-        }.subscribeOn(ioExecutor).doOnNext { log.v("Merge result: $it") }
-    }
-
-    // a rule: things that touch external stuff by I/O must be publishers.  flat functions are only
-    // allowed if they are pure.
-
-    private fun replaceLocalStorage(notifications: List<Notification>): Publisher<out List<Notification>> {
-        return Publishers.defer {
-            log.v("Updating local storage with ${notifications.size} notifications.")
-            keyValueStorage[STORE_KEY] = JSONArray(notifications.map { it.encodeJson(dateFormatting) }).toString()
-            Publishers.just(notifications)
-        }.subscribeOn(ioExecutor)
+        }.doOnNext { log.v("Merge result: $it") }
     }
 
     /**
@@ -195,7 +225,7 @@ class NotificationStore(
                         doMarkAllRead().map { NotificationStoreInterface.Emission.Update(it) }
                     }
                     is Action.NotificationsFetchedOrArrived -> {
-                        mergeWithLocalStorage(action.notifications).flatMap { merged -> replaceLocalStorage(merged) }.map {
+                        doMergeNotifications(action.notifications).map {
                             NotificationStoreInterface.Emission.Update(it)
                         }
                     }
@@ -219,19 +249,21 @@ class NotificationStore(
 
     /**
      * When subscribed, performs the side-effect of marking the given notification as deleted
-     * locally (on the I/O executor).  If successful, it will yield an emission appropriate
-     * to inform consumers of the change.
+     * locally (on the I/O executor).  If successful, it will yield the updated notifications
+     * list so consumers can be informed of the change.
      */
     private fun doMarkAsDeleted(notification: Notification): Publisher<List<Notification>> {
-        return currentNotificationsOnDisk().flatMap { onDisk ->
-            val alreadyDeleted = onDisk.find { it.id == notification.id }?.isDeleted ?: false
+        var alreadyDeleted = false
 
-            val modified = onDisk.map { onDiskNotification ->
+        return updateLocalStorage { onDisk ->
+            alreadyDeleted = onDisk.find { it.id == notification.id }?.isDeleted ?: false
+
+            onDisk.map { onDiskNotification ->
                 if (onDiskNotification.id == notification.id) {
                     onDiskNotification.copy(isDeleted = true)
                 } else onDiskNotification
             }
-
+        }.doOnNext {
             if (!alreadyDeleted) {
                 eventQueue.trackEvent(
                     io.rover.sdk.core.events.domain.Event(
@@ -243,48 +275,43 @@ class NotificationStore(
                     io.rover.sdk.core.events.EventQueueService.ROVER_NAMESPACE
                 )
             }
-
-            replaceLocalStorage(
-                modified
-            ).map { modified }
-        }.subscribeOn(ioExecutor)
+        }
     }
 
     /**
-     * When subscribed, performs the side-effect of marking the given notification as deleted
+     * When subscribed, performs the side-effect of marking the given notification as read
      * locally (on the I/O executor).
      */
     private fun doMarkAsRead(notification: Notification): Publisher<List<Notification>> {
-        return currentNotificationsOnDisk().flatMap { onDisk ->
-            val alreadyRead = onDisk.find { it.id == notification.id }?.isRead ?: false
+        var alreadyRead = false
 
-            val modified = onDisk.map { onDiskNotification ->
+        return updateLocalStorage { onDisk ->
+            alreadyRead = onDisk.find { it.id == notification.id }?.isRead ?: false
+
+            onDisk.map { onDiskNotification ->
                 if (onDiskNotification.id == notification.id) {
                     onDiskNotification.copy(isRead = true)
                 } else onDiskNotification
             }
-
+        }.doOnNext {
             if (!alreadyRead) {
                 emitMarkedReadEvent(notification)
             }
-
-            replaceLocalStorage(
-                modified
-            ).map { modified }
-        }.subscribeOn(ioExecutor)
+        }
     }
 
     private fun doMarkAllRead(): Publisher<List<Notification>> {
-        return currentNotificationsOnDisk().flatMap { onDisk ->
-            val unread = onDisk.filter { !it.isRead }
-            val modified = onDisk.map { onDiskNotification ->
+        var unread: List<Notification> = listOf()
+
+        return updateLocalStorage { onDisk ->
+            unread = onDisk.filter { !it.isRead }
+
+            onDisk.map { onDiskNotification ->
                 onDiskNotification.copy(isRead = true)
             }
-
-            replaceLocalStorage(modified).map { modified }.doOnComplete {
-                // side-effect: emit all marked-read events.
-                unread.forEach { emitMarkedReadEvent(it) }
-            }
+        }.doOnComplete {
+            // side-effect: emit all marked-read events.
+            unread.forEach { emitMarkedReadEvent(it) }
         }
     }
 

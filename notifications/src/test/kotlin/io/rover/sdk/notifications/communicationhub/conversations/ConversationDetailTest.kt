@@ -20,12 +20,17 @@ package io.rover.sdk.notifications.communicationhub.conversations
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.test.swipeUp
 import io.rover.sdk.notifications.communicationhub.messages.formatReplyClockTime
 
 
@@ -405,7 +410,6 @@ class ConversationDetailTest {
         val loadOlderCount = AtomicInteger(0)
         val uiState = mutableStateOf(
             baseUiState.copy(
-                isLoading = false,
                 canLoadOlder = false,
                 threadRows = buildThreadRows(30),
             )
@@ -439,7 +443,6 @@ class ConversationDetailTest {
     fun autoScrollsWhenNewestGroupGrowsWithoutChangingRowCount() {
         val uiState = mutableStateOf(
             baseUiState.copy(
-                isLoading = false,
                 replies = buildRepliesForAutoScrollTest(
                     newestReplies = listOf("Newest reply"),
                 ),
@@ -481,6 +484,67 @@ class ConversationDetailTest {
     }
 
     @Test
+    fun readMarkingFollowsRealScrollingAndSurvivesRecreation() {
+        val history = viewportFillingHistory(dayStart = ConversationTestFixtures.T0)
+        val arrivingReply = ConversationTestFixtures.replyRow(
+            id = "history-31",
+            text = "History reply #31",
+            isOutgoing = false,
+            sentAt = history.last().sentAt + THREE_MINUTES_MILLIS,
+        )
+        val uiState = mutableStateOf(
+            baseUiState.copy(
+                replies = history,
+                threadRows = buildConversationThreadRows(history),
+            )
+        )
+        val marked = mutableListOf<String>()
+
+        val restorationTester = StateRestorationTester(composeRule)
+        restorationTester.setContent {
+            MaterialTheme {
+                ConversationDetail(
+                    uiState = uiState.value,
+                    composerState = rememberTextFieldState(),
+                    onLoadOlderRequested = {},
+                    onSendTapped = {},
+                    onLatestReplyVisible = { replyId -> marked += replyId },
+                )
+            }
+        }
+        composeRule.waitForIdle()
+        assertEquals(listOf("history-30"), marked)
+
+        // A real drag up into history flips the bottom-proximity gate.
+        composeRule.onNodeWithTag("conversation-thread-list").performTouchInput { swipeDown() }
+        composeRule.waitForIdle()
+
+        composeRule.runOnIdle {
+            uiState.value = uiState.value.copy(
+                replies = history + arrivingReply,
+                threadRows = buildConversationThreadRows(history + arrivingReply),
+            )
+        }
+        composeRule.waitForIdle()
+        assertEquals(listOf("history-30"), marked)
+
+        // Recreation restores the scrolled-up position and must not reset the gate to
+        // "at the bottom".
+        restorationTester.emulateSavedInstanceStateRestore()
+        composeRule.waitForIdle()
+        assertEquals(listOf("history-30"), marked)
+
+        // Returning to the bottom is what marks the deferred reply.
+        var swipes = 0
+        while (!marked.contains("history-31") && swipes < 10) {
+            composeRule.onNodeWithTag("conversation-thread-list").performTouchInput { swipeUp() }
+            composeRule.waitForIdle()
+            swipes++
+        }
+        assertEquals(listOf("history-30", "history-31"), marked)
+    }
+
+    @Test
     fun scrollsToRevealOutgoingReplyThatStartsANewDay() {
         // The repro shape: the newest message is from an earlier day, so the send inserts TWO
         // rows — a DayDivider plus a new MessageGroup — and the previously-newest row shifts
@@ -488,7 +552,6 @@ class ConversationDetailTest {
         val history = viewportFillingHistory(dayStart = ConversationTestFixtures.T0)
         val uiState = mutableStateOf(
             baseUiState.copy(
-                isLoading = false,
                 replies = history,
                 threadRows = buildConversationThreadRows(history),
             )
@@ -526,7 +589,6 @@ class ConversationDetailTest {
         val history = viewportFillingHistory(dayStart = ConversationTestFixtures.T0)
         val uiState = mutableStateOf(
             baseUiState.copy(
-                isLoading = false,
                 replies = history,
                 threadRows = buildConversationThreadRows(history),
             )
@@ -558,9 +620,76 @@ class ConversationDetailTest {
         composeRule.onNodeWithText("Fresh outgoing reply").assertIsDisplayed()
     }
 
+    @Test
+    fun notFoundPhaseReportsTheMissingConversationAndOffersNoComposer() {
+        composeRule.setContent {
+            MaterialTheme {
+                ConversationDetail(
+                    uiState = baseUiState.copy(phase = ConversationDetailPhase.NotFound),
+                    composerState = rememberTextFieldState(),
+                    onLoadOlderRequested = {},
+                    onSendTapped = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("This conversation could not be found.").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Write a reply").assertCountEquals(0)
+    }
+
+    @Test
+    fun loadFailedPhaseSaysSoWithoutClaimingTheConversationIsMissing() {
+        composeRule.setContent {
+            MaterialTheme {
+                ConversationDetail(
+                    uiState = baseUiState.copy(phase = ConversationDetailPhase.LoadFailed),
+                    composerState = rememberTextFieldState(),
+                    onLoadOlderRequested = {},
+                    onSendTapped = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("This conversation could not be loaded.").assertIsDisplayed()
+        composeRule.onAllNodesWithText("This conversation could not be found.").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Write a reply").assertCountEquals(0)
+    }
+
+    @Test
+    fun loadingPhaseOffersNoComposer() {
+        composeRule.setContent {
+            MaterialTheme {
+                ConversationDetail(
+                    uiState = baseUiState.copy(phase = ConversationDetailPhase.Loading),
+                    composerState = rememberTextFieldState(),
+                    onLoadOlderRequested = {},
+                    onSendTapped = {},
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithText("Write a reply").assertCountEquals(0)
+    }
+
+    @Test
+    fun threadPhaseOffersTheComposer() {
+        composeRule.setContent {
+            MaterialTheme {
+                ConversationDetail(
+                    uiState = baseUiState.copy(phase = ConversationDetailPhase.Thread),
+                    composerState = rememberTextFieldState(),
+                    onLoadOlderRequested = {},
+                    onSendTapped = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Write a reply").assertIsDisplayed()
+    }
+
     private companion object {
         val baseUiState = ConversationDetailUiState(
-            isLoading = false,
+            phase = ConversationDetailPhase.Thread,
             canLoadOlder = false,
         )
 

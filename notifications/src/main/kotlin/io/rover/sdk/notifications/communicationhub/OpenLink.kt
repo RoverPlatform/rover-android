@@ -34,8 +34,20 @@ import io.rover.sdk.core.routing.LinkOpenInterface
 internal fun LinkOpenInterface.openLink(url: String, context: Context) {
 
     val uri = url.toUri()
-    // give rover router first crack at the URL
-    val intent = intentForLink(context, uri) ?: {
+    // Give the Rover router first crack at the URL. The router stops at the first matching Route
+    // and isolates one that throws, so this guard is a second line of defence; treat anything that
+    // still escapes the routing layer as "not ours" and fall through to the standard handling
+    // below rather than letting it escape a click handler.
+    val routedIntent = try {
+        intentForLink(context, uri)
+    } catch (exception: Exception) {
+        // Query and fragment can carry tokens or user identifiers, so log the link without them,
+        // as Experience does for its own URLs. The stack trace stays, it is the only diagnostic.
+        val urlForLogging = uri.buildUpon().clearQuery().fragment(null).build()
+        log.w("Could not route link '$urlForLogging', falling back to the standard handling: $exception, at ${exception.stackTraceToString()}")
+        null
+    }
+    val intent = routedIntent ?: {
         // If Rover Router doesn't handle it, check if it's a web URL
         val scheme = uri.scheme?.lowercase()
 

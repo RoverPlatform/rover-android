@@ -30,6 +30,7 @@ import io.rover.sdk.notifications.communicationhub.InMemoryLocalStorage
 import io.rover.sdk.notifications.communicationhub.InboxSeenWatermark
 import io.rover.sdk.notifications.communicationhub.HubPushNotification
 import io.rover.sdk.notifications.communicationhub.conversations.ConversationEntity
+import io.rover.sdk.notifications.communicationhub.conversations.ConversationsTransactionRunner
 import io.rover.sdk.notifications.communicationhub.conversations.ParticipantEntity
 import io.rover.sdk.notifications.communicationhub.conversations.ReplyContentBlock
 import io.rover.sdk.notifications.communicationhub.conversations.ReplyEntity
@@ -43,9 +44,11 @@ import io.rover.sdk.notifications.communicationhub.navigation.HubCoordinator
 import io.rover.sdk.notifications.communicationhub.posts.PostEntity
 import io.rover.sdk.notifications.communicationhub.posts.SubscriptionEntity
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.fail
 import org.junit.Test
@@ -95,6 +98,137 @@ class HubSyncCoordinatorTest : RoverEngageTestBase() {
         assertThat(database!!.syncStateDao().getSyncState("posts"), equalTo(null as SyncStateEntity?))
         assertThat(resetObserverCalled, equalTo(true))
         assertThat(hubCoordinator.pendingNavigation.value, equalTo(HubNavigation.Home))
+    }
+
+    /**
+     * The Bench's Reset Hub Data, which has no 410 behind it.
+     *
+     * [HubSyncCoordinator.resetAfterSyncCancellation] is gated on an invalidation only a
+     * server-driven 410 can arm, so it is a no-op for a reset the operator asked for. This is the
+     * guard that [HubSyncCoordinator.resetHubDataOnDemand] performs the whole reset regardless —
+     * the point being that a Bench that keeps running afterwards clears the *live* database rather
+     * than unlinking its files out from under the open Room connection.
+     */
+    @Test
+    fun resetOnDemandClearsEngageDataWithoutA410() = runTest {
+        val hubCoordinator = HubCoordinator()
+        val coordinator = buildHubSyncCoordinator(hubCoordinator)
+        var resetObserverCalled = false
+        coordinator.registerResetObserver(object : HubResetObserver {
+            override suspend fun onHubReset() {
+                resetObserverCalled = true
+            }
+        })
+        seedEngageData()
+
+        coordinator.resetHubDataOnDemand()
+
+        assertThat(database!!.postsDao().getPostById("post-1"), equalTo(null as PostEntity?))
+        assertThat(database!!.subscriptionsDao().getAllSubscriptions(), equalTo(emptyList()))
+        assertThat(database!!.conversationsDao().getConversationById("conversation-1"), equalTo(null as ConversationEntity?))
+        assertThat(database!!.participantsDao().getAllParticipants(), equalTo(emptyList()))
+        assertThat(database!!.repliesDao().getRepliesForConversation("conversation-1"), equalTo(emptyList()))
+        // The cursors go with the rows: without this the Hub would resume mid-stream on its next
+        // sync instead of refetching, which is what the button's copy promises.
+        assertThat(database!!.syncStateDao().getSyncState("posts"), equalTo(null as SyncStateEntity?))
+        assertThat(resetObserverCalled, equalTo(true))
+        assertThat(hubCoordinator.pendingNavigation.value, equalTo(HubNavigation.Home))
+    }
+
+    /**
+     * The half of the reset that a bare `clearAllTables()` would not get: in-flight sync is
+     * cancelled and joined first, and the generation advances so a response that was already on
+     * its way cannot repopulate what was just cleared.
+     */
+    @Test
+    fun resetOnDemandCancelsInFlightWorkAndBlocksStaleWrites() = runTest {
+        val coordinator = buildHubSyncCoordinator(HubCoordinator())
+        var cancelledInFlightWork = false
+        coordinator.registerResetCancellable(object : HubResetCancellable {
+            override suspend fun cancelAndJoinHubResetInvalidatedWork() {
+                cancelledInFlightWork = true
+            }
+        })
+        seedEngageData()
+        val generationBeforeReset = coordinator.currentGeneration()
+
+        coordinator.resetHubDataOnDemand()
+
+        assertThat(cancelledInFlightWork, equalTo(true))
+        assertThat(coordinator.currentGeneration(), equalTo(generationBeforeReset + 1))
+        try {
+            coordinator.ensureCanPersist(generationBeforeReset)
+            fail("Expected a response captured before the reset to be refused")
+        } catch (expected: StaleHubSyncGenerationException) {
+            // The stale write was refused, which is the point.
+        }
+    }
+
+    /**
+     * The window on the far side of the cancellation hooks: a sync that starts *after* its own hook
+     * has run, reads a cursor the delete transaction has not reached yet, and persists once it has.
+     *
+     * Cancelling the running syncs is not enough on its own to close that. The generation such a
+     * sync captures is the one the reset itself advanced to, so it matches at persist time and the
+     * write is accepted — the pre-reset cursor goes back into a table the reset had just emptied,
+     * along with whatever page the server returned for it, and the next sync resumes mid-stream
+     * instead of refetching. The gate holds the sync at the door until the reset is done, so it
+     * reads the cleared state rather than the state on its way out.
+     */
+    @Test
+    fun syncStartingDuringResetOnDemandCannotPersistBehindIt() = runTest {
+        val deleteTransactionReached = CompletableDeferred<Unit>()
+        val syncReadItsCursor = CompletableDeferred<Unit>()
+        val coordinator = buildHubSyncCoordinator(HubCoordinator()) { roomTransactionRunner ->
+            object : ConversationsTransactionRunner {
+                override suspend fun <T> withTransaction(block: suspend () -> T): T {
+                    deleteTransactionReached.complete(Unit)
+                    // Hold the delete open long enough for a sync to race it. Virtual time, so a
+                    // sync that is held at the gate instead costs the test nothing.
+                    withTimeoutOrNull(10.seconds) { syncReadItsCursor.await() }
+                    return roomTransactionRunner.withTransaction(block)
+                }
+            }
+        }
+        val syncJobs = HubResetJobTracker(
+            cancellationMessage = "Test sync cancelled because Hub data was reset.",
+            syncStartGate = coordinator,
+        )
+        coordinator.registerResetCancellable(syncJobs)
+        seedEngageData()
+
+        val reset = async { coordinator.resetHubDataOnDemand() }
+        // The reset has advanced the generation and run the cancellation hooks by now: the tracker
+        // holds no jobs, so a sync starting here is one the hooks can no longer reach.
+        deleteTransactionReached.await()
+
+        val sync = async {
+            syncJobs.track {
+                val cursor = database!!.syncStateDao().getSyncState("posts")?.forwardCursor
+                val generation = coordinator.currentGeneration()
+                syncReadItsCursor.complete(Unit)
+                val persistAccepted = try {
+                    coordinator.ensureCanPersist(generation)
+                    true
+                } catch (_: StaleHubSyncGenerationException) {
+                    false
+                }
+                cursor to persistAccepted
+            }
+        }
+
+        reset.await()
+        val (cursorSeenBySync, persistAccepted) = sync.await()
+
+        assertThat(
+            "a sync that read a pre-reset cursor must not be allowed to write behind the reset",
+            cursorSeenBySync != null && persistAccepted,
+            equalTo(false),
+        )
+        // And it is held rather than refused: once the reset is done the sync starts cleanly, from
+        // no cursor at all, which is the refetch the button promises.
+        assertThat(cursorSeenBySync, equalTo(null as String?))
+        assertThat(database!!.postsDao().getPostById("post-1"), equalTo(null as PostEntity?))
     }
 
     /**
@@ -264,6 +398,7 @@ class HubSyncCoordinatorTest : RoverEngageTestBase() {
         hubCoordinator: HubCoordinator,
         engageApiService: EngageApiService = mockEngageApiService,
         inboxSeenWatermark: InboxSeenWatermark? = null,
+        wrapTransactionRunner: (ConversationsTransactionRunner) -> ConversationsTransactionRunner = { it },
     ): HubSyncCoordinator {
         val database = database!!
         return HubSyncCoordinator(
@@ -274,7 +409,7 @@ class HubSyncCoordinatorTest : RoverEngageTestBase() {
             repliesDao = database.repliesDao(),
             participantsDao = database.participantsDao(),
             syncStateDao = database.syncStateDao(),
-            transactionRunner = RoomConversationsTransactionRunner(database),
+            transactionRunner = wrapTransactionRunner(RoomConversationsTransactionRunner(database)),
             hubCoordinator = hubCoordinator,
             deliveredHubNotificationClearer = AndroidDeliveredHubNotificationClearer(
                 ApplicationProvider.getApplicationContext()

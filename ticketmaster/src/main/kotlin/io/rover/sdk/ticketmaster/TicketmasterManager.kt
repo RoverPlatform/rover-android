@@ -38,7 +38,7 @@ class TicketmasterManager(
     localStorage: LocalStorage,
     private val privacyService: PrivacyService,
     private val eventQueue: EventQueueServiceInterface
-) : TicketmasterAuthorizer, TicketmasterAnalytics, PrivacyService.TrackingEnabledChangedListener {
+) : TicketmasterAuthorizer, TicketmasterAnalytics {
     private val storage = localStorage.getKeyValueStorageFor(STORAGE_CONTEXT_IDENTIFIER)
 
     companion object {
@@ -47,17 +47,15 @@ class TicketmasterManager(
     }
 
     override fun setTicketmasterId(id: String) {
-        if (privacyService.trackingMode != PrivacyService.TrackingMode.Default) {
-            log.i("Ticketmaster ID set while privacy is in anonymous/anonymized mode, ignored")
-            return
-        }
         member = Member(
             ticketmasterID = id,
             email = null,
             firstName = null
         )
         updateUserInfoWithMemberAttributes()
-        log.i("Ticketmaster signed in with '$id'.")
+        // The identifier itself is deliberately not logged: it is retained on the device in
+        // every tracking mode now, and an anonymized fan's identity should not turn up in logcat.
+        log.i("Ticketmaster signed in.")
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -112,12 +110,6 @@ class TicketmasterManager(
             email.whenNotNull { propertiesMap.put(Member::email.name, it) }
             firstName.whenNotNull { propertiesMap.put(Member::firstName.name, it) }
             return propertiesMap
-        }
-    }
-
-    override fun onTrackingModeChanged(trackingMode: PrivacyService.TrackingMode) {
-        if (trackingMode != PrivacyService.TrackingMode.Default) {
-            clearCredentials()
         }
     }
 

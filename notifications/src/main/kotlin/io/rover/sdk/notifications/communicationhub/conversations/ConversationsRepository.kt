@@ -57,8 +57,8 @@ import java.io.IOException
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 internal class ConversationsRepository(
     private val hubSyncCoordinator: HubSyncCoordinator,
@@ -100,7 +100,7 @@ internal class ConversationsRepository(
     private val markConversationReadResponseAdapter = moshi.adapter(MarkConversationReadResponse::class.java)
     private val pollingScope = CoroutineScope(SupervisorJob() + backgroundDispatcher)
     private val repliesPollingJobs = ConcurrentHashMap<String, Job>()
-    private val conversationsBackfillRunning = AtomicBoolean(false)
+    private val runningConversationsBackfill = AtomicReference<CompletableDeferred<Unit>?>(null)
     private val resetVersion = MutableStateFlow(0L)
 
     // Single-consumer actor that serializes and coalesces outbound reply sends. Every send
@@ -842,16 +842,36 @@ internal class ConversationsRepository(
         }
     }
 
+    /**
+     * Runs one conversation history backfill at a time. A caller that arrives while one is in
+     * flight waits for it rather than starting a second, and rather than returning immediately:
+     * returning is what lets a caller that judges its outcome by what is in the store afterwards —
+     * the conversation detail screen — conclude "not found" with nothing having been fetched.
+     *
+     * The wait is a [kotlinx.coroutines.Job.join], not an await, so a backfill that fails fails for
+     * the caller that ran it. Everyone else re-reads the store and draws their own conclusion.
+     *
+     * Claim and release are compare-and-set rather than a mutex, so neither suspends. A suspending
+     * release could be interrupted by the owner's own cancellation before it completed the
+     * deferred, and every waiter would then join something nobody will ever finish.
+     */
     internal suspend fun runConversationHistoryBackfillLock(block: suspend () -> Unit) {
-        if (!conversationsBackfillRunning.compareAndSet(false, true)) {
-            log.d("triggerEagerBackwardHistoryBackfill: already running, skipping")
-            return
+        val own = CompletableDeferred<Unit>()
+        while (true) {
+            val inFlight = runningConversationsBackfill.get()
+            if (inFlight != null) {
+                log.d("triggerEagerBackwardHistoryBackfill: already running, awaiting it")
+                inFlight.join()
+                return
+            }
+            if (runningConversationsBackfill.compareAndSet(null, own)) break
         }
 
         try {
             block()
         } finally {
-            conversationsBackfillRunning.set(false)
+            runningConversationsBackfill.compareAndSet(own, null)
+            own.complete(Unit)
         }
     }
 

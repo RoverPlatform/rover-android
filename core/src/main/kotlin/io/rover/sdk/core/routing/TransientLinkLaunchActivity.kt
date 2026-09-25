@@ -22,7 +22,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import androidx.core.content.ContextCompat
 import io.rover.sdk.core.Rover
 import io.rover.sdk.core.logging.log
 import java.net.URI
@@ -56,24 +55,54 @@ open class TransientLinkLaunchActivity : Activity() {
 
         val uri = intent.data ?: run {
             log.e("Transient link launch activity was launched, but no URI was provided.  Ignoring.")
+            finish()
             return
         }
 
         log.v("Transient link launch activity running for received URI: '${intent.data}'")
 
-        val linkIntent = linkOpen.intentForLink(this, uri) ?: run {
+        // The router stops at the first matching Route and isolates one that throws, so a
+        // routing failure should no longer escape it. This guard stays as a second line of
+        // defence: this activity is an entry point from outside the app, so anything unexpected
+        // escaping the routing layer would take the process down on a link tap. A plain
+        // ACTION_VIEW for a Rover link also resolves to this activity, so a caller that treats a
+        // routing failure as "no route" and falls back to ACTION_VIEW ends up routing the same URI
+        // again in here. Treat a failure as unroutable and use the app open fallback below.
+        val routedIntent = try {
+            linkOpen.intentForLink(this, uri)
+        } catch (exception: Exception) {
+            log.w(
+                "Could not route the inbound link '$uri', treating it as unroutable: " +
+                    "$exception, at ${exception.stackTraceToString()}"
+            )
+            null
+        }
+
+        val linkIntent = routedIntent ?: run {
             // no fallback to making a stock ACTION_VIEW intent for this uri is needed if Rover
             // Router fails to produce a Uri is needed. This is because Link Launch activity
             // is only used for *inbound* links being launched with the Rover SDK.
             log.w("Rover router could not give us a URL for the URI: '$uri'.  Ignoring.")
 
             // fall back to app open intent so there's not a blank screen
-            fallbackIntent ?: return
+            fallbackIntent ?: run {
+                finish()
+                return
+            }
         }
 
         log.v("Launching intent: $linkIntent")
 
-        ContextCompat.startActivity(this, linkIntent, null)
+        // The routed intent can be an ACTION_VIEW for a remotely configured deep link, so nothing
+        // guarantees an installed activity can answer it. Open the app rather than taking the
+        // host app's process down on an inbound link. linkIntent may already BE fallbackIntent,
+        // when routing produced nothing above; the helper knows not to relaunch it.
+        startActivityOrOpenApp(
+            intent = linkIntent,
+            openApp = fallbackIntent,
+            failureMessage = "No activity could be found to handle the intent produced for this link.\n" +
+                "This could be because a deep link configured on the Rover dashboard does not match any intent filter in the app's manifest.",
+        )
 
         finish()
     }

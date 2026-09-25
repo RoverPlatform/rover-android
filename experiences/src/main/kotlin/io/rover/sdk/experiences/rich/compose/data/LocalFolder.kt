@@ -31,11 +31,11 @@ object LocalFolder {
     private fun getExperiencesCacheDir(context: Context): File? {
         val roverCacheFolder = File(context.cacheDir, "/RoverExperiences/")
 
-        if (!roverCacheFolder.exists()) {
-            if (!roverCacheFolder.mkdir()) {
-                Log.e(TAG, "Failed to create Rover Experiences folder inside the cache directory. You may need to give your application further file handling permissions.")
-                return null
-            }
+        // mkdirs() then isDirectory: loaders run in parallel, so another thread may have
+        // created the folder between our check and our mkdirs() call. That is not a failure.
+        if (!roverCacheFolder.mkdirs() && !roverCacheFolder.isDirectory) {
+            Log.e(TAG, "Failed to create Rover Experiences folder inside the cache directory. You may need to give your application further file handling permissions.")
+            return null
         }
 
         return roverCacheFolder
@@ -44,11 +44,9 @@ object LocalFolder {
     fun getImagesCacheFolder(context: Context): File? {
         val imageFolder = File(getExperiencesCacheDir(context) ?: return null, Images)
 
-        if (!imageFolder.exists()) {
-            if (!imageFolder.mkdir()) {
-                Log.e(TAG, "Failed to create $Images inside the cache directory. You may need to give your application further file handling permissions.")
-                return null
-            }
+        if (!imageFolder.mkdirs() && !imageFolder.isDirectory) {
+            Log.e(TAG, "Failed to create $Images inside the cache directory. You may need to give your application further file handling permissions.")
+            return null
         }
 
         return imageFolder
@@ -57,11 +55,9 @@ object LocalFolder {
     fun getMediaCacheFolder(context: Context): File? {
         val mediaFolder = File(getExperiencesCacheDir(context) ?: return null, Media)
 
-        if (!mediaFolder.exists()) {
-            if (!mediaFolder.mkdir()) {
-                Log.e(TAG, "Failed to create $Media inside the cache directory. You may need to give your application further file handling permissions.")
-                return null
-            }
+        if (!mediaFolder.mkdirs() && !mediaFolder.isDirectory) {
+            Log.e(TAG, "Failed to create $Media inside the cache directory. You may need to give your application further file handling permissions.")
+            return null
         }
 
         return mediaFolder
@@ -70,11 +66,9 @@ object LocalFolder {
     fun getFontsCacheFolder(context: Context): File? {
         val fontFolder = File(getExperiencesCacheDir(context) ?: return null, Fonts)
 
-        if (!fontFolder.exists()) {
-            if (!fontFolder.mkdir()) {
-                Log.e(TAG, "Failed to create $Fonts inside the cache directory. You may need to give your application further file handling permissions.")
-                return null
-            }
+        if (!fontFolder.mkdirs() && !fontFolder.isDirectory) {
+            Log.e(TAG, "Failed to create $Fonts inside the cache directory. You may need to give your application further file handling permissions.")
+            return null
         }
 
         return fontFolder

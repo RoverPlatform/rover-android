@@ -35,6 +35,7 @@ import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import io.rover.core.R
+import io.rover.sdk.notifications.NotificationPermission
 import io.rover.sdk.notifications.communicationhub.HubPushKind
 import io.rover.sdk.notifications.communicationhub.HubPushNotification
 import io.rover.sdk.notifications.communicationhub.navigation.HubCoordinator
@@ -61,6 +62,7 @@ internal class AndroidConversationPushNotificationPresenter(
         body: String,
     ) {
         if (isConversationVisible(conversationId)) return
+        if (!NotificationPermission.canPost(applicationContext, describedAs = "conversation $conversationId")) return
 
         ensureDefaultChannelExists()
 
@@ -145,6 +147,7 @@ internal class AndroidConversationPushNotificationPresenter(
             PendingIntent.getActivity(applicationContext, conversationId.hashCode(), openIntent, flags)
         )
 
+        @Suppress("MissingPermission") // Checked by NotificationPermission.canPost above.
         nm.notify(
             conversationId,
             NOTIFICATION_INT_ID,

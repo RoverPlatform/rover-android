@@ -26,6 +26,7 @@ import androidx.core.app.Person
 import androidx.core.app.RemoteInput
 import io.rover.sdk.core.Rover
 import io.rover.sdk.core.logging.log
+import io.rover.sdk.notifications.NotificationPermission
 import io.rover.sdk.notifications.communicationhub.HubPushKind
 import io.rover.sdk.notifications.communicationhub.HubPushNotification
 import io.rover.sdk.notifications.conversationsRepository
@@ -101,7 +102,10 @@ internal class ConversationReplyReceiver : BroadcastReceiver() {
                     smallIconResId = smallIconResId,
                     style = style,
                 )
-                nm.notify(conversationId, AndroidConversationPushNotificationPresenter.NOTIFICATION_INT_ID, notification)
+                if (NotificationPermission.canPost(context, describedAs = "reply repost for conversation $conversationId")) {
+                    @Suppress("MissingPermission") // Checked by NotificationPermission.canPost above.
+                    nm.notify(conversationId, AndroidConversationPushNotificationPresenter.NOTIFICATION_INT_ID, notification)
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

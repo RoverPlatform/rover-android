@@ -143,6 +143,38 @@ class NavigatorModelTest {
     }
 
     @Test
+    fun `a root navigate while a sheet is presented lands behind the sheet`() {
+        // Placement is decided by fromSheet/transition ALONE: a non-sheet navigation that arrives
+        // from a root-stack session (a queued bridge message, or a tap that landed as the sheet
+        // opened) is pushed onto the ROOT stack even though a sheet is covering it, so it is not the
+        // entry the user can see. AppScreenNavigator relies on this when it withholds
+        // `App Screen Viewed` for a push that is not the exposed top and lets the sheet's dismissal
+        // reveal report it instead.
+        val m = model()
+        m.start(home, "https://x/a/home", null)
+        val sheet = m.navigate(standings, "https://x/a/standings", null, "sheet", fromSheet = false)
+
+        val hidden = m.navigate(detail, "https://x/a/player-detail?id=1", null, null, fromSheet = false)
+
+        assertFalse(hidden.toSheet)
+        assertSame(hidden.entry, m.rootStack.last())
+        // The visible surface is still the sheet top, not the entry just pushed.
+        assertSame(sheet.entry, m.sheetStack.last())
+        assertEquals(
+            AppScreensDecisions.SessionLiveness.OnStackHidden,
+            m.livenessOf(hidden.entry.session)
+        )
+
+        // Dismissing the sheet exposes it: it becomes the top of the (only) remaining stack.
+        m.onSheetDismissed()
+        assertSame(hidden.entry, m.rootStack.last())
+        assertEquals(
+            AppScreensDecisions.SessionLiveness.Visible,
+            m.livenessOf(hidden.entry.session)
+        )
+    }
+
+    @Test
     fun `sheet dismissal releases the whole sheet stack`() {
         val m = model()
         m.start(home, "https://x/a/home", null)

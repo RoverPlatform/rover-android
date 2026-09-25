@@ -21,6 +21,10 @@ package io.rover.sdk.notifications.communicationhub.messages
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performClick
+import com.natpryce.hamkrest.assertion.assertThat
+import com.natpryce.hamkrest.equalTo
 import io.rover.sdk.notifications.communicationhub.posts.PostEntity
 import io.rover.sdk.notifications.communicationhub.posts.PostWithSubscription
 import org.junit.Assert.assertEquals
@@ -64,15 +68,105 @@ class MessagesTest {
         assertDividerCount(0)
     }
 
-    private fun renderMessages(rows: List<MessageFeedRow>, isExpanded: Boolean) {
+    @Test
+    fun activeSearchTokenRendersChip() {
+        renderMessages(
+            rows = mixedRows,
+            isExpanded = false,
+            searchToken = HubSearchToken.Subscription(id = "sub-news", name = "News Daily"),
+        )
+
+        assertThat(
+            composeRule
+                .onAllNodesWithTag(HUB_SEARCH_CHIP_TEST_TAG)
+                .fetchSemanticsNodes()
+                .size,
+            equalTo(1),
+        )
+    }
+
+    @Test
+    fun noSearchTokenRendersNoChip() {
+        renderMessages(rows = mixedRows, isExpanded = false)
+
+        assertThat(
+            composeRule
+                .onAllNodesWithTag(HUB_SEARCH_CHIP_TEST_TAG)
+                .fetchSemanticsNodes()
+                .size,
+            equalTo(0),
+        )
+    }
+
+    @Test
+    fun expandedSearchShowsSuggestionsAlongsideResults() {
+        renderMessages(
+            rows = mixedRows,
+            isExpanded = true,
+            suggestions = listOf(
+                HubSearchToken.Subscription(id = "sub-news", name = "News Daily"),
+                HubSearchToken.Sender(participantID = "p-bob", name = "Bob Newsome"),
+            ),
+        )
+
+        assertThat(
+            composeRule
+                .onAllNodesWithTag(HUB_SEARCH_SUGGESTION_TEST_TAG)
+                .fetchSemanticsNodes()
+                .size,
+            equalTo(2),
+        )
+        // The results still render below the suggestions — they are not replaced.
+        assertDividerCount(mixedRows.size - 1)
+    }
+
+    @Test
+    fun closingExpandedSearchClearsTheTokenToo() {
+        var tokenCleared = false
+        composeRule.setContent {
+            MaterialTheme {
+                Messages(
+                    rows = mixedRows,
+                    searchQuery = "",
+                    searchToken = HubSearchToken.Subscription(id = "sub-news", name = "News Daily"),
+                    suggestions = emptyList(),
+                    displayTitle = "Messages",
+                    isExpanded = true,
+                    onSearchQueryChanged = {},
+                    onSuggestionSelected = {},
+                    onSearchTokenCleared = { tokenCleared = true },
+                    onExpandedChanged = {},
+                    onPostClick = {},
+                    onConversationClick = {},
+                    onRefresh = {},
+                    isRefreshing = false,
+                )
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Close search").performClick()
+
+        assertThat(tokenCleared, equalTo(true))
+    }
+
+    private fun renderMessages(
+        rows: List<MessageFeedRow>,
+        isExpanded: Boolean,
+        searchToken: HubSearchToken? = null,
+        suggestions: List<HubSearchToken> = emptyList(),
+    ) {
         composeRule.setContent {
             MaterialTheme {
                 Messages(
                     rows = rows,
                     searchQuery = if (isExpanded) "search" else "",
+                    searchToken = searchToken,
+                    suggestions = suggestions,
                     displayTitle = "Messages",
                     isExpanded = isExpanded,
                     onSearchQueryChanged = {},
+                    onSuggestionSelected = {},
+                    onSearchTokenCleared = {},
                     onExpandedChanged = {},
                     onPostClick = {},
                     onConversationClick = {},

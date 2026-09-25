@@ -19,12 +19,12 @@ package io.rover.sdk.notifications.communicationhub.posts
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.core.net.toUri
 import io.rover.sdk.core.data.config.ConfigManager
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.routing.Route
 import io.rover.sdk.notifications.communicationhub.navigation.HubCoordinator
+import io.rover.sdk.notifications.communicationhub.navigation.HubDeepLink
 import io.rover.sdk.notifications.communicationhub.ui.ShowPostActivity
 import java.net.URI
 
@@ -68,46 +68,39 @@ internal class ShowPostRoute(
                 when {
                     pathSegments.size == 1 -> {
                         val postId = pathSegments[0]
-                        val config = configManager.config.value
 
-                        // Check if we should use host app deep link coordination
-                        val shouldUseHostDeepLink = config.hub.isInboxEnabled &&
-                                                   config.hub.deepLink != null
+                        val hubIntent = HubDeepLink.revealIntent(configManager, context)
 
-                        if (shouldUseHostDeepLink) {
-                            log.v("Posts: Using host app deep link coordination for post $postId")
-
-                            // Step 1: Queue navigation in coordinator
+                        if (hubIntent != null) {
+                            log.v("Using host app deep link coordination for post $postId")
+                            // Queue only on the coordination path. ShowPostActivity never consumes
+                            // pending navigation, so queuing on the standalone path would leave the
+                            // Hub to jump to an already-read post the next time it is presented.
+                            //
+                            // Queueing here rather than at dispatch is best-effort; see SDK-379.
                             hubCoordinator.navigateToPost(postId)
-
-                            // Step 2: Return ACTION_VIEW intent for host app's deep link
-                            Intent(Intent.ACTION_VIEW).apply {
-                                data = Uri.parse(config.hub.deepLink)
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            }
+                            hubIntent
                         } else {
-                            // Fallback to current behavior
-                            log.v("Posts: Using standalone activity for post $postId")
-                            hubCoordinator.navigateToPost(postId)
+                            log.v("Using standalone activity for post $postId")
                             ShowPostActivity.makeIntent(context, androidUri, postId)
                         }
                     }
                     else -> {
-                        log.w("Messages List: Unknown posts path: ${uri.path}")
+                        log.w("Unknown posts path: ${uri.path}")
                         null
                     }
                 }
             }
             "inbox" -> {
                 // Handle inbox deep links
-                log.v("Messages List: Coordinating navigation to inbox")
+                log.v("Coordinating navigation to inbox")
                 hubCoordinator.navigateToInbox()
 
                 // Return null since inbox is handled by the Hub composable
                 null
             }
             else -> {
-                log.w("Messages List: Unknown authority: ${uri.authority}")
+                log.w("Unknown authority: ${uri.authority}")
                 null
             }
         }

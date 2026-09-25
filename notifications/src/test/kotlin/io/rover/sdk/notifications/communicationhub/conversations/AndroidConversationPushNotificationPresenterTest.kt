@@ -17,6 +17,8 @@
 
 package io.rover.sdk.notifications.communicationhub.conversations
 
+import android.Manifest
+import android.app.Application
 import android.app.NotificationManager
 import android.content.Context
 import androidx.core.app.NotificationCompat
@@ -29,6 +31,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -40,7 +43,14 @@ class AndroidConversationPushNotificationPresenterTest {
         hubCoordinator: HubCoordinator = HubCoordinator(),
         standaloneConversationVisibilityTracker: StandaloneConversationVisibilityTracker =
             StandaloneConversationVisibilityTracker(),
+        postNotificationsGranted: Boolean = true,
     ): AndroidConversationPushNotificationPresenter {
+        val shadowApplication = shadowOf(context.applicationContext as Application)
+        if (postNotificationsGranted) {
+            shadowApplication.grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            shadowApplication.denyPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        }
         return AndroidConversationPushNotificationPresenter(
             applicationContext = context,
             smallIconResId = android.R.drawable.ic_dialog_info,
@@ -50,6 +60,22 @@ class AndroidConversationPushNotificationPresenterTest {
             hubCoordinator = hubCoordinator,
             standaloneConversationVisibilityTracker = standaloneConversationVisibilityTracker,
         )
+    }
+
+    @Test
+    fun notifyIsSkippedWithoutThrowingWhenPostNotificationsIsDenied() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val presenter = makePresenter(context, postNotificationsGranted = false)
+
+        presenter.presentConversationNotification(
+            conversationId = "conversation-1",
+            participantName = "Casey Jones",
+            participantAvatarUrl = null,
+            body = "Body",
+        )
+
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        assertThat(nm.activeNotifications.size, equalTo(0))
     }
 
     @Test

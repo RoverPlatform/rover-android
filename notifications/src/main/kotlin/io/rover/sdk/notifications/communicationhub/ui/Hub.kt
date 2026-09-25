@@ -71,12 +71,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.onLayoutRectChanged
 import androidx.compose.ui.layout.onVisibilityChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.spatial.RelativeLayoutBounds
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import androidx.core.view.WindowCompat
@@ -84,6 +87,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavController
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.DialogNavigator
@@ -105,7 +111,9 @@ import io.rover.sdk.experiences.NavigationMode
 import io.rover.sdk.experiences.appscreens.AppScreenRootAffordance
 import io.rover.sdk.experiences.appscreens.AppScreens
 import io.rover.sdk.experiences.appscreens.LocalAppScreenColorSchemeOverride
+import io.rover.sdk.experiences.appscreens.LocalAppScreenOwnsStatusBar
 import io.rover.sdk.experiences.appscreens.LocalAppScreenRootAffordance
+import io.rover.sdk.experiences.rich.compose.ui.AppBarConfig
 import io.rover.sdk.experiences.rich.compose.ui.AppBarConfigRegistry
 import io.rover.sdk.experiences.rich.compose.ui.LocalAppBarConfigRegistry
 import io.rover.sdk.experiences.rich.compose.ui.LocalAppBarConfigSink
@@ -116,6 +124,7 @@ import io.rover.sdk.experiences.rich.compose.ui.LocalStatusBarConfigSink
 import io.rover.sdk.experiences.rich.compose.ui.NavDestinationRegistry
 import io.rover.sdk.experiences.rich.compose.ui.StatusBarConfig
 import io.rover.sdk.experiences.rich.compose.ui.StatusBarConfigRegistry
+import io.rover.sdk.experiences.rich.compose.ui.utils.overlapsStatusBar
 import io.rover.sdk.notifications.communicationhub.automaticMaterialScheme
 import io.rover.sdk.notifications.communicationhub.rememberCommHubDarkTheme
 import io.rover.sdk.notifications.communicationhub.conversations.ConversationDetailRoute
@@ -134,6 +143,7 @@ import io.rover.sdk.notifications.hubCoordinator
 import io.rover.sdk.notifications.inboxSeenWatermark
 import io.rover.sdk.notifications.postsRepository
 import io.rover.sdk.notifications.roverBadge
+import kotlinx.coroutines.flow.first
 
 /**
  * Embed this view within a tab to integrate the Rover Hub.
@@ -168,6 +178,9 @@ fun Hub(
     // its TopAppBar over this destination, and its status-bar machinery must stand down for it. This
     // flag is false for every V1/V2 home, so that path is byte-identical to before.
     val isV3Home = experienceURL?.let { AppScreens.isAppScreenUrl(Uri.parse(it)) } == true
+    // Whether home actually renders that App Screen: the URL persists after the home view is turned
+    // off, and a disabled home shows the inbox fallback. Only the route padding keys on this.
+    val rendersV3Home = isHomeViewEnabled && isV3Home
 
     val context = LocalContext.current
 
@@ -184,7 +197,34 @@ fun Hub(
     }
     val navRegistry = remember { NavDestinationRegistry() }
     val appBarRegistry = remember { AppBarConfigRegistry() }
+
+    // A route's app-bar config, ignoring a previous V2 home's stale entry when the home is a V3 App
+    // Screen (which never registers its own), so the Hub bar is never drawn over the V3 page's chrome.
+    fun appBarConfigFor(route: String?): AppBarConfig? = route
+        ?.takeUnless { it == "home" && isV3Home }
+        ?.let { appBarRegistry.get(it) }
+
+    // Single rule for which routes show the Hub app bar, shared by the bar and by each route's top
+    // padding. The destination's hasAppBar makes it right on a pluggable screen's first frame.
+    fun routeShowsAppBar(route: String?): Boolean =
+        (route == "home" && isInboxEnabled && isHomeViewEnabled && !isV3Home) ||
+            appBarConfigFor(route) != null ||
+            navRegistry.destinations.any { it.route == route && it.hasAppBar } ||
+            route == "inbox" ||
+            route?.startsWith("postDetail/") == true ||
+            route?.startsWith("conversationDetail/") == true
     val statusBarRegistry = remember { StatusBarConfigRegistry() }
+
+    // The home URL is seeded from the cached /home response and replaced by the fetch, so a V2 home
+    // can compose, register its config, and then be replaced by an App Screens one. Drop what it left
+    // behind; App Screens registers nothing of its own, and a V2 home re-registers when it composes.
+    LaunchedEffect(isV3Home) {
+        if (isV3Home) {
+            appBarRegistry.register("home", null)
+            statusBarRegistry.register("home", null)
+        }
+    }
+
     val experienceCache = remember { ExperienceCache() }
 
     // Resolve HubCoordinator and observe pending navigation
@@ -194,37 +234,14 @@ fun Hub(
     // Handle pending navigation from coordinator
     LaunchedEffect(pendingNavigation) {
         pendingNavigation?.let { nav ->
-            when (nav) {
-                is HubNavigation.Post -> {
-                    // Navigate to post detail
-                    // If home view and inbox are both enabled, navigate through inbox first
-                    // to match iOS behavior
-                    if (isHomeViewEnabled && isInboxEnabled) {
-                        // Reset to home first, then navigate to inbox, then to post
-                        navController.navigate("inbox") {
-                            popUpTo("home") { inclusive = false }
-                        }
-                    }
-                    navController.navigate("postDetail/${nav.postId}")
-                }
-                is HubNavigation.Conversation -> {
-                    if (isHomeViewEnabled && isInboxEnabled) {
-                        navController.navigate("inbox") {
-                            popUpTo("home") { inclusive = false }
-                        }
-                    }
-                    navController.navigate("conversationDetail/${nav.conversationId}")
-                }
-                is HubNavigation.Inbox -> {
-                    navController.navigate("inbox") {
-                        popUpTo("home") { inclusive = false }
-                    }
-                }
-                is HubNavigation.Home -> {
-                    navController.popBackStack("home", inclusive = false)
-                }
-            }
-            hubCoordinator.clearPendingNavigation()
+            executePendingHubNavigation(
+                navController = navController,
+                nav = nav,
+                isHomeViewEnabled = isHomeViewEnabled,
+                isInboxEnabled = isInboxEnabled,
+            )
+            // Conditional clear: a newer navigation queued while this one awaited the graph stays pending.
+            hubCoordinator.clearPendingNavigation(nav)
         }
     }
 
@@ -331,12 +348,45 @@ fun Hub(
             val edgeToEdge = WindowInsets.statusBars.getTop(LocalDensity.current) > 0
             val legacyStatusBarColor = if (!edgeToEdge) experienceStatusBarConfig?.backgroundColor?.toArgb() else null
 
+            // The Hub's top chrome (bar inset, scrim, window styling) is only right when the Hub is top of
+            // screen; WindowInsets.statusBars still reports the full inset under host chrome, so measure.
+            val hubView = LocalView.current
+            // Pessimistic until the first measurement: a wrong false costs a full-screen Hub one frame of
+            // band, a wrong true flashes the very band this exists to remove. (LocalView cannot seed it.)
+            var hubOwnsStatusBar by remember { mutableStateOf(false) }
+
+            // remember-ed so the log tracker survives recomposition; kept separate from the state so the
+            // first resolution is logged even when false, since embedded configurations fail invisibly.
+            val onHubRectChanged: (RelativeLayoutBounds) -> Unit = remember(hubView) {
+                var lastLogged: Boolean? = null
+                { bounds ->
+                    val topInWindow = bounds.boundsInWindow.top
+                    val ownsStatusBar = overlapsStatusBar(hubView, topInWindow)
+                    if (lastLogged != ownsStatusBar) {
+                        lastLogged = ownsStatusBar
+                        // Gates the bar inset, scrim and window styling at once; the top edge tells cases apart.
+                        HubStatusBar.log.i(
+                            "Hub status-bar ownership: $ownsStatusBar (top=$topInWindow)"
+                        )
+                    }
+                    hubOwnsStatusBar = ownsStatusBar
+                }
+            }
+
             HubStatusBarEffect(
+                // Stand down when not top of screen: overriding the host's icon tint would leave e.g. dark
+                // icons on a dark host bar.
+                active = hubOwnsStatusBar,
                 lightStatusBarAppearance = lightStatusBarAppearance,
                 legacyStatusBarColor = legacyStatusBarColor,
             )
 
-            Box(modifier = modifier.fillMaxSize()) {
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    // debounceMillis = 0: the 64ms default is several frames of visibly wrong chrome.
+                    .onLayoutRectChanged(debounceMillis = 0, callback = onHubRectChanged)
+            ) {
               Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 topBar = {
@@ -346,28 +396,30 @@ fun Hub(
                     val isOnInboxRoute = currentRoute == "inbox"
                     val isOnPostDetailRoute = currentRoute?.startsWith("postDetail/") == true
                     val isOnConversationDetailRoute = currentRoute?.startsWith("conversationDetail/") == true
+                    val homeRouteContent = if (isOnHomeRoute) {
+                        resolveHomeRouteContent(
+                            isHomeViewEnabled = isHomeViewEnabled,
+                            isInboxEnabled = isInboxEnabled,
+                            experienceURL = experienceURL,
+                            homeURLResolved = homeURLResolved,
+                        )
+                    } else {
+                        null
+                    }
 
-                    // Look up app bar config from registry based on current route.
-                    // Exception (one-chrome rule): for an App Screens (V3) home, ignore any app-bar
-                    // config still registered by a previous V2 home. App Screens never registers or
-                    // clears its own entry, so the stale V2 config would otherwise draw the Hub's app
-                    // bar (title/background/actions) over the V3 page, which renders its own top chrome.
-                    val experienceAppBarConfig = currentRoute
-                        ?.takeUnless { it == "home" && isV3Home }
-                        ?.let { appBarRegistry.get(it) }
+                    val experienceAppBarConfig = appBarConfigFor(currentRoute)
 
                     // Extract post ID and fetch post for app bar title
                     val postId = if (isOnPostDetailRoute) {
                         currentBackStackEntry?.arguments?.getString("postId")
                     } else null
 
-                    // Fetch post for title display
-                    val postForTitle by androidx.compose.runtime.produceState<PostWithSubscription?>(
-                        initialValue = null,
-                        key1 = postId
-                    ) {
-                        value = postId?.let { postsRepository.getPostWithSubscriptionById(it) }
-                    }
+                    // Observe, rather than read once: the post may only reach Room after the
+                    // detail route's sync, and the title must fill in when it does.
+                    val postForTitle by androidx.compose.runtime.remember(postId) {
+                        postId?.let { postsRepository.observePostWithSubscriptionById(it) }
+                            ?: kotlinx.coroutines.flow.flowOf<PostWithSubscription?>(null)
+                    }.collectAsState(initial = null)
 
                     val conversationId = if (isOnConversationDetailRoute) {
                         currentBackStackEntry?.arguments?.getString("conversationId")
@@ -412,23 +464,20 @@ fun Hub(
                         else -> experienceAppBarConfig?.title
                     }
 
-                    // Show app bar if: on home with both features enabled, OR Experience provides config, OR on inbox/post detail
-                    // Exception (one-chrome rule): never show the Hub app bar over an App Screens (V3)
-                    // home — that page renders its own top chrome inside its injected safe-area band.
-                    val shouldShowAppBar = (isOnHomeRoute && isInboxEnabled && isHomeViewEnabled && !isV3Home) ||
-                            experienceAppBarConfig != null ||
-                            isOnInboxRoute ||
-                            isOnPostDetailRoute ||
-                            isOnConversationDetailRoute
-
                     // TODO: first pass at some animation (so topappbar doesn't appear and disappearing jarringly), but product-wise this isn't yet correct.
                     AnimatedVisibility(
-                        visible = shouldShowAppBar,
+                        visible = routeShowsAppBar(currentRoute),
                         enter = expandVertically(),
                         exit = shrinkVertically()
                     ) {
                         TopAppBar(
                             title = appBarTitle ?: { },
+                            // Only reserve the status-bar band when the Hub actually sits under it.
+                            windowInsets = if (hubOwnsStatusBar) {
+                                TopAppBarDefaults.windowInsets
+                            } else {
+                                WindowInsets(0.dp)
+                            },
                             colors = TopAppBarDefaults.topAppBarColors(
                                 containerColor = experienceAppBarConfig?.backgroundColor
                                     ?: Color.Transparent
@@ -449,9 +498,12 @@ fun Hub(
                                     action()
                                 }
 
-                                // Hub inbox button (appears only on root screen when both features enabled)
+                                // Inbox button only over a real home experience with Inbox enabled (the fallback
+                                // IS the inbox), never over a V3 home (own capsule; else it flashes into the bar).
                                 if ((experienceAppBarConfig?.isRootScreen
-                                        ?: true) && isHomeViewEnabled && isInboxEnabled && isOnHomeRoute
+                                        ?: true) && isHomeViewEnabled && isInboxEnabled &&
+                                    isOnHomeRoute && homeRouteContent == HomeRouteContent.Home &&
+                                    !isV3Home
                                 ) {
                                     IconButton(
                                         onClick = { navController.navigate("inbox") },
@@ -484,27 +536,54 @@ fun Hub(
                     }
                 }
             ) { paddingValues ->
-                // Merge padding from both the outer (parent app's) Scaffold and this inner Scaffold. This allows the inner content within the Hub to account for the full set of insets
-                // both as provided by the Hub's usage in the customer's app (which may well have a Scaffold), and its own internal space consumed by the bars.
-                // This approach is more powerful than just consuming the outer paddingValues, because this allows the inner content to draw content underneath
-                // inset areas.
-                // - paddingValues: from inner Scaffold's topBar
-                // - contentPadding: from outer Scaffold (e.g., bottom tab bar)
-                // Use max() for start/end, take only relevant padding for top/bottom
+                // Merge the outer (host) Scaffold's padding with this one for start/end/bottom, never the
+                // inner TOP: Material3 swaps in the status-bar inset when the bar is 0x0 and animates it.
                 val layoutDirection = LocalLayoutDirection.current
-                val mergedPadding = PaddingValues(
+                val routePadding = PaddingValues(
                     start = maxOf(
                         paddingValues.calculateStartPadding(layoutDirection),
                         contentPadding.calculateStartPadding(layoutDirection)
                     ),
-                    top = paddingValues.calculateTopPadding(), // Only inner (app bar)
+                    top = 0.dp,
                     end = maxOf(
                         paddingValues.calculateEndPadding(layoutDirection),
                         contentPadding.calculateEndPadding(layoutDirection)
                     ),
-                    bottom = contentPadding.calculateBottomPadding() // Only outer (tab bar)
+                    bottom = contentPadding.calculateBottomPadding()
                 )
 
+                // The status-bar band the Hub's chrome reserves: the same inset the TopAppBar above
+                // is given, and nothing when the Hub sits under host chrome.
+                val statusBarInset = with(LocalDensity.current) {
+                    TopAppBarDefaults.windowInsets.getTop(this).toDp()
+                }
+                // A route's settled offset below the Hub's top edge, from its own chrome so nothing moves as the
+                // bar animates: V3 home none (page injects its own), under the bar its full height, else the band.
+                fun routeTopPadding(route: String): Dp {
+                    val statusBand = if (hubOwnsStatusBar) statusBarInset else 0.dp
+                    return when {
+                        route == "home" && rendersV3Home -> 0.dp
+                        routeShowsAppBar(route) -> TopAppBarDefaults.TopAppBarExpandedHeight + statusBand
+                        else -> statusBand
+                    }
+                }
+
+                // Every route in the graph is laid out through this, below routeTopPadding.
+                fun NavGraphBuilder.hubRoute(
+                    route: String,
+                    content: @Composable (NavBackStackEntry) -> Unit,
+                ) {
+                    composable(route) { backStackEntry ->
+                        val resolvedRoute = backStackEntry.destination.route ?: route
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(top = routeTopPadding(resolvedRoute))
+                        ) {
+                            content(backStackEntry)
+                        }
+                    }
+                }
 
                 // Observe destinations to trigger recomposition when they change
                 val destinations = navRegistry.destinations
@@ -541,7 +620,7 @@ fun Hub(
                     ) {
                         // Dynamically registered experience screens
                         destinations.forEach { destination ->
-                            composable(destination.route) { backStackEntry ->
+                            hubRoute(destination.route) { backStackEntry ->
                                 HubRouteConfigSinks(
                                     route = backStackEntry.destination.route ?: destination.route,
                                     appBarRegistry = appBarRegistry,
@@ -552,7 +631,7 @@ fun Hub(
                             }
                         }
 
-                        composable("home") { backStackEntry ->
+                        hubRoute("home") { backStackEntry ->
                             // Provide app bar + status bar config sinks that register config for the
                             // current route so the Hub can render a unified app bar and own the status bar.
                             HubRouteConfigSinks(
@@ -573,22 +652,23 @@ fun Hub(
                                     linkOpen = linkOpen,
                                     hubCoordinator = hubCoordinator,
                                     defaultColorSchemeDark = isDark,
-                                    contentPadding = mergedPadding
+                                    contentPadding = routePadding,
+                                    ownsStatusBar = hubOwnsStatusBar,
                                 )
                             }
                         }
 
-                        composable("inbox") {
+                        hubRoute("inbox") {
                             MessagesRoute(
                                 postsRepository = postsRepository,
                                 conversationsRepository = conversationsRepository,
                                 conversationsSync = rover.conversationsSync,
                                 hubCoordinator = hubCoordinator,
-                                contentPadding = mergedPadding
+                                contentPadding = routePadding
                             )
                         }
 
-                        composable("postDetail/{postId}") { backStackEntry ->
+                        hubRoute("postDetail/{postId}") { backStackEntry ->
                             val postId = backStackEntry.arguments?.getString("postId")
                             postId?.let {
                                 PostDetailRoute(
@@ -596,12 +676,12 @@ fun Hub(
                                     postsRepository = postsRepository,
                                     hubCoordinator = hubCoordinator,
                                     linkOpen = linkOpen,
-                                    contentPadding = mergedPadding
+                                    contentPadding = routePadding
                                 )
                             }
                         }
 
-                        composable("conversationDetail/{conversationId}") { backStackEntry ->
+                        hubRoute("conversationDetail/{conversationId}") { backStackEntry ->
                             val conversationId = backStackEntry.arguments
                                 ?.getString("conversationId")
                             conversationId?.let {
@@ -611,7 +691,7 @@ fun Hub(
                                     conversationsSync = rover.conversationsSync,
                                     hubCoordinator = hubCoordinator,
                                     linkOpen = linkOpen,
-                                    contentPadding = mergedPadding
+                                    contentPadding = routePadding
                                 )
                             }
                         }
@@ -624,16 +704,64 @@ fun Hub(
               // the Hub chrome. This scrim is 0-height in the legacy regime (WindowInsets.statusBars is
               // 0 there); in that regime HubStatusBarEffect colours the opaque bar via
               // Window.statusBarColor instead.
-              experienceStatusBarConfig?.let { config ->
-                  Box(
-                      modifier = Modifier
-                          .align(Alignment.TopCenter)
-                          .fillMaxWidth()
-                          .background(config.backgroundColor)
-                          .statusBarsPadding()
-                  )
+              // Skipped under host chrome (hubOwnsStatusBar): no band to fill, the scrim would land mid-screen.
+              if (hubOwnsStatusBar) {
+                  experienceStatusBarConfig?.let { config ->
+                      Box(
+                          modifier = Modifier
+                              .align(Alignment.TopCenter)
+                              .fillMaxWidth()
+                              .background(config.backgroundColor)
+                              .statusBarsPadding()
+                      )
+                  }
               }
             }
+        }
+    }
+}
+
+/**
+ * Execute one coordinator-queued navigation, routing Post/Conversation through the inbox first (iOS parity).
+ * Suspends until the NavHost has a graph (SDK-355): the coordinator can queue before the NavHost composes.
+ * The back-stack flow replays, so this returns immediately when the graph is already set.
+ */
+internal suspend fun executePendingHubNavigation(
+    navController: NavController,
+    nav: HubNavigation,
+    isHomeViewEnabled: Boolean,
+    isInboxEnabled: Boolean,
+) {
+    HubPendingNavigation.log.d("Waiting for the NavHost graph before executing pending navigation")
+    navController.currentBackStackEntryFlow.first()
+    HubPendingNavigation.log.i("Executing pending Hub navigation: ${nav::class.simpleName}")
+    when (nav) {
+        is HubNavigation.Post -> {
+            if (isHomeViewEnabled && isInboxEnabled) {
+                // Reset to home first, then navigate to inbox, then to post
+                navController.navigate("inbox") {
+                    popUpTo("home") { inclusive = false }
+                }
+            }
+            navController.navigate("postDetail/${nav.postId}")
+        }
+        is HubNavigation.Conversation -> {
+            if (isHomeViewEnabled && isInboxEnabled) {
+                navController.navigate("inbox") {
+                    popUpTo("home") { inclusive = false }
+                }
+            }
+            // Encode to match the inbox tap path: conversation IDs can contain path separators,
+            // which would otherwise split the route into an extra segment and fail to match.
+            navController.navigate("conversationDetail/${Uri.encode(nav.conversationId)}")
+        }
+        is HubNavigation.Inbox -> {
+            navController.navigate("inbox") {
+                popUpTo("home") { inclusive = false }
+            }
+        }
+        is HubNavigation.Home -> {
+            navController.popBackStack("home", inclusive = false)
         }
     }
 }
@@ -665,12 +793,16 @@ private fun HubRouteConfigSinks(
  * behind (embedded experiences run with `manageStatusBar = false` and report their authored styling up
  * instead of touching the window themselves).
  *
+ * Pass [active] = false when the Hub is not the top-of-screen content: the host owns its status bar
+ * there, so the Hub restores the host's values instead of imposing its own.
+ *
  * In the edge-to-edge regime the bar is transparent and the background is drawn as an in-composition
  * scrim instead, so [legacyStatusBarColor] is null there and `Window.statusBarColor` (deprecated and
  * ignored under edge-to-edge) is left alone.
  */
 @Composable
 private fun HubStatusBarEffect(
+    active: Boolean,
     lightStatusBarAppearance: Boolean,
     legacyStatusBarColor: Int?,
 ) {
@@ -686,19 +818,21 @@ private fun HubStatusBarEffect(
         window?.statusBarColor
     }
 
-    LaunchedEffect(window, lightStatusBarAppearance) {
-        window?.let {
-            WindowCompat.getInsetsController(it, it.decorView)
-                .isAppearanceLightStatusBars = lightStatusBarAppearance
-        }
+    LaunchedEffect(window, active, lightStatusBarAppearance, originalAppearance) {
+        val w = window ?: return@LaunchedEffect
+        // While inactive the host owns its status bar: restore whatever it had rather than imposing the
+        // Hub's tint.
+        val appearance = if (active) lightStatusBarAppearance else originalAppearance ?: return@LaunchedEffect
+        WindowCompat.getInsetsController(w, w.decorView).isAppearanceLightStatusBars = appearance
     }
 
-    LaunchedEffect(window, legacyStatusBarColor) {
+    LaunchedEffect(window, active, legacyStatusBarColor) {
         val w = window ?: return@LaunchedEffect
         // Set the authored colour while the Hub owns an experience background in the legacy regime;
         // otherwise leave the bar at (or restore it to) the host's original colour.
         @Suppress("DEPRECATION")
-        w.statusBarColor = legacyStatusBarColor ?: originalStatusBarColor ?: w.statusBarColor
+        w.statusBarColor =
+            (if (active) legacyStatusBarColor else null) ?: originalStatusBarColor ?: w.statusBarColor
     }
 
     DisposableEffect(window) {
@@ -715,6 +849,12 @@ private fun HubStatusBarEffect(
         }
     }
 }
+
+/** Log-tag holder: `log` tags by receiver class, and the status-bar layout callback is a receiverless lambda. */
+private object HubStatusBar
+
+/** Log-tag holder for the top-level [executePendingHubNavigation] (see [HubStatusBar]). */
+private object HubPendingNavigation
 
 private tailrec fun Context.findActivityWindow(): Window? =
     when (this) {
@@ -785,6 +925,7 @@ private fun HomeRoute(
     hubCoordinator: HubCoordinator,
     defaultColorSchemeDark: Boolean? = null,
     contentPadding: PaddingValues = PaddingValues(0.dp),
+    ownsStatusBar: Boolean = true,
     linkOpen: LinkOpenInterface?
 ) {
     val navController = LocalExternalNavController.current
@@ -810,42 +951,25 @@ private fun HomeRoute(
 
     when (content) {
         HomeRouteContent.Home -> {
-            // One-inset rule for the App Screens (V3) home: the embedded page owns its own top chrome
-            // by injecting the real status-bar inset as safe-area padding, and its full-bleed
-            // background paints behind the (transparent, edge-to-edge) status bar. So the Hub must NOT
-            // also apply the status-bar top inset here — doing so both pushes the page down by the
-            // status-bar height AND leaves it to inject that inset a second time (a double top inset),
-            // while the pushed-down page uncovers the bar (an opaque band). Strip only the TOP for V3;
-            // the horizontal insets and the bottom (tab-bar) inset are still applied so the page sits
-            // above the host's bottom chrome. Every non-V3 home keeps the padding unchanged.
-            val layoutDirection = LocalLayoutDirection.current
-            val experiencePadding = if (isV3Home) {
-                PaddingValues(
-                    start = contentPadding.calculateStartPadding(layoutDirection),
-                    top = 0.dp,
-                    end = contentPadding.calculateEndPadding(layoutDirection),
-                    bottom = contentPadding.calculateBottomPadding()
-                )
-            } else {
-                contentPadding
-            }
             // Display home view experience in pluggable mode
             val homeExperience: @Composable () -> Unit = {
-                ExperienceComposable(
-                    url = Uri.parse(experienceURL),
-                    // Pluggable navigation enables the Experience to participate in an existing NavHost.
-                    // See documentation on NavigationMode.Pluggable for details.
-                    navigationMode = NavigationMode.Pluggable,
-                    defaultColorSchemeDark = defaultColorSchemeDark,
-                    // The Hub owns the window's status bar (it draws the top chrome and manages the
-                    // window). The experience reports its authored status-bar styling up via the
-                    // StatusBarConfigRegistry, which the Hub applies; the experience itself must not touch
-                    // the window.
-                    manageStatusBar = false,
-                    modifier = routeVisibilityModifier
-                        .padding(experiencePadding)
-                        .consumeWindowInsets(experiencePadding)
-                )
+                CompositionLocalProvider(LocalAppScreenOwnsStatusBar provides ownsStatusBar) {
+                    ExperienceComposable(
+                        url = Uri.parse(experienceURL),
+                        // Pluggable navigation enables the Experience to participate in an existing NavHost.
+                        // See documentation on NavigationMode.Pluggable for details.
+                        navigationMode = NavigationMode.Pluggable,
+                        defaultColorSchemeDark = defaultColorSchemeDark,
+                        // The Hub owns the window's status bar (it draws the top chrome and manages the
+                        // window). The experience reports its authored status-bar styling up via the
+                        // StatusBarConfigRegistry, which the Hub applies; the experience itself must not touch
+                        // the window.
+                        manageStatusBar = false,
+                        modifier = routeVisibilityModifier
+                            .padding(contentPadding)
+                            .consumeWindowInsets(contentPadding)
+                    )
+                }
             }
             // App Screens (V3) home with the inbox enabled: hand App Screens the native inbox
             // affordance to render on its ROOT screen (an Email icon + unread badge, in the safe-area
@@ -1031,9 +1155,13 @@ private fun MessagesComponent(
     Messages(
         rows = uiState.rows,
         searchQuery = uiState.searchQuery,
+        searchToken = uiState.searchToken,
+        suggestions = uiState.suggestions,
         isExpanded = uiState.isExpanded,
         displayTitle = displayTitle,
         onSearchQueryChanged = { query -> viewModel.updateSearchQuery(query) },
+        onSuggestionSelected = { token -> viewModel.selectSearchToken(token) },
+        onSearchTokenCleared = { viewModel.clearSearchToken() },
         onExpandedChanged = { expanded -> viewModel.updateExpanded(expanded) },
         onPostClick = { postId ->
             viewModel.markPostAsRead(postId)

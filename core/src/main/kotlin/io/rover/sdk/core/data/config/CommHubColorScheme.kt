@@ -18,12 +18,25 @@
 package io.rover.sdk.core.data.config
 
 import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
 /**
  * Color scheme preference for Rover.
  *
  * Maps to backend API values for UI usage.
+ *
+ * ### Why [JsonClass] is here
+ *
+ * No adapter is registered for this type, so Moshi deserializes it through its reflective enum
+ * adapter, which looks each constant up by name. R8 renames those constant fields while leaving the
+ * name strings in the static initializer alone, so the lookup fails and Moshi rethrows it as
+ * `AssertionError: Missing field in ...`. Moshi ships a keep rule that prevents this, conditional on
+ * this annotation, so the annotation is load-bearing despite asking for no codegen.
+ *
+ * Nothing here fails without it. A consumer's minified build crashes on startup instead, and
+ * nothing on our side reports it. That is SDK-451. [CommHubColorSchemeKeepRuleTest] is the guard.
  */
+@JsonClass(generateAdapter = false)
 public enum class CommHubColorScheme {
     @Json(name = "auto")
     AUTO,

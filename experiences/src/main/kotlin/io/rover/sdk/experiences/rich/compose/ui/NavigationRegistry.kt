@@ -60,10 +60,15 @@ class NavDestinationRegistry {
 
 /**
  * A registered navigation destination consisting of a route and composable content.
+ *
+ * @param hasAppBar Whether the screen at this route renders an app bar. Known from the screen's
+ *   model at registration time, so a host can lay the route out under its app bar from the first
+ *   frame; the [AppBarConfig] itself is only reported once the screen composes.
  */
 data class RegisteredDestination(
     val route: String,
-    val content: @Composable () -> Unit
+    val hasAppBar: Boolean = false,
+    val content: @Composable () -> Unit,
 )
 
 /**

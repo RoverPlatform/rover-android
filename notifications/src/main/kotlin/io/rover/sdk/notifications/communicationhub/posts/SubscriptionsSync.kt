@@ -59,7 +59,8 @@ internal class SubscriptionsSync(
         .build()
     private val subscriptionsSyncResponseAdapter = moshi.adapter(SubscriptionsSyncResponse::class.java)
     private val activeSyncJobs = HubResetJobTracker(
-        cancellationMessage = "Subscriptions sync cancelled because Hub data was reset."
+        cancellationMessage = "Subscriptions sync cancelled because Hub data was reset.",
+        syncStartGate = hubSyncCoordinator,
     )
 
     override suspend fun sync(): Boolean = activeSyncJobs.track {

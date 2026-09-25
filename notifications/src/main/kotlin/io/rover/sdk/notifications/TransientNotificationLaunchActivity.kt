@@ -20,19 +20,17 @@ package io.rover.sdk.notifications
 import android.app.Activity
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import androidx.core.content.ContextCompat
 import io.rover.sdk.core.Rover
 import io.rover.sdk.core.logging.log
 import io.rover.sdk.core.platform.DateFormattingInterface
+import io.rover.sdk.core.routing.startActivityOrOpenApp
 import io.rover.sdk.notifications.domain.Notification
 import io.rover.sdk.notifications.graphql.decodeJson
 import io.rover.sdk.notifications.graphql.encodeJson
 import io.rover.sdk.notifications.ui.concerns.NotificationStoreInterface
-import org.json.JSONException
 import org.json.JSONObject
 
 /**
@@ -52,21 +50,31 @@ class TransientNotificationLaunchActivity : Activity() {
     override fun onStart() {
         super.onStart()
 
-        val rover = Rover.shared
+        // A notification tap can cold-start the app, so Rover may not have been initialized yet.
+        // Bail out quietly rather than throwing out of onStart and taking the host app down.
+        val rover = Rover.failableShared
+        if (rover == null) {
+            log.e("Rover is not initialized, so this notification cannot be opened.  Ensure Rover.initialize() is called in Application.onCreate().")
+            finish()
+            return
+        }
 
         val notificationOpen = rover.resolve(NotificationOpenInterface::class.java)
         if (notificationOpen == null) {
             log.e("Could not resolve NotificationOpenInterface in Rover container.  Ensure NotificationAssembler() is added to Rover.initialize.")
+            finish()
             return
         }
         val influenceTracker = rover.resolve(InfluenceTrackerServiceInterface::class.java)
         if (influenceTracker == null) {
             log.e("Could not resolve InfluenceTrackerServiceInterface in Rover container.  Ensure NotificationAssembler() is added to Rover.initialize.")
+            finish()
             return
         }
         val dateFormatting = rover.resolve(DateFormattingInterface::class.java)
         if (dateFormatting == null) {
             log.e("Could not resolve DateFormattingInterface in Rover container.  Ensure NotificationAssembler() is added to Rover.initialize.")
+            finish()
             return
         }
         val notificationsRepository = rover.resolve(NotificationStoreInterface::class.java)
@@ -76,47 +84,52 @@ class TransientNotificationLaunchActivity : Activity() {
 
         log.v("Transient notification launch activity running.")
 
-        if (intent.getStringExtra(NOTIFICATION_JSON) == null) {
-            log.e("No notification json passed, finishing activity")
+        val notificationJson = intent.getStringExtra(NOTIFICATION_JSON)
+        if (notificationJson == null) {
+            log.w("No notification json passed, finishing activity")
             finish()
             return
         }
-
-        // grab the notification back out of the arguments.
-        val notificationJson = intent.getStringExtra(NOTIFICATION_JSON)
 
         // this will also do the side-effect of issuing the Notification Opened event, which
         // is the whole reason for this activity existing.
 
-        try {
-            val notification = Notification.decodeJson(
-                JSONObject(notificationJson),
-                dateFormatting
-            )
-            notificationsRepository?.markRead(notification)
-        } catch (e: JSONException) {
-            log.w("Badly formed notification, could not mark it as read.")
+        val notification = try {
+            Notification.decodeJson(JSONObject(notificationJson), dateFormatting)
+        } catch (exception: Exception) {
+            log.w("Badly formed notification, could not mark it as read: $exception, at ${exception.stackTraceToString()}")
+            null
+        }
+        if (notification != null) {
+            try {
+                notificationsRepository?.markRead(notification)
+            } catch (exception: Exception) {
+                log.w("Could not mark notification as read: $exception, at ${exception.stackTraceToString()}")
+            }
         }
 
         influenceTracker.notificationOpenedDirectly()
 
-        val intent = notificationJson?.let { notificationOpen.intentForOpeningNotificationFromJson(it) } ?: return
-
-        try {
-            ContextCompat.startActivity(
-                this,
-                intent,
-                null
-            )
-        } catch (e: ActivityNotFoundException) {
-            log.e(
-                "No activity could be found to handle the Intent needed to start the notification.\n" +
-                    "This could be because the deep link scheme slug you set on NotificationsAssembler does not match what is set in your Rover account, or that an Activity is missing from your manifest.\n\n" +
-                    "Intent was: $intent"
-            )
+        val intent = notificationOpen.intentForOpeningNotificationFromJson(notificationJson)
+        if (intent == null) {
+            log.w("Notification did not produce an intent; finishing launch activity.")
             finish()
             return
         }
+
+        // This activity is the only one in its task, so finishing without launching anything
+        // takes the task with it and the app vanishes from the user's point of view. When the
+        // intent cannot be handled, open the app instead so the tap lands somewhere.
+        //
+        // Routing may have queued Hub navigation for this tap. It is left in place: if the app
+        // opens, the Hub consumes it; if it does not, a stale destination is accepted rather
+        // than undone here. Queueing at dispatch time instead is tracked as SDK-379.
+        startActivityOrOpenApp(
+            intent = intent,
+            openApp = rover.resolve(Intent::class.java, "openApp"),
+            failureMessage = "No activity could be found to handle the Intent needed to start the notification.\n" +
+                "This could be because the deep link scheme slug you set on NotificationsAssembler does not match what is set in your Rover account, or that an Activity is missing from your manifest.",
+        )
 
         finish()
     }

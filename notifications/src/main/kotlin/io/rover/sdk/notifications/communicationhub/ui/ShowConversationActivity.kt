@@ -17,6 +17,7 @@
 
 package io.rover.sdk.notifications.communicationhub.ui
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -54,6 +55,7 @@ import io.rover.sdk.notifications.communicationhub.rememberCommHubDarkTheme
 import io.rover.sdk.notifications.communicationhub.conversations.ConversationDetailDismissEffect
 import io.rover.sdk.notifications.communicationhub.conversations.ShowConversationRoute
 import io.rover.sdk.notifications.communicationhub.navigation.HubCoordinator
+import io.rover.sdk.notifications.communicationhub.navigation.HubNavigation
 import io.rover.sdk.notifications.conversationPushNotificationPresenter
 import io.rover.sdk.notifications.conversationsRepository
 import io.rover.sdk.notifications.conversationsSync
@@ -74,19 +76,41 @@ class ShowConversationActivity : ComponentActivity() {
 
         val conversationId = intent.getStringExtra(EXTRA_CONVERSATION_ID)
         if (conversationId.isNullOrBlank()) {
-            log.e("ShowConversationActivity: No conversation ID provided in intent extras.")
+            log.e("No conversation ID provided in intent extras.")
             finish()
             return
         }
 
-        val configManager = Rover.shared.resolve(ConfigManager::class.java)
-        val hubCoordinator = Rover.shared.resolve(HubCoordinator::class.java)
+        // A notification tap can cold-start the app, so Rover may not be initialized yet.
+        val rover = Rover.failableShared
+        if (rover == null) {
+            log.e("Rover is not initialized, so this conversation cannot be opened.  Ensure Rover.initialize() is called in Application.onCreate().")
+            finish()
+            return
+        }
+
+        val configManager = rover.resolve(ConfigManager::class.java)
+        val hubCoordinator = rover.resolve(HubCoordinator::class.java)
         if (configManager != null && hubCoordinator != null) {
-            val hubIntent = ShowConversationRoute.revealConversationInHub(conversationId, configManager, hubCoordinator)
+            val hubIntent = ShowConversationRoute.revealConversationInHub(
+                conversationId,
+                this,
+                configManager,
+                hubCoordinator,
+            )
             if (hubIntent != null) {
-                startActivity(hubIntent)
-                finish()
-                return
+                try {
+                    startActivity(hubIntent)
+                    finish()
+                    return
+                } catch (_: ActivityNotFoundException) {
+                    // revealConversationInHub already checked that the intent resolves, but
+                    // resolution can change between that check and the launch. Keep the
+                    // notification tap useful by rendering the conversation here instead of
+                    // crashing, and clear the navigation queued for a Hub we never reached.
+                    log.w("Configured Hub deep link could not be opened; falling back to standalone conversation.")
+                    hubCoordinator.clearPendingNavigation(HubNavigation.Conversation(conversationId))
+                }
             }
         }
 
@@ -150,10 +174,6 @@ private fun ConversationStandaloneFallback(
 
     ConversationDetailDismissEffect(viewModel.effects) { onDismiss() }
 
-    LaunchedEffect(uiState.replies.lastOrNull()?.id) {
-        viewModel.onLatestReplyVisible(uiState.replies.lastOrNull()?.id)
-    }
-
     DisposableEffect(conversationId, standaloneConversationVisibilityTracker) {
         onDispose {
             standaloneConversationVisibilityTracker.updateConversationVisibility(
@@ -199,6 +219,7 @@ private fun ConversationStandaloneFallback(
                     onLoadOlderRequested = viewModel::onLoadOlderRequested,
                     onSendTapped = viewModel::onSendTapped,
                     onOpenUrl = { url -> linkOpen?.openLink(url, context) },
+                    onLatestReplyVisible = viewModel::onLatestReplyVisible,
                     modifier = Modifier
                         .padding(innerPadding)
                         .consumeWindowInsets(innerPadding)
